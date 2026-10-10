@@ -1934,7 +1934,7 @@ function init3D(){
   for(let i=0;i<8;i++){const P=new THREE.PointLight(0xffc070,0,40,1.5);scene.add(P);points.push(P);}
   const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x000000}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a,emissive:0x000000});
   const water=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),mkWaterMat());
-  water.rotation.x=-PI/2;water.position.set(WW/2,0,WH/2);scene.add(water);
+  water.rotation.x=-PI/2;water.position.set(WW/2,0,WH/2);water.receiveShadow=true;scene.add(water);
   const sky=mkSky();scene.add(sky);
   const ship=mkCarrier();ship.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});scene.add(ship);
   const dyn=new THREE.Group();scene.add(dyn);
@@ -1962,7 +1962,7 @@ function buildStatic(){
   const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(pos,3));tg.setAttribute('color',new THREE.BufferAttribute(col,3));tg.setIndex(new THREE.BufferAttribute(idx,1));tg.computeVertexNormals();
   const terrain=new THREE.Mesh(tg,new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000}));st.add(terrain);R3.terrain=terrain;
   // open seabed beyond the terrain mesh, so the edge of the map never shows through the water
-  {const sb=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),new THREE.MeshPhongMaterial({color:new THREE.Color(.335,.39,.36),shininess:0,specular:0x000000}));sb.rotation.x=-PI/2;sb.position.set(WW/2,-6.3,WH/2);st.add(sb);}
+  {const sb=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),new THREE.MeshPhongMaterial({color:new THREE.Color(.335,.39,.36),shininess:0,specular:0x000000}));sb.rotation.x=-PI/2;sb.position.set(WW/2,-6.3,WH/2);st.add(sb);R3.seabed=sb;}
   // road ribbons
   const rv=[];
   for(const rd of W.roads)for(let i=0;i<rd.length-1;i++){const a=rd[i],b=rd[i+1],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,nxv=-dy/l*3.2,nyv=dx/l*3.2,ya=groundY(a.x,a.y)+.4,yb=groundY(b.x,b.y)+.4;
@@ -1988,6 +1988,8 @@ function buildStatic(){
   st.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
   // light itself casts no shadow (a transparent beam still lands in the shadow map)
   if(R3.lhBeam)for(const m of R3.lhBeam.beam.children){m.castShadow=false;m.receiveShadow=false;}
+  // boats throw their shadow on the water surface, not on the seabed metres below (that made them look as if they hovered)
+  if(R3.seabed){R3.seabed.castShadow=false;R3.seabed.receiveShadow=false;}
   R3.scene.add(st);R3.stat=st;R3.seed=W.seed;R3.snap=true;setWaterDepth();
 }
 /* ---------- time of day: sun by day, moon by night (dark blue, never black), pooled lamps ---------- */
