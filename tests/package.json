@@ -1,0 +1,14 @@
+{
+  "name": "brohuvud-tests",
+  "private": true,
+  "description": "Headless tests and the browser smoke test for Brohuvud",
+  "scripts": {
+    "extract": "python3 mk.py",
+    "test:map": "python3 mk.py && node t23.js",
+    "test:points": "python3 mk.py && node t51.js",
+    "sim": "python3 mk.py && node t45.js base"
+  },
+  "devDependencies": {
+    "three": "0.128.0"
+  }
+}
