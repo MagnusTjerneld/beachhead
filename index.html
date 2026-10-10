@@ -2607,7 +2607,7 @@ const SYN={
   boom_small:(o,t)=>{nz(o,t,'lowpass',700,.7,.003,.6,.5,140);},
 };
 function play(name,x,h,z,gain,ref){
-  if(!AUD.ctx||!AUD.on)return;const sp=spatial(x,h,z,ref);if(sp.g<.012)return;
+  if(!AUD.ctx||!AUD.on)return;if(typeof DIAG!=='undefined')DIAG.plays++;const sp=spatial(x,h,z,ref);if(sp.g<.012)return;
   const out=chain(sp,gain||1),t=AUD.ctx.currentTime+Math.min(.25,sp.d/340*.5);
   const b=AUD.bufs[name];if(b){const s=AUD.ctx.createBufferSource();s.buffer=b;s.playbackRate.value=.94+Math.random()*.12;s.connect(out);s.start(t);return;}
   if(SYN[name])SYN[name](out,t);
@@ -2752,19 +2752,50 @@ function startGame(){
 
 /* ---------- loop ---------- */
 let last=performance.now();
-/* fault report: an error or a very slow frame is shown on screen instead of the game silently freezing */
-const DIAG={seen:new Set(),slow:0};
-function diagShow(msg){let el=document.getElementById('diag');if(!el){el=document.createElement('div');el.id='diag';el.style.cssText='position:fixed;left:8px;bottom:8px;max-width:min(560px,calc(100vw - 16px));z-index:99;background:rgba(40,12,10,.92);color:#ffd9cf;font:12px/1.35 ui-monospace,Menlo,monospace;padding:8px 10px;border:1px solid #c23b2e;border-radius:6px;white-space:pre-wrap;user-select:text;';el.title='Klicka för att stänga';el.addEventListener('click',()=>el.remove());document.body.appendChild(el);}
-  el.textContent=(el.textContent?el.textContent+'\n':'Felrapport (skicka en skärmbild):\n')+msg;}
+/* stats and fault panel (F3 or §): frame rate, time per frame phase, 3D load, memory, sound and an error log.
+   It opens by itself on an error, so a hang or a crash leaves something to screenshot. */
+const DIAG={seen:new Set(),slow:0,log:[],on:false,el:null,body:null,errEl:null,ph:[0,0,0,0,0],cpu:0,gap:16.7,worst:0,worstShow:0,lastNow:0,lastUi:0,aud0:null,audRate:1,plays:0,playsShow:0,winT:0};
+const DIAG_PH=['sim','sjökort','3D','ljud','hud'];
+function diagEl(){if(DIAG.el)return DIAG.el;const el=document.createElement('div');el.id='diag';
+  el.style.cssText='position:fixed;left:8px;bottom:8px;width:max-content;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;z-index:99;background:rgba(14,20,26,.9);color:#d8e2e6;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:7px 9px;border:1px solid rgba(160,190,200,.35);border-radius:6px;user-select:text;display:none;';
+  el.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;color:#9fb4bc"><b style="color:#e8eef0">Statistik</b><span>F3 / § stänger</span></div><pre style="margin:4px 0 0;font:inherit;white-space:pre"></pre><div style="color:#ffb4a4;white-space:pre-wrap;margin-top:4px"></div>';
+  document.body.appendChild(el);DIAG.el=el;DIAG.body=el.children[1];DIAG.errEl=el.children[2];return el;}
+function diagToggle(on,keep){DIAG.on=on==null?!DIAG.on:on;if(!keep){try{localStorage.setItem('bh.stats',DIAG.on?'1':'0');}catch(_){}}diagVis();DIAG.lastUi=0;}
+// shown during play while switched on (on by default), and always once something is in the log
+function diagVis(){const el=diagEl(),v=DIAG.on&&(!TITLE.on||DIAG.log.length>0);if(el.style.display!==(v?'block':'none'))el.style.display=v?'block':'none';}
+try{DIAG.on=localStorage.getItem('bh.stats')!=='0';}catch(_){DIAG.on=true;}
+function diagShow(msg,isErr){const tag=(G&&G.running?'t '+Math.round(G.time)+'s ':'')+'· ';DIAG.log.push((isErr?'FEL ':'')+tag+msg);if(DIAG.log.length>12)DIAG.log.shift();
+  diagEl();DIAG.errEl.textContent='Logg ('+DIAG.log.length+'):\n'+DIAG.log.join('\n');if(isErr||!DIAG.on)diagToggle(true,true);diagVis();}
 function diagErr(where,err){const m=where+': '+(err&&err.message||err);if(DIAG.seen.has(m))return;DIAG.seen.add(m);console.error(where,err);
-  const st=String(err&&err.stack||'').split('\n').slice(1,3).map(l=>l.trim().replace(/\(?(blob:|https?:)[^)]*?:(\d+):(\d+)\)?$/,'rad $2')).join(' < ');diagShow(m+(st?'\n  '+st:'')+'\n  ö '+G.seed+', t '+Math.round(G.time)+' s');}
+  const st=String(err&&err.stack||'').split('\n').slice(1,3).map(l=>l.trim().replace(/\(?(blob:|https?:)[^)]*?:(\d+):(\d+)\)?$/,'rad $2')).join(' < ');diagShow(m+(st?'\n   '+st:'')+' (ö '+G.seed+')',true);}
 window.addEventListener('error',e=>diagErr('fel',e.error||e.message));
 window.addEventListener('unhandledrejection',e=>diagErr('löfte',e.reason));
+window.addEventListener('keydown',e=>{if(e.code==='F3'||e.code==='Backquote'||e.key==='§'){e.preventDefault();e.stopImmediatePropagation();diagToggle();}},true);
+function diagTick(now,P){
+  const tot=performance.now()-P[0],gap=DIAG.lastNow?now-DIAG.lastNow:16.7;DIAG.lastNow=now;
+  DIAG.gap+=(gap-DIAG.gap)*.05;DIAG.cpu+=(tot-DIAG.cpu)*.05;DIAG.worst=Math.max(DIAG.worst,gap);
+  for(let i=1;i<P.length&&i<=5;i++)DIAG.ph[i-1]+=((P[i]-P[i-1])-DIAG.ph[i-1])*.05;
+  if(tot>800&&G.running&&G.time>3&&DIAG.slow<5){DIAG.slow++;const parts=[];for(let i=1;i<P.length;i++)parts.push(DIAG_PH[i-1]+' '+Math.round(P[i]-P[i-1]));diagShow('långsam bildruta '+Math.round(tot)+' ms ('+parts.join(', ')+')');}
+  // once a second: worst frame gap, plays per second and how fast the audio clock runs against the wall clock
+  if(now-DIAG.winT>=1000){const dt=(now-DIAG.winT)/1000;DIAG.winT=now;DIAG.worstShow=DIAG.worst;DIAG.worst=0;DIAG.playsShow=Math.round(DIAG.plays/dt);DIAG.plays=0;
+    if(AUD.ctx){const at=AUD.ctx.currentTime;if(DIAG.aud0!=null)DIAG.audRate=(at-DIAG.aud0)/dt;DIAG.aud0=at;}}
+  if(now-DIAG.lastUi<250)return;DIAG.lastUi=now;diagVis();if(!DIAG.on||DIAG.el.style.display==='none')return;
+  const L=[],f=n=>n.toFixed(1).padStart(5);
+  L.push('fps '+Math.round(1000/Math.max(1,DIAG.gap))+'  bild '+f(DIAG.gap)+' ms  värst '+Math.round(DIAG.worstShow)+' ms');
+  L.push('cpu  '+f(DIAG.cpu)+' ms\n     '+DIAG_PH.map((n,i)=>n+' '+DIAG.ph[i].toFixed(1)).join('  '));
+  if(R3){const i=R3.renderer.info;L.push('3D   anrop '+i.render.calls+'  tri '+Math.round(i.render.triangles/1000)+'k  geo '+i.memory.geometries+'  tex '+i.memory.textures+'  prog '+(i.programs?i.programs.length:0));
+    L.push('     effekter '+R3.fx.size+'  partiklar '+R3.parts.length+'  dyn '+R3.dyn.children.length+(R3.renderer.getContext().isContextLost()?'  KONTEXT FÖRLORAD':''));}
+  else L.push('3D  av (ingen WebGL)');
+  const pm=performance.memory;L.push('minne '+(pm?Math.round(pm.usedJSHeapSize/1048576)+' / '+Math.round(pm.jsHeapSizeLimit/1048576)+' MB':'okänt i denna webbläsare')+'  DOM '+document.getElementsByTagName('*').length);
+  L.push('ljud '+(AUD.ctx?AUD.ctx.state+'  klocka '+DIAG.audRate.toFixed(2)+'x'+(AUD.ctx.baseLatency!=null?'  lat '+Math.round(AUD.ctx.baseLatency*1000)+' ms':'')+(AUD.on?'':'  (avstängt)')+'\n     motorer '+AUD.voices.size+'  ljud/s '+DIAG.playsShow:'ej startat'+(AUD.on?'':'  (avstängt)')));
+  const alive=a=>a.filter(x=>!x.dead).length;
+  L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units)+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
+  DIAG.body.textContent=L.join('\n');
+}
 function frame(now){
   requestAnimationFrame(frame);
   const P=[performance.now()];try{frameBody(now,P);}catch(err){diagErr('bildruta',err);}
-  const tot=performance.now()-P[0];
-  if(tot>800&&G.running&&G.time>3&&DIAG.slow<5){DIAG.slow++;const nm=['sim','sjökort','3D','ljud','hud/ui'],parts=[];for(let i=1;i<P.length;i++)parts.push(nm[i-1]+' '+Math.round(P[i]-P[i-1]));diagShow('långsam bildruta '+Math.round(tot)+' ms ('+parts.join(', ')+'), ö '+G.seed+', t '+Math.round(G.time)+' s');}
+  try{diagTick(now,P);}catch(err){console.error(err);}
 }
 function frameBody(now,P){
   const dtr=Math.min(.05,(now-last)/1000);last=now;
