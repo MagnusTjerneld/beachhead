@@ -1877,7 +1877,7 @@ function mkDecor(D,st){
       if(m.type==='E'){g.children[g.children.length-2].position.y=top+1.0;g.children[g.children.length-1].position.y=top+.4;}}
     g.position.set(m.x,0,m.y);st.add(g);R3.bobs.push(g);g.userData.bob=Math.random()*TAU;g.userData.y0=0;}
   for(const b of D.boats){const g=mkBoat(b);g.userData.y0=.15;st.add(g);R3.bobs.push(g);R3.boatM.push(g);}
-  const L=D.light;if(L){const g=new THREE.Group(),WH=mat(0xf2f0ea),RD=mat(0xd2452a);g.add(mesh(cyl(3,3.4,1.2,14),mat(0x8f8680),0,.6,0));
+  R3.lhBeam=null;const L=D.light;if(L){const g=new THREE.Group(),WH=mat(0xf2f0ea),RD=mat(0xd2452a);g.add(mesh(cyl(3,3.4,1.2,14),mat(0x8f8680),0,.6,0));
     g.add(mesh(cyl(2.3,2.6,4,16),WH,0,3.2,0));g.add(mesh(cyl(2.05,2.3,4.6,16),RD,0,7.5,0));g.add(mesh(cyl(1.7,2.05,3.6,16),WH,0,11.6,0));
     g.add(mesh(cyl(2.9,2.9,.18,16),mat(0x2e2e2e),0,13.5,0));for(let k=0;k<12;k++){const a=k/12*TAU;g.add(mesh(box(.08,1,.08),mat(0x2e2e2e),Math.cos(a)*2.8,14,Math.sin(a)*2.8));}g.add(mesh(cyl(2.82,2.82,.08,16,1,true),mat(0x2e2e2e),0,14.5,0));
     g.add(mesh(cyl(1.15,1.15,1.6,12),R3.lampMat,0,14.4,0));const glass=mesh(cyl(1.3,1.3,1.8,12),new THREE.MeshLambertMaterial({color:0xd03028,transparent:true,opacity:.55}),0,14.4,0);g.add(glass);
@@ -1985,6 +1985,8 @@ function buildStatic(){
   for(const b of W.barriers){const im=new THREE.InstancedMesh(new THREE.BoxGeometry(5,1.1,1.1),mat(0x4a3a2c),b.cells.length*2);let n=0;for(const c of b.cells){const q=cellCenter(c);for(const rot of[PI/4,-PI/4]){dummy.position.set(q.x,groundY(q.x,q.y)+.9,q.y);dummy.rotation.set(0,rot,.35);dummy.scale.set(1,1,1);dummy.updateMatrix();im.setMatrixAt(n++,dummy.matrix);}}st.add(im);R3.bars.set(b.id,im);}
   R3.ship.position.set(CARRIER.x,0,CARRIER.y);R3.ship.rotation.y=-(CARRIER.a+PI/2);
   st.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  // light itself casts no shadow (a transparent beam still lands in the shadow map)
+  if(R3.lhBeam)for(const m of R3.lhBeam.beam.children){m.castShadow=false;m.receiveShadow=false;}
   R3.scene.add(st);R3.stat=st;R3.seed=W.seed;R3.snap=true;
 }
 /* ---------- time of day: sun by day, moon by night (dark blue, never black), pooled lamps ---------- */
@@ -2001,7 +2003,9 @@ function updateSky(){
   const sc=R3.scene;lerpHex(A[1],B[1],t,sc.background);sc.fog.color.copy(sc.background);
   lerpHex(A[2],B[2],t,R3.hemi.color);lerpHex(A[3],B[3],t,R3.hemi.groundColor);R3.hemi.intensity=lerp(A[4],B[4],t);
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
-  const n=lerp(A[7],B[7],t);R3.night=n;sc.fog.near=lerp(240,150,n);sc.fog.far=lerp(1000,720,n);
+  const n=lerp(A[7],B[7],t);R3.night=n;
+  // navigation lights come on at dusk (after sunset, about 18:20) and go out at dawn (about 06:15)
+  R3.lit=clamp((n-.3)/.25,0,1);sc.fog.near=lerp(240,150,n);sc.fog.far=lerp(1000,720,n);
   if(n<.6){const tt=(h-6)/12,az=tt*PI,el=clamp(Math.sin(tt*PI),.13,1)*1.05;vDir.set(Math.cos(az)*Math.cos(el),Math.sin(el),.55*Math.cos(el)).normalize();}
   else vDir.set(-.45,.78,-.42).normalize();
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
@@ -2022,8 +2026,8 @@ function updateSky(){
     for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),n)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*n,34]);
     for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),n)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*n,36]);
   }
-  if(n>.1&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*n,70]);}
-  for(const q of R3.secs||[]){if(n<.1||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
+  if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*n*R3.lit,70]);}
+  for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur;if(life<=0)continue;const fl=.8+.3*Math.sin(G.time*11+f.x)+.2*Math.sin(G.time*29+f.y);cand.push([1,f.x,groundY(f.x,f.y)+f.h+3,f.y,0xff6a1a,fl*Math.min(1,life*4)*(.7+n)*f.size*1.4,55]);}
   for(const w of G.wrecks){const age=G.time-w.t0;if(w.kind==='crate'||w.kind==='hulk'||age>120)continue;const fl=.8+.3*Math.sin(G.time*13+w.rot*9)+.2*Math.sin(G.time*31);cand.push([2,w.x,groundY(w.x,w.y)+2.5,w.y,0xff7024,fl*(1-age/120)*(.4+n),30]);}
   for(const c of cand)c.push((c[1]-fx)*(c[1]-fx)+(c[3]-fz)*(c[3]-fz));
@@ -2078,10 +2082,11 @@ function sync3D(dtr){
   // lights: the lighthouse sweeps (10 s a turn); the small lights flash once every 3 s, seen only from inside their 140 degree sector facing the sea
   {const nn=R3.night||0,cx=R3.cam.position.x,cz=R3.cam.position.z;
     const RTs=performance.now()/1000;
-    if(R3.lhBeam){const B=R3.lhBeam,ang=RTs*TAU/10;B.beam.rotation.y=-ang;B.mat.opacity=.32*clamp((nn-.15)/.5,0,1);
-      const dx=cx-B.beam.position.x,dz=cz-B.beam.position.z,ca=Math.atan2(dz,dx),hit=Math.max(Math.cos(ca-ang),Math.cos(ca-ang-PI));const fl=Math.pow(Math.max(0,hit),30);B.flare.scale.setScalar(2.5+fl*16*(.3+nn));B.flare.material.opacity=(.35+.65*fl)*(.25+.75*clamp(nn*2,0,1));}
-    for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180,t=(RTs+z.ph)%3,on=inSec&&t<.6;
-      q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=.55+.45*nn;q.glow.visible=on;}}
+    const lit=R3.lit||0;
+    if(R3.lhBeam){const B=R3.lhBeam,ang=RTs*TAU/10;B.beam.rotation.y=-ang;B.mat.opacity=.32*lit;B.beam.visible=B.flare.visible=lit>0;
+      const dx=cx-B.beam.position.x,dz=cz-B.beam.position.z,ca=Math.atan2(dz,dx),hit=Math.max(Math.cos(ca-ang),Math.cos(ca-ang-PI));const fl=Math.pow(Math.max(0,hit),30);B.flare.scale.setScalar(2.5+fl*16*(.3+nn));B.flare.material.opacity=(.35+.65*fl)*lit;}
+    for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180,t=(RTs+z.ph)%3,on=lit>0&&inSec&&t<.6;
+      q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
   const now=performance.now()/1000;if(R3.bobs)for(const m of R3.bobs){const ph=m.userData.bob;m.position.y=m.userData.y0+Math.sin(now*1.1+ph)*.14;m.rotation.z=Math.sin(now*.9+ph*1.7)*.035;m.rotation.x=Math.sin(now*.8+ph)*.03;}
   for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);const t=g.userData.top;t.material.color.setHex(r.captured?0x3fd06a:0xe0283a);}}
   // fx: tracer projectiles with muzzle flash, impacts, smoke; transient particles live in R3.parts
