@@ -1933,11 +1933,12 @@ function init3D(){
   for(let i=0;i<6;i++){const L=new THREE.SpotLight(0xfff0d0,0,110,.52,.6,1.1);scene.add(L,L.target);spots.push(L);}
   for(let i=0;i<8;i++){const P=new THREE.PointLight(0xffc070,0,40,1.5);scene.add(P);points.push(P);}
   const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x000000}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a,emissive:0x000000});
-  const water=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),new THREE.MeshPhongMaterial({color:0x36677e,transparent:true,opacity:.86,shininess:38,specular:0x3c5c6c}));
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),mkWaterMat());
   water.rotation.x=-PI/2;water.position.set(WW/2,0,WH/2);scene.add(water);
+  const sky=mkSky();scene.add(sky);
   const ship=mkCarrier();ship.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});scene.add(ship);
   const dyn=new THREE.Group();scene.add(dyn);
-  R3={parts:[],sphere:new THREE.SphereGeometry(1,10,8),hemi,sun,spots,points,lampMat,winMat,night:0,renderer,scene,cam,dyn,water,ship,bars:new Map(),stat:null,terrain:null,ray:new THREE.Raycaster(),units:new Map(),enemies:new Map(),wrecks:new Map(),relays:new Map(),fx:new Map(),kroks:new Map(),structs:new Map(),route:null,lookAt:new THREE.Vector3(),snap:true,seed:null};
+  R3={sky,parts:[],sphere:new THREE.SphereGeometry(1,10,8),hemi,sun,spots,points,lampMat,winMat,night:0,renderer,scene,cam,dyn,water,ship,bars:new Map(),stat:null,terrain:null,ray:new THREE.Raycaster(),units:new Map(),enemies:new Map(),wrecks:new Map(),relays:new Map(),fx:new Map(),kroks:new Map(),structs:new Map(),route:null,lookAt:new THREE.Vector3(),snap:true,seed:null};
   return true;
 }
 function buildStatic(){
@@ -1987,7 +1988,7 @@ function buildStatic(){
   st.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
   // light itself casts no shadow (a transparent beam still lands in the shadow map)
   if(R3.lhBeam)for(const m of R3.lhBeam.beam.children){m.castShadow=false;m.receiveShadow=false;}
-  R3.scene.add(st);R3.stat=st;R3.seed=W.seed;R3.snap=true;
+  R3.scene.add(st);R3.stat=st;R3.seed=W.seed;R3.snap=true;setWaterDepth();
 }
 /* ---------- time of day: sun by day, moon by night (dark blue, never black), pooled lamps ---------- */
 const SKY=[ // hour, sky/fog, hemi sky, hemi ground, hemi I, key colour, key I, night
@@ -1998,16 +1999,84 @@ const SKY=[ // hour, sky/fog, hemi sky, hemi ground, hemi I, key colour, key I, 
   [20.4,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1],[24,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1]];
 const T3=typeof THREE!=='undefined',cA=T3?new THREE.Color():null,cB=T3?new THREE.Color():null,vDir=T3?new THREE.Vector3():null;
 function lerpHex(a,b,t,out){return out.set(cA.setHex(a)).lerp(cB.setHex(b),t);}
+/* sky dome: gradient from the fog colour at the horizon to the zenith, sun disc and glow, moon and stars at night */
+function mkSky(){
+  const m=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false,
+    uniforms:{uHor:{value:new THREE.Color(0xa9bbc4)},uZen:{value:new THREE.Color(0x5f8cc0)},uSunDir:{value:new THREE.Vector3(0,1,0)},uSunCol:{value:new THREE.Color(0xfff0d4)},uSunVis:{value:1},
+      uMoonDir:{value:new THREE.Vector3(0,1,0)},uMoonVis:{value:0},uNight:{value:0}},
+    vertexShader:'varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:`uniform vec3 uHor,uZen,uSunCol;uniform vec3 uSunDir,uMoonDir;uniform float uSunVis,uMoonVis,uNight;varying vec3 vD;
+      float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}
+      void main(){vec3 d=normalize(vD);float y=d.y;
+        vec3 col=mix(uHor,uZen,pow(clamp(y,0.0,1.0),0.5));
+        float cs=max(dot(d,uSunDir),0.0),low=1.0-clamp(uSunDir.y*2.5,0.0,1.0);
+        col+=uSunCol*(pow(cs,900.0)*0.9+pow(cs,60.0)*0.28+pow(cs,6.0)*0.16*low*exp(-abs(y)*5.0))*uSunVis;
+        col+=uSunCol*smoothstep(0.99955,0.99975,cs)*1.4*uSunVis*step(-0.02,y);
+        float cm=max(dot(d,uMoonDir),0.0);col+=vec3(0.86,0.9,1.0)*(smoothstep(0.99975,0.99988,cm)*0.9+pow(cm,300.0)*0.12)*uMoonVis;
+        vec3 c=floor(d*420.0);float h=hash(c);col+=vec3(0.85,0.9,1.0)*step(0.9975,h)*(0.4+0.6*fract(h*97.0))*smoothstep(0.03,0.3,y)*clamp((uNight-0.55)*2.5,0.0,1.0);
+        gl_FragColor=vec4(col,1.0);}`});
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(2000,32,16),m);sky.frustumCulled=false;sky.renderOrder=-10;
+  sky.onBeforeRender=(r,sc,cam)=>{sky.position.copy(cam.position);sky.updateMatrixWorld();};
+  return sky;
+}
+/* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;
+   foam where it is shallow, from a depth map of the seabed (see setWaterDepth) */
+function mkWaterMat(){
+  const m=new THREE.MeshPhongMaterial({color:0x36677e,transparent:true,opacity:.86,shininess:220,specular:0xdfe8ec});
+  const U={uTime:{value:0},uHor:{value:new THREE.Color(0xa9bbc4)},uFoam:{value:new THREE.Color(0xe9f1f2)},uDepth:{value:null},uHasDepth:{value:0},uGrid:{value:new THREE.Vector2(1,1)}};
+  m.userData.U=U;
+  m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
+    sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWPos;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWPos=(modelMatrix*vec4(transformed,1.0)).xyz;');
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
+      varying vec3 vWPos;uniform float uTime,uHasDepth;uniform vec3 uHor,uFoam;uniform sampler2D uDepth;uniform vec2 uGrid;
+      vec2 wgrad(vec2 p,float t){vec2 g=vec2(0.0);
+        g+=vec2(0.83,0.55)*0.55*cos(dot(p,vec2(0.83,0.55))*0.55+t*1.1);
+        g+=vec2(-0.42,0.91)*0.9*0.7*cos(dot(p,vec2(-0.42,0.91))*0.9-t*1.3);
+        g+=vec2(0.97,-0.24)*1.7*0.38*cos(dot(p,vec2(0.97,-0.24))*1.7+t*1.9);
+        g+=vec2(-0.71,-0.7)*2.9*0.22*cos(dot(p,vec2(-0.71,-0.7))*2.9-t*2.6);
+        g+=vec2(0.2,0.98)*4.7*0.12*cos(dot(p,vec2(0.2,0.98))*4.7+t*3.3);
+        g+=vec2(0.6,-0.8)*8.3*0.06*cos(dot(p,vec2(0.6,-0.8))*8.3-t*4.1);
+        g+=vec2(-0.95,0.31)*12.1*0.04*cos(dot(p,vec2(-0.95,0.31))*12.1+t*5.2);
+        return g;}`)
+    .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+      float wDist=length(vWPos-cameraPosition);vec2 wg=wgrad(vWPos.xz,uTime)*0.06/(1.0+wDist/220.0);
+      normal=normalize((viewMatrix*vec4(normalize(vec3(-wg.x,1.0,-wg.y)),0.0)).xyz);`)
+    .replace('#include <envmap_fragment>',`#include <envmap_fragment>
+      {vec3 V=normalize(cameraPosition-vWPos);float fr=pow(1.0-clamp(V.y,0.0,1.0),6.0);outgoingLight=mix(outgoingLight,uHor,fr*0.32);
+       if(uHasDepth>0.5){vec2 uv=(vWPos.xz/2200.0*uGrid+0.5)/(uGrid+1.0);
+        if(uv.x>0.0&&uv.y>0.0&&uv.x<1.0&&uv.y<1.0){float dep=8.0-texture2D(uDepth,uv).r*16.0;
+          float nz=0.55+0.45*sin(vWPos.x*0.37+uTime*0.5)*sin(vWPos.z*0.29-uTime*0.37)+0.25*sin(vWPos.x*1.3-vWPos.z*1.1+uTime);
+          float edge=smoothstep(0.7,0.08,dep)+smoothstep(1.6,0.4,dep)*0.35*nz;
+          float band=smoothstep(0.6,0.95,sin(dep*4.0-uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
+          float fo=clamp(edge+band*0.75*nz,0.0,1.0)*step(-0.05,dep)*clamp(1.0-wDist/900.0,0.0,1.0);
+          outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a,fo);}}}`);};
+  return m;
+}
+// depth of the seabed for the foam: the terrain grid packed into a texture (8 m above to 8 m below the surface)
+function setWaterDepth(){
+  const W=WORLD,nx=W.SX+1,ny=W.SY+1,U=R3.water.material.userData.U,data=new Uint8Array(nx*ny*4);
+  for(let k=0;k<nx*ny;k++){const v=Math.round(clamp((W.ev[k]+8)/16,0,1)*255);data[k*4]=v;data[k*4+1]=v;data[k*4+2]=v;data[k*4+3]=255;}
+  if(U.uDepth.value)U.uDepth.value.dispose();
+  const tx=new THREE.DataTexture(data,nx,ny,THREE.RGBAFormat);tx.magFilter=THREE.LinearFilter;tx.minFilter=THREE.LinearFilter;tx.generateMipmaps=false;tx.wrapS=tx.wrapT=THREE.ClampToEdgeWrapping;tx.needsUpdate=true;
+  U.uDepth.value=tx;U.uHasDepth.value=1;U.uGrid.value.set(W.SX,W.SY);
+}
 function updateSky(){
   const h=G.tod;let i=0;while(i<SKY.length-2&&SKY[i+1][0]<=h)i++;const A=SKY[i],B=SKY[i+1],t=clamp((h-A[0])/(B[0]-A[0]),0,1);
   const sc=R3.scene;lerpHex(A[1],B[1],t,sc.background);sc.fog.color.copy(sc.background);
   lerpHex(A[2],B[2],t,R3.hemi.color);lerpHex(A[3],B[3],t,R3.hemi.groundColor);R3.hemi.intensity=lerp(A[4],B[4],t);
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
-  const n=lerp(A[7],B[7],t);R3.night=n;
+  const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
   // navigation lights come on at dusk (after sunset, about 18:20) and go out at dawn (about 06:15)
   R3.lit=clamp((n-.3)/.25,0,1);sc.fog.near=lerp(240,150,n);sc.fog.far=lerp(1000,720,n);
   if(n<.6){const tt=(h-6)/12,az=tt*PI,el=clamp(Math.sin(tt*PI),.13,1)*1.05;vDir.set(Math.cos(az)*Math.cos(el),Math.sin(el),.55*Math.cos(el)).normalize();}
   else vDir.set(-.45,.78,-.42).normalize();
+  // sky dome and water: horizon is the fog colour, zenith deepens towards blue by day and ink at night
+  if(R3.sky){const U=R3.sky.material.uniforms,tt=(h-6)/12,az=tt*PI,el=Math.sin(tt*PI)*1.05;
+    U.uHor.value.copy(sc.background);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
+    U.uSunDir.value.set(Math.cos(az)*Math.cos(el),Math.sin(el),.55*Math.cos(el)).normalize();
+    U.uSunCol.value.copy(R3.sun.color).lerp(cB.setHex(0xffffff),.25);U.uSunVis.value=clamp((U.uSunDir.value.y+.06)/.12,0,1);
+    U.uMoonDir.value.set(-.45,.78,-.42).normalize();U.uMoonVis.value=clamp((n-.55)/.3,0,1);U.uNight.value=n;
+    const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sc.background);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
   R3.lampMat.emissive.setRGB(.15+.85*n,.14+.8*n,.1+.62*n);R3.winMat.emissive.setRGB(.95*n,.66*n,.3*n);if(R3.winMats)R3.winMats.forEach((m,b)=>{const L=winLevel(b,n);m.emissive.setRGB(.95*L,.66*L,.3*L);});
   // headlights: nearest vehicles to the camera focus
