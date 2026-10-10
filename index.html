@@ -679,7 +679,11 @@ function buildWorldTry(seed,tryK){
   W.lines={coast:iso(0),deep:iso(-3.2),cont:[9,17,25].map(iso)};
   return W;
 }
-function heightAt(x,y){const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1;const fx=clamp(x/WW*SX,0,SX-.001),fy=clamp(y/WH*SY,0,SY-.001);const i=Math.floor(fx),j=Math.floor(fy),u=fx-i,v=fy-j;const e=W.ev;const a=e[j*nx+i],b=e[j*nx+i+1],c=e[(j+1)*nx+i],d=e[(j+1)*nx+i+1];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function heightAt(x,y){const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1;const fx=clamp(x/WW*SX,0,SX-.001),fy=clamp(y/WH*SY,0,SY-.001);const i=Math.floor(fx),j=Math.floor(fy),u=fx-i,v=fy-j;const e=W.ev;const a=e[j*nx+i],b=e[j*nx+i+1],c=e[(j+1)*nx+i],d=e[(j+1)*nx+i+1];
+  // same split as the 3D terrain mesh (triangles a,c,b and b,c,d), so heights match what is drawn even on cliffs
+  return u+v<=1?a+(b-a)*u+(c-a)*v:d+(c-d)*(1-u)+(b-d)*(1-v);}
+// lowest safe camera height at x,z: clear of the terrain within the near-plane radius
+function camFloor(x,z){let h=heightAt(x,z);for(let k=0;k<8;k++){const a=k*PI/4;h=Math.max(h,heightAt(x+Math.cos(a)*3,z+Math.sin(a)*3));}return Math.max(h,0)+1.8;}
 const groundY=(x,y)=>Math.max(heightAt(x,y),0);
 
 /* ---------- game state ---------- */
@@ -1940,7 +1944,7 @@ function buildStatic(){
   while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);
   R3.route=null;
   const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1,ny=SY+1,st=new THREE.Group();
-  const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),idx=new Uint16Array(SX*SY*6);
+  const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),idx=new (nx*ny>65535?Uint32Array:Uint16Array)(SX*SY*6);// the grid has more than 65535 vertices: 16-bit indices would wrap and scramble the southern triangles
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
     const k=j*nx+i,x=i*WW/SX,y=j*WH/SY,e=W.ev[k],t=W.vcls[k],n=hash2(i,j,W.seed+5)*.08-.04;
     pos[k*3]=x;pos[k*3+1]=e;pos[k*3+2]=y;
@@ -2117,11 +2121,13 @@ function updateCam(dtr){
   const u=unitById(G.cam);if(!u)return;
   const air=u.air||u.kind==='krok';const y=u.alt!=null&&air?u.alt:unitY(u,0);const small=u.kind==='scout';const aim=G.ctrl===u.id&&u.kind==='tank';
   const fx=Math.cos(u.camH),fz=Math.sin(u.camH),back=small?9:air?22:aim?17:15,up=small?3.5:air?9:aim?6.5:6;
-  const px=u.x-fx*back,pz=u.y-fz*back;let py=Math.max(y+up,groundY(px,pz)+2.5);
+  const px=u.x-fx*back,pz=u.y-fz*back;let py=Math.max(y+up,camFloor(px,pz)+.7);
+  // keep the sight line from camera to unit above the terrain: raise the camera over a ridge or cliff between them
+  for(let t=.15;t<1;t+=.1){const gx=lerp(px,u.x,t),gz=lerp(pz,u.y,t),need=heightAt(gx,gz)+1.2;const lineY=lerp(py,y+1,t);if(lineY<need)py+=(need-lineY)/(1-t);}
   const ax=u.x+fx*30,az=u.y+fz*30,ay=air?groundY(ax,az)+4:aim?y+4.2+Math.tan(G.pitch)*30:y+2.5;
   if(aim&&G.mlook)R3.snap=true;
   const k=R3.snap?1:1-Math.exp(-5*dtr);
-  R3.cam.position.lerp(tmpV.set(px,py,pz),k);R3.lookAt.lerp(tmpV2.set(ax,ay,az),k);R3.cam.lookAt(R3.lookAt);R3.snap=false;
+  R3.cam.position.lerp(tmpV.set(px,py,pz),k);{const cp=R3.cam.position,f=camFloor(cp.x,cp.z);if(cp.y<f)cp.y=f;}R3.lookAt.lerp(tmpV2.set(ax,ay,az),k);R3.cam.lookAt(R3.lookAt);R3.snap=false;
 }
 function projectTo(x,y3,z,w,h){const v=tmpV.set(x,y3,z).project(R3.cam);if(v.z>1||v.z<-1)return null;return{x:(v.x+1)/2*w,y:(1-v.y)/2*h,on:v.x>-1&&v.x<1&&v.y>-1&&v.y<1};}
 const grain=mkCanvas(128,128);{const g=grain.getContext('2d'),im=g.createImageData(128,128);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}g.putImageData(im,0,0);}
@@ -2720,7 +2726,7 @@ function titleCam(dtr){
   const cp=tmpV.set(b.x+out.x/ol*16,TITLE.alt+9,b.z+out.z/ol*16);
   const f=P(D+90),la=tmpV2.set(lerp(f.x,CX,.05),TITLE.alt-7,lerp(f.z,CY,.05));
   if(!TITLE.cam){TITLE.cam=cp.clone();TITLE.look=la.clone();}
-  const k=1-Math.exp(-2.2*dtr);TITLE.cam.lerp(cp,k);TITLE.look.lerp(la,k);R3.cam.position.copy(TITLE.cam);R3.cam.lookAt(TITLE.look);R3.lookAt.copy(TITLE.look);
+  const k=1-Math.exp(-2.2*dtr);TITLE.cam.lerp(cp,k);TITLE.look.lerp(la,k);{const f=camFloor(TITLE.cam.x,TITLE.cam.z);if(TITLE.cam.y<f)TITLE.cam.y=f;}R3.cam.position.copy(TITLE.cam);R3.cam.lookAt(TITLE.look);R3.lookAt.copy(TITLE.look);
 }
 function titleTick(dtr){
   if(!TITLE.on)return;
