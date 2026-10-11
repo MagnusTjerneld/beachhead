@@ -269,7 +269,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
-      <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra.</li>
+      <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna, och hjulet visar också de enskilda enheterna med avstånd, så att du kan välja vem som går utan att välja den först. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder visar andra enheter, helst de som strider; FÄST låser en bild vid enheten, klick visar den i kameran. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
@@ -1163,7 +1163,8 @@ function requestSpot(u,e){
   if(spotterFor(e)||G.units.some(v=>!v.dead&&v.air&&!v.carried&&dist(v,e)<v.vision*.95))return;
   const ok=v=>v.kind==='drone'&&!v.dead&&!v.carried&&v.id!==G.ctrl&&!v.rtb&&v.fuel>v.maxFuel*.4;
   const hs=G.units.filter(ok).sort((p,q)=>dist(p,e)-dist(q,e));
-  const idle=hs.filter(v=>!v.orders.length||(v.orders.length===1&&v.orders[0].type==='obs'&&!v.orders[0].spotFor&&!v.mission));
+  const mine=hs.filter(v=>{const m=v.mission;return m&&m.type==='follow'&&m.escort&&(m.unit===u||(m.group||[]).includes(u.id))&&!(v.orders[0]&&v.orders[0].spotFor);});
+  const idle=mine.concat(hs.filter(v=>!mine.includes(v)&&(!v.orders.length||(v.orders.length===1&&v.orders[0].type==='obs'&&!v.orders[0].spotFor&&!v.mission))));
   if(idle.length){if(sendSpotter(idle[0],e,u))return;
     say(u,'Ser inte '+ename(e)+'. Ingen säker spaningspunkt för HÖK, känt luftvärn täcker.',[{l:'Skicka HÖK ändå',f:()=>sendSpotter(idle[0],e,u,true)}]);return;}
   if(hs.length){say(u,'Ser inte '+ename(e)+'. Kamouflerat, behöver spaning från luften.',[{l:'Skicka '+hs[0].name,f:()=>{if(!hs[0].dead&&!e.dead)sendSpotter(hs[0],e,u,true);}}]);return;}
@@ -1701,8 +1702,15 @@ function groupOrder(pk,append,postOverride){
   if(pk.mine&&!pk.mine.cleared){const sd=mineSide(pk.mine,us[0]);tp={x:sd.x,y:sd.y};}
   if(!tp)return;
   let cx=0,cy=0;for(const u of us){const p=append&&u.orders.length?orderPt(u.orders[u.orders.length-1]):u;cx+=p.x;cy+=p.y;}cx/=us.length;cy/=us.length;
-  const offs=formation(us.length,Math.atan2(tp.y-cy,tp.x-cx));
-  us.forEach((u,i)=>{
+  // HÖK in a group with ground units flies air cover for them instead of racing ahead to the point
+  const gnd=us.filter(v=>!v.air),cover=gnd.length?us.filter(v=>v.kind==='drone'):[];
+  if(cover.length){const lead=gnd.find(v=>v.kind==='tank')||gnd[0],grp=gnd.map(v=>v.id);
+    for(const h of cover){const m=h.mission;if(m&&m.type==='follow'&&m.escort&&gnd.includes(m.unit)&&!m.unit.dead){m.group=grp;if(h.orders[0]!==m&&!h.tempOn)giveOrder(h,m,false,'mission');continue;}
+      giveOrder(h,{type:'follow',unit:lead,post:'def',escort:true,group:grp,cover:true},false,'mission');}
+    if(!G.coverTold){G.coverTold=1;say(cover[0],'HÖK i gruppen ger luftstöd åt '+lead.name+' och de andra fordonen. Välj HÖK ensam för att skicka den på egen hand.');}}
+  const rest=us.filter(v=>!cover.includes(v));
+  const offs=formation(rest.length,Math.atan2(tp.y-cy,tp.x-cx));
+  rest.forEach((u,i)=>{
     const post=postOverride||(append?lastPost(u):u.post);let o;
     if(pk.relay&&u.kind==='eng'&&!pk.relay.captured)o={type:'capture',relay:pk.relay,post};
     else if(pk.barrier&&!pk.barrier.cleared&&u.kind==='eng')o={type:'clear',barrier:pk.barrier,post};

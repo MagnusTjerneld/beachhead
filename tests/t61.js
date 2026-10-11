@@ -37,4 +37,15 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const it=B.callItems({relay:r});ok(it[0].l.includes(es[0].name),'default item names the nearest BÄVER ('+it[0].l+')');
  const alt=it.find(x=>x.l.startsWith(es[1].name));ok(!!alt,'the other BÄVER is offered by name');alt.f();
  ok(es[1].orders[0]&&es[1].orders[0].type==='capture'&&!es[0].orders.length,'the chosen BÄVER takes the relay, the nearest stays');}
+// HÖK in a mixed group flies air cover for the ground units, and spots for them when they attack something camouflaged
+{B.newGame(6556);const G=B.G;G.running=true;const t=G.enemies.find(x=>x.kind==='turret');for(const e of G.enemies)if(e!==t)e.dead=true;
+ const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');const a=Math.atan2(h.y-t.y,h.x-t.x);v.x=t.x+Math.cos(a)*142;v.y=t.y+Math.sin(a)*142;v.orders=[];h.orders=[];
+ G.selIds=[v.id,h.id];G.sel=v.id;B.groupOrder({world:{x:t.x+Math.cos(a)*150,y:t.y+Math.sin(a)*150}},false);
+ ok(h.mission&&h.mission.type==='follow'&&h.mission.escort&&h.mission.unit===v,'HÖK in the group escorts the VARG instead of flying to the point');
+ ok(v.orders[0]&&v.orders[0].type==='move','the VARG gets the move');
+ B.groupOrder({world:{x:t.x+Math.cos(a)*145,y:t.y+Math.sin(a)*145}},false);ok(h.orders[0]===h.mission,'a new group order keeps the same escort');
+ run(20);t.seen=true;t.lx=t.x;t.ly=t.y;B.giveOrder(v,{type:'attack',enemy:t,post:'off'},false);run(1);
+ ok(h.orders[0]&&h.orders[0].spotFor===t,'the escorting HÖK goes to spot the bunker');
+ for(let i=0;i<120&&!t.dead;i++)run(1);ok(t.dead,'bunker killed');run(3);
+ ok(h.orders[0]&&h.orders[0]===h.mission&&h.mission.type==='follow','HÖK back to escorting afterwards');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
