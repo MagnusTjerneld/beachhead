@@ -254,7 +254,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
       <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Varje variant är en ny karta.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
-      <li><span class="em">Uppdrag:</span> ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
+      <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Kulsprutan biter på infanteri, roboten (en) på lätt pansar och byggnader. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
       <li><span class="em">SPARV är engångsspanaren.</span> Billig (40), byggs på 8 sekunder, ser 90 m och tål nästan ingenting. Den flyger lågt: fienden märker den först på 45 m, men luftvärnets radar tar den på 110 m. Den kan alltså ligga stilla och peka ut en bunker åt vargarna, men hittar luftvärn bara genom att dö. Inget vapen.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 150 m, längre än bunkrarna, men bara mot mål som någon ser. Svag mot infanteri, sårbar för pansarvärn.</li>
@@ -878,11 +878,11 @@ function newGame(seed){
   setSel([G.units[3].id]);G.cam=G.units[1].id;
   G.kroks.push(makeKrok());
   for(let i=0;i<GW*GH;i++)if(WORLD.baseGrid[i]===DEEP||WORLD.isletMask[i])G.known[i]=1;markKnown();
-  say(null,'Basfartyget på position. Ön är full av byggnader och materiel: riv, bärga och bygg.');
+  say(null,'HMS Birka på position. Välkommen ombord, kapten! Ön är full av byggnader och materiel: riv, bärga och bygg.');
 }
 function shipPos(lat,fwd){const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)};return[CARRIER.x-f.y*lat+f.x*fwd,CARRIER.y+f.x*lat+f.y*fwd];}
 function makeKrok(){
-  const n=G.krokN=(G.krokN||0)+1,pad=shipPos(18-((n-1)%4+1)*14,-30);
+  const n=G.krokN=(G.krokN||0)+1,pad=shipPos([4.5,-4.5,13,-13][(n-1)%4],-38);
   return{id:n===1?'K':'K'+n,kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};
 }
 const unitById=id=>id&&id[0]==='K'?G.kroks.find(k=>k.id===id):G.units.find(u=>u.id===id);
@@ -907,7 +907,7 @@ function say(u,text,acts){
   const uid=u?u.id:null;
   const prev=G.log.find(l=>l.uid===uid&&l.text===text);
   if(prev&&G.time-prev.t<4)return;
-  G.log.unshift({t:G.time,who:u?u.name:'FARTYGET',uid,text,acts:acts||null});
+  G.log.unshift({t:G.time,who:u?u.name:'HMS BIRKA',uid,text,acts:acts||null});
   if(G.log.length>40)G.log.pop();
   renderLog();
 }
@@ -953,7 +953,7 @@ function step(dt){
 }
 
 /* service: the ship, a taken workshop (full rate) or a taken forward yard (half rate); never one with enemies close by */
-function homeFor(u,p){p=p||u;const landOnly=u.kind==='eng'&&passLand(cellIdx(u.x,u.y));let best={x:CARRIER.x,y:CARRIER.y,ship:true,r:48,rate:1,name:'fartyget'},bd=Math.hypot(p.x-CARRIER.x,p.y-CARRIER.y);
+function homeFor(u,p){p=p||u;const landOnly=u.kind==='eng'&&passLand(cellIdx(u.x,u.y));let best={x:CARRIER.x,y:CARRIER.y,ship:true,r:48,rate:1,name:'HMS Birka'},bd=Math.hypot(p.x-CARRIER.x,p.y-CARRIER.y);
   if(landOnly){best={x:WORLD.landing.x,y:WORLD.landing.y,ship:false,r:14,rate:0,name:'stranden'};bd=1e9;}
   for(const r of G.relays)if(r.captured&&(r.type==='verkstad'||r.type==='varv')){if(lockedAt(r.x,r.y))continue;if(u.air&&airDanger(u,r.x,r.y))continue;const d=Math.hypot(p.x-r.x,p.y-r.y);if(d>=bd)continue;if(G.enemies.some(e=>!e.dead&&Math.hypot(e.x-r.x,e.y-r.y)<VARV_CONTEST))continue;
     bd=d;best={x:r.x,y:r.y,ship:false,r:22,rate:r.type==='varv'?.5:1,name:(r.type==='varv'?'fältvarv ':'verkstad ')+r.id};}return best;}
@@ -2310,38 +2310,76 @@ function fxMat(c,add){const k=c+(add?'a':'');if(!FXM.has(k)){const m=new THREE.M
 function addPart(x,y,z,s0,s1,c,o,ttl,glow){if(!R3||R3.parts.length>420)return;const m=new THREE.Mesh(R3.sphere,glow?fxMat(c,true):new THREE.MeshLambertMaterial({color:c,transparent:true,opacity:o,depthWrite:false}));if(glow)m.material.opacity=o;m.position.set(x,y,z);m.scale.set(s0,s0,s0);R3.dyn.add(m);R3.parts.push({m,t:0,ttl,s0,s1,o,rise:1.2});}
 /* the carrier: low-poly but with a pointed bow, boot stripe, flight deck with pads, an island with a lit bridge, radar and
    masts, lifeboats and a crane; at night floodlights shine down into the water all round and the navigation lights burn */
-function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x56606a),DECK=mat(0x343c42),ISL=mat(0x6c777e),ISL2=mat(0x7d878d),DARK=mat(0x22282c),WHITE=mat(0xe6e1d2),YEL=mat(0xe0b84a);
-  const hullShape=sc=>{const sh=new THREE.Shape(),P=[[-11,-40],[11,-40],[11,22],[7.5,33],[0,41],[-7.5,33],[-11,22]];sh.moveTo(P[0][0]*sc,P[0][1]*sc);for(const q of P.slice(1))sh.lineTo(q[0]*sc,q[1]*sc);sh.closePath();return sh;};
-  const ext=(sc,h,m2,y)=>{const ge=new THREE.ExtrudeGeometry(hullShape(sc),{depth:h,bevelEnabled:false});ge.rotateX(-PI/2);const me=new THREE.Mesh(ge,m2);me.position.y=y;return me;};
-  g.add(ext(1,7.2,HULL,-2.2));g.add(ext(1.012,1.3,mat(0x6b2a22),-.65));g.add(ext(1.006,.35,WHITE,4.75));g.add(ext(.965,.5,DECK,5));
-  // deck: centre line, edge lines, two pads with an H, a lift
-  for(let z=-30;z<=30;z+=6)g.add(mesh(box(.5,.06,3),WHITE,-3,5.53,z));
-  for(const x of[-10,10])g.add(mesh(box(.25,.06,62),YEL,x,5.53,-2));
-  for(const z of[-22,6]){const ring=new THREE.Mesh(new THREE.RingGeometry(4.2,4.7,32),YEL);ring.rotation.x=-PI/2;ring.position.set(-3,5.54,z);g.add(ring);
-    g.add(mesh(box(.5,.07,3),WHITE,-4.1,5.55,z));g.add(mesh(box(.5,.07,3),WHITE,-1.9,5.55,z));g.add(mesh(box(1.7,.07,.5),WHITE,-3,5.55,z));}
-  g.add(mesh(box(7,.06,7),mat(0x2a3136),-3,5.52,22));
-  // island on the starboard side, bridge to the bow
-  g.add(mesh(box(5.4,4.5,17),ISL,7.6,7.7,13));g.add(mesh(box(4.8,3,12),ISL2,7.6,11.4,14));
-  g.add(mesh(box(7,2.6,6.5),ISL,7.2,14.2,9.5));g.add(mesh(box(7.1,.85,6.6),winMat,7.2,14.4,9.5));g.add(mesh(box(10.5,.3,2.2),ISL2,6.2,13.1,6.6));
-  g.add(mesh(box(3.2,3.4,3.6),DARK,8,13.6,18.5));g.add(mesh(box(3.4,.5,3.8),mat(0x15191c),8,15.4,18.5));
-  g.add(mesh(cyl(.22,.3,9,6),ISL2,7.4,19.8,12));for(const[y,w]of[[17.5,4.2],[20.5,3]])g.add(mesh(box(.18,.18,w),ISL2,7.4,y,12));
-  const rad=new THREE.Group();rad.add(mesh(box(.5,.9,4.2),mat(0xd8dcde),0,0,0));rad.position.set(7.4,24.6,12);g.add(rad);g.userData.radar=rad;
-  g.add(mesh(new THREE.SphereGeometry(1.1,10,8),mat(0xe8eaea),7.4,16.9,16));g.add(mesh(cyl(.06,.06,5,4),ISL2,9,17.5,15));g.add(mesh(cyl(.06,.06,4,4),ISL2,5.8,17,15.5));
-  // lifeboats on the port side and a crane aft
-  for(const z of[-6,10]){g.add(mesh(box(1.6,1.1,5.2),mat(0xe0662a),-11.7,5.1,z));g.add(mesh(box(.2,2,.2),DARK,-11,5.6,z-2));g.add(mesh(box(.2,2,.2),DARK,-11,5.6,z+2));}
-  g.add(mesh(cyl(.5,.6,3,8),YEL,8.5,7,-30));{const jb=mesh(box(.5,.5,9),YEL,8.5,9.8,-26);jb.rotation.x=.45;g.add(jb);}
-  g.add(mesh(box(2,1.4,2.2),ISL2,0,6.2,36));g.add(mesh(cyl(.08,.08,4,4),ISL2,0,8.4,37));
+/* HMS Birka: a barge platform, a floating yard. Pontoon hull, the big revolving crane at the bow (after Lodbrok, Stockholm's
+   old floating crane), the printing hall and a gantry over the build bay amidships, reactor and control tower aft, and four
+   helicopter pads on the stern deck. Forward is -z */
+function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),DECK=mat(0x3a4146),STEEL=mat(0x737d84),STEEL2=mat(0x8b949a),DARK=mat(0x22282c),WHITE=mat(0xe6e1d2),YEL=mat(0xe0b84a),YEL2=mat(0xc79a2e),RUST=mat(0x7a3a26),GLOW=new THREE.MeshBasicMaterial({color:0xffb347});
+  const W=34,L=92,DY=4;
+  // hull: a pontoon with raked ends, a red band at the waterline
+  const hull=(sc,h,y,m2)=>{const sh=new THREE.Shape();sh.moveTo(-L/2*sc,h);sh.lineTo(L/2*sc,h);sh.lineTo((L/2-4)*sc,0);sh.lineTo(-(L/2-4)*sc,0);sh.closePath();
+    const ge=new THREE.ExtrudeGeometry(sh,{depth:W*sc,bevelEnabled:false});ge.translate(0,0,-W*sc/2);ge.rotateY(PI/2);const me=new THREE.Mesh(ge,m2);me.position.y=y;return me;};
+  g.add(hull(1,DY+2.2,-2.2,HULL));g.add(hull(1.008,1.2,-.6,mat(0x6b2a22)));
+  g.add(mesh(box(W-.6,.3,L-1),DECK,0,DY+.15,0));
+  for(const x of[-W/2+.3,W/2-.3])g.add(mesh(box(.5,1,L-2),STEEL,x,DY+.6,0));
+  for(const z of[-L/2+1,L/2-1])g.add(mesh(box(W-1,1,.5),STEEL,0,DY+.6,z));
+  // stern: four pads for KROK
+  for(const x of[-13,-4.5,4.5,13]){const ring=new THREE.Mesh(new THREE.RingGeometry(3.4,3.9,28),YEL);ring.rotation.x=-PI/2;ring.position.set(x,DY+.32,38);g.add(ring);
+    g.add(mesh(box(.4,.06,2.4),WHITE,x-.9,DY+.33,38));g.add(mesh(box(.4,.06,2.4),WHITE,x+.9,DY+.33,38));g.add(mesh(box(1.4,.06,.4),WHITE,x,DY+.33,38));}
+  g.add(mesh(box(W-2,.06,.4),YEL,0,DY+.32,32.5));
+  // control tower aft to starboard: block, decks, bridge with a band of windows, mast with radar
+  g.add(mesh(box(9,11,9),STEEL,11,DY+5.5,22));g.add(mesh(box(8.4,.3,9.4),STEEL2,11,DY+7,22));for(const y of[3.2,5.4,8.6])g.add(mesh(box(9.1,.7,.2),winMat,11,DY+y,17.45));g.add(mesh(box(8,4,7.5),STEEL2,11,DY+13,22.5));
+  g.add(mesh(box(11.5,3,7),STEEL,11,DY+16.5,22));g.add(mesh(box(11.6,1,7.1),winMat,11,DY+16.9,22));g.add(mesh(box(12.2,.3,7.8),STEEL2,11,DY+18.15,22));
+  g.add(mesh(box(13.5,.25,2),STEEL2,11,DY+15.1,18.6));
+  g.add(mesh(cyl(.25,.35,12,6),STEEL2,11,DY+24,23));for(const[y,w]of[[DY+21,4.5],[DY+25,3.2],[DY+28,2]])g.add(mesh(box(w,.18,.18),STEEL2,11,y,23));
+  const rad=new THREE.Group();rad.add(mesh(box(4.6,.9,.5),mat(0xd8dcde),0,0,0));rad.position.set(11,DY+30.4,23);g.add(rad);g.userData.radar=rad;
+  g.add(mesh(new THREE.SphereGeometry(1,10,8),mat(0xe8eaea),13.6,DY+19.4,24.5));g.add(mesh(cyl(.06,.06,6,4),STEEL2,8.4,DY+21,24.5));
+  for(const z of[17.4,26.6])g.add(mesh(box(1.4,1,4),mat(0xe0662a),16.2,DY+5.2,z));
+  // reactor aft to port: containment, dome, vents, a hazard band, and the pipes to the hall
+  g.add(mesh(cyl(4.4,4.6,6.5,20),mat(0xc9cdc8),-11,DY+3.25,22));g.add(mesh(cyl(4.5,4.5,.7,20),YEL,-11,DY+5.2,22));
+  {const d=new THREE.Mesh(new THREE.SphereGeometry(4.4,20,10,0,PI*2,0,PI/2),mat(0xdadcd6));d.position.set(-11,DY+6.5,22);g.add(d);}
+  for(const a of[0,2.1,4.2]){g.add(mesh(cyl(.6,.6,3,8),STEEL,-11+Math.cos(a)*5.6,DY+1.5,22+Math.sin(a)*5.6));g.add(mesh(cyl(.75,.6,.5,8),DARK,-11+Math.cos(a)*5.6,DY+3.2,22+Math.sin(a)*5.6));}
+  for(const x of[-13,-9]){const pp=mesh(cyl(.35,.35,11,8),STEEL2,x,DY+1.2,12.5);pp.rotation.x=PI/2;g.add(pp);}
+  // printing hall amidships to port: a long shed with a skylight, the big door facing the build bay glows at the slit
+  g.add(mesh(box(14,10,28),STEEL,-9,DY+5,-2));g.add(mesh(box(14.6,.6,28.6),STEEL2,-9,DY+10.3,-2));{const rf=mesh(box(10,1.6,28),STEEL2,-9,DY+11.2,-2);g.add(rf);}
+  g.add(mesh(box(1.2,.4,26),winMat,-9,DY+12.05,-2));
+  g.add(mesh(box(.3,8,18),DARK,-1.9,DY+4.2,-2));for(let k=0;k<8;k++)g.add(mesh(box(.32,.12,18),STEEL,-1.85,DY+.8+k*1,-2));
+  g.add(mesh(box(.34,.35,18),GLOW,-1.8,DY+.35,-2));g.add(mesh(box(.36,.5,18.4),YEL,-1.82,DY+8.3,-2));
+  // build bay to starboard: hazard frame on the deck, gantry crane on rails, a chassis half built
+  for(const x of[2.6,15.4])g.add(mesh(box(.5,.25,30),STEEL2,x,DY+.4,-2));
+  for(const[x,z,w,d]of[[9,-16.5,13,.4],[9,12.5,13,.4],[3.2,-2,.4,29],[14.8,-2,.4,29]])g.add(mesh(box(w,.06,d),YEL,x,DY+.33,z));
+  const gan=new THREE.Group();for(const x of[2.6,15.4]){gan.add(mesh(box(.8,13,.8),YEL,x,DY+6.9,-1.4));gan.add(mesh(box(.8,13,.8),YEL,x,DY+6.9,1.4));gan.add(mesh(box(1.2,.6,4),YEL2,x,DY+.7,0));}
+  gan.add(mesh(box(14.2,1.4,1.2),YEL,9,DY+13.6,-1));gan.add(mesh(box(14.2,1.4,1.2),YEL,9,DY+13.6,1));gan.add(mesh(box(2.4,1.3,3),DARK,7,DY+12.4,0));
+  gan.add(mesh(cyl(.06,.06,5,4),DARK,7,DY+9.2,0));gan.add(mesh(box(1.4,.8,1),YEL2,7,DY+6.6,0));g.add(gan);g.userData.gantry=gan;
+  g.add(mesh(box(5,1.6,8),mat(0x3d4650),9,DY+1.1,-6));g.add(mesh(box(3.2,1.2,4),mat(0x4b5560),9,DY+2.5,-5.4));for(const x of[6.3,11.7])for(const z of[-9,-3])g.add(mesh(cyl(.9,.9,.6,10),DARK,x,DY+.7,z));
+  // containers at the bow
+  for(const[x,y,z,c]of[[-13,0,-20,0x9a4a32],[-13,2.6,-20,0x2f5d7c],[-8,0,-20,0x52704a],[12,0,-22,0x9a4a32],[12,0,-28,0xb7832e],[12,2.6,-22,0x2f5d7c]]){const cn=mesh(box(4.6,2.5,6),mat(c),x,DY+1.25+y,z);g.add(cn);}
+  // the big crane at the bow: pedestal, slewing house with counterweight and A-frame, a lattice boom over the bow, hook
+  const cr=new THREE.Group();cr.position.set(-4,DY,-30);g.add(cr);g.add(mesh(cyl(3.2,3.6,3,16),YEL2,-4,DY+1.5,-30));
+  cr.add(mesh(box(7.5,5,10),YEL,0,5.6,1));cr.add(mesh(box(7.6,1.2,10.1),DARK,0,4.2,1));cr.add(mesh(box(8,4,3),mat(0x4a4f52),0,5.2,6.6));cr.add(mesh(box(2.4,1.8,2.2),winMat,-2.6,8.3,-3.4));cr.add(mesh(box(2.6,2.2,2.6),YEL,-2.6,8.1,-3.4));
+  const up=new THREE.Vector3(0,1,0),st=(a,b2,t,m2)=>{const d=new THREE.Vector3(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2]),Ln=d.length();const m=mesh(box(t,1,t),m2||YEL,(a[0]+b2[0])/2,(a[1]+b2[1])/2,(a[2]+b2[2])/2);m.quaternion.setFromUnitVectors(up,d.normalize());m.scale.y=Ln;cr.add(m);};
+  const BL=44,EL=58*PI/180,base=[0,8.4,-3.6],tip=[0,8.4+BL*Math.sin(EL),-3.6-BL*Math.cos(EL)];
+  const at=(t,u,v)=>{const w=1.7*(1-t)+.5*t;const p=[base[0]+(tip[0]-base[0])*t,base[1]+(tip[1]-base[1])*t,base[2]+(tip[2]-base[2])*t];const ny=Math.cos(EL),nz=Math.sin(EL);return[p[0]+u*w,p[1]+v*w*ny,p[2]+v*w*nz];};
+  const N=12;const C=[[-1,-1],[1,-1],[1,1],[-1,1]];
+  for(const[u,v]of C)st(at(0,u,v),at(1,u,v),.32);
+  for(let k=0;k<N;k++){const t0=k/N,t1=(k+1)/N;for(let c=0;c<4;c++){const[u0,v0]=C[c],[u1,v1]=C[(c+1)%4];st(at(t0,u0,v0),at(t1,u1,v1),.14);}}
+  for(let k=1;k<N;k+=3){const t=k/N;st(at(t,-1,-1),at(t,1,-1),.12);st(at(t,-1,1),at(t,1,1),.12);}
+  st([-2.6,7.9,4.4],[0,15.5,3],.4);st([2.6,7.9,4.4],[0,15.5,3],.4);st([-2.6,7.9,-2],[0,15.5,3],.35);st([2.6,7.9,-2],[0,15.5,3],.35);
+  st([0,15.5,3],[tip[0],tip[1]+.3,tip[2]+.4],.1,DARK);st([0,15.3,3.4],[tip[0],tip[1],tip[2]+.6],.1,DARK);
+  cr.add(mesh(box(1.6,1.2,1.6),YEL2,tip[0],tip[1],tip[2]));st([tip[0],tip[1]-.6,tip[2]],[tip[0],tip[1]-16,tip[2]],.08,DARK);
+  cr.add(mesh(box(1.6,1.4,1),YEL2,tip[0],tip[1]-16.7,tip[2]));cr.add(mesh(box(.4,1,.4),DARK,tip[0],tip[1]-17.8,tip[2]));
+  cr.rotation.y=-.18;g.userData.crane=cr;
   // floodlights: a lamp on the deck edge, a faint cone down to the water and a pool of light on it
   const coneG=new THREE.ConeGeometry(4.2,9,16,1,true);coneG.translate(0,-4.5,0);{const P=coneG.attributes.position,cl=new Float32Array(P.count*3);for(let i=0;i<P.count;i++){const f=.35+.65*clamp(-P.getY(i)/9,0,1);cl[i*3]=f;cl[i*3+1]=f*.96;cl[i*3+2]=f*.85;}coneG.setAttribute('color',new THREE.BufferAttribute(cl,3));}
   const coneM=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
   const poolT=(()=>{const c=mkCanvas(64,64),x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,240,205,1)');gr.addColorStop(.5,'rgba(255,230,190,.45)');gr.addColorStop(1,'rgba(255,230,190,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
   const poolM=new THREE.MeshBasicMaterial({map:poolT,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});
-  const spots=[[-11,-30],[-11,-8],[-11,14],[-11,32],[11,-30],[11,-8],[11,28],[0,-40.5]];
-  for(const[x,z]of spots){const out=x?Math.sign(x):0,oz=x?0:-1;const lamp=mesh(box(.9,.6,.9),lampMat,x*1.02,6.1,z);g.add(lamp);
-    const cn=new THREE.Mesh(coneG,coneM);cn.position.set(x*1.02,6,z);cn.rotation.set(oz*-.55,0,out*.55);cn.userData.noShadow=true;g.add(cn);
+  const spots=[[-17,-40],[-17,-12],[-17,10],[-17,40],[17,-40],[17,-12],[17,10],[17,40],[0,-46.5]];
+  for(const[x,z]of spots){const out=x?Math.sign(x):0,oz=x?0:-1;const lamp=mesh(box(.9,.6,.9),lampMat,x*1.0,DY+1.2,z);g.add(lamp);
+    const cn=new THREE.Mesh(coneG,coneM);cn.position.set(x*1.0,DY+1,z);cn.rotation.set(oz*-.55,0,out*.55);cn.userData.noShadow=true;g.add(cn);
     const pl=new THREE.Mesh(new THREE.PlaneGeometry(12,12),poolM);pl.rotation.x=-PI/2;pl.position.set(x+out*5.5,.12,z+oz*5.5);pl.userData.noShadow=true;pl.renderOrder=4;g.add(pl);}
-  // navigation lights: red to port, green to starboard, white masthead and stern
-  const nav=[];for(const[c,x,y,z]of[[0xff3a2a,-10.6,14.4,9.5],[0x3aff6a,13.4,13.4,6.6],[0xffffff,7.4,24.3,12],[0xffffff,0,6.2,-40]]){const m2=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:c}),x,y,z);m2.userData.noShadow=true;g.add(m2);nav.push({m:m2,c});}
+  // navigation lights: red to port, green to starboard on the bridge wings, white masthead, stern and crane tip
+  const nav=[];for(const[c,x,y,z]of[[0xff3a2a,4.4,DY+15.4,18.6],[0x3aff6a,17.6,DY+15.4,18.6],[0xffffff,11,DY+30,23],[0xffffff,0,DY+1.4,46.3]]){const m2=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:c}),x,y,z);m2.userData.noShadow=true;g.add(m2);nav.push({m:m2,c});}
+  {const tl=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:0xff3a2a}),tip[0],tip[1]+.9,tip[2]);tl.userData.noShadow=true;cr.add(tl);nav.push({m:tl,c:0xff3a2a});}
   g.userData.flood={coneM,poolM};g.userData.nav=nav;return g;}
 function init3D(){
   if(typeof THREE==='undefined')return false;
@@ -2610,7 +2648,7 @@ function sync3D(dtr){
       const dx=cx-B.beam.position.x,dz=cz-B.beam.position.z,ca=Math.atan2(dz,dx),hit=Math.max(Math.cos(ca-ang),Math.cos(ca-ang-PI));const fl=Math.pow(Math.max(0,hit),30);B.flare.scale.setScalar(2.5+fl*16*(.3+nn));B.flare.material.opacity=(.35+.65*fl)*lit;}
     for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180,on=lit>0&&inSec&&lightOn(q.ch,RTs+z.ph);
       q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
-  {const sh=R3.ship.userData,L=R3.lit||0,now2=performance.now()/1000;if(sh.radar)sh.radar.rotation.y=now2*1.3;
+  {const sh=R3.ship.userData,L=R3.lit||0,now2=performance.now()/1000;if(sh.radar)sh.radar.rotation.y=now2*1.3;if(sh.gantry)sh.gantry.position.z=Math.sin(now2*.05)*11;if(sh.crane)sh.crane.rotation.y=-.18+Math.sin(now2*.031)*.22;
     if(sh.flood){sh.flood.coneM.opacity=.16*L;sh.flood.poolM.opacity=.75*L;}
     if(sh.nav){if(!sh.navH){sh.navH=sh.nav.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(3.2);n.m.add(h);return h;});}sh.navH.forEach(h=>{h.visible=L>0;h.material.opacity=.85*L;});}}
   const now=performance.now()/1000;if(R3.bobs)for(const m of R3.bobs){const ph=m.userData.bob;m.position.y=m.userData.y0+Math.sin(now*1.1+ph)*.14;m.rotation.z=Math.sin(now*.9+ph*1.7)*.035;m.rotation.x=Math.sin(now*.8+ph)*.03;}

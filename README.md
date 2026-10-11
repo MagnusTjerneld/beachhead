@@ -1,6 +1,8 @@
 # Brohuvud
 
-Prototyp av ett strategispel om att leda obemannade enheter från ett basfartyg och frigöra öarna i Stockholms yttre skärgård, en ö i taget. Inspirerat av Hostile Waters, Battlezone och Duskers.
+Prototyp av ett actionspel om att leda autonoma enheter från HMS Birka, en flytande varvspråm, och frigöra öarna i Stockholms yttre skärgård, en ö i taget. Inspirerat av Hostile Waters, Battlezone och Duskers.
+
+Uppdrag Arkipelag, 2032: Ryssland har befäst öar i skärgården som språngbräda mot Sverige, och det som finns kvar av svensk försvarsindustri har byggt Birka, en fissionsdriven pråm som skriver ut och monterar obemannade stridsenheter. Hela bakgrunden finns i designdokumentet.
 
 Spelet är en enda HTML-fil med Three.js (r128 från cdnjs) för 3D och ett 2D-sjökort ritat på canvas. Varje ö genereras från ett frö, så samma ö-variant blir alltid samma ö.
 
