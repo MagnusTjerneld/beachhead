@@ -26,7 +26,7 @@ jobs:
         run: python3 tests/mk.py
       - name: Kartvalidering (tio öar)
         working-directory: tests
-        run: node t23.js | tee map.log && ! grep -v "oxx ooo" map.log | grep -q .
+        run: node t23.js | tee map.log && ! grep -v "check ok" map.log | grep -q .
       - name: Strategiska punkter
         working-directory: tests
         run: node t51.js

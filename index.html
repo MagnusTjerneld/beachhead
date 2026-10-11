@@ -249,7 +249,8 @@ button:disabled{opacity:.45;cursor:default}
     <h2><small>Prototyp 2 · testbana Kustfästet</small>Brohuvud</h2>
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
-      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Passen in till R2 och R3 är blockerade av spärrar. Varje variant är en ny karta.</li>
+      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Varje variant är en ny karta.</li>
+      <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Kulsprutan biter på infanteri, roboten (en) på lätt pansar och byggnader. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
       <li><span class="em">SPARV är engångsspanaren.</span> Billig (40), byggs på 8 sekunder, ser 90 m och tål nästan ingenting. Den flyger lågt: fienden märker den först på 45 m, men luftvärnets radar tar den på 110 m. Den kan alltså ligga stilla och peka ut en bunker åt vargarna, men hittar luftvärn bara genom att dö. Inget vapen.</li>
@@ -287,6 +288,7 @@ button:disabled{opacity:.45;cursor:default}
       <div><span>Förlorade enheter</span><b id="rUnits">0</b></div>
       <div><span>Bärgat material</span><b id="rSalv">0</b></div>
     </div>
+    <p id="rPlan" class="hint"></p>
     <p id="rBest"></p>
     <div class="row">
       <button class="btn big pri" id="bAgain" type="button">Samma ö igen</button>
@@ -436,10 +438,10 @@ function buildWorld(seed){
 }
 function validWorld(W){
   const g=W.grid,flood=bar=>{const r=new Uint8Array(g.length),s0=cellIdx(CARRIER.x,CARRIER.y),st=[s0];r[s0]=1;while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!isGround(g[n])||bar[n])continue;r[n]=1;st.push(n);}}return r;};
-  const none=new Uint8Array(g.length),bar=new Uint8Array(g.length);for(const b of W.barriers)for(const c of b.cells)bar[c]=1;
+  const none=new Uint8Array(g.length),bar=new Uint8Array(g.length);for(const c of W.gateCells||[])bar[c]=1;
   for(const s of W.structs||[]){none[s.cell]=1;bar[s.cell]=1;}
   const open=flood(none),shut=flood(bar),at=p=>cellIdx(p.x,p.y);
-  return W.relays.every(r=>open[at(r)])&&shut[at(W.relays[0])]&&!shut[at(W.relays[1])]&&!shut[at(W.relays[2])]&&W.barriers.length>0;
+  return W.relays.every(r=>open[at(r)])&&shut[at(W.relays[0])]&&!shut[at(W.relays[1])]&&!shut[at(W.relays[2])]&&(W.gateCells||[]).length>0&&W.enemies.filter(e=>e.kind==='turret'&&Math.hypot(e.x-W.relays[2].x,e.y-W.relays[2].y)<200).length>=2;
 }
 function buildWorldTry(seed,tryK){
   const s=seed+tryK*7919,V=levelFor(s),R=rng(s*13+5);
@@ -517,56 +519,129 @@ function buildWorldTry(seed,tryK){
   const passRoads=[];for(const p of pass){const r=mkRoad(zc[p.a],zc[p.b]);if(r)passRoads.push({p,r});}
   if(harborPt&&zc[hz])mkRoad(harborPt,zc[hz]);
   for(const[k,zi]of[[0,r1z],[1,r2z],[2,r3z]])if(Math.hypot(relays[k].x-zc[zi].x,relays[k].y-zc[zi].y)>20)mkRoad(zc[zi],relays[k]);
-  // barriers on every pass into the R2 and R3 zones
-  const gated=pass.filter(p=>[r2z,r3z].includes(p.a)||[r2z,r3z].includes(p.b));
-  let bi=0;
-  for(const p of gated){
-    const cells=[];let sx=0,sy=0;
+  // ---------- barrier sites: any pass can be blocked; the enemy decides which ----------
+  const siteFor=p=>{const cells=[];let sx=0,sy=0;
     for(let i=0;i<grid.length;i++){const t=grid[i];if(t!==LAND&&t!==BEACH)continue;const c=cellCenter(i);if(Math.hypot(c.x-p.x,c.y-p.y)>p.w+45)continue;const q=zoneAt(c.x,c.y,V);if(pairKey(q.i1,q.i2)!==pairKey(p.a,p.b)||q.s>9)continue;cells.push(i);sx+=c.x;sy+=c.y;}
-    if(!cells.length)continue;
-    const bx=sx/cells.length,by=sy/cells.length,inB=new Set(cells);
+    if(!cells.length)return null;const bx=sx/cells.length,by=sy/cells.length,inB=new Set(cells);
     const side=zi=>{const zz=zc[zi]||Z[zi],dd=Math.hypot(zz.x-bx,zz.y-by)||1;const t={x:bx+(zz.x-bx)/dd*30,y:by+(zz.y-by)/dd*30};let best=null,bd=1e9;for(let i=0;i<grid.length;i++){if((grid[i]!==LAND&&grid[i]!==BEACH)||inB.has(i)||zid[i]!==zi)continue;const c=cellCenter(i);const d=Math.hypot(c.x-t.x,c.y-t.y);if(d<bd){bd=d;best=c;}}return best||t;};
-    W.barriers.push({id:'S'+(++bi),cells,x:bx,y:by,za:p.a,zb:p.b,sides:[{...side(p.a),z:p.a},{...side(p.b),z:p.b}],far:pd[p.a]>pd[p.b]?p.a:p.b});
-  }
-  // enemies
+    return{cells,x:bx,y:by,za:p.a,zb:p.b,sides:[{...side(p.a),z:p.a},{...side(p.b),z:p.b}]};};
+  const sites=new Map();for(const p of pass){const st=siteFor(p);if(st)sites.set(p,st);}
+  // geography check only: the plateaus of R2 and R3 must be closed to the sea once their passes are shut (validWorld)
+  const gated=pass.filter(p=>[r2z,r3z].includes(p.a)||[r2z,r3z].includes(p.b));W.gateCells=[];for(const p of gated){const st=sites.get(p);if(st)W.gateCells.push(...st.cells);}
+  /* ---------- the enemy plans its defence ----------
+     threat analysis: every way in from the sea and the traffic each pass would carry towards what matters; a defended region
+     whose line of passes it blocks by doctrine and budget; cracks where it judges traffic lowest; covering fire on every obstacle */
+  const mids=lz.filter(i=>![land,r1z,r2z,r3z].includes(i));
+  const Rp=rng(s*97+3),CFG=ENEMY_CFG,COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
+  const nbr=z=>pass.filter(p=>p.a===z||p.b===z).map(p=>({p,n:p.a===z?p.b:p.a}));
+  const DM=new Map();for(const z of lz){const d=new Map([[z,0]]),q=[z];while(q.length){const c=q.shift();for(const{n}of nbr(c))if(!d.has(n)){d.set(n,d.get(c)+1);q.push(n);}}DM.set(z,d);}
+  const dz=(a,b)=>{const m=DM.get(a);return m&&m.has(b)?m.get(b):99;};
+  const covePt=V.cove?snapZ({x:CX+Math.cos(V.cove.a*PI/180)*.97*V.RX,y:CY+Math.sin(V.cove.a*PI/180)*.97*V.RY},null,TIER.beach):null;
+  // ways in: land a VARG can climb from water, per zone
+  const coastN=new Map(),coastXY=new Map();
+  for(let i=0;i<grid.length;i++){const t=grid[i];if((t!==LAND&&t!==BEACH)||!reach[i])continue;const z=zid[i];if(z<0||Z[z].water)continue;const gx=i%GW,gy=(i/GW)|0;let wet=false;
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=gx+dx,ny=gy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if((grid[n]===SHAL||grid[n]===DEEP)&&reach[n]){wet=true;break;}}
+    if(wet){coastN.set(z,(coastN.get(z)||0)+1);const c=cellCenter(i),o=coastXY.get(z)||{x:0,y:0,n:0};o.x+=c.x;o.y+=c.y;o.n++;coastXY.set(z,o);}}
+  const entries=[];for(const[z,n]of coastN){if(n<4||!lz.includes(z))continue;const o=coastXY.get(z);
+    const pt=z===land?landing:z===hz&&harborPt?harborPt:covePt&&zid[cellIdx(covePt.x,covePt.y)]===z?covePt:{x:o.x/o.n,y:o.y/o.n};
+    entries.push({z,pt,w:z===land?1:z===hz?.8:covePt&&zid[cellIdx(covePt.x,covePt.y)]===z?.65:Math.min(.5,n/40),kind:z===land?'strand':z===hz?'hamn':'kust'});}
+  const entrySet=new Set(entries.map(e=>e.z));
+  const val=new Map([[r3z,10],[r2z,relays[1].type==='radar'?3:4],[r1z,3]]);
+  // traffic over passes: shortest and next-shortest routes from every way in to every objective
+  const traffic=new Map(pass.map(p=>[p,0]));
+  for(const e of entries)for(const[t,v]of val){const d=dz(e.z,t);if(d>=99)continue;
+    for(const p of pass){const k=Math.min(dz(e.z,p.a)+1+dz(p.b,t),dz(e.z,p.b)+1+dz(p.a,t));if(k===d)traffic.set(p,traffic.get(p)+e.w*v);else if(k===d+1)traffic.set(p,traffic.get(p)+.35*e.w*v);}}
+  // doctrine: chosen from the island's shape and the seed, unless set
+  const lineOf=D=>pass.filter(p=>D.has(p.a)!==D.has(p.b));
+  const ringLC=nbr(r3z).length;
+  const dw={framskjutet:1+(entries.length<=2?1:0),djup:1.3,fastning:.9+(ringLC<=2?1:0),rorligt:.8+(pass.length>=lz.length+2?.7:0)};
+  let doctrine=CFG.doctrine&&dw[CFG.doctrine]!=null?CFG.doctrine:null;
+  if(!doctrine){let tw=0;for(const k in dw)tw+=dw[k];let r=Rp()*tw;for(const k in dw){r-=dw[k];if(r<=0){doctrine=k;break;}}doctrine=doctrine||'djup';}
+  // the defended region and its line
+  const grow=stop=>{const D=new Set([r3z]);for(let it=0;it<lz.length&&!stop(D);it++){let best=null,bs=1e9;
+      for(const z of lz){if(D.has(z)||entrySet.has(z))continue;if(!nbr(z).some(q=>D.has(q.n)))continue;const t=new Set(D);t.add(z);const sc=lineOf(t).length*10-(val.get(z)||0)*3+Rp()*2;if(sc<bs){bs=sc;best=z;}}
+      if(best==null)break;D.add(best);}return D;};
+  let Dz;
+  if(doctrine==='framskjutet')Dz=new Set(lz.filter(z=>!entrySet.has(z)));
+  else if(doctrine==='fastning'){Dz=new Set([r3z]);for(let it=0;it<3;it++){let best=null,bl=lineOf(Dz).length;for(const z of lz){if(Dz.has(z)||entrySet.has(z)||!nbr(z).some(q=>Dz.has(q.n)))continue;const t=new Set(Dz);t.add(z);const L=lineOf(t).length;if(L<bl){bl=L;best=z;}}if(best==null)break;Dz.add(best);}}
+  else Dz=grow(D=>D.has(r2z)&&D.size>=Math.ceil(lz.length*.35));
+  if(!Dz.size)Dz=new Set([r3z]);
+  // two lines: the inner one around the defended region, the outer one where the ground the sea reaches ends
+  const byT=(p,q)=>traffic.get(q)-traffic.get(p),outerZ=new Set(lz.filter(z=>!entrySet.has(z)));
+  const inner=lineOf(Dz).sort(byT),outer=pass.filter(p=>outerZ.has(p.a)!==outerZ.has(p.b)&&!inner.includes(p)&&traffic.get(p)>0).sort(byT);
+  const DOC={framskjutet:{inner:1,outBar:4,outMine:2,ring:0,beach:{strand:3,hamn:2,kust:1},mines:3,aaN:6,aaZ:outerZ,rbMax:10,extraAA:1,reserve:['at','tank','light']},
+             djup:{inner:3,outBar:2,outMine:3,ring:1,beach:{strand:2,hamn:1,kust:1},mines:4,aaN:6,aaZ:outerZ,rbMax:11,extraAA:1,reserve:['at','tank','light','at']},
+             fastning:{inner:4,outBar:0,outMine:2,ring:4,beach:{strand:1,hamn:0,kust:0},mines:2,aaN:4,aaZ:Dz,rbMax:12,extraAA:2,reserve:['tank','at']},
+             rorligt:{inner:1,outBar:1,outMine:3,ring:0,beach:{strand:1,hamn:1,kust:0},mines:4,aaN:5,aaZ:outerZ,rbMax:10,extraAA:0,reserve:['tank','light','tank','at','light','tank']}}[doctrine];
+  // budget: core point defence first, then by doctrine with caps, so no single kind swallows what is left
+  const budget=CFG.budget;let left=budget;const spent={};const take=(k,n)=>{const c=COST[k]*(n||1);if(c>left+1e-6)return false;left-=c;spent[k]=(spent[k]||0)+(n||1);return true;};
+  take('turret',4);take('aa');
+  const lineBar=[],lineMine=[],cracks=[];let nMines=0;
+  const barOn=p=>{const st=sites.get(p);if(!st||lineBar.some(x=>x.p===p)||!take('barrier'))return false;lineBar.push({p,cover:take('turret')});return true;};
+  const mineOn=p=>{if(nMines>=DOC.mines||!take('mine'))return false;lineMine.push(p);nMines++;return true;};
+  inner.forEach((p,i)=>{if(i<DOC.inner&&barOn(p))return;if(mineOn(p))return;cracks.push(p);});
+  outer.forEach((p,i)=>{if(i<DOC.outBar&&barOn(p))return;if(i<DOC.outBar+DOC.outMine&&mineOn(p))return;cracks.push(p);});
+  // ---------- placement ----------
   const toward=(p,q,m)=>{const d=Math.hypot(q.x-p.x,q.y-p.y)||1;return{x:p.x+(q.x-p.x)/d*m,y:p.y+(q.y-p.y)/d*m};};
   const E=[],cnt={T:0,L:0,I:0,A:0,P:0,SV:0,RB:0};
-  const barC=new Uint8Array(GW*GH);for(const b of W.barriers)for(const c of b.cells)barC[c]=1;
+  let bi=0;for(const{p}of lineBar){const st=sites.get(p);const far=Dz.has(p.a)!==Dz.has(p.b)?(Dz.has(p.a)?p.a:p.b):(outerZ.has(p.a)?p.a:p.b);W.barriers.push(Object.assign({id:'S'+(++bi),far},st));}
+  const barC=new Uint8Array(GW*GH);for(const b2 of W.barriers)for(const c of b2.cells)barC[c]=1;
   const unbar=p=>{const c=cellIdx(p.x,p.y);if(!barC[c]&&(grid[c]===LAND||grid[c]===BEACH))return p;let best=null,bd=1e9;const gx0=c%GW,gy0=(c/GW)|0;for(let oy=-8;oy<=8;oy++)for(let ox=-8;ox<=8;ox++){const gx=gx0+ox,gy=gy0+oy;if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const n=gy*GW+gx;if(barC[n]||(grid[n]!==LAND&&grid[n]!==BEACH)||!reach[n])continue;const d=ox*ox+oy*oy;if(d<bd){bd=d;best=n;}}return best==null?p:cellCenter(best);};
   const add=(kind,pfx,p,extra)=>{p=unbar(p);E.push(Object.assign({id:pfx+(++cnt[pfx]),kind,x:p.x,y:p.y},extra||{}));};
-  const zcL=zc[land],bdir=Math.atan2(landing.y-zcL.y,landing.x-zcL.x);
-  for(const sgn of[-1,1]){const p={x:landing.x-Math.cos(bdir)*90+Math.cos(bdir+PI/2)*sgn*55,y:landing.y-Math.sin(bdir)*90+Math.sin(bdir+PI/2)*sgn*55};add('turret','T',snapZ(p,null));}
-  add('turret','T',snapZ(toward(relays[0],landing,70),r1z));
-  for(const b of W.barriers){const fs=b.sides.find(x=>x.z===b.far)||b.sides[0];add('turret','T',snapZ(toward(fs,zc[b.far]||fs,45),b.far));}
-  add('aa','L',snapZ(toward(relays[1],zc[land],60),r2z));add('turret','T',snapZ({x:relays[1].x+50,y:relays[1].y-40},r2z));
-  add('aa','L',snapZ({x:relays[2].x-55,y:relays[2].y+30},r3z));add('turret','T',snapZ({x:relays[2].x+45,y:relays[2].y+40},r3z));
-  const mids=lz.filter(i=>![land,r1z,r2z,r3z].includes(i));
-  if(mids.length)add('aa','L',zc[mids[Math.floor(R()*mids.length)]]);
-  // AA network: every bit of land beyond the barriers lies under at least one AA, so airlifting past them means killing AA first
-  {const prot=new Set(Z.map((z,i)=>i).filter(i=>!Z[i].water&&!safe.has(i)));const AR=185,MAXAA=9;
-    const isL=i=>(grid[i]===LAND||grid[i]===BEACH)&&reach[i]&&prot.has(zid[i]);
+  // core: the command post is always held; every point has a guard so taking it means fighting for it
+  // guard: the point this position is assigned to; a point cannot be taken until its guards are destroyed
+  add('turret','T',snapZ({x:relays[2].x+45,y:relays[2].y+40},r3z),{guard:2});add('turret','T',snapZ({x:relays[2].x-50,y:relays[2].y-45},r3z),{guard:2});add('aa','L',snapZ({x:relays[2].x-55,y:relays[2].y+30},r3z),{guard:2});
+  add('turret','T',snapZ(toward(relays[0],landing,70),r1z),{guard:0});add('turret','T',snapZ({x:relays[1].x+50,y:relays[1].y-40},r2z),{guard:1});
+  // obstacles are covered by fire from the defender's side
+  W.barriers.forEach((b2,i)=>{if(!lineBar[i].cover)return;const fs=b2.sides.find(x=>x.z===b2.far)||b2.sides[0];add('turret','T',snapZ(toward(fs,zc[b2.far]||fs,45),b2.far));});
+  const mineAt=p=>{let best=null,bd=60;for(let i=0;i<grid.length;i++){if(!W.road[i])continue;const c=cellCenter(i);const d=Math.hypot(c.x-p.x,c.y-p.y);if(d<bd){bd=d;best=c;}}const q=best||{x:p.x,y:p.y};
+    if(Math.hypot(q.x-landing.x,q.y-landing.y)<170||relays.some(r=>Math.hypot(r.x-q.x,r.y-q.y)<50)||W.mineSites.some(m=>Math.hypot(m.x-q.x,m.y-q.y)<120))return false;W.mineSites.push({x:q.x,y:q.y});return true;};
+  W.mineSites=[];const minedP=[];for(const p of lineMine){if(mineAt(p))minedP.push(p);else{left+=COST.mine;spent.mine--;}}
+  // a minefield nobody watches is only a delay: each gets a bunker on the defender's side
+  for(const p of minedP){if(!take('turret'))break;const st=sites.get(p),far=Dz.has(p.a)!==Dz.has(p.b)?(Dz.has(p.a)?p.a:p.b):(outerZ.has(p.a)?p.a:p.b);const q=st?(st.sides.find(x=>x.z===far)||st.sides[0]):{x:p.x,y:p.y};add('turret','T',snapZ(toward(q,zc[far]||q,55),far));}
+  // beaches by doctrine
+  let nBeach=0;{const lnd=entries.filter(e=>e.z===land),rest=entries.filter(e=>e.z!==land).sort((a2,b2)=>b2.w-a2.w);
+    for(const e of[...lnd,...rest]){const n=DOC.beach[e.kind]||0;for(let k=0;k<n;k++){if(!take('turret'))break;nBeach++;
+      if(e.z===land){const zcL=zc[land],bdir=Math.atan2(landing.y-zcL.y,landing.x-zcL.x),sg=k%2?1:-1;add('turret','T',snapZ({x:landing.x-Math.cos(bdir)*(90+Math.floor(k/2)*30)+Math.cos(bdir+PI/2)*sg*(k===2?0:55),y:landing.y-Math.sin(bdir)*(90+Math.floor(k/2)*30)+Math.sin(bdir+PI/2)*sg*(k===2?0:55)},null));}
+      else add('turret','T',snapZ(toward(e.pt,zc[e.z]||e.pt,60+k*25),e.z));}}}
+  // air defence: the radar, then a network over the region the doctrine cares about
+  if(relays[1].type==='radar'&&take('aa'))add('aa','L',snapZ(toward(relays[1],zc[land],60),r2z),{guard:1});
+  {const prot=DOC.aaZ,AR=185;let nA=0;const isL=i=>(grid[i]===LAND||grid[i]===BEACH)&&reach[i]&&prot.has(zid[i]);
     const tg=[],cand=[];for(let gy=0;gy<GH;gy+=2)for(let gx=0;gx<GW;gx+=2){const i=gy*GW+gx;if(isL(i))tg.push(cellCenter(i));}
     for(let gy=1;gy<GH;gy+=3)for(let gx=1;gx<GW;gx+=3){const i=gy*GW+gx;if(!isL(i)||grid[i]!==LAND||W.road[i]||barC[i])continue;const c=cellCenter(i);if(Math.hypot(c.x-landing.x,c.y-landing.y)<300)continue;cand.push(c);}
     const aas=()=>E.filter(e=>e.kind==='aa');const cov=new Uint8Array(tg.length);
     const mark=()=>{for(const e of aas())tg.forEach((t,j)=>{if(!cov[j]&&Math.hypot(t.x-e.x,t.y-e.y)<AR)cov[j]=1;});};mark();
-    while(aas().length<MAXAA){let best=null,bn=0;for(const c of cand){if(aas().some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;for(let j=0;j<tg.length;j++)if(!cov[j]&&Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<AR)n++;if(n>bn){bn=n;best=c;}}
-      if(!best||bn<tg.length*.02)break;add('aa','L',best);mark();}
-    W.aaCover=tg.length?cov.reduce((a,b)=>a+b,0)/tg.length:1;}
-  // MANPADS screen over the rest of the island, so a VARG cannot be set down just anywhere; the landing beach stays open
-  {const RR=115,MAXRB=11,aaL=E.filter(e=>e.kind==='aa');const isL=i=>(grid[i]===LAND||grid[i]===BEACH)&&reach[i];
-    const tg=[],cand=[];for(let gy=0;gy<GH;gy+=2)for(let gx=0;gx<GW;gx+=2){const i=gy*GW+gx;if(!isL(i))continue;const c=cellCenter(i);if(Math.hypot(c.x-landing.x,c.y-landing.y)<300)continue;if(aaL.some(a=>Math.hypot(a.x-c.x,a.y-c.y)<185))continue;tg.push(c);}
+    while(nA<DOC.aaN){let best=null,bn=0;for(const c of cand){if(aas().some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;for(let j=0;j<tg.length;j++)if(!cov[j]&&Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<AR)n++;if(n>bn){bn=n;best=c;}}
+      if(!best||bn<tg.length*.02||!take('aa'))break;add('aa','L',best);mark();nA++;}
+    W.aaCover=tg.length?cov.reduce((a2,b2)=>a2+b2,0)/tg.length:1;}
+  // reserve: where its routes to the lines are shortest (interior lines)
+  {const lz2=[...inner,...outer].map(p=>Dz.has(p.a)?p.a:outerZ.has(p.a)?p.a:p.b);let rz=r3z,rbst=1e9;const back=[...new Set([...Dz,...outerZ])].filter(z=>dz(land,z)>=2&&!entrySet.has(z));for(const z of back.length?back:[...Dz]){let t=0;for(const q of lz2)t+=dz(z,q);if(t<rbst){rbst=t;rz=z;}}
+    const rp=zc[rz]||relays[2];let k=0;for(const kind of DOC.reserve){if(!take(kind))continue;const a2=k*2.1;k++;add(kind,kind==='tank'?'SV':kind==='light'?'P':'A',snapZ({x:rp.x+Math.cos(a2)*(40+k*12),y:rp.y+Math.sin(a2)*(40+k*12)},rz));}}
+  // MANPADS screen over what the AA does not cover; the landing beach stays open
+  {const RR=115,aaL=E.filter(e=>e.kind==='aa');const isL=i=>(grid[i]===LAND||grid[i]===BEACH)&&reach[i];let nR=0;
+    const tg=[],cand=[];for(let gy=0;gy<GH;gy+=2)for(let gx=0;gx<GW;gx+=2){const i=gy*GW+gx;if(!isL(i))continue;const c=cellCenter(i);if(Math.hypot(c.x-landing.x,c.y-landing.y)<300)continue;if(aaL.some(a2=>Math.hypot(a2.x-c.x,a2.y-c.y)<185))continue;tg.push(c);}
     for(let gy=1;gy<GH;gy+=3)for(let gx=1;gx<GW;gx+=3){const i=gy*GW+gx;if(!isL(i)||grid[i]!==LAND||W.road[i]||barC[i])continue;const c=cellCenter(i);if(Math.hypot(c.x-landing.x,c.y-landing.y)<330)continue;cand.push(c);}
-    const cov=new Uint8Array(tg.length),rbs=[];const mark=p=>tg.forEach((t,j)=>{if(!cov[j]&&Math.hypot(t.x-p.x,t.y-p.y)<RR)cov[j]=1;});
-    while(rbs.length<MAXRB){let best=null,bn=0;for(const c of cand){if(rbs.some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;for(let j=0;j<tg.length;j++)if(!cov[j]&&Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<RR)n++;if(n>bn){bn=n;best=c;}}
-      if(!best||bn<tg.length*.03)break;add('rb','RB',best);rbs.push(best);mark(best);}
-    W.rbCover=tg.length?cov.reduce((a,b)=>a+b,0)/tg.length:1;}
-  add('inf','I',snapZ(toward(relays[0],zc[r1z],-60),r1z));
-  if(mids.length)add('inf','I',zc[mids[Math.floor(R()*mids.length)]]);
-  if(passRoads[0])add('at','A',along(passRoads[0].r,polyLen(passRoads[0].r)*.5));
-  add('at','A',snapZ({x:relays[1].x-60,y:relays[1].y+50},r2z));
-  if(rLand&&rLand.length>2)add('light','P',along(rLand,polyLen(rLand)*.5),{route:rLand});
-  const pr=passRoads.find(q=>q.p.a!==land&&q.p.b!==land&&!gated.includes(q.p));if(pr)add('light','P',along(pr.r,polyLen(pr.r)*.5),{route:pr.r});
-  add('tank','SV',snapZ({x:relays[1].x+70,y:relays[1].y+60},r2z));add('tank','SV',snapZ({x:relays[2].x-50,y:relays[2].y-60},r3z));
+    const cov=new Uint8Array(tg.length),rbs=[];const mark=q=>tg.forEach((t,j)=>{if(!cov[j]&&Math.hypot(t.x-q.x,t.y-q.y)<RR)cov[j]=1;});
+    while(nR<DOC.rbMax){let best=null,bn=0;for(const c of cand){if(rbs.some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;for(let j=0;j<tg.length;j++)if(!cov[j]&&Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<RR)n++;if(n>bn){bn=n;best=c;}}
+      if(!best||bn<tg.length*.03||!take('rb'))break;add('rb','RB',best);rbs.push(best);mark(best);nR++;}
+    W.rbCover=tg.length?cov.reduce((a2,b2)=>a2+b2,0)/tg.length:1;}
+  // forward screen: observation posts and a patrol on the beach road
+  if(take('inf'))add('inf','I',snapZ(toward(relays[0],zc[r1z],-60),r1z));
+  for(const e of entries){if(e.z===land)continue;if(!take('inf'))break;add('inf','I',snapZ(toward(e.pt,zc[e.z]||e.pt,50),e.z));}
+  if(rLand&&rLand.length>2&&take('light'))add('light','P',along(rLand,polyLen(rLand)*.5),{route:rLand});
+  // fortress ring, extra air defence, then bunkers at the busiest gaps; what is still left stays unspent
+  for(let k=0;k<DOC.ring;k++){if(!take('turret'))break;const a2=k*2.4+.6;add('turret','T',snapZ({x:relays[2].x+Math.cos(a2)*85,y:relays[2].y+Math.sin(a2)*85},r3z),{guard:2});}
+  for(let k=0;k<DOC.extraAA;k++){if(!take('aa'))break;const r=relays[k%2?1:2];add('aa','L',snapZ({x:r.x+(k%2?-60:70),y:r.y+(k%2?55:-40)},zid[cellIdx(r.x,r.y)]));}
+  for(const p of cracks.slice(0,2)){if(!take('turret'))break;const st=sites.get(p),far=Dz.has(p.a)!==Dz.has(p.b)?(Dz.has(p.a)?p.a:p.b):(outerZ.has(p.a)?p.a:p.b);const q=st?(st.sides.find(x=>x.z===far)||st.sides[0]):{x:p.x,y:p.y};add('turret','T',snapZ(toward(q,zc[far]||q,40),far));}
+  // leftovers go to the doctrine's speciality: the fortress thickens its ring, forward defence the beach, mobile defence its reserve
+  for(let k=0;k<4&&left>=5;k++){
+    if(doctrine==='rorligt'){if(!take('tank'))break;const zr=dz(land,r2z)>=2?r2z:r3z,rr=relays[zr===r2z?1:2];add('tank','SV',snapZ({x:rr.x-60+k*20,y:rr.y+70},zr));}
+    else if(doctrine==='framskjutet'){if(!take('turret'))break;const zcL=zc[land],bdir=Math.atan2(landing.y-zcL.y,landing.x-zcL.x),sg=k%2?1:-1;add('turret','T',snapZ({x:landing.x-Math.cos(bdir)*160+Math.cos(bdir+PI/2)*sg*90,y:landing.y-Math.sin(bdir)*160+Math.sin(bdir+PI/2)*sg*90},null));}
+    else{if(!take('turret'))break;const r=doctrine==='fastning'||k%2?relays[2]:relays[1],a2=k*1.9+1.1;add('turret','T',snapZ({x:r.x+Math.cos(a2)*110,y:r.y+Math.sin(a2)*110},zid[cellIdx(r.x,r.y)]));}}
+  for(let tries=0;tries<300&&left>=COST.rb;tries++){const i=Math.floor(Rp()*grid.length),c=cellCenter(i);if(grid[i]!==LAND||!reach[i]||W.road[i]||Math.hypot(c.x-landing.x,c.y-landing.y)<330||E.some(e=>Math.hypot(e.x-c.x,e.y-c.y)<90))continue;if(!take('rb'))break;add('rb','RB',c);}
+  const line=inner;
+  if(mids.length){R();R();}   // keep the world's random sequence where the old placement drew from it
+  W.plan={doctrine,budget,left:Math.round(left),spent,defended:[...Dz],inner:inner.length,outer:outer.length,barred:lineBar.length,mined:W.mineSites.length,cracks:cracks.length,entries:entries.map(e=>e.kind),beachT:nBeach};
   W.enemies=E;
   // salvage: building clusters per zone, loose materiel, old hulks on the landing beach; richer deeper in
   const STR=[],DEB=[];W.structs=STR;W.debris=DEB;
@@ -601,7 +676,7 @@ function buildWorldTry(seed,tryK){
   const lab=(p,t,off)=>W.labels.push({x:p.x,y:p.y,t,off:off?1:0});
   lab(landing,'Strand',1);if(harborPt)lab(harborPt,'Hamn',1);
   if(V.cove){const cv=snapZ({x:CX+Math.cos(V.cove.a*PI/180)*.97*V.RX,y:CY+Math.sin(V.cove.a*PI/180)*.97*V.RY},null,TIER.beach);lab(cv,'Vik',1);}
-  for(const p of pass)if(!gated.includes(p))lab(p,'Pass');
+  for(const p of pass)if(!W.barriers.some(b=>pairKey(b.za,b.zb)===pairKey(p.a,p.b)))lab(p,'Pass');
   // trees
   const isBar=new Uint8Array(GW*GH);for(const b of W.barriers)for(const c of b.cells)isBar[c]=1;
   for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i]||isBar[i])continue;const c=cellCenter(i);const fd=fbm(c.x*1.7,c.y*1.7,s+313),dense=fd>.56,pr=dense?Math.min(.95,.5+(fd-.56)*4):.1;
@@ -746,6 +821,9 @@ const PAL=[['#5fb6cc','#1b7389'],['#8aa6e6','#2c4c96'],['#7fc8a0','#2b7550'],['#
 const POST={off:'Offensiv',def:'Defensiv',dold:'Dold',obs:'Observera'};
 const PK=['off','def','dold','obs'];
 const MAXUNITS=10;
+// enemy defence planner: budget in points (bunker 5, AA 5, robot gunner 1.5, barrier 3, minefield 2 ...), doctrine null = chosen per island
+const ENEMY_CFG={budget:130,doctrine:null};
+const DOCTRINE={framskjutet:'framskjutet försvar vid stränderna',djup:'djupförsvar med två linjer',fastning:'en fästning kring ledningscentralen',rorligt:'rörligt försvar med stark reserv'};
 const INCOME={base:.25,relay:.5};
 const CTRL={thr:0,steer:0};
 let G=null;
@@ -758,9 +836,9 @@ function makeUnit(kind,x,y){
 }
 function makeEnemy(e){const st=ENEMY[e.kind];return Object.assign({},st,e,{maxhp:st.hp,cd:Math.random(),seen:false,visibleNow:false,reveal:0,lx:e.x,ly:e.y,hx:e.x,hy:e.y,alert:null,dead:false,avoid:false,aim:Math.random()*TAU,dir:1,ri:e.route?Math.floor(e.route.length/2):0,route:e.route?e.route.map(p=>({x:p.x,y:p.y})):null});}
 function newGame(seed){
-  if(!WORLD||WORLD.seed!==seed)buildWorld(seed);
+  const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed);WORLD.cfgKey=cfgKey;}
   G={seed,time:0,res:300,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
-    relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)]).map(e=>e.id)})),
+    relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
     structs:WORLD.structs.map(s=>Object.assign({},s,{isStruct:true,hp:STRUCT[s.kind].hp,maxhp:STRUCT[s.kind].hp,dead:false,prog:0,krok:false,hitBy:{}})),
@@ -768,7 +846,7 @@ function newGame(seed){
   WORLD.grid.set(WORLD.baseGrid);for(const b of G.barriers)for(const c of b.cells)WORLD.grid[c]=WALL;
   for(const s of G.structs)WORLD.grid[s.cell]=WALL;
   for(const d of WORLD.debris)addWreck(d.x,d.y,d.value,false,d.kind);
-  G.mines=[];G.reachAll=null;mkMines();computeLock();
+  G.mines=[];G.reachAll=null;mkMines(WORLD.mineSites||[]);computeLock();
   G.units.push(makeUnit('drone',...shipPos(0,60)),makeUnit('tank',...shipPos(-32,0)),makeUnit('tank',...shipPos(32,0)),makeUnit('eng',...shipPos(-32,28)));
   setSel([G.units[3].id]);G.cam=G.units[1].id;
   G.kroks.push(makeKrok());
@@ -1501,18 +1579,9 @@ function cutOff(u){u.state='Avskuren bakom spärr, ingen service';
     say(u,'Avskuren bakom spärr '+(b?b.id:'')+'. Ingen service förrän spärren är sprängd.',[...(b?[{l:'Skicka BÄVER',f:()=>callIn('eng',{barrier:b})}]:[]),{l:'Lyft ut med KROK',f:()=>airlift([u],WORLD.landing)}]);}}
 /* ---------- mines: hidden fields on the roads through narrow ground. HÖK, SPARV and BÄVER find them, a VARG only by
    driving into one. A found field closes the ground until a BÄVER has cleared it ---------- */
-function mkMines(){
-  let a=(G.seed*7919+13)>>>0;const R=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
-  const cand=[];
-  for(let i=0;i<GW*GH;i++){if(!WORLD.road[i]||!passLand(i))continue;const c=cellCenter(i);
-    if(dist(c,WORLD.landing)<170||dist(c,CARRIER)<220)continue;
-    if(G.relays.some(r=>dist(r,c)<50)||G.barriers.some(b=>Math.hypot(b.x-c.x,b.y-c.y)<45))continue;
-    const gx=i%GW,gy=(i/GW)|0;let nar=0;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const x=gx+dx,y=gy+dy;if(x<0||y<0||x>=GW||y>=GH){nar++;continue;}const t=WORLD.baseGrid[y*GW+x];if(t!==LAND&&t!==BEACH)nar++;}
-    cand.push({c,s:nar+R()*8});}
-  cand.sort((p,q)=>q.s-p.s);const want=3+Math.floor(R()*2);
-  for(const k of cand){if(G.mines.length>=want)break;if(G.mines.some(m=>Math.hypot(m.x-k.c.x,m.y-k.c.y)<190))continue;
-    const r=16,cells=[];for(let gy=Math.floor((k.c.y-r)/CELL);gy<=Math.floor((k.c.y+r)/CELL);gy++)for(let gx=Math.floor((k.c.x-r)/CELL);gx<=Math.floor((k.c.x+r)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx;if(Math.hypot(gx*CELL+5-k.c.x,gy*CELL+5-k.c.y)<=r)cells.push(i);}
-    G.mines.push({id:'M'+(G.mines.length+1),x:k.c.x,y:k.c.y,r,cells,walled:[],found:false,cleared:false,prog:0});}
+function mkMines(sites){
+  for(const q of sites){const r=16,cells=[];for(let gy=Math.floor((q.y-r)/CELL);gy<=Math.floor((q.y+r)/CELL);gy++)for(let gx=Math.floor((q.x-r)/CELL);gx<=Math.floor((q.x+r)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx;if(Math.hypot(gx*CELL+5-q.x,gy*CELL+5-q.y)<=r)cells.push(i);}
+    G.mines.push({id:'M'+(G.mines.length+1),x:q.x,y:q.y,r,cells,walled:[],found:false,cleared:false,prog:0});}
 }
 function mineFound(m,by,blast){if(m.found)return;m.found=true;m.foundT=G.time;
   for(const c of m.cells){const t=WORLD.grid[c];if(t===LAND||t===BEACH){WORLD.grid[c]=WALL;m.walled.push(c);}}
@@ -1599,7 +1668,7 @@ function callIn(kind,pk){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={callIn,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,callIn,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -2854,6 +2923,7 @@ function showEnd(){
   const net=Math.max(0,G.lostValue-G.salvagedOwn);
   $('rLoss').textContent=net;$('rTime').textContent=fmt(G.time);$('rUnits').textContent=G.unitsLost;$('rSalv').textContent=G.salvaged;
   $('endSub').textContent='Ö-variant '+G.seed;
+  {const P=WORLD.plan;$('rPlan').textContent=P?'Fienden valde '+DOCTRINE[P.doctrine]+': '+P.barred+' spärrar, '+P.mined+' minfält'+(P.cracks?', '+P.cracks+' oskyddade pass':'')+' (budget '+P.budget+').':'';}
   let best=null;try{best=JSON.parse(localStorage.getItem('brohuvud2:'+G.seed)||'null');}catch(_){}
   const better=!best||net<best.l||(net===best.l&&G.time<best.t);
   if(better){try{localStorage.setItem('brohuvud2:'+G.seed,JSON.stringify({l:net,t:G.time}));}catch(_){}}
@@ -3160,6 +3230,7 @@ function diagTick(now,P){
   const pm=performance.memory;L.push('minne '+(pm?Math.round(pm.usedJSHeapSize/1048576)+' / '+Math.round(pm.jsHeapSizeLimit/1048576)+' MB':'okänt i denna webbläsare')+'  DOM '+document.getElementsByTagName('*').length);
   L.push('ljud '+(AUD.ctx?AUD.ctx.state+'  klocka '+DIAG.audRate.toFixed(2)+'x'+(AUD.ctx.baseLatency!=null?'  lat '+Math.round(AUD.ctx.baseLatency*1000)+' ms':'')+(AUD.on?'':'  (avstängt)')+'\n     motorer '+AUD.voices.size+'  ljud/s '+DIAG.playsShow:'ej startat'+(AUD.on?'':'  (avstängt)')));
   const alive=a=>a.filter(x=>!x.dead).length;
+  if(WORLD.plan){const P=WORLD.plan;L.push('fiende '+P.doctrine+'  budget '+P.budget+' (kvar '+P.left+')  spärrar '+P.barred+'  minor '+P.mined+'  luckor '+P.cracks);}
   L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units)+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
   DIAG.body.textContent=L.join('\n');
 }
@@ -3184,6 +3255,8 @@ function frameBody(now,P){
   uiTick(false);P.push(performance.now());
 }
 globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
+// experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
+try{const q=new URLSearchParams(location.search),bu=+q.get('budget'),dk=q.get('doktrin');if(bu>0)ENEMY_CFG.budget=bu;if(dk&&DOCTRINE[dk])ENEMY_CFG.doctrine=dk;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
 newGame(1000+Math.floor(Math.random()*9000));if($('tSeed'))$('tSeed').textContent=G.seed;
 init3D();

@@ -1,7 +1,7 @@
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;
 for(const seed of [7341,1234,9001,31,77,2718]){
-  B.newGame(seed);const G=B.G;G.running=true;G.res=5000;
+  B.newGame(seed);const G=B.G;G.running=true;G.res=5000;for(const b of G.barriers){b.cleared=true;for(const c of b.cells)B.W.grid[c]=B.W.baseGrid[c];}B.computeLock();// the defence planner may put a point behind a barrier; this test is about the yard and the counterattack
   const types=G.relays.map(r=>r.id+':'+r.type).join(' ');
   const out=[types];
   for(const r of G.relays){

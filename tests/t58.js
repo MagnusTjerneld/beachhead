@@ -25,7 +25,7 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
  ok(B.callIn('eng',{mine:m}),'call-in BÄVER on minefield');for(let t=0;t<200&&!m.cleared;t++)run(G,1);
  ok(m.cleared,'field cleared at t '+Math.round(G.time)+' s');}
 // 4. a VARG drives into an unfound field and is hurt
-{B.newGame(8080);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const m=G.mines[1];
+{B.newGame(8080);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const m=G.mines[0];
  const v=G.units.find(u=>u.kind==='tank');v.x=m.x+4;v.y=m.y;const hp=v.hp;run(G,.5);ok(m.found&&v.hp<hp,'VARG hits unfound mine: hp '+hp+' -> '+Math.round(v.hp));}
 // 5. call-in air support and VARG on an enemy without touching the selection
 {B.newGame(7341);const G=B.G;G.running=true;const e=G.enemies.find(x=>x.kind!=='aa');e.seen=true;e.lx=e.x;e.ly=e.y;const sel=G.selIds.slice();
