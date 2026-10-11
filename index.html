@@ -114,6 +114,8 @@ button:disabled{opacity:.45;cursor:default}
 .chip svg{width:10px;height:10px;flex:none}
 .hint{font-size:11.5px;color:var(--dim)}
 .chip.wing{min-width:54px;justify-content:center;font-family:var(--f-mono);font-weight:400}
+.yard .chips:empty{display:none}
+.yard .qc{cursor:pointer}.yard .qc b{font-weight:400;color:var(--dim);font-family:var(--f-mono);font-size:11px}.yard .qc:hover{border-color:var(--mag)}.yard .qc i{font-style:normal;color:var(--dim)}
 .yard .btn{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:84px}
 .yard .btn small{font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--dim)}
 .wheel{position:fixed;z-index:6;width:250px}
@@ -224,6 +226,7 @@ button:disabled{opacity:.45;cursor:default}
       <div class="panelbox yard">
         <div class="who">Varv · <b id="yardStatus">Ledigt</b></div>
         <div class="row" id="buildAtWrap" hidden><span class="who">Bygg på</span><div class="chips" id="buildAtRow"></div></div>
+        <div class="chips" id="yardQ"></div>
         <div class="row" id="yardRow"></div>
         <div class="row"><span class="who">Bärgning</span><button class="chip" id="bAuto" type="button" aria-pressed="true">Hämtar automatiskt</button><span class="hint" id="krokInfo"></span></div>
       </div>
@@ -264,7 +267,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Fienden</span> har bunkrar, luftvärn (bara mot luftmål), robotskyttar med bärbart luftvärn (120 m, kamouflerade, spridda över hela ön utom vid stranden; ser du dem först med HÖK går de att undvika, VARG slår ut dem lätt), infanteri, pansarvärn, lätt pansar och stridsvagnar. Rörliga förband rycker ut när något i närheten anfalls.</li>
       <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer.</li>
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
-      <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet.</li>
+      <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
@@ -1735,6 +1738,9 @@ function obstacleFor(u,tx,ty){let best=null,bd=230;
   for(const m of G.mines||[]){if(!m.found||m.cleared)continue;const d=Math.min(dist(m,u),Math.hypot(m.x-tx,m.y-ty));if(d<bd){bd=d;best={pk:{mine:m},l:'minfält '+m.id};}}
   if(!best&&lockedAt(tx,ty)){const b=lockBarrier({x:tx,y:ty});if(b)best={pk:{barrier:b},l:'spärr '+b.id};}
   return best;}
+function cancelBuild(where,i){const L=where==='ship'?G.build:G.fbuild,b=L[i];if(!b)return 0;
+  const cost=b.kind==='krok'?KROK_COST:TYPES[b.kind].cost,back=i===0?Math.round(cost*clamp(b.t/b.total,0,1)):cost;
+  L.splice(i,1);G.res+=back;say(null,(b.kind==='krok'?'KROK':TYPES[b.kind].label)+' struken ur byggkön'+(where==='ship'?'':' på fältvarvet')+'. '+back+' material tillbaka'+(i===0&&back<cost?' (det som redan skrivits ut går förlorat)':'')+'.');return back;}
 function queueBuild(k){const T=TYPES[k],alive=G.units.filter(u=>!u.dead).length;
   if(G.res<T.cost){say(null,'Inte nog material för '+T.label+' ('+T.cost+').');return false;}
   if(alive+G.build.filter(b=>b.kind!=='krok').length+G.fbuild.length>=MAXUNITS){say(null,'Fullt, max '+MAXUNITS+' enheter.');return false;}
@@ -1792,7 +1798,7 @@ function callIn(kind,pk,asMission){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,islandName,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,islandName,cancelBuild,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -3250,6 +3256,9 @@ function uiTick(force){
     for(const o of[{id:'ship',l:'Fartyget'},...vs.map(r=>({id:r.id,l:'Fältvarv '+r.id}))]){const c=document.createElement('button');c.type='button';c.className='chip';c.textContent=o.l;c.setAttribute('aria-pressed',String(G.buildAt===o.id));c.addEventListener('click',()=>{G.buildAt=o.id;uiTick(true);});buildAtRow.appendChild(c);}}}
   const bl=k=>k==='krok'?'KROK':TYPES[k].label;
   {const sh=G.build.length?'Bygger '+bl(G.build[0].kind)+' '+Math.ceil(G.build[0].t)+' s'+(G.build.length>1?' · '+(G.build.length-1)+' i kö':''):(alive>=MAXUNITS?'Fullt, max '+MAXUNITS+' enheter':'Ledigt');
+   {const q=$('yardQ'),items=[...G.build.map((b,i)=>({b,i,w:'ship'})),...G.fbuild.map((b,i)=>({b,i,w:b.at||'varv'}))],sig=items.map(x=>x.w+x.b.kind+x.i).join(',');
+    if(q.dataset.k!==sig){q.dataset.k=sig;q.innerHTML='';for(const x of items){const c=document.createElement('button');c.type='button';c.className='chip qc';c.title='Avbryt bygget';c.innerHTML='<span></span><b></b><i>×</i>';c.firstChild.textContent=(x.w==='ship'?'':'Fältvarv · ')+bl(x.b.kind);c.addEventListener('click',()=>{cancelBuild(x.w==='ship'?'ship':'varv',x.i);uiTick(true);});q.appendChild(c);}}
+    items.forEach((x,j)=>{const c=q.children[j];if(c)c.children[1].textContent=x.i===0?Math.ceil(x.b.t)+' s':'i kö';});}
    const fb=G.fbuild[0],fv=fb?' · Fältvarv: '+(fb.paused?'står still, fiende nära':bl(fb.kind)+' '+Math.ceil(fb.t)+' s')+(G.fbuild.length>1?', '+(G.fbuild.length-1)+' i kö':''):'';$('yardStatus').textContent=sh+fv;}
   const ba=$('bAuto');ba.setAttribute('aria-pressed',String(G.krokAuto));ba.textContent=G.krokAuto?'Hämtar automatiskt':'Bara beställt';
   const nq=G.krokQ.length,nw=G.wrecks.length,sv=G.wrecks.filter(w=>!w.claimed&&wreckSafe(w)).length;$('krokInfo').textContent=nw+' högar · '+sv+' säkra'+(nq?' · '+nq+' beställda':'');
