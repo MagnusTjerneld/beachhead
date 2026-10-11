@@ -1,4 +1,6 @@
-# Brohuvud
+# Uppdrag Arkipelag
+
+Tidigare arbetsnamn: Brohuvud.
 
 Prototyp av ett actionspel om att leda autonoma enheter från HMS Birka, en flytande varvspråm, och frigöra öarna i Stockholms yttre skärgård, en ö i taget. Inspirerat av Hostile Waters, Battlezone och Duskers.
 
@@ -27,6 +29,7 @@ python3 -m http.server 8000
 ## Kort om spelet
 
 - **Enheter:** SPARV (billig spanare), HÖK (drönare och ögon), VARG (svävare, slagkraft), BÄVER (ingenjör, bara på land, flygs i land av KROK) och KROK (bärgnings- och transporthelikopter).
+- **Öarnas namn:** varje ö får ett namn ur fröet, en fågel, ett träd, ett bär eller ett däggdjur plus -ö, -skär, -holmen eller -näset (Tranholmen, Lingonskär).
 - **Strategiska punkter:** ledningscentralen är målet. Verkstad, radarstation och fältvarv är frivilliga men ger service, spaning och en framskjuten byggplats.
 - **Fiendens försvar:** fienden planerar försvaret när ön skapas. Den analyserar var man kan gå i land och vilka pass vägen till ledningscentralen måste ta, väljer doktrin (framskjutet, djup, fästning, rörligt) och fördelar en budget på spärrar, minfält, bunkrar, luftvärn, robotskyttar och reserv. Långa linjer stängs aldrig helt: det minst trafikerade passet lämnas öppet med en bunker bakom. Där en helikopter kan landsätta innanför försvaret förbi allt luftvärn stänger fästning och djupförsvar fickan med robotskyttar, medan framskjutet och rörligt försvar lämnar den. Laborera med `?budget=150&doktrin=djup` i adressen (standard 130, doktrinen väljs annars per ö).
 - **Låsta sektorer och minor:** allt bakom en oröjd spärr är låst och kan inte försörjas (ingen service, ingen bärgning). Minfält på trånga vägar syns från luften och röjs av BÄVER.

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-<title>Brohuvud 2</title>
+<title>Uppdrag Arkipelag</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
@@ -179,7 +179,7 @@ button:disabled{opacity:.45;cursor:default}
 
 <div id="app">
   <header class="bar">
-    <div class="brand">BROHUVUD<small id="islandId">Ö-variant</small></div>
+    <div class="brand">ARKIPELAG<small id="islandId">Ö-variant</small></div>
     <div class="stat"><span>Punkter</span><b id="sRel">0/3</b></div>
     <div class="stat gold"><span>Material</span><b id="sRes">300</b></div>
     <div class="stat" id="lossBox"><span>Förlust</span><b id="sLoss">0</b></div>
@@ -236,7 +236,7 @@ button:disabled{opacity:.45;cursor:default}
   <div id="titleStage"></div>
   <div class="tshade"></div>
   <div class="tfront">
-    <div id="logoWrap" hidden><canvas id="logo" aria-label="Brohuvud"></canvas><div class="tsub">Frigör skärgården, en ö i taget.</div></div>
+    <div id="logoWrap" hidden><canvas id="logo" aria-label="Uppdrag Arkipelag"></canvas><div class="tsub">Frigör skärgården, en ö i taget.</div></div>
     <div class="tgap"></div>
     <div class="tpress" id="tPress">KLICKA FÖR ATT STARTA</div>
     <div class="tmenu" id="tMenu" hidden>
@@ -244,12 +244,12 @@ button:disabled{opacity:.45;cursor:default}
       <button class="btn big" id="tHow" type="button">Hur man spelar</button>
       <button class="btn big" id="tNew" type="button">Ny ö</button>
     </div>
-    <div class="tfoot">Prototyp 2 · Ö-variant <span id="tSeed"></span> · Esc eller Enter hoppar över</div>
+    <div class="tfoot">Prototyp 2 · <span id="tSeed"></span> · Esc eller Enter hoppar över</div>
   </div>
 </div>
 <div class="ov" id="intro" hidden>
   <div class="panel">
-    <h2><small>Prototyp 2 · testbana Kustfästet</small>Brohuvud</h2>
+    <h2><small>Prototyp 2 · testbana Kustfästet</small>Uppdrag Arkipelag</h2>
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
       <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Varje variant är en ny karta.</li>
@@ -258,7 +258,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Kulsprutan biter på infanteri, roboten (en) på lätt pansar och byggnader. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
       <li><span class="em">SPARV är engångsspanaren.</span> Billig (40), byggs på 8 sekunder, ser 90 m och tål nästan ingenting. Den flyger lågt: fienden märker den först på 45 m, men luftvärnets radar tar den på 110 m. Den kan alltså ligga stilla och peka ut en bunker åt vargarna, men hittar luftvärn bara genom att dö. Inget vapen.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 150 m, längre än bunkrarna, men bara mot mål som någon ser. Svag mot infanteri, sårbar för pansarvärn.</li>
-      <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: från fartyget lyfts den i land av KROK, och det beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. Lagar fordon i fält: peka på en skadad VARG och tryck B, eller låt en ledig BÄVER göra det själv. Båda måste stå still och vara utanför eld, lagningen går upp till 75 % och kostar material. Bakom en oröjd spärr är det den enda reparation som finns. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget.</li>
+      <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: en ny BÄVER står i byggbädden på HMS Birkas däck, och KROK lyfter den i land, vilket beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. Lagar fordon i fält: peka på en skadad VARG och tryck B, eller låt en ledig BÄVER göra det själv. Båda måste stå still och vara utanför eld, lagningen går upp till 75 % och kostar material. Bakom en oröjd spärr är det den enda reparation som finns. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget.</li>
       <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
       <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. HÖK och SPARV ser minfälten från luften, BÄVER med sin detektor på nära håll; en VARG märker dem först när den kör på en. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
       <li><span class="em">Fienden</span> har bunkrar, luftvärn (bara mot luftmål), robotskyttar med bärbart luftvärn (120 m, kamouflerade, spridda över hela ön utom vid stranden; ser du dem först med HÖK går de att undvika, VARG slår ut dem lätt), infanteri, pansarvärn, lätt pansar och stridsvagnar. Rörliga förband rycker ut när något i närheten anfalls.</li>
@@ -395,6 +395,20 @@ const angDeg=(dx,dy)=>((Math.atan2(dy,dx)*180/PI)+360)%360;
 const angDiff=(a,b)=>Math.abs(((a-b+540)%360)-180);
 const sm=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 const norm360=a=>((a%360)+360)%360;
+/* island names: a stem from Swedish birds, trees, berries and mammals, written as it goes into a compound (trana -> Tran),
+   plus an ending. The seed decides, so an island keeps its name. Stems that end in a vowel never take -ö */
+const ISLAND_STEMS={
+  fagel:['Örn','Havsörn','Kungsörn','Gjuse','Falk','Tornfalk','Pilgrimsfalk','Hök','Duvhök','Sparvhök','Vråk','Glad','Uggle','Uv','Berguv','Korp','Kråk','Kaj','Skat',
+    'Tran','Svan','Sångsvan','Knölsvan','Gås','Grågås','And','Ejder','Alfågel','Knip','Skrak','Storskrak','Lom','Storlom','Smålom','Dopping','Mås','Fiskmås','Trut','Gråtrut','Havstrut',
+    'Tärn','Labb','Tordmule','Grissel','Lunne','Skarv','Häger','Rördrom','Rödben','Glutt','Snäpp','Spov','Vip','Pipar','Beckasin','Rall','Orr','Tjäder','Järp','Rip','Duv','Ringduv',
+    'Gök','Spett','Sval','Ärl','Lärk','Trast','Koltrast','Rödhake','Näktergal','Star','Fink','Bofink','Domherr','Sisk','Steglits','Mes','Talgox','Gärdsmyg','Nötväck','Sparv','Strandskat','Kärrhök'],
+  trad:['Björk','Tall','Gran','Ek','Ask','Asp','Al','Alm','Lönn','Lind','Rönn','Hägg','Sälg','Pil','Vide','Hassel','En','Idegran','Bok','Avenbok','Oxel','Apel','Fläder','Hagtorn','Lärkträd'],
+  bar:['Lingon','Blåbär','Hjortron','Hallon','Smultron','Tranbär','Kråkbär','Odon','Krusbär','Vinbär','Nypon','Slån','Björnbär','Åkerbär','Mjölon','Rönnbär','Havtorn','Enbär','Måbär','Hönsbär','Stenbär','Fläderbär'],
+  djur:['Älg','Ren','Hjort','Kronhjort','Dovhjort','Rå','Galt','Varg','Björn','Lo','Järv','Räv','Fjällräv','Grävlings','Utter','Mink','Mård','Iller','Hermelin','Vessel','Har','Kanin','Ekorr','Bäver',
+    'Sork','Lämmel','Mus','Igelkott','Mullvad','Fladdermus','Säl','Gråsäl','Knubbsäl','Vikare','Tumlar','Val','Myskoxe','Vildsvin','Bisam']};
+const ISLAND_END=['ö','skär','holmen','näset'];
+function islandName(seed){const R=rng((seed|0)*131+7),groups=Object.values(ISLAND_STEMS),all=[].concat(...groups);const stem=all[Math.floor(R()*all.length)];
+  const ends=/[aeiouyåäö]$/i.test(stem)?ISLAND_END.slice(1):ISLAND_END;return (stem+ends[Math.floor(R()*ends.length)]).replace(/(.)\1\1/g,'$1$1');}
 function rng(seed){let a=seed|0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const HLV=[5,13,21,29];
 const pairKey=(a,b)=>a<b?a+'_'+b:b+'_'+a;
@@ -874,12 +888,17 @@ function newGame(seed){
   for(const s of G.structs)WORLD.grid[s.cell]=WALL;
   for(const d of WORLD.debris)addWreck(d.x,d.y,d.value,false,d.kind);
   G.mines=[];G.reachAll=null;mkMines(WORLD.mineSites||[]);computeLock();
-  G.units.push(makeUnit('drone',...shipPos(0,60)),makeUnit('tank',...shipPos(-32,0)),makeUnit('tank',...shipPos(32,0)),makeUnit('eng',...shipPos(-32,28)));
+  G.units.push(makeUnit('drone',...shipPos(0,60)),makeUnit('tank',...shipPos(-32,0)),makeUnit('tank',...shipPos(32,0)),makeUnit('eng',...deckSpot(0)));
   setSel([G.units[3].id]);G.cam=G.units[1].id;
   G.kroks.push(makeKrok());
   for(let i=0;i<GW*GH;i++)if(WORLD.baseGrid[i]===DEEP||WORLD.isletMask[i])G.known[i]=1;markKnown();
-  say(null,'HMS Birka på position. Välkommen ombord, kapten! Ön är full av byggnader och materiel: riv, bärga och bygg.');
+  say(null,'HMS Birka på position vid '+islandName(G.seed)+'. Välkommen ombord, kapten! Ön är full av byggnader och materiel: riv, bärga och bygg.');
 }
+/* HMS Birka's deck: BÄVER cannot swim, so it stands in the build bay when built and KROK lifts it from there */
+const DECK_Y=4.3;
+function shipLocal(x,y){const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)},dx=x-CARRIER.x,dy=y-CARRIER.y;return{lat:-dx*f.y+dy*f.x,fwd:dx*f.x+dy*f.y};}
+const onDeck=(x,y)=>{const l=shipLocal(x,y);return Math.abs(l.lat)<16&&Math.abs(l.fwd)<45;};
+function deckSpot(n){const k=(n||0)%4;return shipPos(6+(k%2)*6,-6-Math.floor(k/2)*7);}
 function shipPos(lat,fwd){const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)};return[CARRIER.x-f.y*lat+f.x*fwd,CARRIER.y+f.x*lat+f.y*fwd];}
 function makeKrok(){
   const n=G.krokN=(G.krokN||0)+1,pad=shipPos([4.5,-4.5,13,-13][(n-1)%4],-38);
@@ -932,7 +951,7 @@ function step(dt){
   G.kt+=dt;if(G.kt>=.25){G.kt=0;markKnown();}
   for(const k of G.kroks)updateKrok(k,dt);
   G.kroks=G.kroks.filter(k=>!k.dead||G.time-k.diedAt<4);
-  if(G.build.length){const b=G.build[0];b.t-=dt;if(b.t<=0){G.build.shift();if(b.kind==='krok'){const k=makeKrok();G.kroks.push(k);say(k,'Ny bärgningshelikopter klar.');}else{const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)},lat=Math.random()<.5?-32:32,fw=Math.random()*40-20;const u=makeUnit(b.kind,CARRIER.x-f.y*lat+f.x*fw,CARRIER.y+f.x*lat+f.y*fw);G.units.push(u);say(u,'Sjösatt och redo.');}}}
+  if(G.build.length){const b=G.build[0];b.t-=dt;if(b.t<=0){G.build.shift();if(b.kind==='krok'){const k=makeKrok();G.kroks.push(k);say(k,'Ny bärgningshelikopter klar.');}else{const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)},lat=Math.random()<.5?-32:32,fw=Math.random()*40-20;const sp=b.kind==='eng'?deckSpot(G.units.filter(v=>v.kind==='eng'&&!v.dead&&onDeck(v.x,v.y)).length):[CARRIER.x-f.y*lat+f.x*fw,CARRIER.y+f.x*lat+f.y*fw];const u=makeUnit(b.kind,sp[0],sp[1]);G.units.push(u);say(u,b.kind==='eng'?'Klar i byggbädden på HMS Birka. KROK lyfter mig i land när jag får en order.':'Sjösatt och redo.');}}}
   mineTick(dt);
   if(G.fbuild.length){const b=G.fbuild[0],r=G.relays.find(x=>x.id===b.at);
     const foe=r&&G.enemies.find(e=>!e.dead&&dist(e,r)<VARV_CONTEST),cut=r&&lockedAt(r.x,r.y);b.paused=!!foe||!!cut;b.cut=!!cut;
@@ -1394,7 +1413,7 @@ function krokPath(k,tx,ty){
 function krokRetreat(k){
   clearKrok(k);if(k.target){k.target.claimed=false;k.target=null;}
   if(k.state==='out'||k.state==='hook')k.state='back';
-  if(k.cargo){const p=shipPos(0,75);k.orders.push({type:'drop',x:p[0],y:p[1]});}
+  if(k.cargo){const p=k.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);k.orders.push({type:'drop',x:p[0],y:p[1]});}
   if(!k.cargo&&k.state==='idle')k.orders.push({type:'move',x:k.pad.x,y:k.pad.y});
   k.retreat=true;say(k,'Träffad, skrovet '+Math.round(k.hp/k.maxhp*100)+' %. Avbryter och drar mig tillbaka till fartyget.');
 }
@@ -1435,6 +1454,7 @@ function krokWait(){
 /* KROK: an order queue (move, lift a vehicle, drop it, salvage a pile) runs first; with nothing queued it salvages on its own */
 const KROK_LIFT=3;
 function dropSpot(p){
+  if(onDeck(p.x,p.y))return{x:p.x,y:p.y};
   const c0=cellIdx(p.x,p.y),ok=c=>{const t=WORLD.grid[c];return t===LAND||t===BEACH||t===SHAL;};if(ok(c0))return{x:p.x,y:p.y};
   const gx=c0%GW,gy=(c0/GW)|0;let best=null,bd=1e9;for(let oy=-5;oy<=5;oy++)for(let ox=-5;ox<=5;ox++){const x=gx+ox,y=gy+oy;if(x<0||y<0||x>=GW||y>=GH)continue;const c=y*GW+x;if(!ok(c))continue;const d=ox*ox+oy*oy;if(d<bd){bd=d;best=c;}}
   return best==null?{x:p.x,y:p.y}:cellCenter(best);
@@ -1767,7 +1787,7 @@ function callIn(kind,pk,asMission){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,islandName,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -2590,6 +2610,7 @@ function updateSky(){
 function unitY(u,dtr){
   const g=groundY(u.x,u.y);
   if(u.air||u.kind==='krok'){const want=g+(u.kind==='krok'?(u.low?15:30):u.kind==='scout'?12:24);u.alt=u.alt==null?want:lerp(u.alt,want,Math.min(1,1.5*(dtr||0)));return u.alt;}
+  if(!u.carried&&onDeck(u.x,u.y))return DECK_Y+(u.kind==='tank'?.45:0);
   if(u.kind==='tank')return g+.45+Math.sin(G.time*2.3+(u.id.charCodeAt(1)||0))*.08;
   return g;
 }
@@ -3021,7 +3042,7 @@ for(const k of['scout','drone','tank','eng','krok']){const b=document.createElem
   b.addEventListener('click',()=>{const alive=G.units.filter(u=>!u.dead).length;if(G.res<T.cost)return;if(k==='krok'?krokCount()>=KROK_MAX:alive+unitBuilds()>=MAXUNITS)return;const fv=G.buildAt!=='ship'&&G.relays.find(r=>r.id===G.buildAt&&r.captured);if(fv&&!VARV_KINDS.includes(k))return;G.res-=T.cost;if(fv){G.fbuild.push({kind:k,t:T.build*VARV_SLOW,total:T.build*VARV_SLOW,at:fv.id});say(null,T.label+' i kö på fältvarvet '+fv.id+'.');}else{G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö.');}uiTick(true);});yardRow.appendChild(b);}
 $('bAuto').addEventListener('click',()=>{G.krokAuto=!G.krokAuto;G.krokMsg=null;say(null,G.krokAuto?'KROK hämtar allt i säkra områden.':'KROK hämtar bara det du beställer.');uiTick(true);});
 $('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of selUnits()){u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
-$('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of selUnits()){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
+$('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of selUnits()){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of selUnits()){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
 $('bPause').addEventListener('click',()=>{G.paused=!G.paused;uiTick(true);});
 function toggleFull(){
@@ -3039,7 +3060,7 @@ $('bStart').addEventListener('click',()=>{audInit();startGame();});
 $('title').addEventListener('click',()=>titleWake(false));
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
-$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.savedTod=G.tod;$('tSeed').textContent=sd;renderLog();uiTick(true);});
+$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 function restart(seed){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed);if(R3&&R3.seed!==WORLD.seed)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>restart(G.seed));
 $('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000)));
@@ -3175,7 +3196,7 @@ function renderOrders(v){
 function showEnd(){
   const net=Math.max(0,G.lostValue-G.salvagedOwn);
   $('rLoss').textContent=net;$('rTime').textContent=fmt(G.time);$('rUnits').textContent=G.unitsLost;$('rSalv').textContent=G.salvaged;
-  $('endSub').textContent='Ö-variant '+G.seed;
+  $('endSub').textContent=islandName(G.seed)+' · ö '+G.seed;
   {const P=WORLD.plan;$('rPlan').textContent=P?'Fienden valde '+DOCTRINE[P.doctrine]+': '+P.barred+' spärrar, '+P.mined+' minfält'+(P.cracks?', '+P.cracks+' oskyddade pass':'')+' (budget '+P.budget+').':'';}
   let best=null;try{best=JSON.parse(localStorage.getItem('brohuvud2:'+G.seed)||'null');}catch(_){}
   const better=!best||net<best.l||(net===best.l&&G.time<best.t);
@@ -3191,7 +3212,7 @@ function uiTick(force){
   $('sRes').textContent=Math.floor(G.res);
   $('sLoss').textContent=net;$('lossBox').classList.toggle('warn',net>0);
   $('sTime').textContent=fmt(G.time);{const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('sClock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
-  $('islandId').textContent='Ö-variant '+G.seed;
+  $('islandId').textContent=islandName(G.seed)+' · ö '+G.seed;
   $('bPause').setAttribute('aria-pressed',String(G.paused));$('bPause').textContent=G.paused?'Fortsätt':'Paus';
   $('bSpeed').textContent=G.speed+'×';
   const ids=[...G.units.map(u=>u.id),...G.kroks.map(k=>k.id)].join(',');
@@ -3373,15 +3394,19 @@ function updAudio(dtr){
 /* ---------- title: flyover with a drone, pixel logo, theme music ---------- */
 const TITLE={on:true,phase:'press',t:0,logoT:-1,drone:null,cam:null,look:null,alt:null,savedTod:null,menuT:-1};
 const GLYPH={B:['11110','10001','10001','11110','10001','10001','11110'],R:['11110','10001','10001','11110','10100','10010','10001'],O:['01110','10001','10001','10001','10001','10001','01110'],
-  H:['10001','10001','10001','11111','10001','10001','10001'],U:['10001','10001','10001','10001','10001','10001','01110'],V:['10001','10001','10001','10001','01010','01010','00100'],D:['11110','10001','10001','10001','10001','10001','11110']};
-const LOGO=(()=>{const word='BROHUVUD',blocks=[];let cx=0;for(const ch of word){const g=GLYPH[ch];for(let y=0;y<7;y++)for(let x=0;x<5;x++)if(g[y][x]==='1')blocks.push({x:cx+x,y,d:cx*.045+Math.random()*.25});cx+=6;}
-  return{blocks,w:cx-1,h:7};})();
+  H:['10001','10001','10001','11111','10001','10001','10001'],U:['10001','10001','10001','10001','10001','10001','01110'],V:['10001','10001','10001','10001','01010','01010','00100'],D:['11110','10001','10001','10001','10001','10001','11110'],
+  A:['01110','10001','10001','11111','10001','10001','10001'],K:['10001','10010','10100','11000','10100','10010','10001'],I:['11111','00100','00100','00100','00100','00100','11111'],
+  P:['11110','10001','10001','11110','10000','10000','10000'],E:['11111','10000','10000','11110','10000','10000','11111'],L:['10000','10000','10000','10000','10000','10000','11111'],G:['01110','10001','10000','10111','10001','10001','01111']};
+const glyphRow=word=>{const blocks=[];let cx=0;for(const ch of word){const g=GLYPH[ch];for(let y=0;y<7;y++)for(let x=0;x<5;x++)if(g[y][x]==='1')blocks.push({x:cx+x,y,d:cx*.045+Math.random()*.25});cx+=6;}return{blocks,w:cx-1,h:7};};
+const LOGO=glyphRow('ARKIPELAG'),LOGO_SUB=glyphRow('UPPDRAG');
 /* the word is coloured as a Swedish flag: blue field, yellow cross (vertical bar at 5/16 of the width, horizontal bar on the middle row) */
 const FLAG_B='#006aa7',FLAG_Y='#fecc02',flagCol=b=>{const x0=Math.round(LOGO.w*5/16);return (b.y>=2&&b.y<=4)||(b.x>=x0&&b.x<x0+Math.round(LOGO.w*2/16))?FLAG_Y:FLAG_B;};
 function drawLogo(t){
   // flat dot-matrix letters, plotted column by column: a hot amber pen head that cools to paper, a hard navy offset shadow, then a chart scale bar
-  const cv=$('logo');if(!cv)return;const S=12,G1=1,SH=4,pad=6,BAR=22,W=LOGO.w*S+SH+pad*2,H=LOGO.h*S+SH+pad*2+BAR;
+  const cv=$('logo');if(!cv)return;const S=12,G1=1,SH=4,S2=6,TOP=LOGO_SUB.h*S2+12,BAR=22,W=LOGO.w*S+SH+12,H=LOGO.h*S+SH+12+BAR+TOP;
   if(cv.width!==W){cv.width=W;cv.height=H;}const c=cv.getContext('2d');c.clearRect(0,0,W,H);
+  {const a=clamp(t/.5,0,1);c.globalAlpha=a;for(const b of LOGO_SUB.blocks){c.fillStyle=COL.marin;c.fillRect(6+b.x*S2+2,6+b.y*S2+2,S2-1,S2-1);}for(const b of LOGO_SUB.blocks){c.fillStyle='#fff6d8';c.fillRect(6+b.x*S2,6+b.y*S2,S2-1,S2-1);}c.globalAlpha=1;}
+  const pad=6;c.save();c.translate(0,TOP);
   const T=1.5,head=t/T*(LOGO.w+2);
   const sq=(b,ox,oy,col)=>{c.fillStyle=col;c.fillRect(pad+b.x*S+ox,pad+b.y*S+oy,S-G1,S-G1);};
   const vis=LOGO.blocks.filter(b=>b.x<head);
@@ -3396,6 +3421,7 @@ function drawLogo(t){
     c.fillStyle=COL.marin;c.fillRect(pad+SH,y+SH-2,bw,6);
     for(let i=0;i<n;i++){const x0=pad+i*seg,x1=Math.min(pad+bw,x0+seg);if(x1<=x0)break;c.fillStyle=i%2?COL.ink:FLAG_Y;c.fillRect(x0,y,x1-x0,6);}
     c.fillStyle=COL.ink;c.fillRect(pad,y-3,2,12);if(k>=1)c.fillRect(pad+LOGO.w*S-G1-2,y-3,2,12);}
+  c.restore();
 }
 function titleRoute(extra){extra=extra||85;
   // radius to the outermost land along each bearing, pushed out to sea and smoothed, never cutting a headland
@@ -3511,11 +3537,11 @@ globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,pl
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget'),dk=q.get('doktrin');if(bu>0)ENEMY_CFG.budget=bu;if(dk&&DOCTRINE[dk])ENEMY_CFG.doctrine=dk;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
-newGame(1000+Math.floor(Math.random()*9000));if($('tSeed'))$('tSeed').textContent=G.seed;
+newGame(1000+Math.floor(Math.random()*9000));if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
 init3D();
 if(R3)buildStatic();
 mkFeeds();
-placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=G.seed;showTitle();
+placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();
 requestAnimationFrame(frame);
 })();
 </script>
