@@ -12,7 +12,7 @@ Designdokumentet "Brohuvud: designdokument" (https://claude.ai/artifact/LV1DFpR3
 ## Språk och stil
 
 - Svara på svenska.
-- Använd aldrig tankstreck eller pratstreck (– och —), varken i svar, kod, commits eller dokument.
+- Använd aldrig tankstreck eller pratstreck (U+2013 och U+2014), varken i svar, kod, commits eller dokument.
 - Säg emot när något verkar fel. Bästa möjliga resultat går före att hålla med.
 
 ## Spelet
