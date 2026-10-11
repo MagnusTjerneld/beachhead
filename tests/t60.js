@@ -33,4 +33,15 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
  B.cancelBuild('ship',1);ok(G.res===r0+120&&G.build.length===1,'queued HÖK cancelled, full refund');
  for(let i=0;i<200;i++)B.step(.05);const b=G.build[0],part=Math.round(200*b.t/b.total),r1=G.res;B.cancelBuild('ship',0);
  ok(!G.build.length&&Math.abs(G.res-r1-part)<1&&part<200,'VARG in production cancelled, '+part+' of 200 back');}
+// 6. a badly damaged VARG goes to a BÄVER nearby for field repair, not to the ship; a player order keeps it fighting
+{B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;G.res=500;const L=G.relays[0];
+ const v=G.units.find(u=>u.kind==='tank'),e=G.units.find(u=>u.kind==='eng');v.x=L.x+40;v.y=L.y;v.orders=[];e.x=L.x+160;e.y=L.y+20;e.orders=[];
+ v.hp=25;for(let i=0;i<20;i++)B.step(.05);ok(!v.rtb&&v.orders[0]&&v.orders[0].toRep===e.id,'damaged VARG drives to the BÄVER instead of the ship');
+ for(let t=0;t<60&&v.hp<74;t++)for(let i=0;i<20;i++)B.step(.05);ok(v.hp>=74,'repaired in the field to '+Math.round(v.hp));
+ const v2=G.units.filter(u=>u.kind==='tank')[1];v2.x=L.x+300;v2.y=L.y+200;e.x=9999;e.dead=true;v2.hp=20;v2.orders=[];for(let i=0;i<10;i++)B.step(.05);ok(v2.rtb,'without a BÄVER it retreats to the ship');
+ B.giveOrder(v2,{type:'move',x:L.x,y:L.y,post:'off'},false);for(let i=0;i<20;i++)B.step(.05);ok(!v2.rtb&&v2.orders[0]&&v2.orders[0].type==='move','a player order keeps it in the fight');}
+// 7. HÖK carries two robots and fires them by hand at the target in its sight
+{B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone');ok(h.maxAmmo===2&&h.ammo===2,'HÖK carries two robots');
+ const t=G.enemies.find(x=>x.kind==='light'||x.kind==='inf');for(const e of G.enemies)if(e!==t)e.dead=true;t.seen=true;t.visibleNow=true;t.lx=t.x;t.ly=t.y;t.hp=999;
+ h.x=t.x-80;h.y=t.y;h.heading=0;G.ctrl=h.id;B.droneRocket(h);ok(h.ammo===1,'R fires a robot at the target in the sight');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'second robot');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'no third');G.ctrl=null;}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
