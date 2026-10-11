@@ -3453,8 +3453,8 @@ function titleCam(dtr){
   if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:1});R3.scene.add(TITLE.drone);}
   const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.08);
   if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
-  // camera swings slowly between 60 degrees either side behind the HÖK (a full swing in about a minute), looking at it with the scenery beyond
-  const th=hd+PI+Math.sin(TITLE.t*.105)*PI/3,R0=30+Math.sin(TITLE.t*.11)*5;
+  // camera swings slowly between 45 degrees either side behind the HÖK (a full swing in about a minute), looking at it with the scenery beyond
+  const th=hd+PI+Math.sin(TITLE.t*.105)*PI/4,R0=30+Math.sin(TITLE.t*.11)*5;
   const cp=tmpV.set(m.position.x+Math.cos(th)*R0,TITLE.alt+7+Math.sin(TITLE.t*.07)*3,m.position.z+Math.sin(th)*R0);
   const la=tmpV2.set(m.position.x,TITLE.alt-2,m.position.z);
   if(!TITLE.cam){TITLE.cam=cp.clone();TITLE.look=la.clone();}
