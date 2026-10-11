@@ -2642,7 +2642,7 @@ function sync3D(dtr){
     if(e.dead||!(e.visibleNow||(e.seen&&!e.mobile)))continue;seen.add(e.id);
     let m=R3.enemies.get(e.id);if(!m){m=mkEnemyMesh(e);D.add(m);R3.enemies.set(e.id,m);}
     m.position.set(e.x,groundY(e.x,e.y),e.y);
-    if(!e.mobile)m.userData.head.rotation.y=-e.aim;else m.rotation.y=-e.aim;
+    if(!e.mobile&&m.userData.head)m.userData.head.rotation.y=-e.aim;else m.rotation.y=-e.aim;
   }
   for(const[id,m]of R3.enemies)if(!seen.has(id)){D.remove(m);R3.enemies.delete(id);}
   seen.clear();
