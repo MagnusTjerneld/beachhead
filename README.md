@@ -34,11 +34,12 @@ python3 -m http.server 8000
 - **Fiendens försvar:** fienden planerar försvaret när ön skapas. Den analyserar var man kan gå i land och vilka pass vägen till ledningscentralen måste ta, väljer doktrin (framskjutet, djup, fästning, rörligt) och fördelar en budget på spärrar, minfält, bunkrar, luftvärn, robotskyttar och reserv. Långa linjer stängs aldrig helt: det minst trafikerade passet lämnas öppet med en bunker bakom. Där en helikopter kan landsätta innanför försvaret förbi allt luftvärn stänger fästning och djupförsvar fickan med robotskyttar, medan framskjutet och rörligt försvar lämnar den. Laborera med `?budget=150&doktrin=djup` i adressen (standard 130, doktrinen väljs annars per ö).
 - **Låsta sektorer och minor:** allt bakom en oröjd spärr är låst och kan inte försörjas (ingen service, ingen bärgning). Minfält på trånga vägar syns från luften och röjs av BÄVER.
 - **Spanat område:** KROK flyger och bärgar bara där någon har tittat när den flyger själv. Luftvärnet ser och skjuter på KROK på 275 m, HÖK på 200 m och SPARV först inom radarns 110 m. Luftvärnet kan inte skjuta på markmål, så det slås ut från marken.
+- **Spaning åt VARG:** en VARG som anfaller ett kamouflerat mål som ingen ser ropar in en ledig HÖK som spanar från utanför känt luftvärn och väntar själv utom målets räckvidd. HÖK:s robotar når 120 m (som robotskyttarnas) och har halv verkan mot pansar; bunkrar skjuter mot flyg på 130 m.
 - **KROK för hand:** välj KROK och tryck E. Inga säkerhetsmarginaler, en kamera rakt nedåt i hörnet, F lyfter fordonet eller högen under dig eller sätter ned lasten.
 - **Fältreparation:** BÄVER lagar markfordon upp till 75 % där de står (B på en skadad VARG, eller automatiskt när den är ledig). Båda måste stå still och vara utanför eld, och det kostar material. Bakom en oröjd spärr är det den enda reparationen.
 - **Ekonomi:** bärgning. Riv med BÄVER för fullt värde, skjut sönder för mindre.
 - **Styrning:** klicka och dra för order, högerklick för orderhjulet, dra med höger musknapp för att panorera sjökortet, E tar och släpper kontroll, G får gruppen att följa den du kör.
-- **Ropa in:** peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK). Fungerar även när du kör en enhet. Inropningen är tillfällig: enheten återgår sedan till sitt uppdrag (eskort, följ, observera). Skift gör den till nytt uppdrag; en vanlig order ersätter uppdraget. Q byter huvudvy; två livebilder visar andra enheter.
+- **Ropa in:** peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK). Fungerar även när du kör en enhet. Inropningen är tillfällig: enheten återgår sedan till sitt uppdrag (eskort, följ, observera). Skift gör den till nytt uppdrag; en vanlig order ersätter uppdraget. Hjulet (högerklick) visar också de enskilda enheterna som kan ropas in, närmast först, så att du väljer vem som går utan att välja den först. Q byter huvudvy; två livebilder visar andra enheter.
 
 Hela reglerna finns under "Hur man spelar" i spelet.
 
@@ -72,7 +73,7 @@ node t45.js base   # datorspelare som spelar hela öar (tar några minuter per �
 | `t57.js` | BÄVER beställer lufttransport från fartyget |
 | `t58.js` | Låsta sektorer, försörjning bakom spärr, minor och inropning |
 | `t61.js` | Uppdrag och tillfälliga order: inropning återgår till uppdraget, Skift ger nytt uppdrag |
-| `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor |
+| `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor, avbrutna byggen, fältlagning, HÖK-robotar, spaning åt VARG mot kamouflerade mål |
 
 `smoke.py` laddar spelet i Chromium med Playwright, öppnar ordershjulet och fångar sidfel. Den behöver `npm install` i `tests/` (för Three.js) och Playwright för Python.
 

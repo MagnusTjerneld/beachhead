@@ -44,4 +44,16 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
 {B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone');ok(h.maxAmmo===2&&h.ammo===2,'HÖK carries two robots');
  const t=G.enemies.find(x=>x.kind==='light'||x.kind==='inf');for(const e of G.enemies)if(e!==t)e.dead=true;t.seen=true;t.visibleNow=true;t.lx=t.x;t.ly=t.y;t.hp=999;
  h.x=t.x-80;h.y=t.y;h.heading=0;G.ctrl=h.id;B.droneRocket(h);ok(h.ammo===1,'R fires a robot at the target in the sight');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'second robot');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'no third');G.ctrl=null;}
+// 8. a VARG attacking a camouflaged bunker it cannot see gets an idle HÖK to spot it from outside its air range, and kills it
+{B.newGame(6556);const G=B.G;G.running=true;const t=G.enemies.find(x=>x.kind==='turret');for(const e of G.enemies)if(e!==t)e.dead=true;t.seen=true;t.lx=t.x;t.ly=t.y;
+ const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');for(const u of G.units)if(u!==v&&u!==h){u.dead=true;}
+ const C={x:h.x,y:h.y},a=Math.atan2(C.y-t.y,C.x-t.x);v.x=t.x+Math.cos(a)*142;v.y=t.y+Math.sin(a)*142;v.orders=[];h.orders=[];
+ B.giveOrder(v,{type:'attack',enemy:t,post:'off'},false);for(let i=0;i<10;i++)B.step(.05);
+ const so=h.orders[0];ok(so&&so.type==='obs'&&so.spotFor===t,'idle HÖK sent to spot the bunker');
+ let minD=1e9;for(let i=0;i<20*120&&!t.dead;i++){B.step(.05);if(h.x!==undefined&&Math.hypot(h.x-t.x,h.y-t.y)<minD&&h.orders[0]&&h.orders[0].spotFor)minD=Math.hypot(h.x-t.x,h.y-t.y);}
+ ok(t.dead,'bunker killed with the spotter');ok(minD>130,'spotter stayed outside the bunker air range (closest '+Math.round(minD)+' m)');
+ for(let i=0;i<20;i++)B.step(.05);ok(!h.orders[0]||!h.orders[0].spotFor,'spotting order ends with the target');}
+// 9. robots hurt armor at half effect, the MG does not bother
+{B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(x=>x.kind==='turret');
+ ok(B.canHit(h,t,true),'HÖK with robots can engage a bunker when told to');ok(!B.canHit(h,t),'but never picks armor on its own');h.ammo=0;ok(!B.canHit(h,t),'without robots it cannot');ok(Math.abs(B.dmgMult(h,t,'rocket')-.5)<1e-9,'robot vs armor at half effect');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

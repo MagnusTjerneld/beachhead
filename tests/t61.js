@@ -30,4 +30,11 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const [a,b]=G.units.filter(u=>u.kind==='tank'),e=G.units.find(u=>u.kind==='eng');a.x=L.x+20;a.y=L.y;a.orders=[];b.x=L.x+40;b.y=L.y+10;e.x=L.x+55;e.y=L.y+5;e.orders=[];
  B.giveOrder(b,{type:'follow',unit:a,post:'def'},false);run(1);b.hp=30;run(3);ok(e.orders[0]&&e.orders[0].type==='repair'&&e.orders[0].unit===b,'idle BÄVER repairs a VARG that is on its mission');
  for(let t=0;t<40&&e.orders.length;t++)run(1);run(1);ok(b.hp>=74&&b.orders[0]===b.mission,'repaired VARG back on its mission ('+Math.round(b.hp)+' hp)');}
+// the wheel names individual units: pick who takes a relay without selecting it first
+{B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const r=G.relays.find(x=>!x.captured);
+ const es=G.units.filter(u=>u.kind==='eng');B.queueBuild&&0;if(es.length<2){const n=B.makeUnit('eng',r.x+300,r.y);G.units.push(n);es.push(n);}
+ es[0].x=r.x+40;es[0].y=r.y;es[1].x=r.x+200;es[1].y=r.y;for(const e of es)e.orders=[];
+ const it=B.callItems({relay:r});ok(it[0].l.includes(es[0].name),'default item names the nearest BÄVER ('+it[0].l+')');
+ const alt=it.find(x=>x.l.startsWith(es[1].name));ok(!!alt,'the other BÄVER is offered by name');alt.f();
+ ok(es[1].orders[0]&&es[1].orders[0].type==='capture'&&!es[0].orders.length,'the chosen BÄVER takes the relay, the nearest stays');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
