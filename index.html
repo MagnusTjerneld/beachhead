@@ -642,6 +642,9 @@ function buildWorldTry(seed,tryK){
   const line=inner;
   if(mids.length){R();R();}   // keep the world's random sequence where the old placement drew from it
   W.plan={doctrine,budget,left:Math.round(left),spent,defended:[...Dz],inner:inner.length,outer:outer.length,barred:lineBar.length,mined:W.mineSites.length,cracks:cracks.length,entries:entries.map(e=>e.kind),beachT:nBeach};
+  {const role=p=>lineBar.some(x=>x.p===p)?'barrier':minedP.includes(p)?'mine':lineMine.includes(p)?'nomine':cracks.includes(p)?'crack':'';const mid=p=>{const st=sites.get(p);if(st)return{x:st.x,y:st.y};const a2=zc[p.a],b2=zc[p.b];return{x:(a2.x+b2.x)/2,y:(a2.y+b2.y)/2};};
+    W.planDbg={entries:entries.map(e=>({z:e.z,x:e.pt.x,y:e.pt.y,w:e.w,kind:e.kind})),pass:pass.map(p=>({a:p.a,b:p.b,...mid(p),t:+traffic.get(p).toFixed(2),line:inner.includes(p)?'inner':outer.includes(p)?'outer':'',role:role(p),crackRank:cracks.indexOf(p)})),
+      Dz:[...Dz],outerZ:[...outerZ],dw,nPass:pass.length,nZ:lz.length,obj:{r1:r1z,r2:r2z,r3:r3z,land},zc:zc.map(c=>c&&{x:c.x,y:c.y})};}
   W.enemies=E;
   // salvage: building clusters per zone, loose materiel, old hulks on the landing beach; richer deeper in
   const STR=[],DEB=[];W.structs=STR;W.debris=DEB;
