@@ -3065,7 +3065,7 @@ $('bStart').addEventListener('click',()=>{audInit();startGame();});
 $('title').addEventListener('click',()=>titleWake(false));
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
-$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
+$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 function restart(seed){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed);if(R3&&R3.seed!==WORLD.seed)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>restart(G.seed));
 $('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000)));
@@ -3449,9 +3449,13 @@ function titleCam(dtr){
   let cliff=0;{const dx=CX-p.x,dz=CY-p.z,dl=Math.hypot(dx,dz)||1;for(let r=0;r<=160;r+=20)cliff=Math.max(cliff,groundY(p.x+dx/dl*r,p.z+dz/dl*r));}
   const shipUp=Math.hypot(p.x-CARRIER.x,p.z-CARRIER.y)<140?22:0,want=Math.max(gmax+30,cliff+16)+shipUp;
   TITLE.alt=TITLE.alt==null?want:lerp(TITLE.alt,want,Math.min(1,dtr*.6));
-  const hd=Math.atan2(q.z-p.z,q.x-p.x);
+  // smooth the flight: the route is a polyline, so the drone eases toward it and turns gently instead of following every kink
+  const hdRaw=Math.atan2(q.z-p.z,q.x-p.x),ks=1-Math.exp(-1.2*dtr);
+  if(!TITLE.sp){TITLE.sp={x:p.x,z:p.z};TITLE.hd=hdRaw;}
+  TITLE.sp.x+=(p.x-TITLE.sp.x)*ks;TITLE.sp.z+=(p.z-TITLE.sp.z)*ks;TITLE.hd+=angWrap(hdRaw-TITLE.hd)*(1-Math.exp(-.9*dtr));
+  const hd=TITLE.hd,bank=clamp(angWrap(hdRaw-TITLE.hd)*1.4,-.35,.35);p.x=TITLE.sp.x;p.z=TITLE.sp.z;
   if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:1});R3.scene.add(TITLE.drone);}
-  const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.08);
+  const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.05+bank);
   if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
   // camera swings slowly between 45 degrees either side behind the HÖK (a full swing in about a minute), looking at it with the scenery beyond
   const th=hd+PI+Math.sin(TITLE.t*.105)*PI/4,R0=30+Math.sin(TITLE.t*.11)*5;
@@ -3469,7 +3473,7 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
