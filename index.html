@@ -613,6 +613,8 @@ function buildWorldTry(seed,tryK){
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)ev[j*nx+i]=elevAt(i*WW/SX,j*WH/SY,s,V);
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
   W.SX=SX;W.SY=SY;W.ev=ev;W.vcls=vcls;
+  // each grid square is split along the diagonal whose ends differ least in height (1 = a-d, 0 = b-c): contours such as the waterline then follow the slope instead of a sawtooth
+  {const dg=new Uint8Array(SX*SY);for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=ev[j*nx+i],b=ev[j*nx+i+1],c=ev[(j+1)*nx+i],d=ev[(j+1)*nx+i+1];dg[j*SX+i]=Math.abs(a-d)<Math.abs(b-c)?1:0;}W.diag=dg;}
   // archipelago dressing, decoration only: jetties with moored boats, boats at anchor, spar buoys, a lighthouse on an outer point
   {const Rk=rng(s*71+3),G0=W.baseGrid,wetK=i=>G0[i]===DEEP||G0[i]===SHAL,isl=[];W.islets=isl;W.isletMask=new Uint8Array(GW*GH);
     const harbor=harborPt,N=6+Math.floor(Rk()*5);
@@ -722,6 +724,7 @@ function buildWorldTry(seed,tryK){
 }
 function heightAt(x,y){const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1;const fx=clamp(x/WW*SX,0,SX-.001),fy=clamp(y/WH*SY,0,SY-.001);const i=Math.floor(fx),j=Math.floor(fy),u=fx-i,v=fy-j;const e=W.ev;const a=e[j*nx+i],b=e[j*nx+i+1],c=e[(j+1)*nx+i],d=e[(j+1)*nx+i+1];
   // same split as the 3D terrain mesh (triangles a,c,b and b,c,d), so heights match what is drawn even on cliffs
+  if(W.diag&&W.diag[j*SX+i])return u>=v?a+(b-a)*u+(d-b)*v:a+(c-a)*v+(d-c)*u;
   return u+v<=1?a+(b-a)*u+(c-a)*v:d+(c-d)*(1-u)+(b-d)*(1-v);}
 // lowest safe camera height at x,z: clear of the terrain within the near-plane radius
 function camFloor(x,z){let h=heightAt(x,z);for(let k=0;k<8;k++){const a=k*PI/4;h=Math.max(h,heightAt(x+Math.cos(a)*3,z+Math.sin(a)*3));}return Math.max(h,0)+1.8;}
@@ -2139,7 +2142,7 @@ function buildStatic(){
     else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
     col[k*3]=c[0]+n;col[k*3+1]=c[1]+n;col[k*3+2]=c[2]+n*.6;
   }
-  let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}
+  let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(W.diag&&W.diag[j*SX+i]){idx[p++]=a;idx[p++]=c;idx[p++]=d;idx[p++]=a;idx[p++]=d;idx[p++]=b;}else{idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}}
   const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(pos,3));tg.setAttribute('color',new THREE.BufferAttribute(col,3));tg.setIndex(new THREE.BufferAttribute(idx,1));tg.computeVertexNormals();
   const terrain=new THREE.Mesh(tg,new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000}));st.add(terrain);R3.terrain=terrain;
   // open seabed beyond the terrain mesh, so the edge of the map never shows through the water
@@ -2238,10 +2241,11 @@ function mkWaterMat(){
        if(uHasDepth>0.5){vec2 uv=(vWPos.xz/2200.0*uGrid+0.5)/(uGrid+1.0);
         if(uv.x>0.0&&uv.y>0.0&&uv.x<1.0&&uv.y<1.0){float dep=8.0-texture2D(uDepth,uv).r*16.0;
           float nz=0.55+0.45*sin(vWPos.x*0.37+uTime*0.5)*sin(vWPos.z*0.29-uTime*0.37)+0.25*sin(vWPos.x*1.3-vWPos.z*1.1+uTime);
-          float edge=smoothstep(0.7,0.08,dep)+smoothstep(1.6,0.4,dep)*0.35*nz;
+          float edge=smoothstep(0.8,0.2,dep)+smoothstep(1.6,0.4,dep)*0.35*nz;
           float band=smoothstep(0.6,0.95,sin(dep*4.0-uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
-          float fo=clamp(edge+band*0.75*nz,0.0,1.0)*step(-0.05,dep)*clamp(1.0-wDist/900.0,0.0,1.0);
-          outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a,fo);}}}`);};
+          float lip=smoothstep(0.02,0.3,dep);
+          float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
+          outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);}}}`);};
   return m;
 }
 // depth of the seabed for the foam: the terrain grid packed into a texture (8 m above to 8 m below the surface)
