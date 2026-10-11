@@ -104,6 +104,8 @@ button:disabled{opacity:.45;cursor:default}
 .olist li button{background:none;border:0;color:var(--dim);font-size:14px;padding:0 6px}
 .olist li button:hover{color:var(--mag)}
 .olist li.now{border-color:#41566a}
+.olist li.mission{border-left:3px solid var(--signal)}
+.olist li.mission span{color:var(--signal)}
 .who b{color:var(--ink);letter-spacing:.06em}
 .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
@@ -132,6 +134,7 @@ button:disabled{opacity:.45;cursor:default}
 .ru .rn i{width:8px;height:8px;border-radius:50%;flex:none}
 .ru .rn em{font-style:normal;font-weight:500;font-size:10.5px;color:var(--dim);margin-left:auto;letter-spacing:.02em}
 .ru .rs{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ru .rm{font-size:10px;line-height:12px;height:12px;color:var(--signal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ru.sel{border-color:var(--signal);box-shadow:inset 0 0 0 1px var(--signal)}
 .ru.cam{background:#1e2e3d}
 .ru.alert{border-color:var(--mag)}.ru.alert .rs{color:var(--mag)}
@@ -265,6 +268,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
+      <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder visar andra enheter, helst de som strider; FÄST låser en bild vid enheten, klick visar den i kameran. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. Utan musen skjuter den automatiskt.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. Automatiskt flyger den bara över spanat område och sätter aldrig ned inom räckhåll för kända hot. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, SPARV först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
@@ -1119,6 +1123,11 @@ function airPath(u,tx,ty,o){
 }
 function move(u,dt){
   const o=u.orders[0];
+  if(!o&&u.mission&&!u.rtb){
+    const m=u.mission;
+    if(m.type==='follow'&&!m.escort&&(!m.unit||m.unit.dead)){u.mission=null;say(u,'Uppdraget avslutat: '+(m.unit?m.unit.name:'målet')+' förlorad.');}
+    else{u.orders.push(m);u.path=null;if(u.tempOn){u.tempOn=false;say(u,'Klar. Återgår till uppdraget: '+mText(m).toLowerCase()+'.');}return;}
+  }
   if(!o){
     u.override=false;u.path=null;
     if(u.air){orbit(u,dt);u.state=dist(u.orbit,CARRIER)<50?'Cirklar vid fartyget':'Cirklar över '+sq(u.orbit.x,u.orbit.y);}
@@ -1136,7 +1145,7 @@ function move(u,dt){
   else if(o.type==='raze'){const st=o.s;if(st.dead){u.orders.shift();u.path=null;return;}tx=st.x;ty=st.y;arr=effRange(u)*.8;u.state='På väg mot '+slabel(st);}
   else if(o.type==='follow'){
     if(o.escort&&(!o.unit||o.unit.dead)){const nx=(o.group||[]).map(id=>G.units.find(v=>v.id===id&&!v.dead&&!v.carried)).filter(Boolean).sort((a,b)=>dist(a,u)-dist(b,u))[0];if(nx){o.unit=nx;say(u,'Eskortmålet förlorat. Eskorterar nu '+nx.name+'.');}}
-    const t=o.unit;if(!t||t.dead){u.orders.shift();u.path=null;u.escTgt=null;if(o.escort)say(u,'Ingen kvar att eskortera.');return;}
+    const t=o.unit;if(!t||t.dead){u.orders.shift();u.path=null;u.escTgt=null;if(u.mission===o)u.mission=null;if(o.escort)say(u,'Ingen kvar att eskortera.');return;}
     if(o.escort&&u.air){const e=escortTarget(u,o);u.escTgt=e;
       if(e){const R=effRange(u),d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,k=Math.min(d,R*.75);tx=e.lx+(u.x-e.lx)/d*k;ty=e.ly+(u.y-e.ly)/d*k;arr=8;u.state='Eskort · bekämpar '+ename(e)+' åt '+t.name;}
       else{tx=t.x+Math.cos(t.heading)*45;ty=t.y+Math.sin(t.heading)*45;arr=14;u.state='Eskorterar '+t.name+' · '+(o.post==='off'?'söker mål':'skyddar gruppen');}
@@ -1445,7 +1454,7 @@ function krokOrders(k,dt,sp){
   if(o.type==='move'){k.status='Flyger till '+sq(o.tp.x,o.tp.y);const d=krokFly(k,o.tp.x,o.tp.y,dt,sp);if(d===Infinity){k.status='Ingen spanad väg dit';o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område. Ordern struken.');k.orders.shift();}return;}if(d<3){k.orders.shift();k.path=null;}return;}
   if(o.type==='lift'){
     const u=o.unit;if(!u||u.dead||u.carried||k.cargo){if(u&&u.awaitKrok===k.id)u.awaitKrok=null;k.orders.shift();k.path=null;return;}
-    if(!o.started){o.started=true;o.t=0;if(!o.keep)u.orders=[];resetFor(u);if(G.ctrl===u.id)dropCtrl();u.awaitKrok=k.id;say(u,'Väntar på '+k.name+' för lufttransport.');}
+    if(!o.started){o.started=true;o.t=0;if(!o.keep){u.orders=[];u.mission=null;u.tempOn=false;}resetFor(u);if(G.ctrl===u.id)dropCtrl();u.awaitKrok=k.id;say(u,'Väntar på '+k.name+' för lufttransport.');}
     if(airDanger(k,u.x,u.y)){say(k,u.name+' står inom räckhåll för kända hot. Kan inte hämta.');u.awaitKrok=null;k.orders.shift();k.path=null;return;}
     const d=krokFly(k,u.x,u.y,dt,sp);k.status='Hämtar '+u.name;
     if(d===Infinity){k.status='Ingen spanad väg till '+u.name;o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område till '+u.name+'. Ordern struken.');u.awaitKrok=null;k.orders.shift();}return;}
@@ -1592,11 +1601,20 @@ function defaultOrder(u,pk,post){
   if(!pk.world)return null;
   return{type:'move',x:clamp(pk.world.x,10,WW-10),y:clamp(pk.world.y,10,WH-10),post};
 }
-function giveOrder(u,o,append){
+/* Missions: a unit has a standing mission (escort, follow, hold or watch a point) and temporary orders on top.
+   An ordinary order replaces the mission (a standing order becomes the new one); a call-in is temporary, and when it is
+   done the unit goes back to its mission; Shift on a call-in makes it the new mission instead */
+const STANDING=o=>o&&(o.type==='follow'||o.type==='obs');
+function mText(m){return !m?'':m.type==='follow'?(m.escort?'Eskort ':'Följer ')+(m.unit?m.unit.name:''):m.type==='obs'?'Bevakar '+sq(m.x,m.y):oText(m);}
+function giveOrder(u,o,append,mode){
   if(!u||u.dead||!o)return;u.awaitRep=null;
   if(G.ctrl===u.id)dropCtrl();
   if(append){if(u.rtb&&u.saved){u.saved.push(o);}else u.orders.push(o);}
-  else{u.orders=[o];resetFor(u);}
+  else{
+    if(mode==='temp'){u.tempOn=!!u.mission;}
+    else if(mode==='mission'&&STANDING(o)){u.mission=o;u.tempOn=false;}
+    else{u.mission=STANDING(o)?o:null;u.tempOn=false;}
+    u.orders=[o];resetFor(u);}
   const p=orderPt(o);ping(p.x,p.y);
 }
 function formation(n,ang){const out=[],fx=Math.cos(ang),fy=Math.sin(ang),px=-fy,py=fx,s=16;for(let i=0;i<n;i++){const col=(i%3)-1,row=Math.floor(i/3);out.push({x:px*col*s-fx*row*s,y:py*col*s-fy*row*s});}return out;}
@@ -1670,7 +1688,7 @@ function mineSide(m,p){let best=null,bd=1e9;const R0=m.r+3,R1=m.r+11;
 /* field repair: BÄVER patches up a ground vehicle nearby. Both must be still and out of fire; it gets the vehicle to 75 %
    at a third of the ship's rate and costs material. Behind an uncleared barrier this is the only repair there is */
 const REP={r:25,rate:8/3,cap:.75,cost:.5,quiet:5};
-function repairCand(u,R){let best=null,bd=R;const free=v=>!v.orders.length||v.rtb;if(!passLand(cellIdx(u.x,u.y))||dist(u,homeFor(u))<homeFor(u).r)return null;
+function repairCand(u,R){let best=null,bd=R;const free=v=>!v.orders.length||v.rtb||(v.mission&&v.orders[0]===v.mission);if(!passLand(cellIdx(u.x,u.y))||dist(u,homeFor(u))<homeFor(u).r)return null;
   for(const v of G.units){if(v===u||v.dead||v.carried||v.air||(v.kind!=='tank'&&v.kind!=='eng')||v.hp>=v.maxhp*REP.cap-1||!free(v)||v.id===G.ctrl)continue;if(G.units.some(w=>w!==u&&!w.dead&&w.orders[0]&&w.orders[0].type==='repair'&&w.orders[0].unit===v))continue;const d=dist(u,v);if(d<bd){bd=d;best=v;}}return best;}
 function workRepair(t,u,o,dt){
   if(t.repX==null||Math.hypot(t.x-t.repX,t.y-t.repY)>.4){t.repX=t.x;t.repY=t.y;t.repStill=0;}else t.repStill=(t.repStill||0)+dt;
@@ -1700,8 +1718,8 @@ function queueBuild(k){const T=TYPES[k],alive=G.units.filter(u=>!u.dead).length;
    selection or the unit you drive. B: BÄVER, H: HÖK air support, V: VARG, K: KROK ---------- */
 const CALL={eng:'BÄVER',air:'HÖK',tank:'VARG',krok:'KROK'};
 function callTarget(pk){return pk.mine?{x:pk.mine.x,y:pk.mine.y}:pk.barrier?{x:pk.barrier.x,y:pk.barrier.y}:pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.struct?{x:pk.struct.x,y:pk.struct.y}:pk.wreck?{x:pk.wreck.x,y:pk.wreck.y}:pk.unit?{x:pk.unit.x,y:pk.unit.y}:pk.world||null;}
-function callIn(kind,pk){
-  pk=pk||{};const tp=callTarget(pk);if(!tp)return false;
+function callIn(kind,pk,asMission){
+  pk=pk||{};const cm=asMission?'mission':'temp',mk=o=>asMission&&o.type==='move'?Object.assign(o,{type:'obs'}):o;const tp=callTarget(pk);if(!tp)return false;
   const ok=v=>!v.dead&&!v.carried&&v.id!==G.ctrl,byD=a=>a.sort((p,q)=>dist(p,tp)-dist(q,tp)),W=v=>({x:clamp(v.x,10,WW-10),y:clamp(v.y,10,WH-10)});
   if(kind==='eng'){
     const es=byD(G.units.filter(v=>v.kind==='eng'&&ok(v)));
@@ -1714,7 +1732,7 @@ function callIn(kind,pk){
     else if(pk.unit&&pk.unit!==u&&!pk.unit.dead&&!pk.unit.air&&!pk.unit.carried&&(pk.unit.kind==='tank'||pk.unit.kind==='eng')&&pk.unit.hp<pk.unit.maxhp*REP.cap-1){o={type:'repair',unit:pk.unit,post:'def'};what='lagar '+pk.unit.name;}
     else if(pk.struct&&!pk.struct.dead){pk.struct.krok=true;o={type:'demolish',s:pk.struct,post:'def'};what='river '+slabel(pk.struct);}
     else{o=Object.assign({type:'move',post:'def'},W(tp));what='kör till ruta '+sq(tp.x,tp.y);}
-    giveOrder(u,o,false);say(u,'Inropad: '+what+'.');return true;}
+    giveOrder(u,mk(o),false,cm);say(u,'Inropad: '+what+(asMission&&STANDING(o)?' (nytt uppdrag)':'')+'.');return true;}
   if(kind==='air'){
     const hs=byD(G.units.filter(v=>v.kind==='drone'&&ok(v)&&!v.rtb&&v.fuel>v.maxFuel*.3)).slice(0,2);
     if(!hs.length){say(null,'Ingen HÖK redo för luftstöd (batteri eller service).',[{l:'Bygg HÖK',f:()=>queueBuild('drone')}]);return false;}
@@ -1722,7 +1740,7 @@ function callIn(kind,pk){
       if(pk.enemy&&!pk.enemy.dead&&canHit(u,pk.enemy)&&u.ammo>=1)o={type:'attack',enemy:pk.enemy,post:'off'};
       else if(pk.unit&&!pk.unit.air&&!pk.unit.dead)o={type:'follow',unit:pk.unit,post:'def',escort:true,group:escortGroup(pk.unit)};
       else o=Object.assign({type:'obs',post:'def'},W(tp));
-      giveOrder(u,o,false);}
+      giveOrder(u,mk(o),false,cm);}
     say(hs[0],'Luftstöd: '+hs.map(v=>v.name).join(' och ')+(pk.enemy?' mot '+ename(pk.enemy):pk.unit?' eskorterar '+pk.unit.name:' över ruta '+sq(tp.x,tp.y))+'.');return true;}
   if(kind==='tank'){
     let vs=G.units.filter(v=>v.kind==='tank'&&ok(v)&&(G.ctrl?(G.ctrlSel||[]).includes(v.id):G.selIds.includes(v.id)));
@@ -1736,7 +1754,7 @@ function callIn(kind,pk){
       else if(pk.struct&&!pk.struct.dead)o={type:'raze',s:pk.struct,post:'off'};
       else if(pk.unit&&pk.unit!==u&&!pk.unit.dead)o={type:'follow',unit:pk.unit,post:'def'};
       else o=Object.assign({type:'move',post:'off'},W({x:tp.x+offs[i].x,y:tp.y+offs[i].y}));
-      giveOrder(u,o,false);});
+      giveOrder(u,mk(o),false,cm);});
     say(vs[0],'Inropad: '+vs.map(v=>v.name).join(' och ')+(pk.enemy?' anfaller '+ename(pk.enemy):' mot ruta '+sq(tp.x,tp.y))+'.');return true;}
   if(kind==='krok'){
     if(pk.wreck){orderKrok(pk.wreck);return true;}
@@ -2924,11 +2942,11 @@ function buildRoster(){
   rosterEl.innerHTML='';
   for(const u of[...G.units,...G.kroks]){
     const el=document.createElement('button');el.type='button';el.className='ru'+(u.kind==='krok'?' service':'');
-    el.innerHTML='<span class="rn"><i></i><span></span><em></em></span><span class="bars"><span class="b hp"><b></b></span>'+(u.air&&u.kind!=='krok'?'<span class="b fu"><b></b></span>':'')+'</span><span class="rs"></span>';
+    el.innerHTML='<span class="rn"><i></i><span></span><em></em></span><span class="bars"><span class="b hp"><b></b></span>'+(u.air&&u.kind!=='krok'?'<span class="b fu"><b></b></span>':'')+'</span><span class="rs"></span><span class="rm"></span>';
     el.querySelector('.rn i').style.background=u.color;el.querySelector('.rn span').textContent=u.name;el.title='Klick väljer, Ctrl+klick lägger till, dubbelklick visar kameran';
     el.addEventListener('click',ev=>{if(u.kind==='krok'){if(!u.dead)selectKrok(u);}else if(!u.dead){if(ev.ctrlKey||ev.metaKey||ev.shiftKey)toggleSel(u.id);else setSel([u.id]);}uiTick(true);});
     el.addEventListener('dblclick',()=>{if(u.dead)return;setCam(u.id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}uiTick(true);});
-    rosterEl.appendChild(el);cardRefs[u.id]={el,u,state:el.querySelector('.rs'),em:el.querySelector('.rn em'),hp:el.querySelector('.hp > b'),fu:el.querySelector('.fu > b')};
+    rosterEl.appendChild(el);cardRefs[u.id]={el,u,state:el.querySelector('.rs'),mis:el.querySelector('.rm'),em:el.querySelector('.rn em'),hp:el.querySelector('.hp > b'),fu:el.querySelector('.fu > b')};
   }
 }
 const postRow=$('postRow');
@@ -2947,7 +2965,7 @@ function setFollowMe(on){const u=G.ctrl&&unitById(G.ctrl);if(!u||u.kind==='krok'
     for(const v of gs){giveOrder(v,{type:'follow',unit:u,post:v.post,escort:!!v.air,group:grp,slot:v.air?null:k++,me:true},false);}
     say(u,'Gruppen följer mig: '+gs.map(v=>v.name).join(', ')+'.');}
   else stopFollowMe(true);}
-function stopFollowMe(msg){if(!G.followMe)return;G.followMe=false;for(const v of G.units)if(v.orders[0]&&v.orders[0].me){v.orders=[];resetFor(v);if(v.air)v.orbit={x:v.x,y:v.y};}if(msg)say(null,'Gruppen håller position.');}
+function stopFollowMe(msg){if(!G.followMe)return;G.followMe=false;for(const v of G.units){if(v.mission&&v.mission.me)v.mission=null;}for(const v of G.units)if(v.orders[0]&&v.orders[0].me){v.orders=[];resetFor(v);if(v.air)v.orbit={x:v.x,y:v.y};}if(msg)say(null,'Gruppen håller position.');}
 function setCtrl(id){
   const prev=G.ctrl?unitById(G.ctrl):null;
   if(!id){stopFollowMe(true);if(prev&&prev.kind==='krok'){krokHookStop(prev);prev.state=prev.carry?'back':'idle';}if(prev&&!prev.dead)say(prev,'Tillbaka i autonomi.');G.ctrl=null;G.joy=null;G.firing=false;if(document.pointerLockElement)document.exitPointerLock();return;}
@@ -2964,7 +2982,7 @@ const unitBuilds=()=>G.build.filter(b=>b.kind!=='krok').length+G.fbuild.length,k
 for(const k of['scout','drone','tank','eng','krok']){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.k=k;b.innerHTML='<span></span><small></small>';const T=k==='krok'?{label:'KROK',cost:KROK_COST,build:KROK_BUILD}:TYPES[k];b.firstChild.textContent=T.label;b.lastChild.textContent=T.cost+' · '+T.build+' s';
   b.addEventListener('click',()=>{const alive=G.units.filter(u=>!u.dead).length;if(G.res<T.cost)return;if(k==='krok'?krokCount()>=KROK_MAX:alive+unitBuilds()>=MAXUNITS)return;const fv=G.buildAt!=='ship'&&G.relays.find(r=>r.id===G.buildAt&&r.captured);if(fv&&!VARV_KINDS.includes(k))return;G.res-=T.cost;if(fv){G.fbuild.push({kind:k,t:T.build*VARV_SLOW,total:T.build*VARV_SLOW,at:fv.id});say(null,T.label+' i kö på fältvarvet '+fv.id+'.');}else{G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö.');}uiTick(true);});yardRow.appendChild(b);}
 $('bAuto').addEventListener('click',()=>{G.krokAuto=!G.krokAuto;G.krokMsg=null;say(null,G.krokAuto?'KROK hämtar allt i säkra områden.':'KROK hämtar bara det du beställer.');uiTick(true);});
-$('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of selUnits()){u.orders=[];resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
+$('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of selUnits()){u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
 $('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of selUnits()){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of selUnits()){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
 $('bPause').addEventListener('click',()=>{G.paused=!G.paused;uiTick(true);});
@@ -2995,7 +3013,7 @@ window.addEventListener('blur',()=>keys.clear());
 const HOV={el:null,x:0,y:0,t:0,pk:null,ct:0,cpk:null};
 const CALLKEY={KeyB:'eng',KeyH:'air',KeyV:'tank',KeyK:'krok'};
 function pointedPick(){if(G.mlook)return pick('cam',size.cam.w/2,size.cam.h/2);if(!HOV.el)return null;return pick(viewKind(HOV.el),HOV.x,HOV.y);}
-function doCall(kind,key){const pk=pointedPick();if(!pk||!callTarget(pk)){say(null,'Peka på ett mål i kameran eller på sjökortet och tryck '+String(key).toUpperCase()+'.');return;}callIn(kind,pk);}
+function doCall(kind,key,shift){const pk=pointedPick();if(!pk||!callTarget(pk)){say(null,'Peka på ett mål i kameran eller på sjökortet och tryck '+String(key).toUpperCase()+'.');return;}callIn(kind,pk,shift&&kind!=='krok');}
 function swapViews(){G.mainMode=G.mainMode==='map'?'cam':'map';placePanes();uiTick(true);}
 function focusUnit(u){if(u&&!u.dead){setCam(u.id);uiTick(true);}}
 function focusPoint(x,y){ping(x,y);if(G.mainMode==='map'){mv.free=true;mv.z=Math.max(mv.z,2.2);mv.cx=x;mv.cy=y;}}
@@ -3086,7 +3104,7 @@ $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
   if(TITLE.on){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();if(!$('intro').hidden&&e.key==='Escape'){$('intro').hidden=true;return;}titleWake(true);}return;}
   if(e.key==='Escape'){closeWheel();if(G.ctrl){setCtrl(null);uiTick(true);}else if(G.selK){G.selK=null;uiTick(true);}return;}
-  if(CALLKEY[e.code]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.running){e.preventDefault();doCall(CALLKEY[e.code],e.key);uiTick(true);return;}
+  if(CALLKEY[e.code]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.running){e.preventDefault();doCall(CALLKEY[e.code],e.key,e.shiftKey);uiTick(true);return;}
   if(e.code==='KeyQ'&&!e.ctrlKey&&!e.metaKey&&G.running){swapViews();return;}
   if(G.ctrl&&DRIVE.includes(e.code)){keys.add(e.code);e.preventDefault();return;}
   const m=/^Digit([1-9])$/.exec(e.code||'');
@@ -3105,8 +3123,10 @@ window.addEventListener('keydown',e=>{
 let olSig='';
 function renderOrders(v){
   const el=$('orderList'),list=v?v.orders:[],krok=v&&v.kind==='krok';
-  const sig=v?v.id+':'+list.map(o=>oText(o,krok)).join('|'):'';if(sig===olSig)return;olSig=sig;el.innerHTML='';
-  list.forEach((o,i)=>{const li=document.createElement('li');if(i===0)li.className='now';li.innerHTML='<span></span><b></b><button type="button" aria-label="Ta bort ordern">×</button>';li.children[0].textContent=(i+1)+'.';li.children[1].textContent=oText(o,krok);
+  const mi=v&&!krok&&v.mission?v.mission:null,sig=v?v.id+':'+(mi?'M'+mText(mi):'')+':'+list.map(o=>oText(o,krok)).join('|'):'';if(sig===olSig)return;olSig=sig;el.innerHTML='';
+  if(mi){const li=document.createElement('li');li.className='mission'+(list[0]===mi?' now':'');li.innerHTML='<span></span><b></b><button type="button" aria-label="Avsluta uppdraget">×</button>';li.children[0].textContent='U';li.children[1].textContent='Uppdrag: '+mText(mi);li.title='Uppdraget ligger kvar. Inropningar är tillfälliga och enheten återgår hit när de är klara.';
+    li.children[2].addEventListener('click',()=>{if(v.orders[0]===v.mission){v.orders.shift();v.path=null;}v.mission=null;v.tempOn=false;olSig='';uiTick(true);});el.appendChild(li);}
+  list.forEach((o,i)=>{if(o===mi)return;const li=document.createElement('li');if(i===0)li.className='now';li.innerHTML='<span></span><b></b><button type="button" aria-label="Ta bort ordern">×</button>';li.children[0].textContent=(i+1)+'.';li.children[1].textContent=oText(o,krok);
     li.children[2].addEventListener('click',()=>{const j=v.orders.indexOf(o);if(j<0)return;
       if(krok){if(o.unit&&o.unit.awaitKrok===v.id)o.unit.awaitKrok=null;v.orders.splice(j,1);v.path=null;}
       else if(o.type==='rtb'&&v.rtb){v.rtb=false;const sv=v.saved||[];v.saved=null;v.orders=v.orders.filter(x=>x!==o).concat(sv);v.path=null;}
@@ -3143,8 +3163,8 @@ function uiTick(force){
     r.el.classList.toggle('sel',G.selIds.includes(u.id)||G.selK===u.id);
     const emT=u.kind==='krok'?'':G.ctrl===u.id?'manuell':(u.kind==='drone'?Math.floor(u.ammo)+' rob':'')+(wingOf(u.id)?(u.kind==='drone'?' · ':'')+'W'+wingOf(u.id):'');r.el.classList.toggle('cut',!u.dead&&!u.air&&lockedAt(u.x,u.y));if(r.em.textContent!==emT)r.em.textContent=emT;r.el.classList.toggle('cam',u.id===G.cam);r.el.classList.toggle('dead',!!u.dead);
     r.el.classList.toggle('alert',!u.dead&&u.kind!=='krok'&&(u.hold||u.rtb||G.time-u.lastHit<2));
-    const st=u.dead?'Förlorad':u.kind==='krok'?u.status:u.state;
-    if(r.state.textContent!==st)r.state.textContent=st;
+    const onM=u.mission&&u.orders[0]===u.mission,st=u.dead?'Förlorad':u.kind==='krok'?u.status:u.state,mt=u.dead||!u.mission?'':(onM?'Uppdrag: ':'Sedan: ')+mText(u.mission);if(r.mis&&r.mis.textContent!==mt)r.mis.textContent=mt;
+    if(r.state.textContent!==st){r.state.textContent=st;r.el.title=(u.mission?'Uppdrag: '+mText(u.mission)+'\n':'')+'Klick väljer, Ctrl+klick lägger till, dubbelklick visar kameran';}
     if(r.hp)r.hp.style.width=(u.hp/u.maxhp*100)+'%';
     if(r.fu)r.fu.style.width=(u.fuel/u.maxFuel*100)+'%';
   }

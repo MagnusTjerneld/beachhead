@@ -36,6 +36,9 @@ jobs:
       - name: Luftvärn, KROK för hand, fältreparation och luckor
         working-directory: tests
         run: node t60.js
+      - name: Uppdrag och tillfälliga order
+        working-directory: tests
+        run: node t61.js
 
   deploy:
     needs: test
