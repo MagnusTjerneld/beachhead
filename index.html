@@ -2131,10 +2131,12 @@ function buildStatic(){
     const k=j*nx+i,x=i*WW/SX,y=j*WH/SY,e=W.ev[k],t=W.vcls[k],n=hash2(i,j,W.seed+5)*.08-.04;
     pos[k*3]=x;pos[k*3+1]=e;pos[k*3+2]=y;
     let c;
-    if(t<=SHAL){const d=clamp(-e/8,0,1);c=[lerp(.62,.24,d),lerp(.6,.32,d),lerp(.48,.32,d)];}
-    else if(t===BEACH)c=[.80,.72,.52];
-    else if(t===ROCK)c=[.53,.51,.47];
-    else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];}
+    // archipelago granite: pink-grey slabs at the waterline with grey-green lichen, grey stony seabed; sand only on the landing beach
+    const lich=hash2(i>>1,j>>1,W.seed+9)*.65,granite=[lerp(.64,.53,lich),lerp(.58,.56,lich),lerp(.55,.48,lich)];
+    if(t<=SHAL){const d=clamp(-e/8,0,1);c=[lerp(.47,.24,d),lerp(.47,.32,d),lerp(.43,.32,d)];}
+    else if(t===BEACH){const sw=clamp((90-Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y))/35,0,1);c=[lerp(granite[0],.78,sw),lerp(granite[1],.71,sw),lerp(granite[2],.54,sw)];}
+    else if(t===ROCK){const dk=hash2(i,j,W.seed+11)*.1;c=[.57-dk,.53-dk,.51-dk];}
+    else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
     col[k*3]=c[0]+n;col[k*3+1]=c[1]+n;col[k*3+2]=c[2]+n*.6;
   }
   let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}
