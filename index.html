@@ -564,7 +564,8 @@ function buildWorldTry(seed,tryK){
   let Dz;
   if(doctrine==='framskjutet')Dz=new Set(lz.filter(z=>!entrySet.has(z)));
   else if(doctrine==='fastning'){Dz=new Set([r3z]);for(let it=0;it<3;it++){let best=null,bl=lineOf(Dz).length;for(const z of lz){if(Dz.has(z)||entrySet.has(z)||!nbr(z).some(q=>Dz.has(q.n)))continue;const t=new Set(Dz);t.add(z);const L=lineOf(t).length;if(L<bl){bl=L;best=z;}}if(best==null)break;Dz.add(best);}}
-  else if(doctrine==='rorligt')Dz=grow(D=>D.has(r2z));
+  // mobile defence holds only the command post (and R2 if it lies next to it); the reserve does the rest
+  else if(doctrine==='rorligt')Dz=new Set(nbr(r3z).some(q=>q.n===r2z)?[r3z,r2z]:[r3z]);
   else Dz=grow(D=>D.has(r2z)&&D.size>=Math.ceil(lz.length*.35));
   if(!Dz.size)Dz=new Set([r3z]);
   // two lines: the inner one around the defended region, the outer one where the ground the sea reaches ends
