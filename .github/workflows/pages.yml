@@ -33,6 +33,9 @@ jobs:
       - name: Låsta sektorer, minor och inropning
         working-directory: tests
         run: node t58.js
+      - name: Luftvärn, KROK för hand, fältreparation och luckor
+        working-directory: tests
+        run: node t60.js
 
   deploy:
     needs: test

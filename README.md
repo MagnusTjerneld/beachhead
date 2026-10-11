@@ -26,9 +26,11 @@ python3 -m http.server 8000
 
 - **Enheter:** SPARV (billig spanare), HÖK (drönare och ögon), VARG (svävare, slagkraft), BÄVER (ingenjör, bara på land, flygs i land av KROK) och KROK (bärgnings- och transporthelikopter).
 - **Strategiska punkter:** ledningscentralen är målet. Verkstad, radarstation och fältvarv är frivilliga men ger service, spaning och en framskjuten byggplats.
-- **Fiendens försvar:** fienden planerar försvaret när ön skapas. Den analyserar var man kan gå i land och vilka pass vägen till ledningscentralen måste ta, väljer doktrin (framskjutet, djup, fästning, rörligt) och fördelar en budget på spärrar, minfält, bunkrar, luftvärn, robotskyttar och reserv. Det blir ofta luckor att hitta. Laborera med `?budget=150&doktrin=djup` i adressen (standard 130, doktrinen väljs annars per ö).
+- **Fiendens försvar:** fienden planerar försvaret när ön skapas. Den analyserar var man kan gå i land och vilka pass vägen till ledningscentralen måste ta, väljer doktrin (framskjutet, djup, fästning, rörligt) och fördelar en budget på spärrar, minfält, bunkrar, luftvärn, robotskyttar och reserv. Långa linjer stängs aldrig helt: det minst trafikerade passet lämnas öppet med en bunker bakom. Där en helikopter kan landsätta innanför försvaret förbi allt luftvärn stänger fästning och djupförsvar fickan med robotskyttar, medan framskjutet och rörligt försvar lämnar den. Laborera med `?budget=150&doktrin=djup` i adressen (standard 130, doktrinen väljs annars per ö).
 - **Låsta sektorer och minor:** allt bakom en oröjd spärr är låst och kan inte försörjas (ingen service, ingen bärgning). Minfält på trånga vägar syns från luften och röjs av BÄVER.
-- **Spanat område:** KROK flyger och bärgar bara där någon har tittat. Luftvärn och robotskyttar gör djupa lufttransporter dyra.
+- **Spanat område:** KROK flyger och bärgar bara där någon har tittat när den flyger själv. Luftvärnet ser och skjuter på KROK på 275 m, HÖK på 200 m och SPARV först inom radarns 110 m. Luftvärnet kan inte skjuta på markmål, så det slås ut från marken.
+- **KROK för hand:** välj KROK och tryck E. Inga säkerhetsmarginaler, en kamera rakt nedåt i hörnet, F lyfter fordonet eller högen under dig eller sätter ned lasten.
+- **Fältreparation:** BÄVER lagar markfordon upp till 75 % där de står (B på en skadad VARG, eller automatiskt när den är ledig). Båda måste stå still och vara utanför eld, och det kostar material. Bakom en oröjd spärr är det den enda reparationen.
 - **Ekonomi:** bärgning. Riv med BÄVER för fullt värde, skjut sönder för mindre.
 - **Styrning:** klicka och dra för order, högerklick för orderhjulet, dra med höger musknapp för att panorera sjökortet, E tar och släpper kontroll, G får gruppen att följa den du kör.
 - **Ropa in:** peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK). Fungerar även när du kör en enhet. Q byter huvudvy; två livebilder visar andra enheter.
@@ -45,6 +47,7 @@ python3 mk.py
 node t23.js        # kartvalidering: målen nåbara, ledningscentralen försvarad, budgeten använd
 node t51.js        # strategiska punkter: verkstad, radar, fältvarv, vinst
 node t58.js        # låsta sektorer, minor och inropning
+node t60.js        # luftvärn efter målstorlek, KROK för hand, fältreparation, luckor och luftlandningsfickor
 node t45.js base   # datorspelare som spelar hela öar (tar några minuter per ö)
 ```
 
@@ -62,6 +65,7 @@ node t45.js base   # datorspelare som spelar hela öar (tar några minuter per �
 | `t55.js` | VARG skjuter under förflyttning |
 | `t57.js` | BÄVER beställer lufttransport från fartyget |
 | `t58.js` | Låsta sektorer, försörjning bakom spärr, minor och inropning |
+| `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor |
 
 `smoke.py` laddar spelet i Chromium med Playwright, öppnar ordershjulet och fångar sidfel. Den behöver `npm install` i `tests/` (för Three.js) och Playwright för Python.
 
