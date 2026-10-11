@@ -43,9 +43,10 @@ function play(seed,limit){
     const engs=alive.filter(u=>u.kind==='eng'),e=engs[0];
     if(e&&!e.orders.length){
       const job=[...G.relays.filter(r=>!r.captured&&!r.guards.some(id=>G.enemies.find(x=>x.id===id&&!x.dead))).map(r=>({type:'capture',relay:r})),
-                 ...G.barriers.filter(b=>!b.cleared&&!G.enemies.some(x=>!x.dead&&x.kind!=='aa'&&(d(x,b)<x.range+5||b.sides.some(sd=>sd.z!==b.far&&d(x,sd)<x.range+5)))).map(b=>({type:'clear',barrier:b}))];
-      const pass=i=>B.W.grid[i]!==4&&B.W.grid[i]!==5;const reachable=j=>j.relay?!!B.astar(e.x,e.y,j.relay.x,j.relay.y,pass):j.barrier.sides.some(s=>B.astar(e.x,e.y,s.x,s.y,pass));
-      job.sort((a,b)=>d(e,a.relay||a.barrier)-d(e,b.relay||b.barrier));const okj=job.filter(reachable);job.length=0;job.push(...okj);
+                 ...G.barriers.filter(b=>!b.cleared&&!G.enemies.some(x=>!x.dead&&x.kind!=='aa'&&(d(x,b)<x.range+5||b.sides.some(sd=>sd.z!==b.far&&d(x,sd)<x.range+5)))).map(b=>({type:'clear',barrier:b})),
+                 ...(G.mines||[]).filter(m=>m.found&&!m.cleared).map(m=>({type:'demine',mine:m}))];
+      const pass=i=>B.W.grid[i]!==4&&B.W.grid[i]!==5;const reachable=j=>j.relay?!!B.astar(e.x,e.y,j.relay.x,j.relay.y,pass):j.mine?(()=>{const sd=B.mineSide(j.mine,e);return !!B.astar(e.x,e.y,sd.x,sd.y,pass);})():j.barrier.sides.some(s=>B.astar(e.x,e.y,s.x,s.y,pass));
+      job.sort((a,b)=>d(e,a.relay||a.barrier||a.mine)-d(e,b.relay||b.barrier||b.mine));const okj=job.filter(reachable);job.length=0;job.push(...okj);
       if(job[0]){job[0].post='dold';B.giveOrder(e,job[0],false);e.override=true;}
     }
     const e2=engs[1];

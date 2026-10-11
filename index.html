@@ -68,7 +68,7 @@ button:disabled{opacity:.45;cursor:default}
 .zoom button{background:rgba(17,26,34,.85);color:var(--ink);border:1px solid var(--line);border-radius:3px;min-width:30px;height:28px;font-weight:700;font-size:14px;padding:0 8px}
 #subSlot .zoom{display:none}
 .vlabel{position:absolute;left:8px;top:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;background:rgba(17,26,34,.82);color:var(--ink);padding:3px 7px;border-radius:2px;pointer-events:none;z-index:2}
-#subSlot{aspect-ratio:4/3;cursor:pointer;flex:none}
+#subSlot{aspect-ratio:4/3;flex:none}
 .side{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
 .side > *{flex-shrink:0}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;min-height:84px}
@@ -114,7 +114,7 @@ button:disabled{opacity:.45;cursor:default}
 .chip.wing{min-width:54px;justify-content:center;font-family:var(--f-mono);font-weight:400}
 .yard .btn{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:84px}
 .yard .btn small{font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--dim)}
-.wheel{position:absolute;z-index:4;width:250px}
+.wheel{position:fixed;z-index:6;width:250px}
 .ring{position:relative;width:250px;height:250px;border-radius:50%;background:rgba(14,21,28,.93);border:1px solid #3a4c5c;box-shadow:0 6px 24px rgba(0,0,0,.4)}
 .wc{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;font-size:11px;color:var(--dim);width:96px;line-height:1.25}
 .wc b{display:block;color:var(--ink);font-size:12px;letter-spacing:.06em}
@@ -124,6 +124,41 @@ button:disabled{opacity:.45;cursor:default}
 .wchips{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:6px;background:rgba(14,21,28,.93);border:1px solid #3a4c5c;border-radius:16px;padding:5px}
 .wchips .lab{width:100%;text-align:center;font-size:10.5px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
 .keys{font-size:11px;color:var(--dim)}
+.maincol{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+.maincol > #mainSlot{flex:1}
+.roster{display:flex;gap:6px;overflow-x:auto;flex:none;scrollbar-width:thin}
+.ru{display:flex;flex-direction:column;gap:3px;width:128px;padding:5px 8px 6px;border:1px solid var(--line);border-radius:3px;background:var(--panel);text-align:left;flex:none}
+.ru .rn{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;letter-spacing:.05em;white-space:nowrap;min-width:0}
+.ru .rn i{width:8px;height:8px;border-radius:50%;flex:none}
+.ru .rn em{font-style:normal;font-weight:500;font-size:10.5px;color:var(--dim);margin-left:auto;letter-spacing:.02em}
+.ru .rs{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ru.sel{border-color:var(--signal);box-shadow:inset 0 0 0 1px var(--signal)}
+.ru.cam{background:#1e2e3d}
+.ru.alert{border-color:var(--mag)}.ru.alert .rs{color:var(--mag)}
+.ru.cut .rs{color:var(--signal)}
+.ru.dead{opacity:.45}
+.ru.service{border-style:dashed}
+.feeds{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:none}
+.feeds[hidden]{display:none}
+.feed{position:relative;aspect-ratio:16/10;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:#0b1015;cursor:pointer}
+.feed canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.feed .fl{position:absolute;left:0;right:0;bottom:0;padding:10px 6px 3px;background:linear-gradient(transparent,rgba(8,12,16,.88));font-family:var(--f-mono);font-size:10.5px;color:var(--ink);display:flex;gap:6px;align-items:baseline;pointer-events:none}
+.feed .fl b{font-weight:400;letter-spacing:.06em;flex:none}
+.feed .fl span{color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.feed .fhp{position:absolute;left:0;top:0;height:2px;background:var(--ok);pointer-events:none}
+.feed .fpin{position:absolute;right:4px;top:4px;background:rgba(17,26,34,.82);border:1px solid var(--line);border-radius:2px;color:var(--dim);font-size:10px;font-family:var(--f-mono);padding:1px 5px;letter-spacing:.06em}
+.feed .fpin[aria-pressed="true"]{background:var(--signal);color:#1b1a12;border-color:var(--signal)}
+.feed.hit{border-color:var(--mag)}
+.feed.empty::after{content:'INGEN BILD';position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;color:var(--dim)}
+.swap{position:absolute;right:6px;top:6px;z-index:3;background:rgba(17,26,34,.86);color:var(--ink);border:1px solid var(--line);border-radius:3px;font-size:11px;font-weight:600;padding:3px 8px}
+.swap:hover{border-color:var(--signal)}
+.log .la{grid-column:3;display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.log .la button{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;border:1px solid var(--signal);background:none;color:var(--signal)}
+.log .la button:hover{background:var(--signal);color:#1b1a12}
+.log li.act{border-left:2px solid var(--signal)}
+.wi.call{border-color:var(--signal);color:var(--signal)}
+.keys b{color:var(--ink);font-weight:600}
+
 .ov{position:fixed;inset:0;background:rgba(7,11,15,.8);display:grid;place-items:center;padding:16px;z-index:9;overflow:auto}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;max-width:500px;width:100%;padding:20px 20px 18px;display:flex;flex-direction:column;gap:12px}
 .panel h2{margin:0;font-size:26px;letter-spacing:.1em;font-weight:700;text-wrap:balance}
@@ -153,21 +188,23 @@ button:disabled{opacity:.45;cursor:default}
       <button class="btn" id="bClock" type="button" title="Spola fram tre timmar på dygnet">+3 h</button>
       <button class="btn" id="bSpeed" type="button">1×</button>
       <button class="btn" id="bPause" type="button" aria-pressed="false">Paus</button>
+      <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
       <button class="btn" id="bFull" type="button" title="Helskärm (F)">Helskärm</button>
       <button class="btn" id="bHelp" type="button" aria-label="Instruktioner">?</button>
     </div>
   </header>
   <main class="stage">
-    <div class="slot" id="mainSlot">
+    <div class="maincol"><div class="slot" id="mainSlot">
       <div class="pane" id="paneMap"><canvas id="cMap"></canvas><div class="vlabel" id="lblMap">SJÖKORT</div><div class="zoom"><button type="button" id="zIn" aria-label="Zooma in">+</button><button type="button" id="zOut" aria-label="Zooma ut">−</button><button type="button" id="zFit">Hela</button></div></div>
       <div class="wheel" id="wheel" hidden><div class="ring" id="wRing"></div><div class="wchips" id="wChips"></div></div>
     </div>
+    <div class="roster" id="roster" role="toolbar" aria-label="Enheter"></div></div>
     <aside class="side">
-      <div class="slot" id="subSlot">
+      <div class="feeds" id="feeds"></div>
+      <div class="slot" id="subSlot"><button class="swap" id="bSwap" type="button" title="Byt huvudvy (Q)">⇄ Byt vy</button>
         <div class="pane" id="paneCam"><canvas id="cGl"></canvas><canvas id="cHud"></canvas><div class="vlabel" id="lblCam">KAMERA</div></div>
       </div>
       <ol class="log" id="log" aria-live="polite"></ol>
-      <div class="cards" id="cards"></div>
       <div class="panelbox" id="actions">
         <div class="who" id="who"></div>
         <ol class="olist" id="orderList"></ol>
@@ -187,7 +224,7 @@ button:disabled{opacity:.45;cursor:default}
         <div class="row" id="yardRow"></div>
         <div class="row"><span class="who">Bärgning</span><button class="chip" id="bAuto" type="button" aria-pressed="true">Hämtar automatiskt</button><span class="hint" id="krokInfo"></span></div>
       </div>
-      <div class="keys">Ctrl+klick lägger till i urvalet. Skift+siffra sparar wing, siffra väljer den, dubbeltryck visar dess kamera. T tar eller släpper kontroll. I kontroll kör W A S D; i en VARG låser klick i kameran musen till tornet, klick skjuter, Esc frigör musen. C sätter kamera på vald, F helskärm, M ljud, N musik, Skift+klick lägger till punkt, mellanslag pausar.</div>
+      <div class="keys"><b>Ropa in:</b> peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK), eller högerklicka för hjulet. Q byter huvudvy. Ctrl+klick lägger till i urvalet. Skift+siffra sparar wing, siffra väljer den, dubbeltryck visar dess kamera. E tar eller släpper kontroll. I kontroll kör W A S D; i en VARG låser klick i kameran musen till tornet, klick skjuter, Esc frigör musen. C sätter kamera på vald, F helskärm, M ljud, N musik, Skift+klick lägger till punkt, mellanslag pausar.</div>
     </aside>
   </main>
 </div>
@@ -217,13 +254,17 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Kulsprutan biter på infanteri, roboten (en) på lätt pansar och byggnader. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
       <li><span class="em">SPARV är engångsspanaren.</span> Billig (40), byggs på 8 sekunder, ser 90 m och tål nästan ingenting. Den flyger lågt: fienden märker den först på 45 m, men luftvärnets radar tar den på 110 m. Den kan alltså ligga stilla och peka ut en bunker åt vargarna, men hittar luftvärn bara genom att dö. Inget vapen.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 150 m, längre än bunkrarna, men bara mot mål som någon ser. Svag mot infanteri, sårbar för pansarvärn.</li>
-      <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: från fartyget lyfts den i land av KROK, och det beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten och tar strategiska punkter. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget.</li>
+      <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: från fartyget lyfts den i land av KROK, och det beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget.</li>
+      <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
+      <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. HÖK och SPARV ser minfälten från luften, BÄVER med sin detektor på nära håll; en VARG märker dem först när den kör på en. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
       <li><span class="em">Fienden</span> har bunkrar, luftvärn (bara mot luftmål), robotskyttar med bärbart luftvärn (120 m, kamouflerade, spridda över hela ön utom vid stranden; ser du dem först med HÖK går de att undvika, VARG slår ut dem lätt), infanteri, pansarvärn, lätt pansar och stridsvagnar. Rörliga förband rycker ut när något i närheten anfalls.</li>
       <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer.</li>
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra.</li>
+      <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
+      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder visar andra enheter, helst de som strider; FÄST låser en bild vid enheten, klick visar den i kameran. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. Utan musen skjuter den automatiskt.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. Den flyger bara över spanat område och sätter aldrig ned inom räckhåll för kända hot. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
@@ -724,6 +765,7 @@ function newGame(seed){
   WORLD.grid.set(WORLD.baseGrid);for(const b of G.barriers)for(const c of b.cells)WORLD.grid[c]=WALL;
   for(const s of G.structs)WORLD.grid[s.cell]=WALL;
   for(const d of WORLD.debris)addWreck(d.x,d.y,d.value,false,d.kind);
+  G.mines=[];G.reachAll=null;mkMines();computeLock();
   G.units.push(makeUnit('drone',...shipPos(0,60)),makeUnit('tank',...shipPos(-32,0)),makeUnit('tank',...shipPos(32,0)),makeUnit('eng',...shipPos(-32,28)));
   setSel([G.units[3].id]);G.cam=G.units[1].id;
   G.kroks.push(makeKrok());
@@ -744,7 +786,7 @@ const selKrok=()=>{const k=G.selK?G.kroks.find(x=>x.id===G.selK):null;return k&&
 function clearKrok(k){for(const x of k.orders)if(x.unit&&x.unit.awaitKrok===k.id)x.unit.awaitKrok=null;k.orders=[];k.path=null;}
 function oText(o,krok){const P=o.post&&POST[o.post]?' · '+POST[o.post].toLowerCase():'';switch(o.type){
   case'move':return(krok?'Flyg till ':'Gå till ')+sq(o.x,o.y)+P;case'obs':return'Observera '+sq(o.x,o.y);case'capture':return'Ta '+pname(o.relay)+P;case'attack':return'Anfall '+ename(o.enemy);
-  case'follow':return(o.escort?'Eskortera ':'Följ ')+o.unit.name+P;case'clear':return'Spräng spärr '+o.barrier.id+P;case'rtb':return'Till fartyget';case'demolish':return'Riv '+slabel(o.s);case'raze':return'Skjut sönder '+slabel(o.s);
+  case'follow':return(o.escort?'Eskortera ':'Följ ')+o.unit.name+P;case'clear':return'Spräng spärr '+o.barrier.id+P;case'demine':return'Röj minfält '+o.mine.id+P;case'rtb':return'Till fartyget';case'demolish':return'Riv '+slabel(o.s);case'raze':return'Skjut sönder '+slabel(o.s);
   case'lift':return'Lyft '+o.unit.name;case'drop':return'Sätt ned i '+sq(o.x,o.y);case'salvage':return'Bärga '+wlabel(o.wreck);}return o.type;}
 function toggleSel(id){if(G.selIds.includes(id))setSel(G.selIds.filter(x=>x!==id));else setSel([...G.selIds,id]);}
 function wingOf(id){for(const k in G.wings)if(G.wings[k].includes(id))return k;return null;}
@@ -753,11 +795,11 @@ function assignWing(n){const us=selUnits(),ids=us.map(u=>u.id);if(!ids.length)re
 function selectWing(n){const w=G.wings[n];if(!w)return;const ids=w.filter(id=>G.units.some(u=>u.id===id&&!u.dead));if(!ids.length){delete G.wings[n];return;}setSel(ids);}
 const ename=e=>ENEMY[e.kind].label.toLowerCase()+' '+e.id;
 
-function say(u,text){
+function say(u,text,acts){
   const uid=u?u.id:null;
   const prev=G.log.find(l=>l.uid===uid&&l.text===text);
   if(prev&&G.time-prev.t<4)return;
-  G.log.unshift({t:G.time,who:u?u.name:'FARTYGET',uid,text});
+  G.log.unshift({t:G.time,who:u?u.name:'FARTYGET',uid,text,acts:acts||null});
   if(G.log.length>40)G.log.pop();
   renderLog();
 }
@@ -783,9 +825,11 @@ function step(dt){
   for(const k of G.kroks)updateKrok(k,dt);
   G.kroks=G.kroks.filter(k=>!k.dead||G.time-k.diedAt<4);
   if(G.build.length){const b=G.build[0];b.t-=dt;if(b.t<=0){G.build.shift();if(b.kind==='krok'){const k=makeKrok();G.kroks.push(k);say(k,'Ny bärgningshelikopter klar.');}else{const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)},lat=Math.random()<.5?-32:32,fw=Math.random()*40-20;const u=makeUnit(b.kind,CARRIER.x-f.y*lat+f.x*fw,CARRIER.y+f.x*lat+f.y*fw);G.units.push(u);say(u,'Sjösatt och redo.');}}}
+  mineTick(dt);
   if(G.fbuild.length){const b=G.fbuild[0],r=G.relays.find(x=>x.id===b.at);
-    const foe=r&&G.enemies.find(e=>!e.dead&&dist(e,r)<VARV_CONTEST);b.paused=!!foe;
-    if(foe){if(!b.pmsg){b.pmsg=1;say(null,'Fältvarvet '+r.id+' står still: fiende inom '+VARV_CONTEST+' m.');}}
+    const foe=r&&G.enemies.find(e=>!e.dead&&dist(e,r)<VARV_CONTEST),cut=r&&lockedAt(r.x,r.y);b.paused=!!foe||!!cut;b.cut=!!cut;
+    if(cut){if(b.pmsg!==2){b.pmsg=2;const bb=lockBarrier(r);say(null,'Fältvarvet '+r.id+' är avskuret bakom spärr '+(bb?bb.id:'')+' och kan inte försörjas. Spräng spärren för att bygga.',bb?[{l:'Skicka BÄVER',f:()=>callIn('eng',{barrier:bb})}]:null);}}
+    else if(foe){if(!b.pmsg){b.pmsg=1;say(null,'Fältvarvet '+r.id+' står still: fiende inom '+VARV_CONTEST+' m.');}}
     else{if(b.pmsg){b.pmsg=0;say(null,'Fältvarvet '+r.id+' bygger igen.');}b.t-=dt;
       if(b.t<=0){G.fbuild.shift();const a=Math.random()*TAU,sp=dropSpot({x:r.x+Math.cos(a)*18,y:r.y+Math.sin(a)*18});const u=makeUnit(b.kind,sp.x,sp.y);G.units.push(u);say(u,'Klar på fältvarvet '+r.id+'.');}}}
   if(G.fires.length)G.fires=G.fires.filter(f=>G.time-f.t0<f.dur);
@@ -803,13 +847,13 @@ function step(dt){
 /* service: the ship, a taken workshop (full rate) or a taken forward yard (half rate); never one with enemies close by */
 function homeFor(u,p){p=p||u;const landOnly=u.kind==='eng'&&passLand(cellIdx(u.x,u.y));let best={x:CARRIER.x,y:CARRIER.y,ship:true,r:48,rate:1,name:'fartyget'},bd=Math.hypot(p.x-CARRIER.x,p.y-CARRIER.y);
   if(landOnly){best={x:WORLD.landing.x,y:WORLD.landing.y,ship:false,r:14,rate:0,name:'stranden'};bd=1e9;}
-  for(const r of G.relays)if(r.captured&&(r.type==='verkstad'||r.type==='varv')){if(u.air&&airDanger(u,r.x,r.y))continue;const d=Math.hypot(p.x-r.x,p.y-r.y);if(d>=bd)continue;if(G.enemies.some(e=>!e.dead&&Math.hypot(e.x-r.x,e.y-r.y)<VARV_CONTEST))continue;
+  for(const r of G.relays)if(r.captured&&(r.type==='verkstad'||r.type==='varv')){if(lockedAt(r.x,r.y))continue;if(u.air&&airDanger(u,r.x,r.y))continue;const d=Math.hypot(p.x-r.x,p.y-r.y);if(d>=bd)continue;if(G.enemies.some(e=>!e.dead&&Math.hypot(e.x-r.x,e.y-r.y)<VARV_CONTEST))continue;
     bd=d;best={x:r.x,y:r.y,ship:false,r:22,rate:r.type==='varv'?.5:1,name:(r.type==='varv'?'fältvarv ':'verkstad ')+r.id};}return best;}
 /* flight distance home, around known threats (re-planned every 1.5 s) */
 function homeDist(u,hm){const st=Math.hypot(u.x-hm.x,u.y-hm.y);
   if(!u.hdT||G.time-u.hdT>1.5||u.hdK!==hm.name){u.hdT=G.time;u.hdK=hm.name;const pth=airPath(u,hm.x,hm.y,{type:'rtb'});let L=0,a={x:u.x,y:u.y};if(pth)for(const q of pth){L+=Math.hypot(q.x-a.x,q.y-a.y);a=q;}u.hdL=pth?L:st;u.hdS=st;}
   return Math.max(st,u.hdL-(u.hdS-st));}
-function goRtb(u,msg){u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post}];u.path=null;u.rtb=true;u.hold=false;say(u,msg);}
+function goRtb(u,msg){if(!u.air&&lockedAt(u.x,u.y)){cutOff(u);return;}u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post}];u.path=null;u.rtb=true;u.hold=false;say(u,msg);}
 const curPost=u=>u.orders[0]?u.orders[0].post:u.post;
 
 function updateUnit(u,dt){
@@ -941,7 +985,7 @@ function costFor(post){
   }
   return i=>{let c=g[i]<=SHAL?1.35:1;if(road[i])c*=post==='dold'?1.7:.6;return dz?c+dz[i]:c;};
 }
-function orderPt(o){if(o.type==='move'||o.type==='obs')return o;if(o.type==='clear')return{x:o.barrier.x,y:o.barrier.y};if(o.type==='capture')return o.relay;if(o.type==='attack')return{x:o.enemy.lx,y:o.enemy.ly};if(o.type==='follow')return o.unit;if(o.type==='raze'||o.type==='demolish')return o.s;return o.hp||CARRIER;}
+function orderPt(o){if(o.type==='move'||o.type==='obs')return o;if(o.type==='clear')return{x:o.barrier.x,y:o.barrier.y};if(o.type==='demine')return{x:o.mine.x,y:o.mine.y};if(o.type==='capture')return o.relay;if(o.type==='attack')return{x:o.enemy.lx,y:o.enemy.ly};if(o.type==='follow')return o.unit;if(o.type==='raze'||o.type==='demolish')return o.s;return o.hp||CARRIER;}
 
 function airThreatR(u,e){return u.sig?Math.min(e.range+25,(e.radar||u.sig)+20):e.range+25;}
 function airDanger(u,x,y){for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;const r=airThreatR(u,e)-5;if(Math.hypot(x-e.lx,y-e.ly)<r)return e;}return null;}
@@ -981,6 +1025,7 @@ function move(u,dt){
   else if(o.type==='attack'){if(o.enemy.dead){u.orders.shift();u.path=null;return;}if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;u.path=null;}if(o.fp){tx=o.fp.x;ty=o.fp.y;arr=6;}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?effRange(u)*.8:45;}u.state='Anfaller '+ename(o.enemy);}
   else if(o.type==='clear'){const b=o.barrier;if(b.cleared){u.orders.shift();u.path=null;return;}const bd=barrierDist(b,u);if(bd<34){workBarrier(b,u,dt);return;}if(!o.sd||(u.waitT&&G.time<u.waitT))o.sd=barrierSide(b,u);const sd=o.sd;tx=sd.x;ty=sd.y;arr=3;u.state='På väg mot spärr '+b.id;}
   else if(o.type==='demolish'){const st=o.s;if(st.dead){u.orders.shift();u.path=null;return;}tx=st.x;ty=st.y;arr=16;u.state='På väg att riva '+slabel(st);}
+  else if(o.type==='demine'){const m=o.mine;if(m.cleared){u.orders.shift();u.path=null;return;}if(dist(u,m)<m.r+13){workMine(m,u,dt);return;}if(!o.sd||(u.waitT&&G.time<u.waitT))o.sd=mineSide(m,u);tx=o.sd.x;ty=o.sd.y;arr=4;u.state='På väg mot minfält '+m.id;}
   else if(o.type==='raze'){const st=o.s;if(st.dead){u.orders.shift();u.path=null;return;}tx=st.x;ty=st.y;arr=effRange(u)*.8;u.state='På väg mot '+slabel(st);}
   else if(o.type==='follow'){
     if(o.escort&&(!o.unit||o.unit.dead)){const nx=(o.group||[]).map(id=>G.units.find(v=>v.id===id&&!v.dead&&!v.carried)).filter(Boolean).sort((a,b)=>dist(a,u)-dist(b,u))[0];if(nx){o.unit=nx;say(u,'Eskortmålet förlorat. Eskorterar nu '+nx.name+'.');}}
@@ -1026,7 +1071,8 @@ function move(u,dt){
     else{const pth=astar(u.x,u.y,tx,ty,u.kind==='eng'?passLand:passAmph,costFor(o.post));
       if(!pth&&u.kind==='eng'&&(!passLand(cellIdx(u.x,u.y))||(!u.amphT||G.time>u.amphT)&&(u.amphT=G.time+10,!!astar(u.x,u.y,tx,ty,passAmph,costFor(o.post))))&&!u.awaitKrok&&!G.kroks.some(k=>!k.dead&&k.orders.some(q=>q.unit===u))){if(!u.liftAskT||G.time>u.liftAskT){u.liftAskT=G.time+15;say(u,'BÄVER kör inte i vatten. Begär lufttransport med KROK.');airlift([u],{x:tx,y:ty},true);}u.state='Väntar på lufttransport';return;}
       if(!pth&&o.type==='attack'&&!o.fp){o.fp=firingPoint(u,o.enemy,o.close);o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;if(o.fp){u.state='Söker skjutläge mot '+ename(o.enemy);return;}}
-      if(!pth){u.path=null;u.pathFor=null;u.waitT=G.time+3;u.state='Ingen framkomlig väg';if(!u.blockMsgT||G.time>u.blockMsgT){u.blockMsgT=G.time+20;say(u,'Ingen framkomlig väg. En spärr eller klippa blockerar.');}return;}
+      if(!pth){u.path=null;u.pathFor=null;u.waitT=G.time+3;u.state='Ingen framkomlig väg';if(u.kind==='eng'&&!['clear','demine'].includes(o.type)){const ob=obstacleFor(u,tx,ty);if(ob&&passLand(cellIdx(u.x,u.y))){u.orders.unshift(ob.pk.mine?{type:'demine',mine:ob.pk.mine,post:o.post}:{type:'clear',barrier:ob.pk.barrier,post:o.post});u.waitT=0;say(u,(ob.pk.mine?'Röjer ':'Spränger ')+ob.l+' som stänger vägen först.');return;}}
+      if(!u.blockMsgT||G.time>u.blockMsgT){u.blockMsgT=G.time+20;const ob=obstacleFor(u,tx,ty);say(u,ob?'Ingen framkomlig väg: '+ob.l+' blockerar.':'Ingen framkomlig väg. En spärr eller klippa blockerar.',ob?[{l:'Skicka BÄVER',f:()=>callIn('eng',ob.pk)},{l:'Lyft med KROK',f:()=>airlift([u],{x:tx,y:ty})}]:null);}return;}
       u.path=pth;}
     u.pathFor=o;u.pathT={x:tx,y:ty};
   }
@@ -1056,7 +1102,7 @@ function updateEnemy(e,dt){
     if(bd<=e.range&&e.cd<=0){
       e.cd=1/e.rate;e.reveal=1.6;
       shoot(e,tgt,e.dmg,tgt.air&&e.kind==='turret'?e.acc*.55:e.acc,'e');
-      if(!tgt.dead&&G.time-tgt.lastHitMsg>7){tgt.lastHitMsg=G.time;say(tgt,'Beskjuts av '+(e.seen?ename(e):'dold fiende')+', ruta '+sq(e.x,e.y)+'.');}
+      if(!tgt.dead&&G.time-tgt.lastHitMsg>7){tgt.lastHitMsg=G.time;const ee=e;say(tgt,'Beskjuts av '+(e.seen?ename(e):'dold fiende')+', ruta '+sq(e.x,e.y)+'.',tgt.kind==='krok'?null:[{l:'Luftstöd',f:()=>callIn('air',ee.seen?{enemy:ee}:{world:{x:ee.x,y:ee.y}})},{l:'Visa',f:()=>focusUnit(tgt)}]);}
     }
     if(e.march&&bd>e.range*.85){marchStep(e,dt);return;}
     if(e.mobile&&bd>e.range*.85&&home<e.leash)enemyStep(e,tgt.x,tgt.y,dt);
@@ -1173,7 +1219,7 @@ function barrierSide(b,p){const q=zoneAt(p.x,p.y,WORLD.V).i1;const own=b.sides.f
   return b.sides.find(x=>x.z!==b.far&&ok(x))||b.sides.find(ok)||b.sides.find(x=>x.z!==b.far)||b.sides[0];}
 function barrierDist(b,p){let m=1e9;for(const c of b.cells){const q=cellCenter(c);const d=Math.hypot(q.x-p.x,q.y-p.y);if(d<m)m=d;}return m;}
 function barrierNearest(b,p){let m=1e9,best=b;for(const c of b.cells){const q=cellCenter(c);const d=Math.hypot(q.x-p.x,q.y-p.y);if(d<m){m=d;best=q;}}return best;}
-function workBarrier(b,u,dt){b.prog=Math.min(1,b.prog+dt/10);u.state='Spränger spärr '+b.id+' '+Math.round(b.prog*100)+' %';if(b.prog>=1){b.cleared=true;for(const c of b.cells)WORLD.grid[c]=WORLD.baseGrid[c];for(const v of G.units){v.path=null;v.waitT=0;for(const o of v.orders)if(o.fp)o.fp=null;}G.fx.push({k:'boom',x:b.x,y:b.y,t:0,ttl:1.4});say(u,'Spärr '+b.id+' sprängd. Vägen är öppen.');if(u.orders[0]&&u.orders[0].type==='clear')u.orders.shift();}}
+function workBarrier(b,u,dt){b.prog=Math.min(1,b.prog+dt/10);u.state='Spränger spärr '+b.id+' '+Math.round(b.prog*100)+' %';if(b.prog>=1){b.cleared=true;for(const c of b.cells)WORLD.grid[c]=WORLD.baseGrid[c];for(const v of G.units){v.path=null;v.waitT=0;for(const o of v.orders)if(o.fp)o.fp=null;}G.fx.push({k:'boom',x:b.x,y:b.y,t:0,ttl:1.4});const was=G.lockN;computeLock();const opened=was-G.lockN;G.unlockFx={t:G.time,b:b.id};say(u,'Spärr '+b.id+' sprängd.'+(opened>0?' Sektorn bakom är öppen: service och bärgning når dit nu.':' Vägen är öppen.'));if(u.orders[0]&&u.orders[0].type==='clear')u.orders.shift();}}
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;
   const t=r.type;
@@ -1244,7 +1290,7 @@ function krokReach(){
   for(let h=0;h<q.length;h++){const c=q[h],cx=c%GW,cy=(c/GW)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!R[n]&&ok[n]){R[n]=1;q.push(n);}}}
   reachKey=key;reachArr=R;return R;
 }
-function wreckSafe(w){return isKnown(w.x,w.y)&&!!krokReach()[cellIdx(w.x,w.y)]&&G.enemies.every(e=>e.dead||!e.seen||Math.hypot(e.lx-w.x,e.ly-w.y)>e.range+20);}
+function wreckSafe(w){return isKnown(w.x,w.y)&&!lockedAt(w.x,w.y)&&!!krokReach()[cellIdx(w.x,w.y)]&&G.enemies.every(e=>e.dead||!e.seen||Math.hypot(e.lx-w.x,e.ly-w.y)>e.range+20);}
 /* automatic salvage only where the ground around the pile has been looked at; an explicit order skips this */
 const SCOUT_R=110,SCOUT_FRAC=.9;
 function wreckScouted(w){if(w.scV===G.knownV&&w.scG===G)return w.scOK;let n=0,k=0;const r0=SCOUT_R,gx0=Math.floor((w.x-r0)/CELL),gx1=Math.floor((w.x+r0)/CELL),gy0=Math.floor((w.y-r0)/CELL),gy1=Math.floor((w.y+r0)/CELL);
@@ -1259,6 +1305,7 @@ function krokPick(){
 function krokWait(){
   const free=G.wrecks.filter(w=>!w.claimed);
   if(G.krokQ.some(id=>free.some(w=>w.id===id)))return{st:'Väntar: beställt vrak ligger i hotat eller ospanat område',key:'q',msg:'Beställningen ligger i ett område med kända hot eller utan spanad väg dit. Väntar.'};
+  if(!free.some(w=>wreckSafe(w))&&free.some(w=>isKnown(w.x,w.y)&&lockedAt(w.x,w.y))){const w=free.find(x=>isKnown(x.x,x.y)&&lockedAt(x.x,x.y)),b=lockBarrier(w);return{st:'Väntar: material bakom oröjd spärr',key:'l',msg:'Material ligger bakom spärr '+(b?b.id:'')+'. Spräng den med BÄVER så kan jag hämta.',acts:b?[{l:'Skicka BÄVER',f:()=>callIn('eng',{barrier:b})}]:null};}
   if(G.krokAuto&&free.length&&!free.some(w=>isKnown(w.x,w.y)))return{st:'Väntar: inget material i spanat område',key:'u',msg:'Väntar på spaning. Inget material i område vi har sett.'};
   if(G.krokAuto&&free.length&&!free.some(w=>isKnown(w.x,w.y)&&G.enemies.every(e=>e.dead||!e.seen||Math.hypot(e.lx-w.x,e.ly-w.y)>e.range+20)))return{st:'Väntar: vrak i områden med kända hot',key:'a',msg:'Det finns material att hämta, men inte i säkra områden. Väntar.'};
   if(G.krokAuto&&free.some(w=>wreckSafe(w)))return{st:'Väntar: området runt materialet är inte spanat',key:'s',msg:'Material i sikte, men terrängen runt det är inte spanad. Spana runt högen eller beställ hämtningen själv.'};
@@ -1325,7 +1372,7 @@ function updateKrok(k,dt){
     const w=k.retreat?null:krokPick();
     if(k.retreat&&!w){k.status='Reparerar vid fartyget ('+Math.round(k.hp/k.maxhp*100)+' %)';return;}
     if(w){k.target=w;w.claimed=true;k.state='out';G.krokMsg=null;say(k,(G.krokQ.includes(w.id)?'Beställning mottagen. Hämtar ':'Hämtar ')+wlabel(w)+' i ruta '+sq(w.x,w.y)+'.');}
-    else{const r=krokWait();k.status=r.st;if(r.key&&G.krokMsg!==r.key&&k===G.kroks.find(x=>x.state==='idle'&&!x.dead)){G.krokMsg=r.key;say(k,r.msg);}}
+    else{const r=krokWait();k.status=r.st;if(r.key&&G.krokMsg!==r.key&&k===G.kroks.find(x=>x.state==='idle'&&!x.dead)){G.krokMsg=r.key;say(k,r.msg,r.acts);}}
   }else if(k.state==='out'){
     const w=k.target;
     if(!w||!G.wrecks.includes(w)){k.target=null;k.state='back';}
@@ -1370,11 +1417,13 @@ function krokDefault(k,pk){
 }
 function krokOrder(k,o,append){
   if(!k||k.dead||!o)return;
+  if(o.type==='salvage'&&o.wreck&&lockedAt(o.wreck.x,o.wreck.y)){orderKrok(o.wreck);return;}
   if(!append){for(const x of k.orders)if(x.unit&&x.unit.awaitKrok===k.id)x.unit.awaitKrok=null;k.orders=[];k.path=null;}
   k.orders.push(o);const p=o.type==='lift'?o.unit:o.type==='salvage'?o.wreck:o;ping(p.x,p.y);
 }
 function orderKrok(w){
   if(!w||!G.wrecks.includes(w))return;
+  if(lockedAt(w.x,w.y)){const b=lockBarrier(w);say(null,'Materialet ligger bakom spärr '+(b?b.id:'')+'. KROK bärgar inte där förrän spärren är sprängd.',b?[{l:'Skicka BÄVER',f:()=>callIn('eng',{barrier:b})}]:null);return;}
   if(G.krokQ.includes(w.id)){G.krokQ=G.krokQ.filter(id=>id!==w.id);say(null,'KROK-beställning på '+wlabel(w)+' i '+sq(w.x,w.y)+' struken.');return;}
   G.krokQ.push(w.id);ping(w.x,w.y);
   say(null,'KROK beställd till '+wlabel(w)+' i ruta '+sq(w.x,w.y)+(wreckSafe(w)?'.':'. Området har kända hot, KROK väntar tills det är säkert.'));
@@ -1388,6 +1437,7 @@ function lastPost(u){return u.orders.length?u.orders[u.orders.length-1].post:u.p
 function defaultOrder(u,pk,post){
   if(u.kind==='eng'&&pk.relay&&!pk.relay.captured)return{type:'capture',relay:pk.relay,post};
   if(pk.barrier&&!pk.barrier.cleared){if(u.kind==='eng')return{type:'clear',barrier:pk.barrier,post};const sd=barrierSide(pk.barrier,u);return{type:'move',x:sd.x,y:sd.y,post};}
+  if(pk.mine&&!pk.mine.cleared){if(u.kind==='eng')return{type:'demine',mine:pk.mine,post};if(!u.air){const sd=mineSide(pk.mine,u);return{type:'move',x:sd.x,y:sd.y,post};}}
   if((u.kind==='tank'||u.kind==='drone')&&pk.enemy&&!pk.enemy.dead&&canHit(u,pk.enemy))return{type:'attack',enemy:pk.enemy,post:'off'};
   if(u.air&&pk.enemy&&!pk.enemy.dead){const e=pk.enemy,d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=Math.min(u.vision*.8,d);return{type:'obs',x:e.lx+(u.x-e.lx)/d*r,y:e.ly+(u.y-e.ly)/d*r,post};}
   if(u.kind==='scout'&&pk.enemy&&!pk.enemy.dead){const e=pk.enemy,d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=Math.min(u.vision*.8,d);return{type:'obs',x:e.lx+(u.x-e.lx)/d*r,y:e.ly+(u.y-e.ly)/d*r,post};}
@@ -1408,6 +1458,7 @@ function groupOrder(pk,append,postOverride){
   if(us.length===1){const u=us[0];giveOrder(u,defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post)),append);return;}
   let tp=pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:pk.struct?{x:pk.struct.x,y:pk.struct.y}:pk.world;
   if(pk.barrier&&!pk.barrier.cleared){const sd=barrierSide(pk.barrier,us[0]);tp={x:sd.x,y:sd.y};}
+  if(pk.mine&&!pk.mine.cleared){const sd=mineSide(pk.mine,us[0]);tp={x:sd.x,y:sd.y};}
   if(!tp)return;
   let cx=0,cy=0;for(const u of us){const p=append&&u.orders.length?orderPt(u.orders[u.orders.length-1]):u;cx+=p.x;cy+=p.y;}cx/=us.length;cy/=us.length;
   const offs=formation(us.length,Math.atan2(tp.y-cy,tp.x-cx));
@@ -1415,6 +1466,7 @@ function groupOrder(pk,append,postOverride){
     const post=postOverride||(append?lastPost(u):u.post);let o;
     if(pk.relay&&u.kind==='eng'&&!pk.relay.captured)o={type:'capture',relay:pk.relay,post};
     else if(pk.barrier&&!pk.barrier.cleared&&u.kind==='eng')o={type:'clear',barrier:pk.barrier,post};
+    else if(pk.mine&&!pk.mine.cleared&&u.kind==='eng')o={type:'demine',mine:pk.mine,post};
     else if(pk.enemy&&!pk.enemy.dead&&(u.kind==='tank'||u.kind==='drone')&&canHit(u,pk.enemy))o={type:'attack',enemy:pk.enemy,post:'off'};
     else if(pk.struct&&!pk.struct.dead){const only=pk.only||(us.some(v=>v.kind==='eng')?'eng':'gun');
       if(only==='eng'?u.kind==='eng':(u.kind==='tank'||u.kind==='drone'))o=u.kind==='eng'?{type:'demolish',s:pk.struct,post}:{type:'raze',s:pk.struct,post};
@@ -1427,17 +1479,134 @@ function groupOrder(pk,append,postOverride){
 function groupObs(pt){const us=selUnits(),offs=formation(us.length,-PI/2);us.forEach((u,i)=>giveOrder(u,{type:'obs',x:clamp(pt.x+offs[i].x,10,WW-10),y:clamp(pt.y+offs[i].y,10,WH-10),post:'obs'},false));}
 function escortGroup(t){const w=wingOf(t.id);let ids=w?G.wings[w].slice():[];if(!ids.length)ids=G.units.filter(v=>!v.dead&&!v.air&&dist(v,t)<80).map(v=>v.id);if(!ids.includes(t.id))ids.push(t.id);return ids;}
 function groupFollow(t,post,escort){const grp=escort?escortGroup(t):null;for(const u of selUnits())if(u!==t)giveOrder(u,{type:'follow',unit:t,post,escort:!!escort,group:grp},false);}
+/* ---------- locked sectors: land the sea reaches only once a barrier is blown. Nothing behind an uncleared barrier
+   can be supplied: no service there and no salvage, so a unit lifted over it fights on what it carries ---------- */
+function computeLock(){
+  const N=GW*GH,bg=WORLD.baseGrid,blk=new Uint8Array(N);for(const b of G.barriers)if(!b.cleared)for(const c of b.cells)blk[c]=1;
+  const ok=i=>bg[i]!==ROCK&&bg[i]!==WALL,s0=cellIdx(CARRIER.x,CARRIER.y);
+  const flood=useBlk=>{const r=new Uint8Array(N),q=[s0];r[s0]=1;for(let h=0;h<q.length;h++){const c=q[h],x=c%GW,y=(c/GW)|0;
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!ok(n)||(useBlk&&blk[n]))continue;r[n]=1;q.push(n);}}return r;};
+  if(!G.reachAll)G.reachAll=flood(false);
+  const now=flood(true),L=new Uint8Array(N);let n=0;
+  for(let i=0;i<N;i++)if(G.reachAll[i]&&!now[i]&&(bg[i]===LAND||bg[i]===BEACH)){L[i]=1;n++;}
+  G.lock=L;G.lockN=n;G.lockV=(G.lockV||0)+1;
+}
+const lockedAt=(x,y)=>!!(G.lock&&G.lock[cellIdx(x,y)]);
+function lockBarrier(p){let best=null,bd=1e9;for(const b of G.barriers){if(b.cleared)continue;const d=barrierDist(b,p);if(d<bd){bd=d;best=b;}}return best;}
+function cutOff(u){u.state='Avskuren bakom spärr, ingen service';
+  if(!u.cutMsgT||G.time>u.cutMsgT){u.cutMsgT=G.time+30;const b=lockBarrier(u);
+    say(u,'Avskuren bakom spärr '+(b?b.id:'')+'. Ingen service förrän spärren är sprängd.',[...(b?[{l:'Skicka BÄVER',f:()=>callIn('eng',{barrier:b})}]:[]),{l:'Lyft ut med KROK',f:()=>airlift([u],WORLD.landing)}]);}}
+/* ---------- mines: hidden fields on the roads through narrow ground. HÖK, SPARV and BÄVER find them, a VARG only by
+   driving into one. A found field closes the ground until a BÄVER has cleared it ---------- */
+function mkMines(){
+  let a=(G.seed*7919+13)>>>0;const R=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+  const cand=[];
+  for(let i=0;i<GW*GH;i++){if(!WORLD.road[i]||!passLand(i))continue;const c=cellCenter(i);
+    if(dist(c,WORLD.landing)<170||dist(c,CARRIER)<220)continue;
+    if(G.relays.some(r=>dist(r,c)<50)||G.barriers.some(b=>Math.hypot(b.x-c.x,b.y-c.y)<45))continue;
+    const gx=i%GW,gy=(i/GW)|0;let nar=0;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const x=gx+dx,y=gy+dy;if(x<0||y<0||x>=GW||y>=GH){nar++;continue;}const t=WORLD.baseGrid[y*GW+x];if(t!==LAND&&t!==BEACH)nar++;}
+    cand.push({c,s:nar+R()*8});}
+  cand.sort((p,q)=>q.s-p.s);const want=3+Math.floor(R()*2);
+  for(const k of cand){if(G.mines.length>=want)break;if(G.mines.some(m=>Math.hypot(m.x-k.c.x,m.y-k.c.y)<190))continue;
+    const r=16,cells=[];for(let gy=Math.floor((k.c.y-r)/CELL);gy<=Math.floor((k.c.y+r)/CELL);gy++)for(let gx=Math.floor((k.c.x-r)/CELL);gx<=Math.floor((k.c.x+r)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx;if(Math.hypot(gx*CELL+5-k.c.x,gy*CELL+5-k.c.y)<=r)cells.push(i);}
+    G.mines.push({id:'M'+(G.mines.length+1),x:k.c.x,y:k.c.y,r,cells,walled:[],found:false,cleared:false,prog:0});}
+}
+function mineFound(m,by,blast){if(m.found)return;m.found=true;m.foundT=G.time;
+  for(const c of m.cells){const t=WORLD.grid[c];if(t===LAND||t===BEACH){WORLD.grid[c]=WALL;m.walled.push(c);}}
+  for(const v of G.units)if(!v.air)v.path=null;
+  if(!blast)say(by,'Minfält upptäckt i ruta '+sq(m.x,m.y)+'. Marken där är spärrad tills det är röjt.',[{l:'Skicka BÄVER',f:()=>callIn('eng',{mine:m})},{l:'Visa',f:()=>focusPoint(m.x,m.y)}]);}
+function mineTick(dt){
+  if(!G.mines||!G.mines.length)return;G.mineT=(G.mineT||0)-dt;const scan=G.mineT<=0;if(scan)G.mineT=.25;
+  for(const m of G.mines){if(m.cleared||m.found)continue;
+    if(scan)for(const u of G.units){if(u.dead||u.carried)continue;const R=u.air?Math.min(85,u.vision*.5):u.kind==='eng'?48:0;if(R&&dist(u,m)<R+m.r){mineFound(m,u,false);break;}}
+    if(m.found)continue;
+    for(const u of G.units){if(u.dead||u.air||u.carried||dist(u,m)>=m.r)continue;
+      mineFound(m,u,true);u.hp-=u.kind==='tank'?55:45;u.lastHit=G.time;G.fx.push({k:'boom',x:u.x,y:u.y,t:0,ttl:1.1,small:true});
+      if(u.hp<=0)killUnit(u,'Gick på en mina.');
+      else say(u,'Mina! '+Math.round(u.hp/u.maxhp*100)+' % skrov kvar. Fältet i ruta '+sq(m.x,m.y)+' är markerat.',[{l:'Skicka BÄVER',f:()=>callIn('eng',{mine:m})}]);break;}}
+}
+function mineSide(m,p){let best=null,bd=1e9;const R0=m.r+3,R1=m.r+11;
+  for(let gy=Math.floor((m.y-R1)/CELL);gy<=Math.floor((m.y+R1)/CELL);gy++)for(let gx=Math.floor((m.x-R1)/CELL);gx<=Math.floor((m.x+R1)/CELL);gx++){
+    if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx;if(!passLand(i))continue;const c=cellCenter(i),dm=Math.hypot(c.x-m.x,c.y-m.y);if(dm<R0||dm>R1)continue;const d=Math.hypot(c.x-p.x,c.y-p.y);if(d<bd){bd=d;best=c;}}
+  return best||{x:m.x,y:m.y};}
+function workMine(m,u,dt){m.prog=Math.min(1,m.prog+dt/9);u.state='Röjer minfält '+m.id+' '+Math.round(m.prog*100)+' %';
+  if(m.prog>=1){m.cleared=true;for(const c of m.walled)if(WORLD.grid[c]===WALL)WORLD.grid[c]=WORLD.baseGrid[c];m.walled=[];
+    for(const s2 of G.structs)if(!s2.dead)WORLD.grid[s2.cell]=WALL;for(const b of G.barriers)if(!b.cleared)for(const c of b.cells)WORLD.grid[c]=WALL;
+    for(const v of G.units)if(!v.air){v.path=null;v.waitT=0;}G.fx.push({k:'boom',x:m.x,y:m.y,t:0,ttl:.9,small:true});
+    say(u,'Minfält '+m.id+' röjt. Vägen är fri.');if(u.orders[0]&&u.orders[0].type==='demine')u.orders.shift();}}
+/* what blocks a ground unit's way: the nearest uncleared barrier or found minefield near it or its goal */
+function obstacleFor(u,tx,ty){let best=null,bd=230;
+  for(const b of G.barriers){if(b.cleared)continue;const d=Math.min(barrierDist(b,u),barrierDist(b,{x:tx,y:ty}));if(d<bd){bd=d;best={pk:{barrier:b},l:'spärr '+b.id};}}
+  for(const m of G.mines||[]){if(!m.found||m.cleared)continue;const d=Math.min(dist(m,u),Math.hypot(m.x-tx,m.y-ty));if(d<bd){bd=d;best={pk:{mine:m},l:'minfält '+m.id};}}
+  if(!best&&lockedAt(tx,ty)){const b=lockBarrier({x:tx,y:ty});if(b)best={pk:{barrier:b},l:'spärr '+b.id};}
+  return best;}
+function queueBuild(k){const T=TYPES[k],alive=G.units.filter(u=>!u.dead).length;
+  if(G.res<T.cost){say(null,'Inte nog material för '+T.label+' ('+T.cost+').');return false;}
+  if(alive+G.build.filter(b=>b.kind!=='krok').length+G.fbuild.length>=MAXUNITS){say(null,'Fullt, max '+MAXUNITS+' enheter.');return false;}
+  G.res-=T.cost;G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö på fartyget.');return true;}
+/* ---------- call in: send the right unit at whatever is pointed at, from the chart or a camera, without touching the
+   selection or the unit you drive. B: BÄVER, H: HÖK air support, V: VARG, K: KROK ---------- */
+const CALL={eng:'BÄVER',air:'HÖK',tank:'VARG',krok:'KROK'};
+function callTarget(pk){return pk.mine?{x:pk.mine.x,y:pk.mine.y}:pk.barrier?{x:pk.barrier.x,y:pk.barrier.y}:pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.struct?{x:pk.struct.x,y:pk.struct.y}:pk.wreck?{x:pk.wreck.x,y:pk.wreck.y}:pk.unit?{x:pk.unit.x,y:pk.unit.y}:pk.world||null;}
+function callIn(kind,pk){
+  pk=pk||{};const tp=callTarget(pk);if(!tp)return false;
+  const ok=v=>!v.dead&&!v.carried&&v.id!==G.ctrl,byD=a=>a.sort((p,q)=>dist(p,tp)-dist(q,tp)),W=v=>({x:clamp(v.x,10,WW-10),y:clamp(v.y,10,WH-10)});
+  if(kind==='eng'){
+    const es=byD(G.units.filter(v=>v.kind==='eng'&&ok(v)));
+    if(!es.length){say(null,'Ingen BÄVER tillgänglig.',[{l:'Bygg BÄVER',f:()=>queueBuild('eng')}]);return false;}
+    const busy=v=>v.orders.length&&['clear','demine','capture','demolish'].includes(v.orders[0].type);const u=es.find(v=>!busy(v))||es[0];
+    let o,what;
+    if(pk.mine&&!pk.mine.cleared){o={type:'demine',mine:pk.mine,post:'def'};what='röjer minfält '+pk.mine.id;}
+    else if(pk.barrier&&!pk.barrier.cleared){o={type:'clear',barrier:pk.barrier,post:'def'};what='spränger spärr '+pk.barrier.id;}
+    else if(pk.relay&&!pk.relay.captured){o={type:'capture',relay:pk.relay,post:'def'};what='tar '+pname(pk.relay);}
+    else if(pk.struct&&!pk.struct.dead){pk.struct.krok=true;o={type:'demolish',s:pk.struct,post:'def'};what='river '+slabel(pk.struct);}
+    else{o=Object.assign({type:'move',post:'def'},W(tp));what='kör till ruta '+sq(tp.x,tp.y);}
+    giveOrder(u,o,false);say(u,'Inropad: '+what+'.');return true;}
+  if(kind==='air'){
+    const hs=byD(G.units.filter(v=>v.kind==='drone'&&ok(v)&&!v.rtb&&v.fuel>v.maxFuel*.3)).slice(0,2);
+    if(!hs.length){say(null,'Ingen HÖK redo för luftstöd (batteri eller service).',[{l:'Bygg HÖK',f:()=>queueBuild('drone')}]);return false;}
+    for(const u of hs){let o;
+      if(pk.enemy&&!pk.enemy.dead&&canHit(u,pk.enemy)&&u.ammo>=1)o={type:'attack',enemy:pk.enemy,post:'off'};
+      else if(pk.unit&&!pk.unit.air&&!pk.unit.dead)o={type:'follow',unit:pk.unit,post:'def',escort:true,group:escortGroup(pk.unit)};
+      else o=Object.assign({type:'obs',post:'def'},W(tp));
+      giveOrder(u,o,false);}
+    say(hs[0],'Luftstöd: '+hs.map(v=>v.name).join(' och ')+(pk.enemy?' mot '+ename(pk.enemy):pk.unit?' eskorterar '+pk.unit.name:' över ruta '+sq(tp.x,tp.y))+'.');return true;}
+  if(kind==='tank'){
+    let vs=G.units.filter(v=>v.kind==='tank'&&ok(v)&&(G.ctrl?(G.ctrlSel||[]).includes(v.id):G.selIds.includes(v.id)));
+    if(!vs.length)vs=byD(G.units.filter(v=>v.kind==='tank'&&ok(v))).slice(0,2);
+    if(!vs.length){say(null,'Ingen VARG ledig.',[{l:'Bygg VARG',f:()=>queueBuild('tank')}]);return false;}
+    const offs=formation(vs.length,Math.atan2(tp.y-vs[0].y,tp.x-vs[0].x));
+    vs.forEach((u,i)=>{let o;
+      if(pk.enemy&&!pk.enemy.dead&&canHit(u,pk.enemy))o={type:'attack',enemy:pk.enemy,post:'off'};
+      else if(pk.barrier&&!pk.barrier.cleared){const sd=barrierSide(pk.barrier,u);o={type:'move',x:sd.x,y:sd.y,post:'def'};}
+      else if(pk.mine&&!pk.mine.cleared){const sd=mineSide(pk.mine,u);o={type:'move',x:sd.x,y:sd.y,post:'def'};}
+      else if(pk.struct&&!pk.struct.dead)o={type:'raze',s:pk.struct,post:'off'};
+      else if(pk.unit&&pk.unit!==u&&!pk.unit.dead)o={type:'follow',unit:pk.unit,post:'def'};
+      else o=Object.assign({type:'move',post:'off'},W({x:tp.x+offs[i].x,y:tp.y+offs[i].y}));
+      giveOrder(u,o,false);});
+    say(vs[0],'Inropad: '+vs.map(v=>v.name).join(' och ')+(pk.enemy?' anfaller '+ename(pk.enemy):' mot ruta '+sq(tp.x,tp.y))+'.');return true;}
+  if(kind==='krok'){
+    if(pk.wreck){orderKrok(pk.wreck);return true;}
+    const ks=G.kroks.filter(k=>!k.dead);if(!ks.length){say(null,'Ingen KROK tillgänglig.');return false;}
+    if(pk.unit&&(pk.unit.kind==='tank'||pk.unit.kind==='eng')&&!pk.unit.dead&&pk.unit.id!==G.ctrl){airlift([pk.unit],WORLD.landing);return true;}
+    const us=(G.ctrl?[]:selUnits()).filter(v=>v.kind==='tank'||v.kind==='eng');
+    if(us.length){airlift(us,tp);return true;}
+    const k=ks.slice().sort((a,b)=>a.orders.length-b.orders.length)[0];krokOrder(k,Object.assign({type:'move'},W(tp)),false);say(k,'Flyger till ruta '+sq(tp.x,tp.y)+'.');return true;}
+  return false;
+}
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={callIn,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
   const el=$('log');el.innerHTML='';
-  for(const l of G.log.slice(0,4)){
+  for(const l of G.log.slice(0,5)){
     const li=document.createElement('li');
     li.innerHTML='<time></time><b></b><span></span>';
     li.children[0].textContent=fmt(l.t);li.children[1].textContent=l.who;li.children[2].textContent=l.text;
+    if(l.acts&&l.acts.length&&G.time-l.t<90){li.classList.add('act');const box=document.createElement('div');box.className='la';
+      for(const a of l.acts){const bt=document.createElement('button');bt.type='button';bt.textContent=a.l;bt.addEventListener('click',ev=>{ev.stopPropagation();a.f();l.acts=null;renderLog();uiTick(true);});box.appendChild(bt);}li.appendChild(box);}
     if(l.uid){li.title='Välj enheten och visa dess kamera';li.addEventListener('click',()=>{const u=unitById(l.uid);if(!u||u.dead)return;if(u.kind!=='krok')setSel([u.id]);setCam(u.id);uiTick(true);});}
     el.appendChild(li);
   }
@@ -1542,6 +1711,8 @@ function drawMap(ctx,w,h,small){
   // fog: areas no one has looked at
   if(G.knownV!==fogV||fogG!==G){fogV=G.knownV;fogG=G;const id=fogX.createImageData(GW,GH);for(let i=0;i<GW*GH;i++){if(!G.known[i]){const o=i*4;id.data[o]=118;id.data[o+1]=128;id.data[o+2]=140;id.data[o+3]=135;}}fogX.putImageData(id,0,0);}
   ctx.imageSmoothingEnabled=true;ctx.drawImage(fogC,0,0,WW,WH);
+  // locked sectors: hatched until the barrier in front of them is blown
+  if(G.lock&&G.lockN){if(lockV!==G.lockV||lockG!==G){lockV=G.lockV;lockG=G;buildLockC();}ctx.imageSmoothingEnabled=false;ctx.drawImage(lockC,0,0,WW,WH);ctx.imageSmoothingEnabled=true;}
   // vision rings
   ctx.setLineDash([3*k,4*k]);ctx.strokeStyle='rgba(35,57,91,.2)';ctx.lineWidth=k;
   for(const u of G.units){if(u.dead||u.carried)continue;ctx.beginPath();ctx.arc(u.x,u.y,u.vision,0,TAU);ctx.stroke();}
@@ -1565,7 +1736,14 @@ function drawMap(ctx,w,h,small){
   for(const lb of WORLD.labels){let x=lb.x,y=lb.y;if(lb.off){const dd=Math.hypot(x-CX,y-CY)||1;x+=(x-CX)/dd*40;y+=(y-CY)/dd*40;}ctx.fillStyle='rgba(35,57,91,.8)';ctx.font=`italic 600 ${11*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lb.t.toUpperCase(),x,y);}
   for(const b of G.barriers){if(b.cleared)continue;ctx.strokeStyle='#5a2a14';ctx.lineWidth=2.2;for(const c of b.cells){const q=cellCenter(c);ctx.beginPath();ctx.moveTo(q.x-4,q.y-4);ctx.lineTo(q.x+4,q.y+4);ctx.moveTo(q.x+4,q.y-4);ctx.lineTo(q.x-4,q.y+4);ctx.stroke();}
     ctx.fillStyle='#5a2a14';ctx.font=`700 ${10*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('SPÄRR '+b.id,b.x,b.y-14*k);
+    if(barrierGate(b)){ctx.font=`600 ${8*k}px ${FONT}`;ctx.fillStyle='#7a4a10';ctx.fillText('LÅSER SEKTOR · B',b.x,b.y-25*k);}
     if(b.prog>0){ctx.strokeStyle='#e0a21f';ctx.lineWidth=3*k;ctx.beginPath();ctx.arc(b.x,b.y,14*k,-PI/2,-PI/2+TAU*b.prog);ctx.stroke();}}
+  for(const m of G.mines||[]){if(!m.found||m.cleared)continue;ctx.save();ctx.lineWidth=2.4*k;ctx.fillStyle='rgba(242,194,0,.32)';ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,TAU);ctx.fill();
+    ctx.setLineDash([4*k,4*k]);ctx.strokeStyle='#161616';ctx.stroke();ctx.lineDashOffset=4*k;ctx.strokeStyle='#f2c200';ctx.stroke();ctx.restore();
+    ctx.fillStyle='#4a3a00';ctx.font=`700 ${9.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('MINOR '+m.id,m.x,m.y-m.r-3*k);
+    if(m.prog>0){ctx.strokeStyle='#e0a21f';ctx.lineWidth=3*k;ctx.beginPath();ctx.arc(m.x,m.y,m.r+4*k,-PI/2,-PI/2+TAU*m.prog);ctx.stroke();}}
+  if(G.unlockFx&&G.time-G.unlockFx.t<5){const b=G.barriers.find(x=>x.id===G.unlockFx.b),a=(G.time-G.unlockFx.t)/5;if(b){ctx.strokeStyle=`rgba(43,117,80,${1-a})`;ctx.lineWidth=4*k;ctx.beginPath();ctx.arc(b.x,b.y,20+a*260,0,TAU);ctx.stroke();
+    ctx.fillStyle=`rgba(43,117,80,${Math.min(1,2-2*a)})`;ctx.font=`700 ${12*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('SEKTOR ÖPPNAD',b.x,b.y-30*k);}}
   // buildings
   const zoomed=!small&&mv.z>=1.9,f=Math.max(1,k*1.05);
   for(const st of G.structs){
@@ -1681,6 +1859,7 @@ function drawMap(ctx,w,h,small){
   }
   if(G.box&&!small){const b=G.box,x=Math.min(b.x0,b.x1),y=Math.min(b.y0,b.y1),bw=Math.abs(b.x1-b.x0),bh=Math.abs(b.y1-b.y0);ctx.fillStyle='rgba(240,196,90,.12)';ctx.fillRect(x,y,bw,bh);ctx.strokeStyle='#e0a21f';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.strokeRect(x+.5,y+.5,bw,bh);ctx.setLineDash([]);}
   if(G.paused&&G.running){ctx.fillStyle='rgba(17,26,34,.78)';ctx.fillRect(w/2-44,10,88,24);ctx.fillStyle='#f0c45a';ctx.font=`700 13px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PAUS',w/2,22);}
+  if(HOV.el===mapC&&HOV.pk)hoverTag(ctx,HOV.x,HOV.y,HOV.pk,w,h);
   mapX={s,ox,oy};
 }
 function camCorners(ctx,x,y,k){ctx.strokeStyle=NAVY;ctx.lineWidth=1.5*k;const r=17*k,c=6*k;for(const[sx,sy]of[[-1,-1],[1,-1],[1,1],[-1,1]]){ctx.beginPath();ctx.moveTo(x+sx*r,y+sy*(r-c));ctx.lineTo(x+sx*r,y+sy*r);ctx.lineTo(x+sx*(r-c),y+sy*r);ctx.stroke();}}
@@ -1945,7 +2124,7 @@ function buildStatic(){
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
   for(const m of[R3.units,R3.enemies,R3.wrecks,R3.relays,R3.fx,R3.kroks,R3.structs])m.clear();R3.parts.length=0;
   while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);
-  R3.route=null;
+  R3.route=null;R3.tags=new Map();
   const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1,ny=SY+1,st=new THREE.Group();
   const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),idx=new (nx*ny>65535?Uint32Array:Uint16Array)(SX*SY*6);// the grid has more than 65535 vertices: 16-bit indices would wrap and scramble the southern triangles
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
@@ -2140,6 +2319,7 @@ function sync3D(dtr){
   for(const w of G.wrecks){seen.add(w.id);let m=R3.wrecks.get(w.id);if(!m){m=mkWreckMesh(w);D.add(m);R3.wrecks.set(w.id,m);}}
   for(const[id,m]of R3.wrecks)if(!seen.has(id)){D.remove(m);R3.wrecks.delete(id);}
   for(const b of G.barriers){const m=R3.bars.get(b.id);if(m)m.visible=!b.cleared;}
+  syncTags();
   if(R3.villaM)R3.villaM.forEach((m,i)=>{const t0=G.ddead.v&&G.ddead.v[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.12,1-(G.time-t0)/70);});
   if(R3.shedM)R3.shedM.forEach((m,i)=>{const t0=G.ddead.s&&G.ddead.s[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.15,1-(G.time-t0)/40);});
   if(R3.boatM)R3.boatM.forEach((m,i)=>{const t0=G.ddead.b[i];if(t0==null){if(m.userData.sunk){m.userData.sunk=false;m.visible=true;}return;}const k2=clamp((G.time-t0)/7,0,1);m.userData.sunk=true;m.userData.y0=.15-3.2*k2;m.rotation.x=.5*k2;m.visible=k2<1;});
@@ -2253,13 +2433,15 @@ function drawHud(ctx,w,h){
   if(u.kind!=='krok'&&G.time-u.lastHit<1.2){ctx.fillStyle='#ff7aa8';ctx.fillText('TRÄFF',w-8,h-6);}
   else if(u.kind!=='krok'){ctx.fillText(G.ctrl===u.id?'MANUELL':POST[curPost(u)].toUpperCase(),w-8,h-6);}
   if(G.ctrl===u.id){ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#f0c45a';
-    ctx.font=mono(11);ctx.fillText(u.kind!=='tank'?'MANUELL · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':G.mlook?'MUSEN SIKTAR · KLICK SKJUTER · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D KÖR · E SLÄPPER',w/2,64);ctx.font=mono(12);
+    ctx.font=mono(11);ctx.fillText(u.kind!=='tank'?'MANUELL · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':G.mlook?'MUSEN SIKTAR · KLICK SKJUTER · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D KÖR · E SLÄPPER',w/2,64);ctx.fillStyle='rgba(240,196,90,.75)';ctx.fillText('PEKA OCH TRYCK  B BÄVER · H LUFTSTÖD · V VARG · K KROK',w/2,80);ctx.fillStyle='#f0c45a';ctx.font=mono(12);
     if(u.kind==='tank'&&G.mlook){const cx2=w/2,cy2=h/2,t=u.target;ctx.shadowBlur=0;ctx.strokeStyle=t?'#ff7aa8':'rgba(240,244,240,.9)';ctx.lineWidth=1.5;
       ctx.beginPath();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){ctx.moveTo(cx2+dx*7,cy2+dy*7);ctx.lineTo(cx2+dx*18,cy2+dy*18);}ctx.stroke();
       const rl=clamp(1-u.cd*u.rate,0,1);ctx.strokeStyle=rl>=1?'rgba(240,196,90,.9)':'rgba(240,196,90,.45)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx2,cy2,24,-PI/2,-PI/2+TAU*rl);ctx.stroke();
       ctx.font=mono(11);ctx.textBaseline='top';ctx.fillStyle=t?'#ffd0de':'rgba(240,244,240,.75)';
       ctx.fillText(t?(t.isStruct?STRUCT[t.kind].label.toUpperCase()+' '+t.id:ENEMY[t.kind].label.toUpperCase()+' '+t.id)+' · '+Math.round(dist(u,t))+' m':'INGET MÅL INOM '+u.range+' m',cx2,cy2+32);}}
   ctx.shadowBlur=0;
+  if(G.mlook){const t=performance.now();if(t-(HOV.ct||0)>150){HOV.ct=t;HOV.cpk=pick('cam',w/2,h/2);}if(HOV.cpk)hoverTag(ctx,w/2+28,h/2+44,HOV.cpk,w,h,true);}
+  else if(HOV.el===glC&&HOV.pk)hoverTag(ctx,HOV.x,HOV.y,HOV.pk,w,h);
   if(G.joy){const j=G.joy,dx=clamp(j.x-j.x0,-55,55),dy=clamp(j.y-j.y0,-55,55);ctx.strokeStyle='rgba(240,196,90,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(j.x0,j.y0,55,0,TAU);ctx.stroke();ctx.fillStyle='rgba(240,196,90,.55)';ctx.beginPath();ctx.arc(j.x0+dx,j.y0+dy,18,0,TAU);ctx.fill();}
 }
 
@@ -2270,7 +2452,7 @@ function screenToWorld3D(sx,sy,w,h){
   if(!hits.length)return null;return{x:hits[0].point.x,y:hits[0].point.z};
 }
 function pick(kind,sx,sy){
-  const res={world:null,unit:null,enemy:null,relay:null,wp:null,krok:null,barrier:null,struct:null,wreck:null};
+  const res={world:null,unit:null,enemy:null,relay:null,wp:null,krok:null,barrier:null,struct:null,wreck:null,mine:null};
   let toS,thr;
   if(kind==='map'){const X=mapX;const wx=(sx-X.ox)/X.s,wy=(sy-X.oy)/X.s;if(wx>=0&&wy>=0&&wx<=WW&&wy<=WH)res.world={x:wx,y:wy};toS=(x,y)=>({x:X.ox+x*X.s,y:X.oy+y*X.s});thr=16;}
   else{if(!R3)return res;const w=size.cam.w,h=size.cam.h;res.world=screenToWorld3D(sx,sy,w,h);toS=(x,y,y3)=>{const p=projectTo(x,y3,y,w,h);return p||{x:-1e4,y:-1e4};};thr=26;}
@@ -2283,7 +2465,8 @@ function pick(kind,sx,sy){
     for(const e of G.enemies){if(e.dead||!e.seen)continue;const d=near(e.lx,e.ly,groundY(e.lx,e.ly)+2);if(d<bd){bd=d;res.enemy=e;res.wp=null;}}
     for(const r of G.relays){const pb=pointBld(r);const d=Math.min(near(r.x,r.y,groundY(r.x,r.y)+6),kind==='map'?1e9:near(pb.x,pb.y,groundY(pb.x,pb.y)+5));if(d<bd){bd=d;res.relay=r;res.wp=null;res.enemy=null;}}
     for(const b of G.barriers){if(b.cleared)continue;for(const c of b.cells){const q=cellCenter(c);const d=near(q.x,q.y,groundY(q.x,q.y)+1);if(d<bd){bd=d;res.barrier=b;res.relay=null;res.wp=null;res.enemy=null;}}}
-    if(!res.enemy&&!res.relay&&!res.barrier){const t2=kind==='map'?12:22;let b2=Math.min(bd,t2);
+    for(const m of G.mines||[]){if(!m.found||m.cleared)continue;const wd=res.world?Math.hypot(res.world.x-m.x,res.world.y-m.y):1e9;const d=Math.min(near(m.x,m.y,groundY(m.x,m.y)+1),wd<m.r?0:1e9);if(d<bd){bd=d;res.mine=m;res.barrier=null;res.relay=null;res.wp=null;res.enemy=null;}}
+    if(!res.enemy&&!res.relay&&!res.barrier&&!res.mine){const t2=kind==='map'?12:22;let b2=Math.min(bd,t2);
       for(const st of G.structs){if(st.dead||!isKnown(st.x,st.y))continue;const d=near(st.x,st.y,groundY(st.x,st.y)+3);if(d<b2){b2=d;res.struct=st;res.wp=null;}}
       for(const w of G.wrecks){if(!isKnown(w.x,w.y))continue;const d=near(w.x,w.y,groundY(w.x,w.y)+1);if(d<b2){b2=d;res.wreck=w;res.struct=null;res.wp=null;}}}
   }
@@ -2298,17 +2481,18 @@ let ptr=null,rpan=null;
 function onDown(e){
   if(TITLE.on)return;
   const kind=viewKind(e.currentTarget);
-  if(!isMain(kind)||G.over)return;
+  if(G.over)return;
   if(!$('wheel').hidden){closeWheel();ptr=null;return;}
-  if(e.button===2&&kind==='map'){if(ptr)clearTimeout(ptr.lp);ptr=null;if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}rpan={id:e.pointerId,sx:e.offsetX,sy:e.offsetY,cx:mv.cx,cy:mv.cy,moved:false};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}
+  if(e.button===2&&kind==='map'&&isMain('map')){if(ptr)clearTimeout(ptr.lp);ptr=null;if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}rpan={id:e.pointerId,sx:e.offsetX,sy:e.offsetY,cx:mv.cx,cy:mv.cy,moved:false};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}
   if(kind==='map'){pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pts.size===2){if(ptr)clearTimeout(ptr.lp);ptr=null;G.box=null;G.drag=null;const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:mv.z,wm:{x:(mx-mapX.ox)/mapX.s,y:(my-mapX.oy)/mapX.s}};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}}
   if(e.button===2)return;
-  if(G.ctrl&&kind==='cam'){const cu=unitById(G.ctrl);if(cu&&cu.kind==='tank'){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}
+  if(G.ctrl&&kind==='cam'&&isMain('cam')){const cu=unitById(G.ctrl);if(cu&&cu.kind==='tank'){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}
   const x=e.offsetX,y=e.offsetY,pk=pick(kind,x,y),su=selUnit();
   let dragFrom=null;
   if(su){if(pk.unit&&G.selIds.includes(pk.unit.id))dragFrom={x:pk.unit.x,y:pk.unit.y};else if(pk.wp&&pk.wp.i===su.orders.length-1){const p=orderPt(su.orders[pk.wp.i]);dragFrom={x:p.x,y:p.y};}}
-  ptr={kind,x,y,moved:false,drag:false,dragFrom,box:kind==='map'&&!dragFrom&&!pk.unit&&!pk.krok,add:e.ctrlKey||e.metaKey||e.shiftKey,lp:setTimeout(()=>{if(ptr&&!ptr.moved){ptr.lpFired=true;openWheel(ptr.x,ptr.y,pick(ptr.kind,ptr.x,ptr.y));}},450)};
+  const srcEl=e.currentTarget;
+  ptr={kind,el:srcEl,x,y,moved:false,drag:false,dragFrom,box:kind==='map'&&isMain('map')&&!dragFrom&&!pk.unit&&!pk.krok,add:e.ctrlKey||e.metaKey||e.shiftKey,lp:setTimeout(()=>{if(ptr&&!ptr.moved){ptr.lpFired=true;openWheel(ptr.x,ptr.y,pick(ptr.kind,ptr.x,ptr.y),ptr.el);}},450)};
   try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}
 }
 function onMove(e){
@@ -2323,7 +2507,7 @@ function onMove(e){
 }
 function onUp(e){
   if(TITLE.on)return;
-  if(rpan&&e.pointerId===rpan.id){const r=rpan;rpan=null;mapC.style.cursor='';if(!r.moved&&!G.mlook)openWheel(r.sx,r.sy,pick('map',r.sx,r.sy));return;}
+  if(rpan&&e.pointerId===rpan.id){const r=rpan;rpan=null;mapC.style.cursor='';if(!r.moved&&!G.mlook)openWheel(r.sx,r.sy,pick('map',r.sx,r.sy),mapC);return;}
   if(G.firing){G.firing=false;return;}
   if(pts.has(e.pointerId)){pts.delete(e.pointerId);if(pinch){if(pts.size<2)pinch=null;ptr=null;return;}}
   if(G.joy){G.joy=null;return;}
@@ -2343,15 +2527,16 @@ function onUp(e){
   if(pk.unit){if(e.ctrlKey||e.metaKey)toggleSel(pk.unit.id);else setSel([pk.unit.id]);uiTick(true);return;}
   if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
   if(pk.wreck){orderKrok(pk.wreck);uiTick(true);return;}
-  if(pk.wp){openWheel(x,y,pk);return;}
+  if(pk.wp){openWheel(x,y,pk,p.el);return;}
   if(!u)return;
   groupOrder(pk,e.shiftKey);uiTick(true);
 }
 for(const el of[mapC,glC]){
   el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);
   el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;G.joy=null;pts.delete(e.pointerId);pinch=null;});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook)return;const kind=viewKind(el);if(!isMain(kind)||kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY));});
-  el.addEventListener('click',()=>{if(TITLE.on)return;const kind=viewKind(el);if(!isMain(kind)){G.mainMode=G.mainMode==='map'?'cam':'map';placePanes();uiTick(true);}});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on)return;const kind=viewKind(el);if(kind==='map'&&isMain('map'))return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
+  el.addEventListener('pointermove',e=>{HOV.el=el;HOV.x=e.offsetX;HOV.y=e.offsetY;const t=performance.now();if(t-HOV.t>70){HOV.t=t;HOV.pk=G&&!TITLE.on?pick(viewKind(el),e.offsetX,e.offsetY):null;}});
+  el.addEventListener('pointerleave',()=>{if(HOV.el===el){HOV.el=null;HOV.pk=null;}});
 }
 
 document.addEventListener('mousedown',e=>{if(G.mlook&&e.button===2){e.preventDefault();document.exitPointerLock();}},true);
@@ -2370,7 +2555,7 @@ function postSvg(p){
   return '<svg viewBox="0 0 10 10" aria-hidden="true">'+s+'</svg>';
 }
 function closeWheel(){wheel.hidden=true;}
-function openWheel(sx,sy,pk){
+function openWheel(sx,sy,pk,srcEl){
   const u=selUnit();
   let title='',sub='',items=[],postTarget=null;
   const sk=selKrok();
@@ -2406,14 +2591,18 @@ function openWheel(sx,sy,pk){
     const ss=G.structs.filter(st=>!st.dead&&isKnown(st.x,st.y)&&dm(st)<500).sort((a,b)=>dm(a)-dm(b)).slice(0,3);
     for(const st of ss)items.push({l:'Riv '+slabel(st)+' ('+dm(st)+' m)',f:()=>{st.krok=true;giveOrder(u,{type:'demolish',s:st,post:wheelPost},false);}});
     if(!items.length)return;
-  }else if(!u){return;}
+  }else if(!u){title=targetLabel(pk);sub='ropa in';}
   else if(pk.wp){
     const o=u.orders[pk.wp.i];title=u.name;sub='punkt '+(pk.wp.i+1)+' av '+u.orders.length;postTarget=o;wheelPost=o.post;
     const fixRtb=()=>{if(o.type==='rtb'&&u.rtb){u.rtb=false;const sv=u.saved||[];u.saved=null;u.orders=u.orders.filter(x=>x!==o).concat(sv);}};
     items.push({l:'Ta bort punkt',danger:true,f:()=>{const i=u.orders.indexOf(o);if(i<0)return;if(o.type==='rtb'){fixRtb();}else u.orders.splice(i,1);u.path=null;}});
     if(pk.wp.i>0&&o.type!=='rtb')items.push({l:'Gör till nästa',f:()=>{const i=u.orders.indexOf(o);if(i<1)return;u.orders.splice(i,1);u.orders.unshift(o);u.path=null;}});
+  }else if(pk.mine){
+    const m=pk.mine;title='MINFÄLT '+m.id;sub=selLabel();wheelPost=u.post;
+    if(selUnits().some(v=>v.kind==='eng'))items.push({l:'Röj minfältet',f:()=>groupOrder({mine:m},false,wheelPost)});
+    items.push({l:'Gå fram till',f:()=>groupOrder({mine:m},false,wheelPost)});
   }else if(pk.barrier){
-    const b=pk.barrier;title='SPÄRR '+b.id;sub=selLabel();wheelPost=u.post;
+    const b=pk.barrier;title='SPÄRR '+b.id;sub=selLabel()+(barrierGate(b)?' · låser en sektor':'');wheelPost=u.post;
     if(selUnits().some(v=>v.kind==='eng'))items.push({l:'Spräng spärr',f:()=>groupOrder({barrier:b},false,wheelPost)});
     items.push({l:'Gå fram till',f:()=>groupOrder({barrier:b},false,wheelPost)});
   }else if(pk.enemy){
@@ -2430,10 +2619,12 @@ function openWheel(sx,sy,pk){
     items.push({l:'Observera här',f:()=>groupObs(pt)});
     const lift=selUnits().filter(v=>v.kind==='tank'||v.kind==='eng');if(lift.length&&G.kroks.some(k=>!k.dead))items.push({l:'Flyg dit med KROK',f:()=>airlift(lift,pt)});
   }
+  if(!sk){for(const c2 of callItems(pk))if(items.length<9)items.push(c2);}
+  if(!items.length)return;
   wRing.innerHTML='';
   const c=document.createElement('div');c.className='wc';c.innerHTML='<b></b><span></span>';c.children[0].textContent=title;c.children[1].textContent=sub;wRing.appendChild(c);
   const n=items.length;
-  items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.className='wi'+(it.danger?' danger':'');b.textContent=it.l;const a=-PI/2+i*TAU/n,rx=n>4?150:86,ry=n>4?100:86;b.style.left=(125+Math.cos(a)*rx)+'px';b.style.top=(125+Math.sin(a)*ry)+'px';b.addEventListener('click',ev=>{ev.stopPropagation();it.f();closeWheel();uiTick(true);});wRing.appendChild(b);});
+  items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.className='wi'+(it.danger?' danger':'')+(it.call?' call':'');b.textContent=it.l;const a=-PI/2+i*TAU/n,rx=n>4?150:86,ry=n>4?100:86;b.style.left=(125+Math.cos(a)*rx)+'px';b.style.top=(125+Math.sin(a)*ry)+'px';b.addEventListener('click',ev=>{ev.stopPropagation();it.f();closeWheel();uiTick(true);});wRing.appendChild(b);});
   wChips.innerHTML='';
   if(!items.length)return;
   const showChips=!sk&&!!u&&!pk.wreck&&!(pk.unit&&pk.unit.id!==u.id);
@@ -2443,30 +2634,26 @@ function openWheel(sx,sy,pk){
     for(const p of PK){const b=document.createElement('button');b.type='button';b.className='chip';b.innerHTML=postSvg(p)+'<span></span>';b.lastChild.textContent=POST[p];b.setAttribute('aria-pressed',String(wheelPost===p));
       b.addEventListener('click',ev=>{ev.stopPropagation();wheelPost=p;if(postTarget){postTarget.post=p;u.path=null;}for(const x of wChips.querySelectorAll('.chip'))x.setAttribute('aria-pressed',String(x===b));});wChips.appendChild(b);}
   }
-  const r=mainSlot.getBoundingClientRect(),fullH=showChips?330:254;
-  const sc=Math.min(1,(r.width-8)/254,(r.height-8)/fullH);
+  const src=(srcEl||(G.mainMode==='map'?mapC:glC)).getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight,fullH=showChips?330:254;
+  const sc=Math.min(1,(vw-8)/254,(vh-8)/fullH);
   wheel.style.transformOrigin='0 0';wheel.style.transform='scale('+sc.toFixed(3)+')';
-  wheel.style.left=clamp(sx-125*sc,4,Math.max(4,r.width-254*sc-4))+'px';
-  wheel.style.top=clamp(sy-125*sc,4,Math.max(4,r.height-fullH*sc-4))+'px';
+  wheel.style.left=clamp(src.left+sx-125*sc,4,Math.max(4,vw-254*sc-4))+'px';
+  wheel.style.top=clamp(src.top+sy-125*sc,4,Math.max(4,vh-fullH*sc-4))+'px';
   wheel.hidden=false;
 }
 document.addEventListener('pointerdown',e=>{if(!wheel.hidden&&!wheel.contains(e.target)&&e.target!==mapC&&e.target!==glC)closeWheel();});
 
 /* ---------- side panel ---------- */
-const cardsEl=$('cards');let cardIds='';const cardRefs={};
-function buildCards(){
-  cardsEl.innerHTML='';
+const rosterEl=$('roster');let cardIds='';const cardRefs={};
+function buildRoster(){
+  rosterEl.innerHTML='';
   for(const u of[...G.units,...G.kroks]){
-    const el=document.createElement('div');el.className='card'+(u.kind==='krok'?' service':'');
-    el.innerHTML='<button class="cbody" type="button"><span class="cname"><i></i><span></span><em></em></span><span class="cstate"></span><span class="bars"></span></button><button class="ccam" type="button">KAM</button>';
-    el.querySelector('.cname i').style.background=u.color;el.querySelector('.cname span').textContent=u.name;
-    el.querySelector('.cname em').textContent=u.kind==='krok'?'bärgning':'';
-    el.querySelector('.ccam').setAttribute('aria-label','Visa kamera från '+u.name);
-    const bars=el.querySelector('.bars');let hp=null,fu=null;
-    {bars.innerHTML='<span class="b hp"><b></b></span>'+(u.air&&u.kind!=='krok'?'<span class="b fu"><b></b></span>':'');hp=bars.querySelector('.hp > b');fu=bars.querySelector('.fu > b');}
-    el.querySelector('.cbody').addEventListener('click',ev=>{if(u.kind==='krok'){if(!u.dead)selectKrok(u);}else if(!u.dead){if(ev.ctrlKey||ev.metaKey||ev.shiftKey)toggleSel(u.id);else setSel([u.id]);}uiTick(true);});
-    el.querySelector('.ccam').addEventListener('click',()=>{if(!u.dead)setCam(u.id);uiTick(true);});
-    cardsEl.appendChild(el);cardRefs[u.id]={el,u,state:el.querySelector('.cstate'),em:el.querySelector('.cname em'),hp,fu};
+    const el=document.createElement('button');el.type='button';el.className='ru'+(u.kind==='krok'?' service':'');
+    el.innerHTML='<span class="rn"><i></i><span></span><em></em></span><span class="bars"><span class="b hp"><b></b></span>'+(u.air&&u.kind!=='krok'?'<span class="b fu"><b></b></span>':'')+'</span><span class="rs"></span>';
+    el.querySelector('.rn i').style.background=u.color;el.querySelector('.rn span').textContent=u.name;el.title='Klick väljer, Ctrl+klick lägger till, dubbelklick visar kameran';
+    el.addEventListener('click',ev=>{if(u.kind==='krok'){if(!u.dead)selectKrok(u);}else if(!u.dead){if(ev.ctrlKey||ev.metaKey||ev.shiftKey)toggleSel(u.id);else setSel([u.id]);}uiTick(true);});
+    el.addEventListener('dblclick',()=>{if(u.dead)return;setCam(u.id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}uiTick(true);});
+    rosterEl.appendChild(el);cardRefs[u.id]={el,u,state:el.querySelector('.rs'),em:el.querySelector('.rn em'),hp:el.querySelector('.hp > b'),fu:el.querySelector('.fu > b')};
   }
 }
 const postRow=$('postRow');
@@ -2527,9 +2714,102 @@ const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','Arro
 const keys=new Set();let lastKey={k:null,t:0};
 window.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>keys.clear());
+/* ---------- pointing and calling in ---------- */
+const HOV={el:null,x:0,y:0,t:0,pk:null,ct:0,cpk:null};
+const CALLKEY={KeyB:'eng',KeyH:'air',KeyV:'tank',KeyK:'krok'};
+function pointedPick(){if(G.mlook)return pick('cam',size.cam.w/2,size.cam.h/2);if(!HOV.el)return null;return pick(viewKind(HOV.el),HOV.x,HOV.y);}
+function doCall(kind,key){const pk=pointedPick();if(!pk||!callTarget(pk)){say(null,'Peka på ett mål i kameran eller på sjökortet och tryck '+String(key).toUpperCase()+'.');return;}callIn(kind,pk);}
+function swapViews(){G.mainMode=G.mainMode==='map'?'cam':'map';placePanes();uiTick(true);}
+function focusUnit(u){if(u&&!u.dead){setCam(u.id);uiTick(true);}}
+function focusPoint(x,y){ping(x,y);if(G.mainMode==='map'){mv.free=true;mv.z=Math.max(mv.z,2.2);mv.cx=x;mv.cy=y;}}
+const barrierGate=b=>!b.cleared&&b.sides.some(sd=>!lockedAt(sd.x,sd.y))&&b.sides.some(sd=>lockedAt(sd.x,sd.y));
+function targetLabel(pk){return pk.mine?'MINFÄLT '+pk.mine.id:pk.barrier?'SPÄRR '+pk.barrier.id:pk.enemy?ENEMY[pk.enemy.kind].label.toUpperCase()+' '+pk.enemy.id:pk.relay?pname(pk.relay).toUpperCase():pk.struct?slabel(pk.struct).toUpperCase():pk.wreck?'VRAK':pk.unit?pk.unit.name:pk.krok?pk.krok.name:pk.world?'RUTA '+sq(pk.world.x,pk.world.y):'';}
+function callHints(pk){
+  if(pk.mine&&!pk.mine.cleared)return'B röjer';
+  if(pk.barrier&&!pk.barrier.cleared)return'B spränger · V går fram';
+  if(pk.enemy&&!pk.enemy.dead)return'H luftstöd · V anfaller';
+  if(pk.relay&&!pk.relay.captured)return'B tar punkten';
+  if(pk.struct&&!pk.struct.dead)return'B river · V skjuter';
+  if(pk.wreck)return lockedAt(pk.wreck.x,pk.wreck.y)?'bakom spärr, ingen bärgning':'K bärgar';
+  if(pk.unit&&!pk.unit.dead)return pk.unit.air?'':'H eskorterar · K lyfter ut';
+  return'';}
+function callItems(pk){const out=[],it=(l,k)=>out.push({l,call:true,f:()=>callIn(k,pk)});
+  if(pk.mine&&!pk.mine.cleared)it('BÄVER röjer (B)','eng');
+  else if(pk.barrier&&!pk.barrier.cleared)it('BÄVER spränger (B)','eng');
+  else if(pk.enemy&&!pk.enemy.dead){it('Luftstöd (H)','air');it('VARG anfaller (V)','tank');}
+  else if(pk.relay&&!pk.relay.captured)it('BÄVER tar (B)','eng');
+  else if(pk.struct&&!pk.struct.dead)it('BÄVER river (B)','eng');
+  else if(pk.wreck){}
+  else if(pk.unit&&!pk.unit.dead&&!pk.unit.air){it('Luftstöd (H)','air');if(pk.unit.kind==='tank'||pk.unit.kind==='eng')it('Lyft ut (K)','krok');}
+  else if(pk.world&&!pk.unit&&!pk.krok){it('VARG hit (V)','tank');it('HÖK spanar (H)','air');}
+  return out;}
+function hoverTag(ctx,x,y,pk,w,h,center){const hint=callHints(pk);if(!hint&&!center)return;const lab=targetLabel(pk);if(!lab)return;
+  ctx.save();ctx.font='700 11px '+FONT;const w1=ctx.measureText(lab).width;ctx.font='600 11px '+FONT;const w2=hint?ctx.measureText(hint).width:0;
+  const bw=Math.max(w1,w2)+14,bh=hint?34:20;let bx=x+14,by=y+16;if(bx+bw>w-4)bx=x-bw-10;if(by+bh>h-4)by=y-bh-10;
+  ctx.fillStyle='rgba(14,21,28,.9)';ctx.strokeStyle='rgba(240,196,90,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(bx,by,bw,bh);ctx.fill();ctx.stroke();
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.font='700 11px '+FONT;ctx.fillStyle='#ebe6d6';ctx.fillText(lab,bx+7,by+4);
+  if(hint){ctx.font='600 11px '+FONT;ctx.fillStyle='#f0c45a';ctx.fillText(hint,bx+7,by+18);}ctx.restore();}
+/* locked-sector hatching for the chart, rebuilt when a barrier falls */
+const lockC=mkCanvas(GW*4,GH*4),lockX=lockC.getContext('2d');let lockV=-1,lockG=null;
+function buildLockC(){const c=lockX,W4=GW*4,H4=GH*4;c.clearRect(0,0,W4,H4);c.save();
+  c.strokeStyle='rgba(52,58,74,.55)';c.lineWidth=1.3;c.beginPath();for(let d=-H4;d<W4;d+=10){c.moveTo(d,0);c.lineTo(d+H4,H4);}c.stroke();
+  c.globalCompositeOperation='destination-in';c.fillStyle='#000';for(let i=0;i<GW*GH;i++)if(G.lock[i])c.fillRect((i%GW)*4,((i/GW)|0)*4,4,4);
+  c.globalCompositeOperation='destination-over';c.fillStyle='rgba(70,76,92,.22)';for(let i=0;i<GW*GH;i++)if(G.lock[i])c.fillRect((i%GW)*4,((i/GW)|0)*4,4,4);c.restore();}
+/* 3D markers over obstacles, so a barrier or a minefield is easy to pick out in any camera */
+function tagSprite(text,bg,fg){const c=mkCanvas(256,64),x=c.getContext('2d');x.font='700 30px '+FONT;const tw=Math.min(244,x.measureText(text).width+28);
+  x.fillStyle=bg;x.beginPath();x.rect((256-tw)/2,8,tw,48);x.fill();x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';x.fillText(text,128,33);
+  const tx=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false,depthWrite:false,fog:false}));sp.renderOrder=20;sp.userData.tw=tw;return sp;}
+function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map();
+  for(const b of G.barriers)if(!b.cleared)want.set('B'+b.id,{x:b.x,y:b.y,t:'SPÄRR '+b.id+(barrierGate(b)?' · LÅST':''),bg:'rgba(90,42,20,.9)',fg:'#ffd9a0'});
+  for(const m of G.mines||[])if(m.found&&!m.cleared)want.set('M'+m.id,{x:m.x,y:m.y,t:'MINOR '+m.id,bg:'rgba(242,194,0,.92)',fg:'#161616',ring:m.r});
+  for(const[k,o]of R3.tags)if(!want.has(k)||o.txt!==want.get(k).t){R3.dyn.remove(o.g);o.sp.material.map.dispose();o.sp.material.dispose();R3.tags.delete(k);}
+  const cp=R3.cam.position;
+  for(const[k,w]of want){let o=R3.tags.get(k);
+    if(!o){const g=new THREE.Group(),sp=tagSprite(w.t,w.bg,w.fg);g.add(sp);
+      if(w.ring){const rg=new THREE.Mesh(new THREE.RingGeometry(w.ring-1.2,w.ring,40),new THREE.MeshBasicMaterial({color:0xf2c200,transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false}));rg.rotation.x=-PI/2;rg.position.y=.6;g.add(rg);}
+      g.position.set(w.x,groundY(w.x,w.y),w.y);R3.dyn.add(g);o={g,sp,txt:w.t};R3.tags.set(k,o);}
+    const d=Math.hypot(cp.x-w.x,cp.z-w.y),sc=clamp(d*.045,2.2,34);o.sp.scale.set(sc*4,sc,1);o.sp.position.y=6+sc*.6;o.g.visible=d<700;}
+}
+/* ---------- live feeds: two small cameras on other units, own renderers, no shadows, each refreshed about 15 times a second ---------- */
+const FEED={list:[],n:0,on:true,pickT:0};
+try{FEED.on=localStorage.getItem('bh.feeds')!=='0';}catch(_){}
+function mkFeeds(){const box=$('feeds');box.innerHTML='';FEED.list=[];
+  for(let i=0;i<2;i++){const el=document.createElement('div');el.className='feed';
+    el.innerHTML='<canvas></canvas><div class="fhp"></div><div class="fl"><b></b><span></span></div><button class="fpin" type="button" aria-pressed="false" title="Fäst bilden vid enheten">FÄST</button>';box.appendChild(el);
+    const cv=el.querySelector('canvas');let r=null;
+    if(R3){try{r=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'low-power'});r.setPixelRatio(1);r.shadowMap.enabled=false;}catch(_){r=null;}}
+    const F={el,cv,r,cam:R3?new THREE.PerspectiveCamera(55,16/10,.5,1400):null,uid:null,pin:false,w:0,h:0,lbl:el.querySelector('.fl b'),st:el.querySelector('.fl span'),hp:el.querySelector('.fhp'),pinB:el.querySelector('.fpin')};
+    el.title='Klick: visa i kameran · dubbelklick: helbild';
+    el.addEventListener('click',ev=>{if(ev.target===F.pinB)return;const u=unitById(F.uid);if(u&&!u.dead){setCam(u.id);uiTick(true);}});
+    el.addEventListener('dblclick',()=>{const u=unitById(F.uid);if(u&&!u.dead){setCam(u.id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}uiTick(true);}});
+    F.pinB.addEventListener('click',ev=>{ev.stopPropagation();F.pin=!F.pin;F.pinB.setAttribute('aria-pressed',String(F.pin));});
+    FEED.list.push(F);}
+  setFeeds(FEED.on);}
+function setFeeds(on){FEED.on=on;try{localStorage.setItem('bh.feeds',on?'1':'0');}catch(_){}$('feeds').hidden=!on;const b=$('bFeeds');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Livebilder':'Livebilder av';}
+function feedScore(u){if(u.dead||u.carried)return -1;let s={tank:20,drone:16,eng:12,krok:8,scout:6}[u.kind]||5;if(G.time-u.lastHit<6)s+=100;if(u.fighting||(u.target&&!u.target.isStruct))s+=60;if(G.selIds.includes(u.id))s+=30;if(u.orders&&u.orders.length)s+=5;return s;}
+function feedPick(){const all=[...G.units,...G.kroks];
+  for(const F of FEED.list){const cur=unitById(F.uid);
+    if(F.pin&&cur&&!cur.dead&&cur.id!==G.cam)continue;if(F.pin&&(!cur||cur.dead)){F.pin=false;F.pinB.setAttribute('aria-pressed','false');}
+    const taken=new Set([G.cam,...FEED.list.filter(x=>x!==F).map(x=>x.uid)]);let best=null,bs=-1;
+    for(const u of all){if(taken.has(u.id))continue;const sc=feedScore(u)+(u.id===F.uid?30:0);if(sc>bs){bs=sc;best=u;}}F.uid=best?best.id:null;}}
+function feedCam(u,cam){const air=u.air||u.kind==='krok',y=u.alt!=null&&air?u.alt:unitY(u,0),h=u.camH!=null?u.camH:u.heading,fx=Math.cos(h),fz=Math.sin(h),back=air?22:15,up=air?9:6;
+  const px=u.x-fx*back,pz=u.y-fz*back,py=Math.max(y+up,camFloor(px,pz)+.7);cam.position.set(px,py,pz);const ax=u.x+fx*30,az=u.y+fz*30;cam.lookAt(ax,air?groundY(ax,az)+4:y+2.5,az);}
+function feedTick(now){if(!FEED.on||TITLE.on||!FEED.list.length)return;
+  if(now-FEED.pickT>500){FEED.pickT=now;feedPick();}
+  FEED.n=(FEED.n+1)%4;if(FEED.n%2)return;const F=FEED.list[FEED.n/2];if(!F)return;
+  const u=unitById(F.uid);F.el.classList.toggle('empty',!u||u.dead||!F.r);
+  if(!u||u.dead){F.lbl.textContent='';F.st.textContent='';F.hp.style.width='0';return;}
+  F.lbl.textContent=u.name;const st=(u.kind==='krok'?u.status:u.state)||'';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width=(u.hp/u.maxhp*100)+'%';F.el.classList.toggle('hit',G.time-u.lastHit<1.5);
+  if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;
+  if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
+  feedCam(u,F.cam);F.r.render(R3.scene,F.cam);}
+$('bFeeds').addEventListener('click',()=>setFeeds(!FEED.on));
+$('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
   if(TITLE.on){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();if(!$('intro').hidden&&e.key==='Escape'){$('intro').hidden=true;return;}titleWake(true);}return;}
   if(e.key==='Escape'){closeWheel();if(G.ctrl){setCtrl(null);uiTick(true);}else if(G.selK){G.selK=null;uiTick(true);}return;}
+  if(CALLKEY[e.code]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.running){e.preventDefault();doCall(CALLKEY[e.code],e.key);uiTick(true);return;}
+  if(e.code==='KeyQ'&&!e.ctrlKey&&!e.metaKey&&G.running){swapViews();return;}
   if(G.ctrl&&DRIVE.includes(e.code)){keys.add(e.code);e.preventDefault();return;}
   const m=/^Digit([1-9])$/.exec(e.code||'');
   if(m){const n=m[1];
@@ -2577,11 +2857,11 @@ function uiTick(force){
   $('bPause').setAttribute('aria-pressed',String(G.paused));$('bPause').textContent=G.paused?'Fortsätt':'Paus';
   $('bSpeed').textContent=G.speed+'×';
   const ids=[...G.units.map(u=>u.id),...G.kroks.map(k=>k.id)].join(',');
-  if(ids!==cardIds){cardIds=ids;buildCards();}
+  if(ids!==cardIds){cardIds=ids;buildRoster();}
   for(const u of[...G.units,...G.kroks]){
     const r=cardRefs[u.id];if(!r)continue;
     r.el.classList.toggle('sel',G.selIds.includes(u.id)||G.selK===u.id);
-    const emT=u.kind==='krok'?'bärgning':G.ctrl===u.id?'manuell':(u.kind==='drone'?Math.floor(u.ammo)+' rob':TYPES[u.kind].role)+(wingOf(u.id)?' · W'+wingOf(u.id):'');if(r.em.textContent!==emT)r.em.textContent=emT;r.el.classList.toggle('cam',u.id===G.cam);r.el.classList.toggle('dead',!!u.dead);
+    const emT=u.kind==='krok'?'':G.ctrl===u.id?'manuell':(u.kind==='drone'?Math.floor(u.ammo)+' rob':'')+(wingOf(u.id)?(u.kind==='drone'?' · ':'')+'W'+wingOf(u.id):'');r.el.classList.toggle('cut',!u.dead&&!u.air&&lockedAt(u.x,u.y));if(r.em.textContent!==emT)r.em.textContent=emT;r.el.classList.toggle('cam',u.id===G.cam);r.el.classList.toggle('dead',!!u.dead);
     r.el.classList.toggle('alert',!u.dead&&u.kind!=='krok'&&(u.hold||u.rtb||G.time-u.lastHit<2));
     const st=u.dead?'Förlorad':u.kind==='krok'?u.status:u.state;
     if(r.state.textContent!==st)r.state.textContent=st;
@@ -2610,8 +2890,8 @@ function uiTick(force){
   const ba=$('bAuto');ba.setAttribute('aria-pressed',String(G.krokAuto));ba.textContent=G.krokAuto?'Hämtar automatiskt':'Bara beställt';
   const nq=G.krokQ.length,nw=G.wrecks.length,sv=G.wrecks.filter(w=>!w.claimed&&wreckSafe(w)).length;$('krokInfo').textContent=nw+' högar · '+sv+' säkra'+(nq?' · '+nq+' beställda':'');
   const cu=unitById(G.cam);
-  $('lblMap').textContent=G.mainMode==='map'?'SJÖKORT':'SJÖKORT · klicka för helbild';
-  $('lblCam').textContent=(G.mainMode==='cam'?'KAMERA':'KAMERA · klicka för helbild')+(cu&&!cu.dead?' · '+cu.name:'');
+  $('lblMap').textContent='SJÖKORT';
+  $('lblCam').textContent='KAMERA'+(cu&&!cu.dead?' · '+cu.name:'');
 }
 
 /* ---------- sound: procedural Web Audio; files listed in SND_FILES replace a synth when present ---------- */
@@ -2883,7 +3163,7 @@ function frameBody(now,P){
   const cu=unitById(G.cam);
   if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
   mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,G.mainMode!=='map');P.push(performance.now());
-  if(R3){sync3D(dtr);if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();R3.renderer.render(R3.scene,R3.cam);}
+  if(R3){sync3D(dtr);if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();R3.renderer.render(R3.scene,R3.cam);feedTick(now);}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
   hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
@@ -2893,6 +3173,7 @@ globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,pl
 newGame(1000+Math.floor(Math.random()*9000));if($('tSeed'))$('tSeed').textContent=G.seed;
 init3D();
 if(R3)buildStatic();
+mkFeeds();
 placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=G.seed;showTitle();
 requestAnimationFrame(frame);
 })();

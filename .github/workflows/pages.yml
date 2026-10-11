@@ -30,6 +30,9 @@ jobs:
       - name: Strategiska punkter
         working-directory: tests
         run: node t51.js
+      - name: Låsta sektorer, minor och inropning
+        working-directory: tests
+        run: node t58.js
 
   deploy:
     needs: test

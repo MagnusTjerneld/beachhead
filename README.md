@@ -26,9 +26,11 @@ python3 -m http.server 8000
 
 - **Enheter:** SPARV (billig spanare), HÖK (drönare och ögon), VARG (svävare, slagkraft), BÄVER (ingenjör, bara på land, flygs i land av KROK) och KROK (bärgnings- och transporthelikopter).
 - **Strategiska punkter:** ledningscentralen är målet. Verkstad, radarstation och fältvarv är frivilliga men ger service, spaning och en framskjuten byggplats.
+- **Låsta sektorer och minor:** allt bakom en oröjd spärr är låst och kan inte försörjas (ingen service, ingen bärgning). Minfält på trånga vägar syns från luften och röjs av BÄVER.
 - **Spanat område:** KROK flyger och bärgar bara där någon har tittat. Luftvärn och robotskyttar gör djupa lufttransporter dyra.
 - **Ekonomi:** bärgning. Riv med BÄVER för fullt värde, skjut sönder för mindre.
 - **Styrning:** klicka och dra för order, högerklick för orderhjulet, dra med höger musknapp för att panorera sjökortet, E tar och släpper kontroll, G får gruppen att följa den du kör.
+- **Ropa in:** peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK). Fungerar även när du kör en enhet. Q byter huvudvy; två livebilder visar andra enheter.
 
 Hela reglerna finns under "Hur man spelar" i spelet.
 
@@ -41,6 +43,7 @@ cd tests
 python3 mk.py
 node t23.js        # kartvalidering: spärrar stänger R2 och R3, landstigning finns
 node t51.js        # strategiska punkter: verkstad, radar, fältvarv, vinst
+node t58.js        # låsta sektorer, minor och inropning
 node t45.js base   # datorspelare som spelar hela öar (tar några minuter per ö)
 ```
 
@@ -57,6 +60,7 @@ node t45.js base   # datorspelare som spelar hela öar (tar några minuter per �
 | `t54.js` | Gruppen följer en manuellt styrd enhet |
 | `t55.js` | VARG skjuter under förflyttning |
 | `t57.js` | BÄVER beställer lufttransport från fartyget |
+| `t58.js` | Låsta sektorer, försörjning bakom spärr, minor och inropning |
 
 `smoke.py` laddar spelet i Chromium med Playwright, öppnar ordershjulet och fångar sidfel. Den behöver `npm install` i `tests/` (för Three.js) och Playwright för Python.
 
