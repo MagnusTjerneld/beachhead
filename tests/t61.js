@@ -104,4 +104,13 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const off=trial(false),on=trial(true);B.SUPPORT.on=true;
  ok(off&&on,'found open ground for the wing');
  if(off&&on){ok(on.dead&&on.said,'with support the wing closes in and kills it ('+on.t+' s)');ok(!off.dead||on.t<off.t*.75,'support is decisive (alone: '+(off.dead?off.t+' s':'not killed in 40 s')+')');}}
+// service at a chosen place: HÖK rearms at a taken workshop or at Birka, whichever the captain names, and one circling a workshop rearms too
+{B.newGame(1234);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;
+ const R=G.relays.find(r=>r.type==='verkstad');const h=G.units.find(u=>u.kind==='drone');
+ if(R){R.captured=true;const C=B.CARRIER;
+  h.x=R.x+(C.x-R.x)*.4;h.y=R.y+(C.y-R.y)*.4;h.ammo=0;B.sendToService(h,'ship');run(3);ok(h.orders[0]&&h.orders[0].svc==='ship','service order names Birka');
+  for(let i=0;i<90&&h.orders.length;i++)run(1);ok(h.ammo>=4&&Math.hypot(h.x-C.x,h.y-C.y)<60,'rearmed at Birka although the workshop was nearer');
+  h.x=R.x+150;h.y=R.y;h.ammo=0;B.sendToService(h,R.id);for(let i=0;i<60&&h.orders.length;i++)run(1);ok(h.ammo>=4&&!h.orders.length,'rearmed at the workshop, service done');
+  h.ammo=0;h.orders=[{type:'move',x:R.x,y:R.y,post:'def'}];run(25);ok(h.ammo>=4,'a HÖK sent to the workshop and circling it rearms ('+h.ammo.toFixed(1)+')');}
+ else ok(false,'no workshop on this island');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
