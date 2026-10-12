@@ -475,6 +475,9 @@ function zoneAt(x,y,V){const w=warp(x,y,V.seed);let i1=-1,d1=1e9,i2=-1,d2=1e9;fo
    three islands joined by narrow necks) and udde (a main island with a long peninsula). */
 const SHAPES={rund:'rund ö',as:'ås',hastsko:'hästsko',nas:'näs',udde:'udde'};
 const SHAPE_CFG={force:null,mix:{rund:1,as:1,hastsko:1,nas:1,udde:1},rough:1};
+/* the intro director's pace (see titleDirector): pan and acceleration in degrees, the spring, the fastest sweep a locked or held
+   subject may make across the view, and the pause between shots in seconds */
+const DIR={pan:6,acc:2.5,k:.16,lockSweep:5,holdSweep:3.5,gap:[20,35]};
 function smin(a,b,k){const h=clamp(.5+.5*(b-a)/k,0,1);return lerp(b,a,h)-k*h*(1-h);}
 function lobeD(L,x,y){const px=x-L.x,py=y-L.y;return Math.hypot((px*L.c+py*L.s)/L.rx,(-px*L.s+py*L.c)/L.ry);}
 function shapeD(S,x,y){let d=lobeD(S.lobes[0],x,y);for(let i=1;i<S.lobes.length;i++)d=smin(d,lobeD(S.lobes[i],x,y),S.k);for(const H of S.holes)d=Math.max(d,2-lobeD(H,x,y));return d;}
@@ -4342,33 +4345,46 @@ function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h
   // the inner archipelago, which always lies to the west: a look out over the backdrop islands
   out.push({x:-500,y:clamp(CARRIER.y,300,WH-300),h:0,w:.5,id:'skargard',r:2600,kind:'skargard'});
   return out;}
-function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0,poi:null,until:0,next:12,seen:{}});
-  const relTo=(x,y)=>angWrap(Math.atan2(y-p.z,x-p.x)-hd),deg=PI/180;
+/* A mood film, not an action film (decided 12 okt): the camera pans at most 6 degrees a second and eases in and out over several
+   seconds, and the director only takes a shot it can make gracefully. Before it commits it checks how far it has to pan, how fast
+   the subject will sweep past (speed over the closest distance the HÖK will pass it at), and whether the shot would swing the
+   camera across to the other side; a subject it cannot frame calmly is let go. Shots are spaced 20 to 35 seconds apart. */
+function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0,poi:null,until:0,next:14,seen:{}});
+  const relTo=(x,y)=>angWrap(Math.atan2(y-p.z,x-p.x)-hd),deg=PI/180,V=17,hx=Math.cos(hd),hz=Math.sin(hd);
   const isl=relTo(RT.c.x,RT.c.y),side=Math.sign(isl)||1;
-  // the island shot: toward the middle of the island, at most 45 degrees to the island side, 15 to the sea side, slow drift
-  let want=side*Math.min(Math.abs(isl)*.85,(32+13*Math.sin(T.t*.09))*deg);want=clamp(want,side>0?-15*deg:-45*deg,side>0?45*deg:15*deg);
-  /* Birka's flyby comes first: when Birka is ahead or to the side within a kilometre, the camera takes it (cutting any other
-     subject short) and follows it until it is well behind, looking back over the HÖK's shoulder if need be */
-  {const d=Math.hypot(CARRIER.x-p.x,CARRIER.y-p.z),r=relTo(CARRIER.x,CARRIER.y);
-    const closing=D.bd!=null&&d<D.bd-.05;D.bd=d;
-    if((!D.poi||D.poi.id!=='birka')&&closing&&d<500&&Math.abs(r)<110*deg&&T.t-(D.seen.birka??-999)>40){D.poi={x:CARRIER.x,y:CARRIER.y,id:'birka',track:true};D.until=T.t+40;}
-    if(D.poi&&D.poi.track&&D.poi.id==='birka'&&(Math.abs(r)>140*deg||d>1300))D.until=0;}
-  // the big lighthouse is always taken on the way past as well, after Birka
-  {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(D.poi.id!=='birka'&&D.poi.id!=='fyr'))){const d=Math.hypot(L.x-p.x,L.y-p.z),r=relTo(L.x,L.y),cl=D.ld!=null&&d<D.ld-.05;D.ld=d;
-    if(cl&&d<450&&Math.abs(r)<110*deg&&T.t-(D.seen.fyr??-999)>40){D.poi={id:'fyr',track:true};D.until=T.t+35;}}}
-  // a locked subject is followed until it is well behind (or out of reach); a held one for its time
-  if(D.poi&&D.poi.track&&D.poi.id!=='birka'){const q=titlePois().find(o=>o.id===D.poi.id);if(!q||Math.abs(relTo(q.x,q.y))>140*deg||Math.hypot(q.x-p.x,q.y-p.z)>q.r*1.3)D.until=0;}
-  if(D.poi&&T.t>D.until){D.seen[D.poi.id]=T.t;D.poi=null;D.next=T.t+12+Math.random()*10;}
-  if(!D.poi&&T.t>D.next){let best=null,bs=.25;
-    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr')continue;const d=Math.hypot(q.x-p.x,q.y-p.z);if(d<90||d>q.r)continue;const r=relTo(q.x,q.y);if(Math.abs(r)>100*deg)continue;
-      const fresh=T.t-(D.seen[q.id]??-999)>60?1:.2,sc=q.w*fresh*(1-d/q.r)*(.6+.4*Math.cos(r))*(.7+.6*Math.random());/* a little whim */if(sc>bs){bs=sc;best=q;}}
-    /* the director's own choice: lock onto a small thing nearby (a jetty, a moored boat, the harbour inlet) and follow it past,
-       or hold a wider subject for a while */
-    if(best){const lock=best.low&&Math.random()<.55;D.poi={id:best.id,track:lock};D.until=T.t+(lock?28:6+Math.random()*5);}else D.next=T.t+3;}
-  let pullOut=0,lockOn=0,low=0;D.at=null;if(D.poi){const q=titlePois().find(o=>o.id===D.poi.id);if(q){const lim=D.poi.track?155:75;want=clamp(relTo(q.x,q.y),-lim*deg,lim*deg);pullOut=q.low?.4:1;lockOn=D.poi.track?1:.5;low=q.low?1:0;D.at=q;}}
-  // damped spring: about six seconds to settle, no overshoot, never faster than 18 degrees a second nor speeding up faster than 10
-  const k=.45,c=2*Math.sqrt(k)*1.05,dt=Math.min(dtr,.1),acc=clamp(k*(want-D.yaw)-c*D.vel,-10*deg,10*deg);D.vel=clamp(D.vel+acc*dt,-18*deg,18*deg);D.yaw+=D.vel*dt;
-  const ez=1-Math.exp(-.6*dt);D.pull=(D.pull??0)+(pullOut-(D.pull??0))*ez;D.lock=(D.lock??0)+(lockOn-(D.lock??0))*ez;D.low=(D.low??0)+(low-(D.low??0))*ez;
+  // the island shot: toward the middle of the island, 19 to 45 degrees to the island side (never more than 15 to the sea), slow drift
+  let want=side*Math.min(Math.abs(isl)*.85,(32+13*Math.sin(T.t*.05))*deg);want=clamp(want,side>0?-15*deg:-45*deg,side>0?45*deg:15*deg);
+  /* how a subject will move in the picture: lateral = the closest distance we pass it at, sweep = the fastest it will cross the
+     view (degrees a second, at that closest point), now = how fast it moves across right now */
+  const geo=q=>{const dx=q.x-p.x,dz=q.y-p.z,d=Math.hypot(dx,dz)||1,along=dx*hx+dz*hz,lat=Math.abs(dx*hz-dz*hx),r=relTo(q.x,q.y);
+    return{d,along,lat,r,sweep:V/Math.max(lat,1)/deg,now:V*Math.abs(Math.sin(r))/d/deg};};
+  const take=(id,track,until)=>{D.poi={id,track};D.until=until;};
+  /* Birka first: taken early, while still well ahead, so that the pan toward it is slow, and followed until it is behind. A close
+     pass sweeps faster than the camera may pan; then the camera falls behind and lets it go rather than whip round. */
+  {const g=geo({x:CARRIER.x,y:CARRIER.y});const closing=D.bd!=null&&g.d<D.bd-.05;D.bd=g.d;
+    if((!D.poi||D.poi.id!=='birka')&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+50);
+    if(D.poi&&D.poi.id==='birka'&&(Math.abs(g.r)>120*deg||g.d>1400))D.until=0;}
+  // the big lighthouse is always taken on the way past too, after Birka, and also early
+  {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(D.poi.id!=='birka'&&D.poi.id!=='fyr'))){const g=geo(L),cl=D.ld!=null&&g.d<D.ld-.05;D.ld=g.d;
+    if(cl&&g.d<750&&g.along>0&&Math.abs(g.r)<65*deg&&T.t-(D.seen.fyr??-999)>120)take('fyr',true,T.t+45);}}
+  // a locked subject is followed until it is well behind or out of reach; a held one for its time
+  if(D.poi&&D.poi.track&&D.poi.id!=='birka'){const q=titlePois().find(o=>o.id===D.poi.id);if(!q||Math.abs(relTo(q.x,q.y))>120*deg||Math.hypot(q.x-p.x,q.y-p.z)>q.r*1.4)D.until=0;}
+  if(D.poi&&T.t>D.until){D.seen[D.poi.id]=T.t;D.poi=null;D.next=T.t+DIR.gap[0]+Math.random()*(DIR.gap[1]-DIR.gap[0]);}
+  if(!D.poi&&T.t>D.next){let best=null,bs=.22,bLock=false;
+    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
+      // the pan to reach it, and whether it crosses the picture to the other side of the HÖK
+      const pan=Math.abs(g.r-D.yaw),cross=Math.sign(g.r)!==Math.sign(D.yaw)&&Math.abs(g.r)>12*deg&&Math.abs(D.yaw)>12*deg;
+      if(pan>55*deg||Math.abs(g.r)>70*deg)continue;
+      const canLock=q.low&&g.lat>V/(DIR.lockSweep*deg),canHold=g.now<DIR.holdSweep&&Math.abs(g.r)+g.now*deg*(pan/(DIR.pan*deg)+9)<75*deg;
+      if(!canLock&&!canHold)continue;
+      const fresh=T.t-(D.seen[q.id]??-999)>90?1:.15,sc=q.w*fresh*(1-g.d/q.r)*(1-pan/(70*deg))*(cross?.35:1)*(.75+.5*Math.random());/* a little whim */
+      if(sc>bs){bs=sc;best=q;bLock=canLock&&(!canHold||Math.random()<.5);}}
+    if(best)take(best.id,bLock,T.t+(bLock?40:7+Math.random()*4));else D.next=T.t+4;}
+  let pullOut=0,lockOn=0,low=0;D.at=null;if(D.poi){const q=titlePois().find(o=>o.id===D.poi.id)||(D.poi.id==='birka'?{x:CARRIER.x,y:CARRIER.y,h:10}:null);
+    if(q){const lim=D.poi.track?125:75;want=clamp(relTo(q.x,q.y),-lim*deg,lim*deg);pullOut=q.low?.4:1;lockOn=D.poi.track?.8:.4;low=q.low?1:0;D.at=q;}}
+  // a gentle spring on the camera's angle to the heading: slow to start, slow to stop, never faster than DIR.pan degrees a second
+  const dt=Math.min(dtr,.1),k=DIR.k,c=2*Math.sqrt(k)*1.1,acc=clamp(k*(want-D.yaw)-c*D.vel,-DIR.acc*deg,DIR.acc*deg);D.vel=clamp(D.vel+acc*dt,-DIR.pan*deg,DIR.pan*deg);D.yaw+=D.vel*dt;
+  const ez=1-Math.exp(-.35*dt);D.pull=(D.pull??0)+(pullOut-(D.pull??0))*ez;D.lock=(D.lock??0)+(lockOn-(D.lock??0))*ez;D.low=(D.low??0)+(low-(D.low??0))*ez;
   if(D.at)D.atP={x:D.at.x,y:D.at.y,h:D.at.h};
   return D;}
 function titleCam(dtr){
@@ -4392,7 +4408,7 @@ function titleCam(dtr){
   const cp=tmpV.set(m.position.x-Math.cos(L+off)*R0,TITLE.alt+8+Dr.pull*3-Dr.low*5+Math.sin(TITLE.t*.07)*2.5,m.position.z-Math.sin(L+off)*R0);
   const ahead=70+Dr.pull*50,la=tmpV2.set(m.position.x+Math.cos(L)*ahead,TITLE.alt-9+Dr.pull*4,m.position.z+Math.sin(L)*ahead);
   // a locked subject pulls the point the camera looks at onto itself, so it stays in the middle of the picture as we pass
-  if(Dr.atP&&Dr.lock>.01){const w=Dr.lock*.75;la.x+=(Dr.atP.x-la.x)*w;la.y+=(Dr.atP.h-la.y)*w;la.z+=(Dr.atP.y-la.z)*w;}
+  if(Dr.atP&&Dr.lock>.01){const w=Dr.lock*.6;la.x+=(Dr.atP.x-la.x)*w;la.y+=(Dr.atP.h-la.y)*w;la.z+=(Dr.atP.y-la.z)*w;}
   if(!TITLE.cam){TITLE.cam=cp.clone();TITLE.look=la.clone();}
   const k=1-Math.exp(-2.2*dtr);TITLE.cam.lerp(cp,k);TITLE.look.lerp(la,k);/* the floor lifts the camera gently, not in a jump, when it passes over a cliff */{const f=camFloor(TITLE.cam.x,TITLE.cam.z)+2;TITLE.floor=TITLE.floor==null?f:TITLE.floor+(f-TITLE.floor)*(1-Math.exp(-3*dtr));if(TITLE.cam.y<TITLE.floor)TITLE.cam.y=TITLE.floor;}R3.cam.position.copy(TITLE.cam);R3.cam.lookAt(TITLE.look);R3.lookAt.copy(TITLE.look);
 }
