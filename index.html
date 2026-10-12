@@ -3086,6 +3086,11 @@ function surroundData(W){
   if(W.surround)return W.surround;
   const R=rng(W.seed*97+5),t0=.1+R()*.8,PAD=45,M=1500,isl=[];
   const outer=x=>t0+(x-CX)/2600;
+  /* keep the low-poly backdrop well away from the island (decided 12 okt): seen up close from the island it looked coarse, and
+     the new shapes reach nearer the map edge than the round island did. The coast is sampled every 30 m; an island must keep
+     GAP metres of water to it. */
+  const GAP=450,coast=[];{const G0=W.baseGrid;for(let gy=0;gy<GH;gy+=3)for(let gx=0;gx<GW;gx+=3){const i=gy*GW+gx,g=G0[i];if(g!==DEEP&&g!==SHAL&&!(W.isletMask&&W.isletMask[i]))coast.push(cellCenter(i));}}
+  const farFromIsland=(x,y,r)=>{const lim=GAP+r*1.15;for(const c of coast){const dx=c.x-x;if(dx>lim||dx<-lim)continue;if(Math.hypot(dx,c.y-y)<lim)return false;}return true;};
   for(let t=0;t<14000&&isl.length<170;t++){
     const x=-M+R()*(WW+2*M),y=-M+R()*(WH+2*M),o=outer(x)+(R()-.5)*.18;if(o>1.04)continue;
     const dens=o<.3?.95:o<.65?.5:.2;if(R()>dens)continue;
@@ -3095,6 +3100,7 @@ function surroundData(W){
     else{r=7+R()*38;h=.7+R()*4;forest=R()<.12?.35:0;}
     const el=.45+R()*.55;
     if(x+r*1.15>-PAD&&x-r*1.15<WW+PAD&&y+r*1.15>-PAD&&y-r*1.15<WH+PAD)continue;
+    if(!farFromIsland(x,y,r))continue;
     if(isl.some(q=>Math.hypot(q.x-x,q.y-y)<(q.r+r)*(o<.3?.6:.95)))continue;
     if(Math.abs(x-fairX(W,y))<FAIR.lane+r*1.2+60)continue;
     isl.push({x,y,r,el,rot:R()*PI,h,forest,o,p:[R()*TAU,R()*TAU,R()*TAU,R()*TAU],sd:Math.floor(R()*1e6)});}
@@ -3948,9 +3954,9 @@ function syncMarks(dtr){if(!R3.marks)R3.marks=new Map();const want=taskMarks(),s
     if(Math.abs(o.p-m.p)>.01){o.p=m.p;const x=o.rc.getContext('2d');x.clearRect(0,0,128,128);x.lineWidth=9;x.strokeStyle='rgba(255,255,255,.25)';x.beginPath();x.arc(64,64,56,0,TAU);x.stroke();
       if(m.p>0){x.strokeStyle=MARK_COL[m.g];x.beginPath();x.arc(64,64,56,-PI/2,-PI/2+TAU*m.p);x.stroke();}o.rt.needsUpdate=true;}}
   for(const[k,o]of R3.marks)if(!seen.has(k)){R3.dyn.remove(o.grp);o.rt.dispose();o.ring.material.dispose();o.ic.material.dispose();o.ic.geometry.dispose();R3.marks.delete(k);}}
-function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map();
-  for(const b of G.barriers)if(!b.cleared)want.set('B'+b.id,{x:b.x,y:b.y,t:'SPÄRR '+b.id+(barrierGate(b)?' · LÅST':''),bg:'rgba(90,42,20,.9)',fg:'#ffd9a0'});
-  for(const m of G.mines||[])if(m.found&&!m.cleared)want.set('M'+m.id,{x:m.x,y:m.y,t:'MINOR '+m.id,bg:'rgba(242,194,0,.92)',fg:'#161616',ring:m.r});
+function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map(),film=TITLE.on;/* the intro film shows no labels */
+  if(!film)for(const b of G.barriers)if(!b.cleared)want.set('B'+b.id,{x:b.x,y:b.y,t:'SPÄRR '+b.id+(barrierGate(b)?' · LÅST':''),bg:'rgba(90,42,20,.9)',fg:'#ffd9a0'});
+  if(!film)for(const m of G.mines||[])if(m.found&&!m.cleared)want.set('M'+m.id,{x:m.x,y:m.y,t:'MINOR '+m.id,bg:'rgba(242,194,0,.92)',fg:'#161616',ring:m.r});
   for(const[k,o]of R3.tags)if(!want.has(k)||o.txt!==want.get(k).t){R3.dyn.remove(o.g);o.sp.material.map.dispose();o.sp.material.dispose();R3.tags.delete(k);}
   const cp=R3.cam.position;
   for(const[k,w]of want){let o=R3.tags.get(k);
