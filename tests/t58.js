@@ -33,4 +33,18 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
  ok(B.callIn('tank',{enemy:e}),'call-in VARG on '+e.id);ok(G.units.filter(u=>u.kind==='tank').every(u=>u.orders[0]),'VARGs ordered');
  ok(G.selIds.join()===sel.join(),'selection untouched');
  const t=G.units.find(u=>u.kind==='tank');G.ctrl=t.id;t.orders=[];B.callIn('tank',{world:{x:1100,y:1100}});ok(!t.orders.length&&G.ctrl===t.id,'the unit you drive is never called in');}
+// 5. the captain gives the orders: a BÄVER's own request for a lift only goes to a safe landing zone, and it does not drive into known reach
+{B.newGame(7341);const G=B.G;G.running=true;const r=G.relays[0],e=G.units.find(u=>u.kind==='eng'),k=G.kroks[0];
+ const t=G.enemies.find(x=>x.kind==='turret'&&!x.dead);t.x=r.x+20;t.y=r.y;t.lx=t.x;t.ly=t.y;t.seen=true;G.known.fill(1);G.knownV++;
+ B.giveOrder(e,{type:'capture',relay:r,post:'dold'},false);run(G,2);
+ ok(!k.orders.length&&e.hold,'target inside a known bunker\'s reach: no lift, the BÄVER waits ('+e.state+')');
+ ok(G.log.some(l=>/Ingen säker landningsplats/.test(l.text)),'KROK reports that there is no safe landing zone');
+ t.dead=true;run(G,4);ok(k.orders.some(o=>o.type==='drop'),'bunker gone: KROK flies the BÄVER in');
+ const d=k.orders.find(o=>o.type==='drop');ok(G.enemies.every(x=>x.dead||!x.seen||!x.canGround||Math.hypot(x.lx-d.x,x.ly-d.y)>=x.range+15),'landing zone outside every known ground threat');}
+{B.newGame(7341);const G=B.G;G.running=true;for(const x of G.enemies)x.dead=true;const L=G.relays[0],e=G.units.find(u=>u.kind==='eng');
+ const land=(x,y)=>{const g=B.W.grid[Math.floor(y/10)*220+Math.floor(x/10)];return g===2||g===3;};let p0=null;
+ for(let r=170;r<260&&!p0;r+=10)for(let a=0;a<12&&!p0;a++){const x=L.x+Math.cos(a/12*6.283)*r,y=L.y+Math.sin(a/12*6.283)*r;if(land(x,y))p0={x,y};}
+ e.x=p0.x;e.y=p0.y;e.orders=[];const t=G.enemies.find(x=>x.kind==='turret');t.dead=false;t.x=L.x;t.y=L.y;t.lx=t.x;t.ly=t.y;t.seen=true;t.hp=999;
+ B.giveOrder(e,{type:'move',x:L.x,y:L.y,post:'dold'},false);run(G,2);ok(e.hold&&Math.hypot(e.x-p0.x,e.y-p0.y)<5,'BÄVER waits instead of driving into a known bunker\'s reach ('+e.state+')');
+ e.override=true;e.hold=false;run(G,3);ok(Math.hypot(e.x-p0.x,e.y-p0.y)>5,'Kör ändå sends it anyway');}
 console.log(fail?fail+' FAILED':'all passed');process.exit(fail?1:0);

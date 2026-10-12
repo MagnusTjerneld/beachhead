@@ -57,7 +57,8 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  B.AUTOPAUSE.on=false;}
 // SPARV: built with the mission to explore, maps the island, keeps clear of a known AA, and spots for VARG before HÖK does
 {B.newGame(7341);const G=B.G;G.running=true;G.res=1000;B.queueBuild('scout');run(10);const sc=G.units.find(u=>u.kind==='scout');
- ok(sc&&sc.mission&&sc.mission.type==='explore','a new SPARV starts exploring on its own');ok(sc.maxFuel>=600,'ten minutes of battery');
+ ok(sc&&!sc.mission&&!sc.orders.length,'a new SPARV waits for the captain\'s order');ok(sc.maxFuel>=600,'ten minutes of battery');
+ B.giveOrder(sc,{type:'explore',post:'def'},false,'mission');ok(sc.mission&&sc.mission.type==='explore','explore given as a mission');
  const aa=G.enemies.find(e=>e.kind==='aa');aa.seen=true;aa.lx=aa.x;aa.ly=aa.y;let minD=1e9;
  for(let i=0;i<20*120;i++){B.step(.05);if(!sc.dead)minD=Math.min(minD,Math.hypot(sc.x-aa.x,sc.y-aa.y));}
  ok(!sc.dead&&G.landPct>.1,'explored '+Math.round(G.landPct*100)+' % of the island in two minutes');ok(minD>110,'never inside the AA radar ('+Math.round(minD)+' m)');
