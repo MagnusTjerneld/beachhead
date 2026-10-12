@@ -80,5 +80,6 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  B.giveOrder(sc,{type:'move',x:B.W.landing.x+900,y:B.W.landing.y-900,post:'def'},false);for(let i=0;i<20*40;i++)B.step(.05);
  ok(B.linkAt(sc.x,sc.y).d<=B.RADIO.r+8,'a waypoint beyond the net stops at its edge');
  for(const u of G.units)if(u.kind==='eng'){u.x=1100;u.y=1950;}const L0=B.linkAt(1100,1100);sc.x=L0.relay.x+(1100-L0.relay.x)*(B.RADIO.r+150)/L0.d;sc.y=L0.relay.y+(1100-L0.relay.y)*(B.RADIO.r+150)/L0.d;const d0=B.linkAt(sc.x,sc.y).d;for(let i=0;i<20*20;i++)B.step(.05);
- ok(d0>B.RADIO.r&&B.linkAt(sc.x,sc.y).d<=B.RADIO.r+8,'link lost: it turns back until it has the link again');}
+ ok(d0>B.RADIO.r&&B.linkAt(sc.x,sc.y).d<=B.RADIO.r+8,'link lost: it turns back until it has the link again');
+ const h=G.units.find(u=>u.kind==='drone');h.x=200;h.y=200;ok(!B.linkAt(210,210).ok,'a HÖK does not carry the link');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
