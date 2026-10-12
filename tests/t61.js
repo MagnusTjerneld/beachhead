@@ -119,4 +119,8 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  v.x=C.x;v.y=C.y;const r0=G.res;ok(B.recycleValue(v)===160+24,'a VARG is worth 160 plus 24 for its MUS ('+B.recycleValue(v)+')');
  B.recycle([v]);ok(!G.units.includes(v)&&!G.units.some(u=>u.kind==='mus'&&u.owner===v.id),'the VARG and its MUS are gone');ok(Math.round(G.res-r0)===184,'184 material back');
  ok(G.wings['1']&&!G.wings['1'].includes(v.id),'it leaves its wing');}
+// a BÄVER from the yard drives along the deck to a stern pad no KROK owns
+{B.START.units=['eng'];B.newGame(1234);const G=B.G;G.running=true;const e=G.units.find(u=>u.kind==='eng'),k=G.kroks[0];run(15);
+ ok(Math.hypot(e.x-k.pad.x,e.y-k.pad.y)>6&&B.freePad(e)!==null,'the BÄVER is not on the KROK pad');ok(/helikopterplattan/.test(e.state)||e.state==='Väntar på order','it waits on a free pad ('+e.state+')');
+ B.START.units=['drone','tank','tank','eng'];}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
