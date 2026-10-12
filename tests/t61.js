@@ -64,4 +64,11 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  ok(!sc.dead&&G.landPct>.1,'explored '+Math.round(G.landPct*100)+' % of the island in two minutes');ok(minD>110,'never inside the AA radar ('+Math.round(minD)+' m)');
  const t=G.enemies.find(e=>e.kind==='turret'&&!e.dead);t.seen=true;t.lx=t.x;t.ly=t.y;t.visibleNow=false;const v=G.units.find(u=>u.kind==='tank');v.x=t.x+140;v.y=t.y;
  B.requestSpot(v,t);ok(sc.orders[0]&&sc.orders[0].spotFor===t,'the SPARV is sent to spot, not the HÖK');}
+// SPARV explores one zone when told to, reports when it is done and waits for orders
+{B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const sc=B.makeUnit('scout',B.W.landing.x,B.W.landing.y);G.units.push(sc);
+ const z=B.W.zid[Math.floor(B.W.landing.y/10)*220+Math.floor(B.W.landing.x/10)];ok(z>=0,'landing zone '+z);
+ B.giveOrder(sc,{type:'explore',zone:z,post:'def'},false,'mission');let out=0;
+ for(let i=0;i<20*240&&sc.mission;i++){B.step(.05);const zz=B.W.zid[Math.floor(sc.y/10)*220+Math.floor(sc.x/10)];if(i%20===0&&zz!==z&&zz>=0)out++;}
+ ok(!sc.mission&&G.log.some(l=>/Zonen vid .* är spanad/.test(l.text)),'zone done and reported, SPARV waits');
+ let unk=0,tot=0;for(let gy=1;gy<220;gy+=3)for(let gx=1;gx<220;gx+=3){const i=gy*220+gx;if(B.W.zid[i]===z){tot++;if(!G.known[i])unk++;}}ok(unk===0,'nothing left unknown in the zone ('+tot+' sample cells)');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

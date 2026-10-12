@@ -54,7 +54,11 @@ button:disabled{opacity:.45;cursor:default}
 .stat b{font-family:var(--f-mono);font-weight:400;font-size:18px;font-variant-numeric:tabular-nums;line-height:1.1}
 .stat.warn b{color:var(--mag)}
 .stat.gold b{color:var(--signal)}
-.hbtns{display:flex;gap:6px}
+.hbtns{display:flex;gap:6px;position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:60;display:flex;flex-direction:column;gap:6px;min-width:190px;padding:10px;background:var(--panel);border:1px solid var(--line);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.menu .mh{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;margin-top:2px}
+.menu .btn{text-align:left}
+.menu .btn.confirm{background:#b8322a;border-color:#b8322a;color:#fff}
 .btn{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:6px 10px;font-weight:600;font-size:13px;letter-spacing:.04em}
 .btn:hover:not(:disabled){border-color:#41566a}
 .btn[aria-pressed="true"]{background:var(--signal);color:#1b1a12;border-color:var(--signal)}
@@ -188,15 +192,22 @@ button:disabled{opacity:.45;cursor:default}
     <div class="stat"><span>Tid</span><b id="sTime">00:00</b></div>
     <div class="stat"><span>Klocka</span><b id="sClock">12:00</b></div>
     <div class="hbtns">
-      <button class="btn" id="bMusic" type="button" aria-pressed="true" title="Musik (N)">Musik på</button>
-      <button class="btn" id="bSound" type="button" aria-pressed="true" title="Ljud (M)">Ljud på</button>
       <button class="btn" id="bClock" type="button" title="Spola fram tre timmar på dygnet">+3 h</button>
       <button class="btn" id="bSpeed" type="button">1×</button>
       <button class="btn" id="bPause" type="button" aria-pressed="false">Paus</button>
-      <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
-      <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
       <button class="btn" id="bFull" type="button" title="Helskärm (F)">Helskärm</button>
+      <button class="btn" id="bSettings" type="button" aria-expanded="false" aria-controls="settings">Inställningar</button>
       <button class="btn" id="bHelp" type="button" aria-label="Instruktioner">?</button>
+      <div class="menu" id="settings" hidden>
+        <div class="mh">Ljud och bild</div>
+        <button class="btn" id="bMusic" type="button" aria-pressed="true" title="Musik (N)">Musik på</button>
+        <button class="btn" id="bSound" type="button" aria-pressed="true" title="Ljud (M)">Ljud på</button>
+        <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
+        <div class="mh">Spel</div>
+        <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
+        <button class="btn" id="bRestart" type="button" title="Börja om på samma ö">Starta om ön</button>
+        <button class="btn" id="bNewIsland" type="button" title="Börja på en ny ö">Ny ö</button>
+      </div>
     </div>
   </header>
   <main class="stage">
@@ -218,6 +229,7 @@ button:disabled{opacity:.45;cursor:default}
         <div class="row">
           <button class="btn" id="bStop" type="button">Stoppa</button>
           <button class="btn" id="bRtb" type="button">Till service</button>
+          <button class="btn" id="bExplore" type="button" hidden title="SPARV utforskar ön fritt; zon väljer du i hjulet">Utforska</button>
           <button class="btn" id="bCtrl" type="button" aria-pressed="false" title="E">Ta kontroll (E)</button>
           <button class="btn" id="bFollowMe" type="button" aria-pressed="false" title="G" hidden>Gruppen följer (G)</button>
           <button class="btn alarm" id="bOverride" type="button" hidden>Kör ändå</button>
@@ -260,7 +272,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
-      <li><span class="em">SPARV är spanaren.</span> Billig (40), byggs på 8 sekunder, ser 120 m, batteri för tio minuter och tål nästan ingenting. Den flyger lågt: robotskyttar och bunkrar märker den först på 45 m och luftvärnets radar på 110 m, så den ser luftvärnet strax innan luftvärnet ser den. Ger du en SPARV ordern Utforska (i hjulet) utforskar den ön på egen hand: den flyger till närmaste ospanade mark, håller sig utanför räckhåll för kända hot, laddar vid fartyget och fortsätter tills ön är spanad. Behöver en VARG spaning mot ett kamouflerat mål går en SPARV före HÖK. Utforska ger du också i hjulet. Inget vapen.</li>
+      <li><span class="em">SPARV är spanaren.</span> Billig (40), byggs på 8 sekunder, ser 120 m, batteri för tio minuter och tål nästan ingenting. Den flyger lågt: robotskyttar och bunkrar märker den först på 45 m och luftvärnets radar på 110 m, så den ser luftvärnet strax innan luftvärnet ser den. Ger du en SPARV ordern Utforska (knappen Utforska, eller i hjulet: fritt eller bara zonen du pekar på) utforskar den på egen hand: den flyger till närmaste ospanade mark, håller sig utanför räckhåll för kända hot, laddar vid fartyget och fortsätter tills ön är spanad. Behöver en VARG spaning mot ett kamouflerat mål går en SPARV före HÖK. Utforska ger du också i hjulet. Inget vapen.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 150 m, längre än bunkrarna, men bara mot mål som någon ser. Anfaller den ett kamouflerat mål som ingen ser skickar den efter en ledig HÖK som spanar från utanför luftvärnets räckvidd, och väntar själv utom räckhåll tills målet syns. Finns ingen ledig HÖK får du en knapp för att skicka en. Svag mot infanteri, sårbar för pansarvärn.</li>
       <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: en ny BÄVER står i byggbädden på HMS Birkas däck, och KROK lyfter den i land, vilket beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. Lagar fordon i fält: peka på en skadad VARG och tryck B, eller låt en ledig BÄVER göra det själv. Båda måste stå still och vara utanför eld, lagningen går upp till 75 % och kostar material. Bakom en oröjd spärr är det den enda reparation som finns. En svårt skadad VARG som kommit ur elden kör till närmaste BÄVER i stället för till fartyget, och en order från dig håller den kvar i striden. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget. Säkerheten går före: BÄVER kör inte in i räckhåll för kända fiender, och ber den själv om lufttransport landar KROK den bara på spanad mark utanför kända hot. Finns ingen säker väg eller landningsplats väntar den; Kör ändå (eller Flyg ändå i loggen) skickar den ändå.</li>
       <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
@@ -270,7 +282,8 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
-      <li><span class="em">Autopaus:</span> knappen Autopaus i översta raden (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, autopaus, Starta om ön och Ny ö (de två sista kräver ett andra klick). Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
+      <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna, och hjulet visar också de enskilda enheterna med avstånd, så att du kan välja vem som går utan att välja den först. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
@@ -939,7 +952,7 @@ function selectKrok(k){setSel([]);G.selK=k.id;}
 const selKrok=()=>{const k=G.selK?G.kroks.find(x=>x.id===G.selK):null;return k&&!k.dead?k:null;};
 function clearKrok(k){for(const x of k.orders)if(x.unit&&x.unit.awaitKrok===k.id)x.unit.awaitKrok=null;k.orders=[];k.path=null;}
 function oText(o,krok){const P=o.post&&POST[o.post]?' · '+POST[o.post].toLowerCase():'';switch(o.type){
-  case'explore':return'Utforska ön';case'move':return(krok?'Flyg till ':'Gå till ')+sq(o.x,o.y)+P;case'obs':return'Observera '+sq(o.x,o.y);case'capture':return'Ta '+pname(o.relay)+P;case'attack':return'Anfall '+ename(o.enemy);
+  case'explore':return o.zone!=null?'Utforska zonen vid '+zoneSq(o.zone):'Utforska fritt';case'move':return(krok?'Flyg till ':'Gå till ')+sq(o.x,o.y)+P;case'obs':return'Observera '+sq(o.x,o.y);case'capture':return'Ta '+pname(o.relay)+P;case'attack':return'Anfall '+ename(o.enemy);
   case'follow':return(o.escort?'Eskortera ':'Följ ')+o.unit.name+P;case'clear':return'Spräng spärr '+o.barrier.id+P;case'demine':return'Röj minfält '+o.mine.id+P;case'rtb':return'Till fartyget';case'demolish':return'Riv '+slabel(o.s);case'raze':return'Skjut sönder '+slabel(o.s);
   case'lift':return'Lyft '+o.unit.name;case'drop':return'Sätt ned i '+sq(o.x,o.y);case'salvage':return'Bärga '+wlabel(o.wreck);case'repair':return'Laga '+o.unit.name;}return o.type;}
 function toggleSel(id){if(G.selIds.includes(id))setSel(G.selIds.filter(x=>x!==id));else setSel([...G.selIds,id]);}
@@ -1207,11 +1220,13 @@ function requestSpot(u,e){
 function safeOrbR(u,x,y,R,post){if(post==='off')return R;let c=1e9;for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;c=Math.min(c,Math.hypot(x-e.lx,y-e.ly)-airThreatR(u,e));}return clamp(Math.min(R,c-4),5,R);}
 /* SPARV exploring: the nearest unknown ground (water costs extra), never a point inside the reach of a known threat to it */
 function exploreTarget(u,o){
-  const K=G.known,g=WORLD.baseGrid;let best=null,bs=1e9,land=0,kn=0;
-  for(let gy=1;gy<GH;gy+=3)for(let gx=1;gx<GW;gx+=3){const i=gy*GW+gx,t=g[i],isL=t!==DEEP&&t!==SHAL;if(isL){land++;if(K[i])kn++;}if(K[i])continue;
+  const K=G.known,g=WORLD.baseGrid,Z=o.zone,zid=WORLD.zid;let best=null,bs=1e9,land=0,kn=0;
+  for(let gy=1;gy<GH;gy+=3)for(let gx=1;gx<GW;gx+=3){const i=gy*GW+gx,t=g[i];if(Z!=null&&zid[i]!==Z)continue;const isL=t!==DEEP&&t!==SHAL;if(isL){land++;if(K[i])kn++;}if(K[i])continue;
     const x=gx*CELL+5,y=gy*CELL+5,sc=Math.hypot(x-u.x,y-u.y)+(isL?0:250);if(sc>=bs)continue;
     if((o.bad||[]).some(b=>Math.hypot(b.x-x,b.y-y)<40))continue;if(airDanger(u,x,y))continue;bs=sc;best={x,y};}
-  G.landPct=land?kn/land:1;return best;}
+  if(Z!=null)o.pct=land?kn/land:1;else G.landPct=land?kn/land:1;return best;}
+/* a zone is named by the chart square at its middle */
+function zoneSq(z){const W=WORLD;if(!W.zMid)W.zMid={};if(!W.zMid[z]){let sx=0,sy=0,n=0;for(let i=0;i<W.zid.length;i++)if(W.zid[i]===z){const c=cellCenter(i);sx+=c.x;sy+=c.y;n++;}W.zMid[z]=n?{x:sx/n,y:sy/n}:{x:CX,y:CY};}return sq(W.zMid[z].x,W.zMid[z].y);}
 function airDanger(u,x,y){for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;const r=airThreatR(u,e)-5;if(Math.hypot(x-e.lx,y-e.ly)<r)return e;}return null;}
 /* nearest point outside every known air threat, for units that should not fly into one */
 function safePoint(u,x,y){if(!airDanger(u,x,y))return null;
@@ -1251,10 +1266,10 @@ function move(u,dt){
   if(o.type==='move'){tx=o.x;ty=o.y;arr=u.air?14:10;u.state=(u.fighting&&u.target&&!u.target.isStruct?'Bekämpar '+ename(u.target)+' under förflyttning mot ':'På väg till ')+sq(tx,ty)+' · '+POST[o.post].toLowerCase();}
   else if(o.type==='explore'){o.ux=u.x;o.uy=u.y;
     if(o.tgt&&(G.known[cellIdx(o.tgt.x,o.tgt.y)]||airDanger(u,o.tgt.x,o.tgt.y)||G.time>o.tgtT)){if(G.time>o.tgtT&&!G.known[cellIdx(o.tgt.x,o.tgt.y)])(o.bad||(o.bad=[])).push(o.tgt);o.tgt=null;u.path=null;}
-    if(!o.tgt&&G.time>=(o.pickT||0)){o.pickT=G.time+1;const t=exploreTarget(u,o);if(!t){u.orders.shift();u.mission=null;u.path=null;goRtb(u,'Ön är utforskad så långt det går utan att komma inom räckhåll för känt luftvärn. Återvänder till '+homeFor(u).name+'.');return;}
-      o.tgt=t;o.tgtT=G.time+Math.hypot(t.x-u.x,t.y-u.y)/u.speed*2.5+20;if(!o.told){o.told=1;say(u,'Utforskar ön på egen hand och håller avstånd till kända hot.');}}
+    if(!o.tgt&&G.time>=(o.pickT||0)){o.pickT=G.time+1;const t=exploreTarget(u,o);if(!t&&o.zone!=null){u.orders.shift();u.mission=null;u.path=null;u.orbit={x:u.x,y:u.y};say(u,'Zonen vid '+zoneSq(o.zone)+' är spanad så långt det går säkert. Väntar på order.',[{l:'Utforska fritt',f:()=>giveOrder(u,{type:'explore',post:'def'},false,'mission')}]);return;}if(!t){u.orders.shift();u.mission=null;u.path=null;goRtb(u,'Ön är utforskad så långt det går utan att komma inom räckhåll för känt luftvärn. Återvänder till '+homeFor(u).name+'.');return;}
+      o.tgt=t;o.tgtT=G.time+Math.hypot(t.x-u.x,t.y-u.y)/u.speed*2.5+20;if(!o.told){o.told=1;say(u,(o.zone!=null?'Utforskar zonen vid '+zoneSq(o.zone):'Utforskar ön fritt')+' och håller avstånd till kända hot.');}}
     if(!o.tgt){u.state='Utforskar';return;}
-    tx=o.tgt.x;ty=o.tgt.y;arr=12;u.state='Utforskar · '+Math.round((G.landPct||0)*100)+' % av ön spanat';}
+    tx=o.tgt.x;ty=o.tgt.y;arr=12;u.state=o.zone!=null?'Utforskar zonen vid '+zoneSq(o.zone)+' · '+Math.round((o.pct||0)*100)+' % spanat':'Utforskar fritt · '+Math.round((G.landPct||0)*100)+' % av ön spanat';}
   else if(o.type==='obs'){if(o.spotFor&&(o.spotFor.dead||!spotNeeded(o.spotFor))){u.orders.shift();u.path=null;if(!u.orders.length&&!u.mission&&o.back)u.orders.push({type:'move',x:o.back.x,y:o.back.y,post:'def'});say(u,o.spotFor.dead?ename(o.spotFor)+' utslagen. Spaningen klar.':'Ingen anfaller '+ename(o.spotFor)+' längre. Avbryter spaningen.');return;}tx=o.x;ty=o.y;arr=u.air?14:10;u.state=o.spotFor?'På väg att spana på '+ename(o.spotFor):'Till observationspunkt '+sq(tx,ty);}
   else if(o.type==='capture'){if(o.relay.captured){u.orders.shift();u.path=null;return;}tx=o.relay.x;ty=o.relay.y;arr=16;u.state='På väg mot '+pname(o.relay)+' · '+POST[o.post].toLowerCase();}
   else if(o.type==='attack'){if(o.enemy.dead){u.orders.shift();u.path=null;return;}if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;u.path=null;}if(o.fp){tx=o.fp.x;ty=o.fp.y;arr=6;}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?(u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):45;}u.state='Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':'');if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400){o.spotAsk=1;requestSpot(u,o.enemy);}if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
@@ -1774,7 +1789,7 @@ function defaultOrder(u,pk,post){
    An ordinary order replaces the mission (a standing order becomes the new one); a call-in is temporary, and when it is
    done the unit goes back to its mission; Shift on a call-in makes it the new mission instead */
 const STANDING=o=>o&&(o.type==='follow'||o.type==='obs'||o.type==='explore');
-function mText(m){return !m?'':m.type==='explore'?'Utforskar ön':m.type==='follow'?(m.escort?'Eskort ':'Följer ')+(m.unit?m.unit.name:''):m.type==='obs'?'Bevakar '+sq(m.x,m.y):oText(m);}
+function mText(m){return !m?'':m.type==='explore'?(m.zone!=null?'Utforskar zonen vid '+zoneSq(m.zone):'Utforskar fritt'):m.type==='follow'?(m.escort?'Eskort ':'Följer ')+(m.unit?m.unit.name:''):m.type==='obs'?'Bevakar '+sq(m.x,m.y):oText(m);}
 function giveOrder(u,o,append,mode){
   if(!u||u.dead||!o)return;u.awaitRep=null;if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3)&&!o.toRep){u.holdHp=u.hp;u.rtb=false;u.saved=null;}
   if(G.ctrl===u.id)dropCtrl();
@@ -3012,6 +3027,9 @@ function drawHud(ctx,w,h){
   ctx.beginPath();ctx.moveTo(cx,tapeY-2);ctx.lineTo(cx-4,tapeY-7);ctx.lineTo(cx+4,tapeY-7);ctx.closePath();ctx.fill();
   ctx.font=mono(12);ctx.fillStyle='#f0f3ee';ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=3;
   ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText('T+'+fmt(G.time),w-8,8);
+  {const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60),ts=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');ctx.fillText(ts,w-8,24);
+    const tw=ctx.measureText(ts).width,cx2=w-8-tw-11,cy2=31,R0=6.5;ctx.save();ctx.shadowBlur=0;ctx.strokeStyle='#f0f3ee';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(cx2,cy2,R0,0,TAU);ctx.stroke();
+    const ah=(G.tod%12)/12*TAU-PI/2,am=(G.tod%1)*TAU-PI/2;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(cx2,cy2);ctx.lineTo(cx2+Math.cos(ah)*3.6,cy2+Math.sin(ah)*3.6);ctx.moveTo(cx2,cy2);ctx.lineTo(cx2+Math.cos(am)*5.4,cy2+Math.sin(am)*5.4);ctx.stroke();ctx.restore();}
   ctx.textBaseline='bottom';ctx.textAlign='left';ctx.fillText('KAM ▸ '+u.name,8,h-22);
   const st=(u.kind==='krok'?u.status:u.state)||'';ctx.fillText(st.toUpperCase().slice(0,Math.max(10,Math.floor(w/8.5))),8,h-6);
   ctx.textAlign='right';
@@ -3183,7 +3201,7 @@ function openWheel(sx,sy,pk,srcEl){
     items.push({l:'Välj',f:()=>setSel([t.id])});items.push({l:G.selIds.includes(t.id)?'Ta ur urval':'Lägg till i urval',f:()=>toggleSel(t.id)});items.push({l:'Kamera',f:()=>setCam(t.id)});
     if(u){items.push({l:'Följ',f:()=>groupFollow(t,wheelPost,false)});items.push({l:'Eskortera',f:()=>groupFollow(t,wheelPost,true)});}
   }else if(pk.unit&&u&&pk.unit.id===u.id&&u.kind==='scout'){
-    title=u.name;sub='spanare';items.push({l:'Utforska ön',f:()=>giveOrder(u,{type:'explore',post:'def'},false,'mission')});items.push({l:'Till service',f:()=>goRtb(u,'Återvänder till '+homeFor(u).name+'.')});
+    title=u.name;sub='spanare';items.push({l:'Utforska fritt',f:()=>giveOrder(u,{type:'explore',post:'def'},false,'mission')});{const z=WORLD.zid[cellIdx(u.x,u.y)];if(z>=0)items.push({l:'Utforska zonen här',f:()=>giveOrder(u,{type:'explore',zone:z,post:'def'},false,'mission')});}items.push({l:'Till service',f:()=>goRtb(u,'Återvänder till '+homeFor(u).name+'.')});
   }else if(pk.unit&&u&&pk.unit.id===u.id&&u.kind==='eng'){
     title=u.name;sub='ingenjör · uppgifter i närheten';wheelPost=u.post;const dm=v=>Math.round(Math.hypot(v.x-u.x,v.y-u.y));
     const pts=G.relays.filter(r=>!r.captured).sort((a,b)=>dm(a)-dm(b)).slice(0,2);
@@ -3219,7 +3237,8 @@ function openWheel(sx,sy,pk,srcEl){
     items.push({l:'Gå hit',f:()=>groupOrder({world:pt},false,wheelPost)});
     items.push({l:'Lägg till punkt',f:()=>groupOrder({world:pt},true,wheelPost)});
     items.push({l:'Observera här',f:()=>groupObs(pt)});
-    if(selUnits().some(v=>v.kind==='scout'))items.push({l:'Utforska ön (SPARV)',f:()=>{for(const v of selUnits())if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');}});
+    if(selUnits().some(v=>v.kind==='scout')){const z=WORLD.zid[cellIdx(pt.x,pt.y)];if(z>=0)items.push({l:'Utforska zonen här (SPARV)',f:()=>{for(const v of selUnits())if(v.kind==='scout')giveOrder(v,{type:'explore',zone:z,post:'def'},false,'mission');}});
+      items.push({l:'Utforska fritt (SPARV)',f:()=>{for(const v of selUnits())if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');}});}
     const lift=selUnits().filter(v=>v.kind==='tank'||v.kind==='eng');if(lift.length&&G.kroks.some(k=>!k.dead))items.push({l:'Flyg dit med KROK',f:()=>airlift(lift,pt)});
   }
   if(!sk){for(const c2 of callItems(pk))if(items.length<9)items.push(c2);}
@@ -3293,6 +3312,16 @@ for(const k of['scout','drone','tank','eng','krok']){const b=document.createElem
   b.addEventListener('click',()=>{const alive=G.units.filter(u=>!u.dead).length;if(G.res<T.cost)return;if(k==='krok'?krokCount()>=KROK_MAX:alive+unitBuilds()>=MAXUNITS)return;const fv=G.buildAt!=='ship'&&G.relays.find(r=>r.id===G.buildAt&&r.captured);if(fv&&!VARV_KINDS.includes(k))return;G.res-=T.cost;if(fv){G.fbuild.push({kind:k,t:T.build*VARV_SLOW,total:T.build*VARV_SLOW,at:fv.id});say(null,T.label+' i kö på fältvarvet '+fv.id+'.');}else{G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö.');}uiTick(true);});yardRow.appendChild(b);}
 $('bAuto').addEventListener('click',()=>{G.krokAuto=!G.krokAuto;G.krokMsg=null;say(null,G.krokAuto?'KROK hämtar allt i säkra områden.':'KROK hämtar bara det du beställer.');uiTick(true);});
 $('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of selUnits()){if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3))u.holdHp=u.hp;u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
+/* settings menu: opens under its button, closes on a click outside or Escape; restart asks for a second click to confirm */
+function setMenu(open){$('settings').hidden=!open;$('bSettings').setAttribute('aria-expanded',String(open));if(!open)for(const b of document.querySelectorAll('#settings .confirm')){b.classList.remove('confirm');b.textContent=b.dataset.l;}}
+$('bSettings').addEventListener('click',ev=>{ev.stopPropagation();setMenu($('settings').hidden);});
+$('settings').addEventListener('click',ev=>ev.stopPropagation());
+document.addEventListener('click',()=>{if(!$('settings').hidden)setMenu(false);});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hidden){setMenu(false);ev.stopPropagation();}},true);
+const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
+confirmBtn('bRestart',()=>restart(G.seed));
+confirmBtn('bNewIsland',()=>restart(1000+Math.floor(Math.random()*9000)));
+$('bExplore').addEventListener('click',()=>{for(const v of selUnits())if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');uiTick(true);});
 $('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of selUnits()){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of selUnits()){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
 $('bPause').addEventListener('click',()=>{setPaused(!G.paused);uiTick(true);});
@@ -3498,6 +3527,7 @@ function uiTick(force){
   for(const b of postRow.children){b.disabled=!us.length;b.setAttribute('aria-pressed',String(!!u&&u.post===b.dataset.p));}
   $('bStop').disabled=!us.length&&!sk;$('bRtb').disabled=!us.length&&!sk;
   $('bOverride').hidden=!us.some(x=>x.hold||(x.rtb&&x.saved&&x.saved.length));
+  $('bExplore').hidden=!selUnits().some(v=>v.kind==='scout');
   const bc=$('bCtrl');bc.textContent=G.ctrl?'Släpp kontroll (E)':'Ta kontroll (E)';{const bf=$('bFollowMe');bf.hidden=!G.ctrl;bf.setAttribute('aria-pressed',String(!!G.followMe));bf.textContent=G.followMe?'Gruppen följer · på (G)':'Gruppen följer (G)';}bc.setAttribute('aria-pressed',String(!!G.ctrl));bc.disabled=!G.ctrl&&!u&&!sk;
   const selKey=G.selIds.slice().sort().join(',');
   for(const b of wingRow.children){const wg=G.wings[b.dataset.n];b.textContent=b.dataset.n+(wg?' · '+wg.length:' · tom');b.setAttribute('aria-pressed',String(!!wg&&wg.slice().sort().join(',')===selKey));}
@@ -3515,7 +3545,7 @@ function uiTick(force){
   const ba=$('bAuto');ba.setAttribute('aria-pressed',String(G.krokAuto));ba.textContent=G.krokAuto?'Hämtar automatiskt':'Bara beställt';
   const nq=G.krokQ.length,nw=G.wrecks.length,sv=G.wrecks.filter(w=>!w.claimed&&wreckSafe(w)).length;$('krokInfo').textContent=nw+' högar · '+sv+' säkra'+(nq?' · '+nq+' beställda':'');
   const cu=unitById(G.cam);
-  $('lblMap').textContent='SJÖKORT';
+  {const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('lblMap').textContent='SJÖKORT · T+'+fmt(G.time)+' · KL '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
   $('lblCam').textContent='KAMERA'+(cu&&!cu.dead?' · '+cu.name:'');
 }
 
