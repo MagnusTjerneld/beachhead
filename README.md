@@ -52,7 +52,7 @@ python3 -m http.server 8000
 - **Fältreparation:** BÄVER lagar markfordon upp till 75 % där de står (B på en skadad VARG, eller automatiskt när den är ledig). Båda måste stå still och vara utanför eld, och det kostar material. Bakom en oröjd spärr är det den enda reparationen.
 - **Ekonomi:** bärgning. Riv med BÄVER för fullt värde, skjut sönder för mindre.
 - **Styrning:** klicka och dra för order, högerklick för orderhjulet, dra med höger musknapp för att panorera sjökortet, E tar och släpper kontroll, G får gruppen att följa den du kör.
-- **Ropa in:** peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK). Fungerar även när du kör en enhet. Inropningen är tillfällig: enheten återgår sedan till sitt uppdrag (eskort, följ, observera). Skift gör den till nytt uppdrag; en vanlig order ersätter uppdraget. Hjulet (högerklick) visar också de enskilda enheterna som kan ropas in, närmast först, så att du väljer vem som går utan att välja den först. Q byter huvudvy; två livebilder visar andra enheter.
+- **Ropa in:** peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK). Fungerar även när du kör en enhet. Inropningen är tillfällig: enheten återgår sedan till sitt uppdrag (eskort, följ, observera). Skift gör den till nytt uppdrag; en vanlig order ersätter uppdraget. Hjulet (högerklick) har två nivåer: först vem (VARG överst, sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, gråade om de saknas; wingarna i raden under eller med 1 till 4; flera av en sort öppnar en ring med Alla först), sedan vad de valda kan göra där du pekade, inklusive den tillfälliga inropningen för deras sort. Med ett urval börjar hjulet på andra nivån; mitten tar dig tillbaka till den första. Q byter huvudvy; två livebilder visar andra enheter.
 
 Hela reglerna finns under "Hur man spelar" i spelet.
 
@@ -88,7 +88,7 @@ node t45.js base        # datorspelare på tio öar (två till tre minuter; öar
 | `t57.js` | BÄVER beställer lufttransport från fartyget |
 | `t58.js` | Låsta sektorer, försörjning bakom spärr, minor och inropning |
 | `t62.js` | MUS: ombord från start, bara fjärrstyrning, länkens gräns, minor utan att utlösa dem, kör genom spärrat minfält, laddningen, ersättning vid Birka, sikt mot dold trupp, bunkern träffar sällan |
-| `t61.js` | Uppdrag och tillfälliga order: inropning återgår till uppdraget, Skift ger nytt uppdrag; välj enhet i hjulet, HÖK som luftstöd i blandad grupp, autopaus, stöd inom wingen |
+| `t61.js` | Uppdrag och tillfälliga order: inropning återgår till uppdraget, Skift ger nytt uppdrag;  HÖK som luftstöd i blandad grupp, autopaus, stöd inom wingen |
 | `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor, markskydd för luftvärnet, avbrutna byggen, fältlagning, HÖK-robotar, spaning åt VARG mot kamouflerade mål |
 
 `smoke.py` laddar spelet i Chromium med Playwright, öppnar ordershjulet och fångar sidfel. Den behöver `npm install` i `tests/` (för Three.js) och Playwright för Python.

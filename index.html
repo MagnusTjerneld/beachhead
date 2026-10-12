@@ -129,6 +129,8 @@ button:disabled{opacity:.45;cursor:default}
 .wi{position:absolute;transform:translate(-50%,-50%);background:var(--panel);border:1px solid #41566a;border-radius:18px;padding:7px 11px;font-weight:600;font-size:13px;white-space:nowrap}
 .wi:hover{border-color:var(--signal)}
 .wi.danger{border-color:var(--mag)}
+.wi.off{opacity:.35;cursor:default}.wi.off:hover{border-color:#41566a}
+.wc.back{cursor:pointer;border-radius:50%;padding:10px 0;background:none;border:0;font:inherit;color:var(--dim)}.wc.back:hover b{color:var(--signal)}.wc i{display:block;font-style:normal;font-size:10px;color:var(--signal);margin-top:3px}
 .wchips{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:6px;background:rgba(14,21,28,.93);border:1px solid #3a4c5c;border-radius:16px;padding:5px}
 .wchips .lab{width:100%;text-align:center;font-size:10.5px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
 .keys{font-size:11px;color:var(--dim)}
@@ -288,7 +290,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, autopaus, Starta om ön och Ny ö (de två sista kräver ett andra klick). Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
-      <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna, och hjulet visar också de enskilda enheterna med avstånd, så att du kan välja vem som går utan att välja den först. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
+      <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder visar andra enheter, helst de som strider; FÄST låser en bild vid enheten, klick visar den i kameran. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
@@ -3361,12 +3363,38 @@ function postSvg(p){
   return '<svg viewBox="0 0 10 10" aria-hidden="true">'+s+'</svg>';
 }
 function closeWheel(){wheel.hidden=true;}
-function openWheel(sx,sy,pk,srcEl){
+/* The wheel has two levels. First who: the five unit types at fixed places (VARG at the top, then clockwise HÖK, SPARV, BÄVER,
+   KROK) and the wings in the row below (or keys 1 to 4), so the hand learns where they are; a type with several units opens a
+   ring of them in build order, with Alla first. Then what: only what the chosen units can do where you pointed. With units
+   already selected the wheel starts at the second level; a click in its middle goes back to the first. */
+let lastWheel=null;
+const WHO=[['tank','VARG'],['drone','HÖK'],['scout','SPARV'],['eng','BÄVER'],['krok','KROK']];
+function wheelWho(sx,sy,pk,srcEl,kind){
+  const avail=k=>k==='krok'?G.kroks.filter(x=>!x.dead):G.units.filter(v=>v.kind===k&&!v.dead&&!v.carried);
+  const reopen=()=>{uiTick(true);openWheel(sx,sy,pk,srcEl);};
+  const go=ids=>{if(!ids.length)return;setSel(ids);reopen();};
+  const tp=callTarget(pk)||pk.world||{x:CARRIER.x,y:CARRIER.y};
+  let title,sub,items=[];
+  if(!kind){title='VEM?';sub=targetLabel(pk)||'';
+    for(const[k,l]of WHO){const L=avail(k);items.push({l:l+(L.length>1?' · '+L.length:''),off:!L.length,keep:true,f:()=>{
+      if(L.length>1){wheelWho(sx,sy,pk,srcEl,k);return;}if(k==='krok'){selectKrok(L[0]);reopen();}else go([L[0].id]);}});}}
+  else{const L=avail(kind),lab=WHO.find(w=>w[0]===kind)[1];title=lab;sub='vilken?';
+    if(kind!=='krok')items.push({l:'Alla '+lab,keep:true,f:()=>go(L.filter(heard).map(v=>v.id))});
+    for(const v of L){const out=kind!=='krok'&&!heard(v);items.push({l:v.name+' · '+Math.round(dist(v,tp))+' m'+(out?' · ingen kontakt':v.orders&&v.orders.length?' · upptagen':''),off:out,keep:true,
+      f:()=>{if(kind==='krok'){selectKrok(v);reopen();}else go([v.id]);}});}}
+  renderWheel(sx,sy,srcEl,title,sub,items,()=>{if(kind)return false;
+    const lab=document.createElement('div');lab.className='lab';lab.textContent='Wing (1 till 4)';wChips.appendChild(lab);
+    for(let n=1;n<=4;n++){const k=String(n),w=(G.wings[k]||[]).filter(id=>G.units.some(u=>u.id===id&&!u.dead));const b=document.createElement('button');b.type='button';b.className='chip wing';b.textContent=k+' · '+(w.length||'tom');b.disabled=!w.length;
+      b.addEventListener('click',ev=>{ev.stopPropagation();selectWing(k);reopen();});wChips.appendChild(b);}
+    return true;},kind?()=>wheelWho(sx,sy,pk,srcEl,null):null);}
+function openWheel(sx,sy,pk,srcEl,pick){
+  if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
+  lastWheel={sx,sy,pk,srcEl};
+  if(!pk.wp&&!pk.unit&&(pick||(!selUnit()&&!selKrok()))){wheelWho(sx,sy,pk,srcEl,typeof pick==='string'?pick:null);return;}
   {const su=selUnit();if(su&&!heard(su)&&!selKrok()){noContact([su]);return;}}
   const u=selUnit();
   let title='',sub='',items=[],postTarget=null;
   const sk=selKrok();
-  if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
   if(sk){
     title=sk.name;sub=sk.orders.length?sk.orders.length+' order i kö':'ingen kö';
     if(pk.unit&&(pk.unit.kind==='tank'||pk.unit.kind==='eng')){const t=pk.unit;title='LYFT '+t.name;items.push({l:'Lyft (i kö)',f:()=>krokOrder(sk,{type:'lift',unit:t},true)});items.push({l:'Lyft nu',f:()=>krokOrder(sk,{type:'lift',unit:t},false)});}
@@ -3429,22 +3457,26 @@ function openWheel(sx,sy,pk,srcEl){
     if(selUnits().some(v=>v.kind==='scout')){const z=WORLD.zid[cellIdx(pt.x,pt.y)];if(z>=0)items.push({l:'Utforska zonen här (SPARV)',f:()=>{for(const v of noContact(selUnits()))if(v.kind==='scout')giveOrder(v,{type:'explore',zone:z,post:'def'},false,'mission');}});
       items.push({l:'Utforska fritt (SPARV)',f:()=>{for(const v of noContact(selUnits()))if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');}});}
     const lift=selUnits().filter(v=>v.kind==='tank'||v.kind==='eng');if(lift.length&&G.kroks.some(k=>!k.dead))items.push({l:'Flyg dit med KROK',f:()=>airlift(lift,pt)});
+    if(selUnits().some(v=>v.kind==='tank'&&v.musId&&unitById(v.musId)&&!unitById(v.musId).dead))items.push({l:'Sätt ut MUS (X)',f:()=>roverKey()});
   }
-  if(!sk){for(const c2 of callItems(pk))if(items.length<9)items.push(c2);}
+  if(!sk&&u){const kinds=new Set(selUnits().map(v=>v.kind));for(const c2 of callItems(pk,true))if(kinds.has(c2.kind)&&items.length<8)items.push(c2);}
   if(!items.length)return;
-  wRing.innerHTML='';
-  const c=document.createElement('div');c.className='wc';c.innerHTML='<b></b><span></span>';c.children[0].textContent=title;c.children[1].textContent=sub;wRing.appendChild(c);
-  const n=items.length;
-  items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.className='wi'+(it.danger?' danger':'')+(it.call?' call':'');b.textContent=it.l;const a=-PI/2+i*TAU/n,rx=n>4?150:86,ry=n>4?100:86;b.style.left=(125+Math.cos(a)*rx)+'px';b.style.top=(125+Math.sin(a)*ry)+'px';b.addEventListener('click',ev=>{ev.stopPropagation();it.f();closeWheel();uiTick(true);});wRing.appendChild(b);});
-  wChips.innerHTML='';
-  if(!items.length)return;
+  const canBack=!pk.wp&&!pk.unit;
   const showChips=!sk&&!!u&&!pk.wreck&&!(pk.unit&&pk.unit.id!==u.id);
-  wChips.hidden=!showChips;
-  if(showChips){
+  renderWheel(sx,sy,srcEl,title,sub,items,()=>{if(!showChips)return false;
     const lab=document.createElement('div');lab.className='lab';lab.textContent=postTarget?'Hållning för punkten':'Hållning för ordern';wChips.appendChild(lab);
     for(const p of PK){const b=document.createElement('button');b.type='button';b.className='chip';b.innerHTML=postSvg(p)+'<span></span>';b.lastChild.textContent=POST[p];b.setAttribute('aria-pressed',String(wheelPost===p));
       b.addEventListener('click',ev=>{ev.stopPropagation();wheelPost=p;if(postTarget){postTarget.post=p;u.path=null;}for(const x of wChips.querySelectorAll('.chip'))x.setAttribute('aria-pressed',String(x===b));});wChips.appendChild(b);}
-  }
+    return true;},canBack?()=>openWheel(sx,sy,pk,srcEl,true):null);
+}
+function renderWheel(sx,sy,srcEl,title,sub,items,fillChips,back){
+  wRing.innerHTML='';
+  const c=document.createElement(back?'button':'div');if(back)c.type='button';c.className='wc'+(back?' back':'');c.innerHTML='<b></b><span></span>'+(back?'<i>annan enhet</i>':'');c.children[0].textContent=title;c.children[1].textContent=sub;
+  if(back)c.addEventListener('click',ev=>{ev.stopPropagation();back();});wRing.appendChild(c);
+  const n=items.length;
+  items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.className='wi'+(it.danger?' danger':'')+(it.call?' call':'')+(it.off?' off':'');b.textContent=it.l;b.disabled=!!it.off;const a=-PI/2+i*TAU/n,rx=n>4?150:86,ry=n>4?100:86;b.style.left=(125+Math.cos(a)*rx)+'px';b.style.top=(125+Math.sin(a)*ry)+'px';
+    b.addEventListener('click',ev=>{ev.stopPropagation();if(it.off)return;it.f();if(!it.keep)closeWheel();uiTick(true);});wRing.appendChild(b);});
+  wChips.innerHTML='';const showChips=fillChips();wChips.hidden=!showChips;
   const src=(srcEl||(G.mainMode==='map'?mapC:glC)).getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight,fullH=showChips?330:254;
   const sc=Math.min(1,(vw-8)/254,(vh-8)/fullH);
   wheel.style.transformOrigin='0 0';wheel.style.transform='scale('+sc.toFixed(3)+')';
@@ -3569,7 +3601,7 @@ function callHints(pk){
 /* who can be called in for a target: everyone of that kind able to go, nearest first */
 function callCands(kind,pk){const tp=callTarget(pk);if(!tp)return[];const ok=v=>!v.dead&&!v.carried&&v.id!==G.ctrl&&v.kind===kind&&(kind!=='drone'||(!v.rtb&&v.fuel>v.maxFuel*.3));
   return G.units.filter(ok).sort((a,b)=>dist(a,tp)-dist(b,tp));}
-function callItems(pk){const out=[],it=(l,k)=>{out.push({l,call:true,f:()=>callIn(k,pk)});
+function callItems(pk,brief){const out=[],it=(l,k)=>{const uk0={eng:'eng',air:'drone',tank:'tank'}[k];if(brief){if(!uk0)return;const v=selUnits().filter(x=>x.kind===uk0);out.push({l,call:true,kind:uk0,f:()=>callIn(k,pk,false,v.length===1?v[0]:undefined)});return;}out.push({l,call:true,f:()=>callIn(k,pk)});
     // the wheel also names the individual units, so you pick who goes without selecting it first
     const uk={eng:'eng',air:'drone',tank:'tank'}[k];if(!uk)return;const tp=callTarget(pk),cs=callCands(uk,pk);if(cs.length<2)return;
     const def=k==='eng'?(cs.find(v=>!(v.orders.length&&['clear','demine','capture','demolish'].includes(v.orders[0].type)))||cs[0]):null;
@@ -3655,6 +3687,7 @@ window.addEventListener('keydown',e=>{
   const m=/^Digit([1-9])$/.exec(e.code||'');
   if(m){const n=m[1];
     if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();assignWing(n);uiTick(true);return;}
+    if(!wheel.hidden&&lastWheel&&G.wings[n]){selectWing(n);uiTick(true);const W=lastWheel;openWheel(W.sx,W.sy,W.pk,W.srcEl);return;}
     selectWing(n);const now=performance.now();if(lastKey.k===n&&now-lastKey.t<350&&G.sel)setCam(G.sel);lastKey={k:n,t:now};uiTick(true);return;}
   if(e.code==='KeyC'){if(G.sel)setCam(G.sel);uiTick(true);}
   if(e.code==='KeyF'&&!G.ctrl){toggleFull();}
