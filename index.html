@@ -3300,8 +3300,8 @@ function drawHud(ctx,w,h){
     ctx.font=mono(11);ctx.fillStyle='#ffd0de';ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText(ENEMY[e.kind].label.toUpperCase()+' '+e.id+'  '+Math.round(dist(u,e))+' m',p.x-b,p.y-b-3);
   }
   for(const v of[...G.units,...G.kroks]){
-    if(v===u||v.dead)continue;
-    const p=projectTo(v.x,unitY(v,0)+4.5,v.y,w,h);if(!p||!p.on)continue;
+    if(v===u||v.dead||(v.kind==='mus'&&v.carried))continue;
+    const p=projectTo(v.x,unitY(v,0)+(v.kind==='mus'?2:4.5),v.y,w,h);if(!p||!p.on)continue;
     ctx.font=mono(10.5);ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='rgba(10,14,18,.55)';const tw=ctx.measureText(v.name).width+8;ctx.fillRect(p.x-tw/2,p.y-14,tw,13);ctx.fillStyle='#e6ecf2';ctx.fillText(v.name,p.x,p.y-2);
   }
   // heading tape
@@ -4016,7 +4016,7 @@ function updAudio(dtr){
   if(!AUD.ctx||!G)return;updListener();musLevel();
   // engines: the six nearest live vehicles
   const L=AUD.L,cand=[];
-  for(const u of [...G.units,...G.kroks]){if(u.dead)continue;const h=u.air||u.kind==='krok'?(u.alt||groundY(u.x,u.y)+20):groundY(u.x,u.y)+1.5;const d=Math.hypot(u.x-L.x,h-L.y,u.y-L.z);if(d<520)cand.push([d,u,h]);}
+  for(const u of [...G.units,...G.kroks]){if(u.dead||(u.kind==='mus'&&u.carried))continue;const h=u.air||u.kind==='krok'?(u.alt||groundY(u.x,u.y)+20):groundY(u.x,u.y)+1.5;const d=Math.hypot(u.x-L.x,h-L.y,u.y-L.z);if(d<520)cand.push([d,u,h]);}
   cand.sort((a,b)=>a[0]-b[0]);const keep=new Set(cand.slice(0,6).map(c=>c[1].id));
   for(const[id,V]of AUD.voices)if(!keep.has(id)){killVoice(V);AUD.voices.delete(id);}
   for(const[d,u,h]of cand.slice(0,6)){
