@@ -26,5 +26,5 @@ for(const f of Object.keys(B.SHAPES)){
 // the mix picks every shape over a spread of seeds, and the round island is the old one
 B.SHAPE_CFG.force=null;const seen={};for(let s=2000;s<2020;s++){B.newGame(s);seen[B.W.V.shape.type]=1;}
 ok(Object.keys(B.SHAPES).every(k=>seen[k]),'the mix gives every shape over 20 islands ('+Object.keys(seen).join(', ')+')');
-B.SHAPE_CFG.force='rund';B.newGame(7341);ok(Math.round(B.G.relays[0].x)===1175&&Math.round(B.G.relays[0].y)===1405,'round island 7341 is the same as before the shapes');
+B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;B.newGame(7341);ok(Math.round(B.G.relays[0].x)===1175&&Math.round(B.G.relays[0].y)===1405,'round island 7341 is the same as before the shapes');
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

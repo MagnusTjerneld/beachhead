@@ -1,7 +1,7 @@
 // MUS: carried by every VARG, remote-controlled only, reach 200 m from its VARG, sees hidden troops, finds mines without
 // setting them off, its charge kills a tank, enemies see it only close, replaced at Birka
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};
 const land=(W,x,y)=>{const t=W.grid[Math.floor(y/10)*220+Math.floor(x/10)];return t===2||t===3;};
 // open land around a point, for placing things
@@ -47,7 +47,7 @@ const hp0=m.hp;m.x=mn.x;m.y=mn.y;mn.cells=[];{const gx=Math.floor(mn.x/10),gy=Ma
  ok(sh>20,'a bunker shoots at a MUS 36 m away ('+sh+' shots)');ok(hits<sh*.3,'but rarely hits it ('+hits+' of '+sh+')');
 }
 // task marks: what BÄVER works on and what KROK is to lift are marked over the object
-{B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.newGame(1234);const G=B.G;G.running=true;run(.2);const e=G.units.find(u=>u.kind==='eng'),b=G.barriers[0],v=G.units.find(u=>u.kind==='tank');
+{B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;B.newGame(1234);const G=B.G;G.running=true;run(.2);const e=G.units.find(u=>u.kind==='eng'),b=G.barriers[0],v=G.units.find(u=>u.kind==='tank');
  e.orders=[{type:'clear',barrier:b,post:'def'}];let M=B.taskMarks();ok(M.some(m=>m.g==='bomb'&&m.x===b.x),'a barrier BÄVER is to blow carries a bomb mark');
  b.prog=.4;M=B.taskMarks();ok(M.find(m=>m.g==='bomb').p===.4,'with its progress');
  G.kroks[0].orders=[{type:'lift',unit:v}];M=B.taskMarks();ok(M.some(m=>m.g==='hook'&&m.unit===v),'a unit KROK is to lift carries a hook mark');

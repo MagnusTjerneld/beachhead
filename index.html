@@ -291,7 +291,7 @@ button:disabled{opacity:.45;cursor:default}
     <h2><small>Prototyp 2 · testbana Kustfästet</small>Uppdrag Arkipelag</h2>
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
-      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Öarna har olika form: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
+      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Du börjar med BÄVER, KROK och 500 material och väljer själv vad varvet ska bygga först. Det som byggs skrivs ut i byggbädden på däck, och den nya enheten startar där. En enhet vid Birka kan återvinnas för 80 % av byggkostnaden (knappen Återvinn, två klick, eller i hjulet på enheten), med MUS ombord; KROK återvinns inte. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Vill du välja ställe: högerklicka på Birka eller en tagen verkstad eller ett fältvarv och välj Service här. HÖK laddar sina robotar där, och en HÖK som cirklar över en verkstad laddar också. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Infanteri och pansarvärn i skog eller bebyggelse syns även från luften först på 40 m. Den som skjuter syns av alla inom synhåll så länge mynningsflamman lyser. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
@@ -474,13 +474,25 @@ function zoneAt(x,y,V){const w=warp(x,y,V.seed);let i1=-1,d1=1e9,i2=-1,d2=1e9;fo
    död mark): rund (the old island), ås (a long bent ridge), hästsko (a horseshoe round a lagoon open to the sea), näs (two or
    three islands joined by narrow necks) and udde (a main island with a long peninsula). */
 const SHAPES={rund:'rund ö',as:'ås',hastsko:'hästsko',nas:'näs',udde:'udde'};
-const SHAPE_CFG={force:null,mix:{rund:1,as:1,hastsko:1,nas:1,udde:1}};
+const SHAPE_CFG={force:null,mix:{rund:1,as:1,hastsko:1,nas:1,udde:1},rough:1};
 function smin(a,b,k){const h=clamp(.5+.5*(b-a)/k,0,1);return lerp(b,a,h)-k*h*(1-h);}
 function lobeD(L,x,y){const px=x-L.x,py=y-L.y;return Math.hypot((px*L.c+py*L.s)/L.rx,(-px*L.s+py*L.c)/L.ry);}
 function shapeD(S,x,y){let d=lobeD(S.lobes[0],x,y);for(let i=1;i<S.lobes.length;i++)d=smin(d,lobeD(S.lobes[i],x,y),S.k);for(const H of S.holes)d=Math.max(d,2-lobeD(H,x,y));return d;}
-function islandD(x,y,V){const shore=1+(fbm(x*.7,y*.7,V.seed+31)-.5)*V.shoreAmp*1.6;return{d:shapeD(V.shape,x,y)/shore};}
-function shapeFor(seed,V){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let type=SHAPE_CFG.force&&SHAPES[SHAPE_CFG.force]?SHAPE_CFG.force:null;
-  if(!type){let tw=0;for(const k in mix)tw+=mix[k];let r=R()*tw;for(const k in mix){r-=mix[k];if(r<=0){type=k;break;}}type=type||'rund';}
+/* Rough coast (decided 12 okt: no island in Stockholm's archipelago is perfectly round): the point is first moved by slow
+   noise (up to about 115 m, wavelengths 300 and 110 m) so the arcs turn into uneven headlands and bights, small lobes along the
+   coast add points and holms (land) or bite coves (holes), and short noise (45 m) makes the waterline ragged. All of it fades
+   out over a neck so that a narrow neck is never cut. rough 0 is the smooth island, which the tests use. */
+function islandD(x,y,V){const S=V.shape,rg=S.rough||0;
+  if(!rg)return{d:shapeD(S,x,y)/(1+(fbm(x*.7,y*.7,V.seed+31)-.5)*V.shoreAmp*1.6)};
+  let att=1;for(const L of S.lobes)if(L.neck){const n=lobeD(L,x,y);if(n<1.8)att=Math.min(att,sm((n-1)/.8));}
+  const s=V.seed,A=80*rg*att,A2=35*rg*att;
+  const wx=x+(vnoise(x/300,y/300,s+51)-.5)*2*A+(vnoise(x/110,y/110,s+53)-.5)*2*A2,wy=y+(vnoise(x/300,y/300,s+52)-.5)*2*A+(vnoise(x/110,y/110,s+54)-.5)*2*A2;
+  let d=shapeD(S,wx,wy);for(const b of S.bumps)d=b.hole?Math.max(d,2-lobeD(b,wx,wy)):smin(d,lobeD(b,wx,wy),.08);
+  const shore=1+(fbm(x*.7,y*.7,s+31)-.5)*V.shoreAmp*1.6+(vnoise(x/45,y/45,s+57)-.5)*.12*rg*att;
+  return{d:d/shore};}
+function shapeFor(seed,V,base){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let type=SHAPE_CFG.force&&SHAPES[SHAPE_CFG.force]?SHAPE_CFG.force:null;
+  /* the island number picks the shape, so a retry of the generator keeps it; the retry only redraws the geometry */
+  if(!type){let tw=0;for(const k in mix)tw+=mix[k];let r=rng((base??seed)*29+17)()*tw;R();for(const k in mix){r-=mix[k];if(r<=0){type=k;break;}}type=type||'rund';}
   const lobes=[],holes=[],L=(x,y,rx,ry,rot)=>({x,y,rx,ry,rot:rot||0});let k=.2;
   const rAlong=(Lb,a)=>1/Math.hypot(Math.cos(a-Lb.rot)/Lb.rx,Math.sin(a-Lb.rot)/Lb.ry);
   if(type==='rund')lobes.push(L(0,0,V.RX,V.RY,0));
@@ -491,15 +503,15 @@ function shapeFor(seed,V){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let type=SHA
   else if(type==='nas'){k=.12;const n=R()<.55?2:3;
     if(n===2){const r1=390+R()*60,r2=330+R()*60,gap=110+R()*90,ax=-(gap/2+r1*.95),bx=gap/2+r2*.95,by=(R()-.5)*160;
       lobes.push(L(ax,0,r1,r1*(.8+R()*.25),R()*PI),L(bx,by,r2,r2*(.8+R()*.25),R()*PI));
-      lobes.push(L((ax+bx)/2,by/2,(bx-ax)/2-r1*.5,45+R()*20,Math.atan2(by,bx-ax)));}
+      lobes.push({...L((ax+bx)/2,by/2,(bx-ax)/2-r1*.5,45+R()*20,Math.atan2(by,bx-ax)),neck:true});}
     else{const r=290+R()*50,gap=100+R()*80,dx=2*r*.95+gap,o=(R()<.5?1:-1)*(120+R()*160);const P=[[-dx,0],[0,o],[dx,0]];
       for(const[x,y]of P)lobes.push(L(x,y,r*(.9+R()*.2),r*(.75+R()*.25),R()*PI));
-      for(let i=0;i<2;i++){const a=P[i],b=P[i+1],len=Math.hypot(b[0]-a[0],b[1]-a[1]);lobes.push(L((a[0]+b[0])/2,(a[1]+b[1])/2,len/2-r*.5,45+R()*20,Math.atan2(b[1]-a[1],b[0]-a[0])));}}}
+      for(let i=0;i<2;i++){const a=P[i],b=P[i+1],len=Math.hypot(b[0]-a[0],b[1]-a[1]);lobes.push({...L((a[0]+b[0])/2,(a[1]+b[1])/2,len/2-r*.5,45+R()*20,Math.atan2(b[1]-a[1],b[0]-a[0])),neck:true});}}}
   else{k=.25;const M=L(0,0,520+R()*60,460+R()*60,R()*PI);lobes.push(M);const ph=R()*TAU,rp=rAlong(M,ph),dx=Math.cos(ph),dy=Math.sin(ph);
     lobes.push(L(dx*(rp+170),dy*(rp+170),320+R()*60,110+R()*40,ph));lobes.push(L(dx*(rp+500),dy*(rp+500),150+R()*40,125+R()*40,R()*PI));}
   const th=type==='rund'?0:R()*TAU,ct=Math.cos(th),st=Math.sin(th);
   const S={type,k,lobes:[],holes:[]};
-  const place=o=>({x:CX+o.x*ct-o.y*st,y:CY+o.x*st+o.y*ct,rx:o.rx,ry:o.ry,c:Math.cos(o.rot+th),s:Math.sin(o.rot+th)});
+  const place=o=>({x:CX+o.x*ct-o.y*st,y:CY+o.x*st+o.y*ct,rx:o.rx,ry:o.ry,c:Math.cos(o.rot+th),s:Math.sin(o.rot+th),neck:!!o.neck});
   S.lobes=lobes.map(place);S.holes=holes.map(place);
   if(type!=='rund'){
     const scale=f=>{for(const o of[...S.lobes,...S.holes]){o.x=CX+(o.x-CX)*f;o.y=CY+(o.y-CY)*f;o.rx*=f;o.ry*=f;}};
@@ -507,6 +519,15 @@ function shapeFor(seed,V){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let type=SHA
     let n=0;for(let y=10;y<WH;y+=20)for(let x=10;x<WW;x+=20)if(shapeD(S,x,y)<=1)n++;
     if(n)scale(clamp(Math.sqrt(PI*V.RX*V.RY/(n*400)),.7,1.4));
     for(let it=0;it<14;it++){let out=false;for(let y=10;y<WH&&!out;y+=30)for(let x=10;x<WW;x+=30){if((x<200||y<200||x>WW-200||y>WH-200)&&shapeD(S,x,y)<=1.15){out=true;break;}}if(!out)break;scale(.94);}}
+  // bumps along the smooth coast, with their own random stream so that rough 0 leaves the island as it was
+  S.rough=SHAPE_CFG.rough;S.bumps=[];
+  if(S.rough){const Rb=rng(seed*41+3),nb=(type==='rund'?4:3)+Math.floor(Rb()*4),solid=S.lobes.filter(l=>!l.neck);
+    for(let t=0;t<300&&S.bumps.length<nb;t++){const Lb=solid[Math.floor(Rb()*solid.length)],a=Rb()*TAU,u=Lb.rx*Math.cos(a),v=Lb.ry*Math.sin(a),px=Lb.x+u*Lb.c-v*Lb.s,py=Lb.y+u*Lb.s+v*Lb.c;
+      const r=(50+Rb()*80)*Math.sqrt(S.rough),hole=Rb()<.4;
+      if(Math.abs(shapeD(S,px,py)-1)>.04)continue;if(S.lobes.some(l=>l.neck&&lobeD(l,px,py)<2.5))continue;
+      if(S.bumps.some(b=>Math.hypot(b.x-px,b.y-py)<Math.max(b.rx,b.ry)+r+60))continue;
+      const e=8,gx=shapeD(S,px+e,py)-shapeD(S,px-e,py),gy=shapeD(S,px,py+e)-shapeD(S,px,py-e),gl=Math.hypot(gx,gy)||1,o=hole?.45:.25,rt=Rb()*PI;
+      S.bumps.push({x:px+gx/gl*r*o,y:py+gy/gl*r*o,rx:r,ry:r*(.6+Rb()*.4),c:Math.cos(rt),s:Math.sin(rt),hole});}}
   return S;}
 function elevAt(x,y,s,V){
   if(x<24||y<24||x>WW-24||y>WH-24||nearShip(x,y))return -6;
@@ -532,10 +553,10 @@ function elevAt(x,y,s,V){
   if(!old&&H&&hl<110&&hi>-20&&hi<200){const t=sm((hi-120)/70),side=sm((110-hl)/31);e=lerp(e,lerp(1.1,e,t),side);}
   return e;
 }
-function levelFor(seed){
+function levelFor(seed,base){
   const R=rng(seed*7+3);
   const V={seed,RX:580+R()*130,RY:480+R()*140,shoreAmp:.14+R()*.16,zones:[]};
-  V.shape=shapeFor(seed,V);
+  V.shape=shapeFor(seed,V,base);
   const K=8+Math.floor(R()*5);
   if(V.shape.type==='rund')for(let t=0;t<4000&&V.zones.length<K;t++){
     const a=R()*TAU,rr=Math.sqrt(R())*.86,x=CX+Math.cos(a)*rr*V.RX,y=CY+Math.sin(a)*rr*V.RY;
@@ -550,7 +571,7 @@ function levelFor(seed){
 const TIER={beach:[0,3],any:[2.5,45]};
 function buildWorld(seed){
   let W=null;
-  for(let k=0;k<8;k++){W=buildWorldTry(seed,k);W.tries=k+1;W.valid=validWorld(W);if(W.valid)break;}
+  for(let k=0;k<(SHAPE_CFG.rough?12:8);k++){W=buildWorldTry(seed,k);W.tries=k+1;W.valid=validWorld(W);{const lg=buildWorld.log=buildWorld.log||[];lg.push(W.valid?"ok":W.why);if(lg.length>200)lg.shift();}if(W.valid)break;}
   W.seed=seed;WORLD=W;return W;
 }
 function validWorld(W){
@@ -559,8 +580,10 @@ function validWorld(W){
   for(const s of W.structs||[]){none[s.cell]=1;bar[s.cell]=1;}
   const open=flood(none),shut=flood(bar),at=p=>cellIdx(p.x,p.y);
   // every zone in one piece (a zone straddling a lagoon or a strait would put its road and its point on the far side)
-  {const seen=new Uint8Array(g.length);const big=new Map();for(let i=0;i<g.length;i++){const z=W.zid[i];if(z<0||seen[i])continue;let n=0;const st=[i];seen[i]=1;
-      while(st.length){const c=st.pop();n++;const x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(!seen[m]&&W.zid[m]===z){seen[m]=1;st.push(m);}}}
+  {const mass=new Uint8Array(g.length);{const s0=cellIdx(W.landing.x,W.landing.y),st=[s0];mass[s0]=1;while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(!mass[m]&&g[m]!==DEEP&&g[m]!==SHAL){mass[m]=1;st.push(m);}}}}
+    // only pieces on the main landmass count: a holm that the rough coast cut off belongs to no road and no point
+    const seen=new Uint8Array(g.length);const big=new Map();for(let i=0;i<g.length;i++){const z=W.zid[i];if(z<0||seen[i]||!mass[i])continue;let n=0;const st=[i];seen[i]=1;
+      while(st.length){const c=st.pop();n++;const x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(!seen[m]&&mass[m]&&W.zid[m]===z){seen[m]=1;st.push(m);}}}
       if(n>=12)big.set(z,(big.get(z)||0)+1);}
     for(const[,k]of big)if(k>1){W.why='zon i flera delar';return false;}}
   // the new shapes: every point reachable over land from the beach once the barriers are open (BÄVER cannot cross water)
@@ -575,12 +598,22 @@ function validWorld(W){
 function nearLists(cand,tg,r){const B=new Map(),key=(x,y)=>x*4096+y;for(let j=0;j<tg.length;j++){const k=key(Math.floor(tg[j].x/r),Math.floor(tg[j].y/r));let a=B.get(k);if(!a){a=[];B.set(k,a);}a.push(j);}
   return cand.map(c=>{const bx=Math.floor(c.x/r),by=Math.floor(c.y/r),o=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const a=B.get(key(bx+dx,by+dy));if(!a)continue;for(const j of a)if(Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<r)o.push(j);}return Int32Array.from(o);});}
 function buildWorldTry(seed,tryK){
-  const s=seed+tryK*7919,V=levelFor(s),R=rng(s*13+5);
+  const s=seed+tryK*7919,V=levelFor(s,seed),R=rng(s*13+5);
   V.passMap=new Map();V.harbor=null;V.beach=null;V.cove=null;
   const Z=V.zones,NZ=Z.length;
   // zone assignment on the grid (shape only) to find adjacency and boundary cells
   const zid=new Int16Array(GW*GH).fill(-1),inside=new Uint8Array(GW*GH);
   for(let i=0;i<GW*GH;i++){const c=cellCenter(i);const I=islandD(c.x,c.y,V);if(I.d>1)continue;inside[i]=1;zid[i]=zoneAt(c.x,c.y,V).i1;}
+  /* a rough coast can leave a small piece of a zone on the far side of a cove: such a piece (under 80 cells) goes to the zone it
+     borders most. Larger splits are left for validWorld to reject. */
+  if(V.shape.rough){const D4=[[1,0],[-1,0],[0,1],[0,-1]],comp=new Int32Array(GW*GH).fill(-1),parts=[];
+    for(let i=0;i<GW*GH;i++){if(zid[i]<0||comp[i]>=0)continue;const z=zid[i],cells=[i],st=[i];comp[i]=parts.length;
+      while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(comp[n]<0&&zid[n]===z){comp[n]=parts.length;cells.push(n);st.push(n);}}}
+      parts.push({z,cells});}
+    const best=new Map();for(const p of parts){const b=best.get(p.z);if(!b||p.cells.length>b.cells.length)best.set(p.z,p);}
+    for(const p of parts){if(best.get(p.z)===p||p.cells.length>=80)continue;const cnt=new Map();
+      for(const c of p.cells){const x=c%GW,y=(c/GW)|0;for(const[dx,dy]of D4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const z2=zid[ny*GW+nx];if(z2>=0&&z2!==p.z)cnt.set(z2,(cnt.get(z2)||0)+1);}}
+      let nz=-1,nb=0;for(const[z2,k]of cnt)if(k>nb){nb=k;nz=z2;}if(nz>=0)for(const c of p.cells)zid[c]=nz;}}
   const bnd=new Map();
   for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW-1;gx++)for(const[ox,oy]of[[1,0],[0,1]]){const nx=gx+ox,ny=gy+oy;if(ny>=GH)continue;const i=gy*GW+gx,j=ny*GW+nx;if(!inside[i]||!inside[j]||zid[i]===zid[j])continue;const k=pairKey(zid[i],zid[j]);if(!bnd.has(k))bnd.set(k,[]);bnd.get(k).push(i);}
   for(const[k,cells]of bnd){if(cells.length<4)continue;const[a,b]=k.split('_').map(Number);Z[a].ad.add(b);Z[b].ad.add(a);}
@@ -593,16 +626,16 @@ function buildWorldTry(seed,tryK){
   const seaC=new Uint8Array(GW*GH);{const st=[];for(let i=0;i<GW*GH;i++){const x=i%GW,y=(i/GW)|0;if(!inside[i]&&(x===0||y===0||x===GW-1||y===GH-1)){seaC[i]=1;st.push(i);}}
     while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+ox,ny=y+oy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!inside[n]&&!seaC[n]){seaC[n]=1;st.push(n);}}}}
   const outN=(x,y)=>{const e=15,gx=shapeD(V.shape,x+e,y)-shapeD(V.shape,x-e,y),gy=shapeD(V.shape,x,y+e)-shapeD(V.shape,x,y-e),l=Math.hypot(gx,gy)||1;return{x:gx/l,y:gy/l};};
-  const coastPt=new Map();
+  const coastPt=new Map(),coastCells=new Map();
   for(let i=0;i<GW*GH;i++){if(!inside[i])continue;const x=i%GW,y=(i/GW)|0;let wet=false;for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+ox,ny=y+oy;if(nx>=0&&ny>=0&&nx<GW&&ny<GH&&seaC[ny*GW+nx]){wet=true;break;}}if(!wet)continue;
-    const z=zid[i],c=cellCenter(i),dd=Math.hypot(c.x-Z[z].x,c.y-Z[z].y),o=coastPt.get(z);if(!o||dd<o.dd)coastPt.set(z,{x:c.x,y:c.y,dd});}
+    const z=zid[i],c=cellCenter(i),dd=Math.hypot(c.x-Z[z].x,c.y-Z[z].y),o=coastPt.get(z);if(!coastCells.has(z))coastCells.set(z,[]);coastCells.get(z).push(c);if(!o||dd<o.dd)coastPt.set(z,{x:c.x,y:c.y,dd});}
   for(const[z,o]of coastPt){const n=outN(o.x,o.y);o.nx=n.x;o.ny=n.y;}
   const isRound=V.shape.type==='rund';
   // the round island keeps its old coast points: where the ray from the centre through the zone leaves the island
   const polar=(a,f)=>({x:CX+Math.cos(a*PI/180)*f*V.RX,y:CY+Math.sin(a*PI/180)*f*V.RY});
   if(isRound)for(const z of coastal){const a=Z[z].a,p=polar(a,1),n={x:Math.cos(a*PI/180)/V.RX,y:Math.sin(a*PI/180)/V.RY},l=Math.hypot(n.x,n.y);coastPt.set(z,{x:p.x,y:p.y,nx:n.x/l,ny:n.y/l,dd:0,a});}
   const clear=(x,y)=>{if(islandD(x,y,V).d<=1.05)return false;for(let k=0;k<16;k++){const a=k/16*TAU;if(islandD(x+Math.cos(a)*170,y+Math.sin(a)*140,V).d<=1.05)return false;}return true;};
-  const shipSpot=o=>{for(let f=20;f<800;f+=10){const x=o.x+o.nx*f,y=o.y+o.ny*f;if(x<150||y<150||x>WW-150||y>WH-150)return null;if(clear(x,y))return{x:x+o.nx*20,y:y+o.ny*20};}return null;};
+  const shipSpot=o=>{for(let f=20;f<800;f+=10){const x=o.x+o.nx*f,y=o.y+o.ny*f;if(x<150||y<150||x>WW-150||y>WH-150)return null;if(f>40&&islandD(x,y,V).d<=1)return null;if(clear(x,y))return{x:x+o.nx*20,y:y+o.ny*20};}return null;};
   const landC=coastal.filter(i=>coastPt.has(i)&&shipSpot(coastPt.get(i)));
   const land=isRound?coastal[Math.floor(R()*coastal.length)]:(landC.length?landC:coastal)[Math.floor(R()*(landC.length||coastal.length))];
   const landConnected=()=>{const seen=new Set([land]),q=[land];while(q.length){const c=q.pop();for(const n of Z[c].ad)if(!Z[n].water&&!seen.has(n)){seen.add(n);q.push(n);}}return Z.every((z,i)=>z.water||seen.has(i));};
@@ -617,7 +650,14 @@ function buildWorldTry(seed,tryK){
   while(q0.length){const c=q0.shift();for(const p of pass){const n=p.a===c?p.b:p.b===c?p.a:-1;if(n<0||lvl[n]>=0)continue;const r=R();lvl[n]=clamp(lvl[c]+(r<up?1:r<up+.2?-1:0),0,3);q0.push(n);}}
   for(let i=0;i<NZ;i++)if(!Z[i].water)Z[i].h=HLV[Math.max(0,lvl[i])];
   for(const e of spare)if(Math.abs(lvl[e.a]-lvl[e.b])<=1&&R()<.3)pass.push(e);
-  for(const p of pass){const cells=bnd.get(pairKey(p.a,p.b))||[];const mx=(Z[p.a].x+Z[p.b].x)/2,my=(Z[p.a].y+Z[p.b].y)/2;let best=null,bd=1e9;for(const c of cells){const q=cellCenter(c);if(islandD(q.x,q.y,V).d>.84)continue;const d=Math.hypot(q.x-mx,q.y-my);if(d<bd){bd=d;best=q;}}if(!best)best={x:mx,y:my};p.x=best.x;p.y=best.y;p.w=20+R()*14;V.passMap.set(pairKey(p.a,p.b),p);}
+  for(const p of pass){const cells=bnd.get(pairKey(p.a,p.b))||[];const mx=(Z[p.a].x+Z[p.b].x)/2,my=(Z[p.a].y+Z[p.b].y)/2;let best=null,bd=1e9;
+    if(!V.shape.rough){for(const c of cells){const q=cellCenter(c);if(islandD(q.x,q.y,V).d>.84)continue;const d=Math.hypot(q.x-mx,q.y-my);if(d<bd){bd=d;best=q;}}if(!best)best={x:mx,y:my};}
+    else{/* rough coast: the pass must be away from where three zones meet (the third zone's cliff would block it) and have land
+         on all sides for its ramp. Score: room to the coast first (up to 70 m), then nearness to the middle between the zones. */
+      const pk=pairKey(p.a,p.b),clean=q=>[[0,0],[28,0],[-28,0],[0,28],[0,-28]].every(([ox,oy])=>{const zq=zoneAt(q.x+ox,q.y+oy,V);return pairKey(zq.i1,zq.i2)===pk;});
+      const room=q=>{for(let r=10;r<=70;r+=10)for(let k=0;k<12;k++){const a=k/12*TAU,j=cellIdx(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r);if(!inside[j])return r-10;}return 70;};
+      let bs=-1e9;for(const c of cells){const q=cellCenter(c),cl=clean(q),rm=room(q),sc=(cl?1000:0)+rm*10-Math.hypot(q.x-mx,q.y-my)*.05;if(sc>bs){bs=sc;best=q;}}if(!best)best={x:mx,y:my};}
+    p.x=best.x;p.y=best.y;p.w=20+R()*14;V.passMap.set(pairKey(p.a,p.b),p);}
   V.pass=pass;
   const pad=c=>pass.filter(p=>p.a===c||p.b===c).map(p=>p.a===c?p.b:p.a);
   const pd=bfs(land,pad);
@@ -629,10 +669,16 @@ function buildWorldTry(seed,tryK){
   const safe=new Set([land]);{const q=[land];while(q.length){const c=q.pop();for(const n of pad(c))if(n!==r2z&&n!==r3z&&!safe.has(n)){safe.add(n);q.push(n);}}}
   // landings: beach in the landing zone, harbor in a coastal zone at least two passes away, sometimes a cove
   const cpt=(z,w)=>{const o=coastPt.get(z);return o?{x:o.x,y:o.y,nx:o.nx,ny:o.ny,w}:null;};
-  V.beach=isRound?{...cpt(land,0),w:9+R()*5,a:Z[land].a}:cpt(land,90+R()*50)||{x:Z[land].x,y:Z[land].y,nx:0,ny:1,w:100};
+  /* on the new shapes the beach, the harbor and the cove keep clear of the passes: their low ground would otherwise cut a pass
+     ramp into cliffs. The coast cell of the zone nearest its middle that is at least clr from every pass (and for the beach has
+     room for Birka); none: the plain coast point. */
+  const passD=q=>{let m=1e9;for(const p of pass)m=Math.min(m,Math.hypot(p.x-q.x,p.y-q.y));return m;};
+  const cptClear=(z,w,clr,ship)=>{if(isRound)return null;let best=null,bd=1e9;for(const c of coastCells.get(z)||[]){const dd=Math.hypot(c.x-Z[z].x,c.y-Z[z].y);if(dd>=bd||passD(c)<clr)continue;
+      const n=outN(c.x,c.y),o={x:c.x,y:c.y,nx:n.x,ny:n.y,w};if(ship&&!shipSpot(o))continue;bd=dd;best=o;}return best;};
+  if(isRound)V.beach={...cpt(land,0),w:9+R()*5,a:Z[land].a};else{const w=90+R()*50;V.beach=cptClear(land,w,w+120,true)||cpt(land,w)||{x:Z[land].x,y:Z[land].y,nx:0,ny:1,w:100};}
   const hc=coastal.filter(i=>!Z[i].water&&i!==land&&pd[i]>=2&&safe.has(i));const hz=hc.length?hc[Math.floor(R()*hc.length)]:coastal.find(i=>!Z[i].water&&i!==land&&safe.has(i));
-  if(hz!==undefined)V.harbor=isRound?{...cpt(hz,4.5),a:Z[hz].a,depth:.8}:cpt(hz,45);
-  const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cpt(ci,55);}
+  if(hz!==undefined)V.harbor=isRound?{...cpt(hz,4.5),a:Z[hz].a,depth:.8}:cptClear(hz,45,240,false)||cpt(hz,45);
+  const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cptClear(ci,55,170,false)||cpt(ci,55);}
   let sp=null;
   if(isRound){const ba=V.beach.a*PI/180;for(let f=1;f<2.2&&!sp;f+=.01){const x=CX+Math.cos(ba)*f*V.RX,y=CY+Math.sin(ba)*f*V.RY;if(clear(x,y))sp={x:x+Math.cos(ba)*20,y:y+Math.sin(ba)*20};}if(!sp)sp=polar(V.beach.a,1.4);}
   else sp=shipSpot(V.beach)||{x:V.beach.x+V.beach.nx*400,y:V.beach.y+V.beach.ny*400};
@@ -2265,7 +2311,8 @@ function callIn(kind,pk,asMission,who){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return l;};
+if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,buildWorldTry,zoneAt,elevAt,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;

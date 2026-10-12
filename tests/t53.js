@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */
 for(const post of ['off','def']){for(const seed of [7341,1234,9001]){
   B.newGame(seed);const G=B.G;G.running=true;
   const tanks=G.units.filter(u=>u.kind==='tank'),d=G.units.find(u=>u.kind==='drone');

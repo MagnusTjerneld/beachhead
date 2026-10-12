@@ -1,6 +1,6 @@
 // air defence by target size, manual KROK flight with the hook, BÄVER field repair, the planner's gaps and air pockets
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=(s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
 const kill=G=>{for(const e of G.enemies)e.dead=true;};
 // 1. AA engages KROK at 240 m but not a HÖK at the same distance

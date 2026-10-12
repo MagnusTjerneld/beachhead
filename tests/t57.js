@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */
 for(const seed of [7341,1234,9001]){B.newGame(seed);const G=B.G;G.running=true;G.known.fill(1);G.knownV++;
   for(const e of G.enemies)e.dead=true;
   const e=G.units.find(u=>u.kind==='eng'),R1=G.relays[0];
