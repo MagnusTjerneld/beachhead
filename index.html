@@ -2611,10 +2611,11 @@ function mkBigShip(kind){
   if(!R3.shipMat){R3.shipMat=thinFog(new THREE.MeshLambertMaterial({vertexColors:true}));R3.shipWin=thinFog(new THREE.MeshLambertMaterial({color:0x22282e}));}
   const g=new THREE.Group(),P=[],Wn=[];let L,B,lights;
   const W1=0xf2f0ea,RED=0xb8262b,DK=0x1d1f22,GR=0x6e747a,NAVY=0x1f2e4a,RUST=0x6a2a22;
-  if(kind==='ferry'){L=140;B=24;const bd=L-B*1.3;P.push(...hullParts(L,B,9,W1,RED),[bd,1.4,B+.3,-L/2+bd/2,5.2,0,RED],{g:bowGeo(B*1.3+.4,B+.3,4.5,1.4,-L/2+bd-.05),c:RED});
-    const sx=-12;P.push([96,7,22,sx,12.5,0,W1],[80,5,20,sx-4,18.5,0,W1],[58,4,17,sx-6,23,0,W1],[16,3,15,sx+30,23,0,W1],[10,6,7,sx-24,28,0,RED],[10,1,7.2,sx-24,31.4,0,W1]);
-    for(const[y,len,w,x0]of[[11,94,22.3,sx],[14,94,22.3,sx],[18.5,78,20.3,sx-4],[23,56,17.3,sx-6],[23.4,15,15.3,sx+30]])Wn.push([len,1.1,w,x0,y,0,0]);
-    lights=[[NAV_R,20,25,-8,'p'],[NAV_G,20,25,8,'s'],[NAV_W,36,30,0,'m'],[NAV_W,-30,33,0,'m'],[NAV_W,-66,8,0,'t']];}
+  if(kind==='ferry'){L=140;B=24;const bd=L-B*1.3;P.push(...hullParts(L,B,9,RED,W1),[bd,1.4,B+.3,-L/2+bd/2,5.2,0,W1],{g:bowGeo(B*1.3+.4,B+.3,4.5,1.4,-L/2+bd-.05),c:W1});
+    // red hull with a white band, white decks; the bridge is a wide slab across the second-highest deck with wings out over the sides; the funnel sits forward of amidships
+    const sx=-12;P.push([96,7,22,sx,12.5,0,W1],[80,5,20,sx-4,18.5,0,W1],[58,4,17,sx-6,23,0,W1],[12,3,15,sx+18,23,0,W1],[5,3,B+3,26.5,19.6,0,W1],[10,6,7,-4,28,0,RED],[10,1,7.2,-4,31.4,0,W1],{g:bowGeo(B*1.3-.6,B-.6,9,.25,-L/2+bd),c:0x8d918c});
+    for(const[y,len,w,x0]of[[11,94,22.3,sx],[14,94,22.3,sx],[18.5,78,20.3,sx-4],[23,56,17.3,sx-6],[23.4,11,15.3,sx+18],[20.2,5.1,B+3.1,26.5]])Wn.push([len,1.1,w,x0,y,0,0]);
+    lights=[[NAV_R,26.5,21.4,-(B+3)/2,'p'],[NAV_G,26.5,21.4,(B+3)/2,'s'],[NAV_W,36,30,0,'m'],[NAV_W,-4,33,0,'m'],[NAV_W,-66,8,0,'t']];}
   else if(kind==='tanker'){L=150;B=24;const bd=L-B*1.3;P.push(...hullParts(L,B,6,RUST,DK),[bd,.4,B-.4,-L/2+bd/2,6.2,0,0x8a8f6a]);
     for(let k=0;k<6;k++)P.push([2,1.4,B-6,-40+k*18,7,0,0xb0b4a8]);P.push([100,1,1.2,-10,7.4,-3,0x9aa09a],[100,1,1.2,-10,7.4,3,0x9aa09a]);
     P.push([16,12,20,-60,12,0,W1],[12,4,22,-58,20,0,W1],[5,9,5,-68,22,0,DK],[5.2,2,5.2,-68,24,0,RED],[1,10,1,55,11,0,W1]);
