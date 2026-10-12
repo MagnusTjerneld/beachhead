@@ -2075,7 +2075,9 @@ function drawMap(ctx,w,h,small){
   ctx.save();ctx.translate(ox,oy);ctx.scale(s,s);
   {const S=surroundData(WORLD);if(!S.paths){S.paths=S.isl.map(q=>{const p=new Path2D(),sh=new Path2D(),n=Math.max(10,Math.min(44,Math.round(q.r/6)));for(let k=0;k<n;k++){const a=k/n*TAU,a1=sIslePt(q,1,a),a2=sIslePt(q,1.18,a);p.lineTo(a1.x,a1.y);sh.lineTo(a2.x,a2.y);}p.closePath();sh.closePath();return{p,sh};});}
     const vx0=-ox/s,vy0=-oy/s,vx1=(w-ox)/s,vy1=(h-oy)/s;if(vx0<0||vy0<0||vx1>WW||vy1>WH){ctx.fillStyle='#f7f9f5';ctx.fillRect(vx0,vy0,vx1-vx0,vy1-vy0);
-      ctx.fillStyle='#badae8';for(const q of S.paths)ctx.fill(q.sh);ctx.fillStyle='#f2de90';ctx.strokeStyle='#26384f';ctx.lineWidth=1.6*k;for(const q of S.paths){ctx.fill(q.p);ctx.stroke(q.p);}
+      ctx.fillStyle='#badae8';for(const q of S.paths)ctx.fill(q.sh);
+      // islands overlap to make larger land: stroke every coast twice as wide, then fill all land on top, so only the outer edge of the merged land shows
+      ctx.strokeStyle='#26384f';ctx.lineWidth=3.2*k;ctx.lineJoin='round';for(const q of S.paths)ctx.stroke(q.p);ctx.fillStyle='#f2de90';for(const q of S.paths)ctx.fill(q.p);
       ctx.strokeStyle='rgba(35,57,91,.35)';ctx.lineWidth=1.2*k;ctx.strokeRect(0,0,WW,WH);}}
   ctx.imageSmoothingEnabled=true;ctx.drawImage(WORLD.chart,0,0,WW,WH);
   if(WORLD.lines){const L=WORLD.lines;ctx.lineCap='round';ctx.lineJoin='round';
