@@ -10,6 +10,7 @@ function openSpot(W,x,y,r){for(let k=0;k<72;k++){const b=k*Math.PI/36;let okL=tr
  const L=G.relays[0],v=G.units.find(u=>u.kind==='tank');v.x=L.x;v.y=L.y;v.orders=[];run(.2);
  const m=G.units.find(u=>u.kind==='mus'&&u.owner===v.id);
  ok(m&&m.carried===v.id,'every VARG starts with a MUS aboard');
+ B.setSel([v.id,m.id]);ok(G.selIds.length===1&&G.selIds[0]===v.id,'a MUS aboard cannot be selected (a box round its VARG takes only the VARG)');
  ok(G.units.filter(u=>u.kind==='mus').length===G.units.filter(u=>u.kind==='tank').length,'one MUS per VARG');
  B.giveOrder(m,{type:'move',x:L.x+50,y:L.y,post:'def'});ok(!m.orders.length,'a MUS takes no orders: remote control only');
  const a=openSpot(B.W,L.x,L.y,240);ok(a!=null,'open land to drive on');

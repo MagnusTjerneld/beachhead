@@ -1007,8 +1007,10 @@ function makeKrok(){
 }
 const unitById=id=>id&&id[0]==='K'?G.kroks.find(k=>k.id===id):G.units.find(u=>u.id===id);
 const selUnit=()=>G.units.find(u=>u.id===G.sel&&!u.dead)||null;
-const selUnits=()=>G.selIds.map(id=>G.units.find(u=>u.id===id)).filter(u=>u&&!u.dead);
-function setSel(ids){G.selIds=ids.filter((v,i,a)=>a.indexOf(v)===i);G.sel=G.selIds[0]||null;if(G.selIds.length)G.selK=null;}
+const selUnits=()=>G.selIds.map(id=>G.units.find(u=>u.id===id)).filter(u=>u&&!u.dead&&!(u.kind==='mus'&&u.carried));
+// a MUS aboard its VARG is not a unit you can pick: it shows (in selections, wings and the roster) only once it is out
+const aboardMus=id=>{const u=G.units.find(x=>x.id===id);return!!u&&u.kind==='mus'&&!!u.carried;};
+function setSel(ids){G.selIds=ids.filter((v,i,a)=>a.indexOf(v)===i&&!aboardMus(v));G.sel=G.selIds[0]||null;if(G.selIds.length)G.selK=null;}
 function selectKrok(k){setSel([]);G.selK=k.id;}
 const selKrok=()=>{const k=G.selK?G.kroks.find(x=>x.id===G.selK):null;return k&&!k.dead?k:null;};
 function clearKrok(k){for(const x of k.orders)if(x.unit&&x.unit.awaitKrok===k.id)x.unit.awaitKrok=null;k.orders=[];k.path=null;}
@@ -1019,8 +1021,8 @@ function oText(o,krok){const P=o.post&&POST[o.post]?' · '+POST[o.post].toLowerC
 function toggleSel(id){if(G.selIds.includes(id))setSel(G.selIds.filter(x=>x!==id));else setSel([...G.selIds,id]);}
 function wingOf(id){for(const k in G.wings)if(G.wings[k].includes(id))return k;return null;}
 function selLabel(){const us=selUnits();return us.length>1?us.length+' enheter':us.length?us[0].name:'';}
-function assignWing(n){const us=selUnits(),ids=us.map(u=>u.id);if(!ids.length)return;for(const k in G.wings){G.wings[k]=G.wings[k].filter(id=>!ids.includes(id));if(!G.wings[k].length)delete G.wings[k];}G.wings[n]=ids;say(null,'Wing '+n+': '+us.map(u=>u.name).join(', ')+'.');}
-function selectWing(n){const w=G.wings[n];if(!w)return;const ids=w.filter(id=>G.units.some(u=>u.id===id&&!u.dead));if(!ids.length){delete G.wings[n];return;}setSel(ids);}
+function assignWing(n){const us=selUnits(),ids=us.map(u=>u.id).filter(id=>!aboardMus(id));if(!ids.length)return;for(const k in G.wings){G.wings[k]=G.wings[k].filter(id=>!ids.includes(id));if(!G.wings[k].length)delete G.wings[k];}G.wings[n]=ids;say(null,'Wing '+n+': '+us.map(u=>u.name).join(', ')+'.');}
+function selectWing(n){const w=G.wings[n];if(!w)return;const ids=w.filter(id=>G.units.some(u=>u.id===id&&!u.dead)&&!aboardMus(id));if(!ids.length){delete G.wings[n];return;}setSel(ids);}
 const ename=e=>ENEMY[e.kind].label.toLowerCase()+' '+e.id;
 
 function say(u,text,acts){
@@ -2145,7 +2147,7 @@ function callIn(kind,pk,asMission,who){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -3373,7 +3375,7 @@ function pick(kind,sx,sy){
 }
 const viewKind=el=>el===mapC?'map':'cam';
 const isMain=kind=>(kind==='map')===(G.mainMode==='map');
-function boxSelect(x0,y0,x1,y1,add){const X=mapX;const a={x:(Math.min(x0,x1)-X.ox)/X.s,y:(Math.min(y0,y1)-X.oy)/X.s},b={x:(Math.max(x0,x1)-X.ox)/X.s,y:(Math.max(y0,y1)-X.oy)/X.s};const ids=G.units.filter(u=>!u.dead&&u.x>=a.x&&u.x<=b.x&&u.y>=a.y&&u.y<=b.y).map(u=>u.id);if(!ids.length)return;setSel(add?[...G.selIds,...ids]:ids);}
+function boxSelect(x0,y0,x1,y1,add){const X=mapX;const a={x:(Math.min(x0,x1)-X.ox)/X.s,y:(Math.min(y0,y1)-X.oy)/X.s},b={x:(Math.max(x0,x1)-X.ox)/X.s,y:(Math.max(y0,y1)-X.oy)/X.s};const ids=G.units.filter(u=>!u.dead&&!(u.kind==='mus'&&u.carried)&&u.x>=a.x&&u.x<=b.x&&u.y>=a.y&&u.y<=b.y).map(u=>u.id);if(!ids.length)return;setSel(add?[...G.selIds,...ids]:ids);}
 function zoomAt(sx,sy,f){if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}mv.free=true;const X=mapX;const wx=(sx-X.ox)/X.s,wy=(sy-X.oy)/X.s;const nz=clamp(mv.z*f,1,6);const s0=fitS(size.map.w,size.map.h),ns=s0*nz;mv.z=nz;mv.cx=wx-(sx-size.map.w/2)/ns;mv.cy=wy-(sy-size.map.h/2)/ns;}
 const pts=new Map();let pinch=null;
 let ptr=null,rpan=null;
@@ -4163,7 +4165,7 @@ function diagTick(now,P){
   L.push('ljud '+(AUD.ctx?AUD.ctx.state+'  klocka '+DIAG.audRate.toFixed(2)+'x'+(AUD.ctx.baseLatency!=null?'  lat '+Math.round(AUD.ctx.baseLatency*1000)+' ms':'')+(AUD.on?'':'  (avstängt)')+'\n     motorer '+AUD.voices.size+'  ljud/s '+DIAG.playsShow:'ej startat'+(AUD.on?'':'  (avstängt)')));
   const alive=a=>a.filter(x=>!x.dead).length;
   if(WORLD.plan){const P=WORLD.plan;L.push('fiende '+P.doctrine+'  budget '+P.budget+' (kvar '+P.left+')  spärrar '+P.barred+'  minor '+P.mined+'  luckor '+P.cracks);}
-  L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units)+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
+  L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units.filter(u=>!(u.kind==='mus'&&u.carried)))+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
   DIAG.body.textContent=L.join('\n');
 }
 function frame(now){
