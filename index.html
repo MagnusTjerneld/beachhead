@@ -2312,7 +2312,7 @@ function callIn(kind,pk,asMission,who){
 
 /* expose for headless tests */
 globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return l;};
-if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,buildWorldTry,zoneAt,elevAt,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -4286,16 +4286,26 @@ function drawLogo(t){
   c.restore();
 }
 function titleRoute(extra){extra=extra||85;
-  // radius to the main island's outer coast along each bearing (skerries and islets do not count: the scan stops after
-  // 80 m of open water), pushed out to sea and smoothed wide, never cutting a headland of the main island
-  const N=256,G0=WORLD.baseGrid,coast=new Float32Array(N);
-  for(let i=0;i<N;i++){const a=i/N*TAU;let last=0;for(let r=0;r<WW*.75;r+=5){const x=CX+Math.cos(a)*r,y=CY+Math.sin(a)*r;if(x<0||y<0||x>=WW||y>=WH)break;const c=cellIdx(x,y),g=G0[c];if(g!==DEEP&&g!==SHAL&&!WORLD.isletMask[c])last=r;}coast[i]=last;}
-  let r=Array.from(coast,c=>c+extra);
-  for(let pass=0;pass<5;pass++){const o=r.slice();for(let i=0;i<N;i++){let sm=0;for(let j=-18;j<=18;j++)sm+=o[(i+j+N)%N];r[i]=Math.max(sm/37,coast[i]+55);}}
-  const pts=r.map((rr,i)=>{const a=i/N*TAU;return{x:CX+Math.cos(a)*rr,z:CY+Math.sin(a)*rr};});
-  const len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}
+  /* the HÖK flies a rubber band round the island: the convex hull of the main island (skerries and islets do not count), pushed
+     out by extra metres with round corners. It never cuts a headland, bridges bays and straits in straight lines and has no
+     kinks at all (decided 12 okt: the old route followed the coast bearing by bearing and jerked on the new shapes). */
+  const G0=WORLD.baseGrid,P=[];for(let i=0;i<G0.length;i++){const g=G0[i];if(g===DEEP||g===SHAL||WORLD.isletMask[i])continue;const c=cellCenter(i);P.push({x:c.x,y:c.y});}
+  if(P.length<3)P.push({x:CX-100,y:CY},{x:CX+100,y:CY},{x:CX,y:CY+100});
+  P.sort((a,b)=>a.x-b.x||a.y-b.y);const cr=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x),lo=[],hi=[];
+  for(const p of P){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(let k=P.length-1;k>=0;k--){const p=P[k];while(hi.length>=2&&cr(hi[hi.length-2],hi[hi.length-1],p)<=0)hi.pop();hi.push(p);}
+  const H=lo.slice(0,-1).concat(hi.slice(0,-1)),n=H.length,nrm=[];
+  for(let k=0;k<n;k++){const a=H[k],b=H[(k+1)%n],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1;nrm.push({x:dy/l,y:-dx/l});}
+  const pts=[],step=8;
+  for(let k=0;k<n;k++){const v=H[k],n0=nrm[(k-1+n)%n],n1=nrm[k];let a0=Math.atan2(n0.y,n0.x),a1=Math.atan2(n1.y,n1.x);while(a1<a0)a1+=TAU;
+    const na=Math.max(1,Math.ceil((a1-a0)*extra/step));for(let q=0;q<na;q++){const a=a0+(a1-a0)*q/na;pts.push({x:v.x+Math.cos(a)*extra,z:v.y+Math.sin(a)*extra});}
+    const w=H[(k+1)%n],e0={x:v.x+n1.x*extra,y:v.y+n1.y*extra},el=Math.hypot(w.x-v.x,w.y-v.y),ne=Math.max(1,Math.floor(el/step));
+    for(let q=0;q<ne;q++){const t=q/ne;pts.push({x:e0.x+(w.x-v.x)*t,z:e0.y+(w.y-v.y)*t});}}
+  // round the corners wider still: a moving average along the band (about 140 m) turns each 85 m arc into a long, gentle bend
+  {const M=pts.length;for(let pass=0;pass<3;pass++){const o=pts.map(p=>({x:p.x,z:p.z}));for(let i=0;i<M;i++){let sx=0,sz=0;for(let j=-9;j<=9;j++){const q=o[(i+j+M)%M];sx+=q.x;sz+=q.z;}pts[i].x=sx/19;pts[i].z=sz/19;}}}
+  const N=pts.length,len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}
   // start on the far side from the ship so the first seconds show the island, not the carrier
-  const ca=Math.atan2(CARRIER.y-CY,CARRIER.x-CX);const i0=Math.round(((ca+PI)/TAU*N+N)%N);
+  let i0=0,bd=-1;for(let i=0;i<N;i++){const d=Math.hypot(pts[i].x-CARRIER.x,pts[i].z-CARRIER.y);if(d>bd){bd=d;i0=i;}}
   return{pts,len,L:len[N],N,off:len[i0]};
 }
 function titleCam(dtr){
@@ -4314,8 +4324,8 @@ function titleCam(dtr){
   if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:1});R3.scene.add(TITLE.drone);}
   const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.05+bank);
   if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
-  // camera swings slowly between 45 degrees either side behind the HÖK (a full swing in about a minute), looking at it with the scenery beyond
-  const th=hd+PI+Math.sin(TITLE.t*.105)*PI/4,R0=30+Math.sin(TITLE.t*.11)*5;
+  // camera swings slowly between 15 degrees either side behind the HÖK (a full swing in about a minute), looking at it with the scenery beyond
+  const th=hd+PI+Math.sin(TITLE.t*.105)*PI/12,R0=30+Math.sin(TITLE.t*.11)*5;
   const cp=tmpV.set(m.position.x+Math.cos(th)*R0,TITLE.alt+7+Math.sin(TITLE.t*.07)*3,m.position.z+Math.sin(th)*R0);
   const la=tmpV2.set(m.position.x,TITLE.alt-2,m.position.z);
   if(!TITLE.cam){TITLE.cam=cp.clone();TITLE.look=la.clone();}
