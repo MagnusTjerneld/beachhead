@@ -49,7 +49,7 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
  for(const u of G.units)if(u!==h){u.x=50;u.y=50;}h.x=t.x-160;h.y=t.y;h.heading=0;h.orders=[];h.orbit={x:h.x,y:h.y};B.step(.05);
  ok(t.visibleNow&&B.reachR(h,t)===h.range,'only the HÖK sees it: normal reach');G.ctrl=h.id;h.heading=Math.atan2(t.y-h.y,t.x-h.x);B.droneRocket(h);ok(h.ammo===4,'no robot fired at 160 m');
  G.ctrl=null;const sc=B.makeUnit('scout',t.x+40,t.y);G.units.push(sc);sc.orders=[];sc.mission=null;sc.orbit={x:sc.x,y:sc.y};B.step(.05);G.ctrl=h.id;
- ok(B.reachR(h,t)===h.range+50,'a SPARV has eyes on it: reach '+B.reachR(h,t)+' m');h.cd=0;h.heading=Math.atan2(t.y-h.y,t.x-h.x);B.droneRocket(h);ok(h.ammo===3,'robot fired at 160 m');G.ctrl=null;
+ ok(B.reachR(h,t)===h.range+50,'a SPARV has eyes on it: reach '+B.reachR(h,t)+' m');h.cd=0;h.heading=Math.atan2(t.y-h.y,t.x-h.x);{const mr=Math.random;Math.random=()=>.01;B.droneRocket(h);Math.random=mr;}ok(h.ammo===3,'robot fired at 160 m');G.ctrl=null;
  const hp0=t.hp;t.mobile=true;for(let i=0;i<60;i++){t.x+=.4;B.step(.05);}ok(t.hp<hp0,'the homing robot hits a target that moves');}
 // 8. a VARG attacking a camouflaged bunker it cannot see gets an idle HÖK to spot it from outside its air range, and kills it
 {B.newGame(6556);const G=B.G;G.running=true;const t=G.enemies.find(x=>x.kind==='turret');for(const e of G.enemies)if(e!==t)e.dead=true;t.seen=true;t.lx=t.x;t.ly=t.y;
