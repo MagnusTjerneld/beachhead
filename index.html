@@ -59,6 +59,14 @@ button:disabled{opacity:.45;cursor:default}
 .menu .mh{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;margin-top:2px}
 .menu .btn{text-align:left}
 .menu .btn.confirm{background:#b8322a;border-color:#b8322a;color:#fff}
+.dlg{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(6,10,14,.55)}
+.dlg[hidden]{display:none}
+.dlg .box{width:min(340px,calc(100vw - 32px));padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
+.dlg h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.dlg label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--dim)}
+.dlg input{font:inherit;font-size:14px;padding:6px 8px;background:#0e151c;color:var(--ink);border:1px solid var(--line);border-radius:4px}
+.dlg .hint2{font-size:11.5px;color:var(--dim);min-height:1.2em}
+.dlg .row2{display:flex;gap:8px;justify-content:flex-end}
 .btn{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:6px 10px;font-weight:600;font-size:13px;letter-spacing:.04em}
 .btn:hover:not(:disabled){border-color:#41566a}
 .btn[aria-pressed="true"]{background:var(--signal);color:#1b1a12;border-color:var(--signal)}
@@ -208,8 +216,15 @@ button:disabled{opacity:.45;cursor:default}
         <div class="mh">Spel</div>
         <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
         <button class="btn" id="bRestart" type="button" title="Börja om på samma ö">Starta om ön</button>
-        <button class="btn" id="bNewIsland" type="button" title="Börja på en ny ö">Ny ö</button>
+        <button class="btn" id="bNewIsland" type="button" title="Börja på en ny ö">Ny ö…</button>
       </div>
+      <div class="dlg" id="newIsle" hidden role="dialog" aria-modal="true" aria-labelledby="niTitle"><div class="box">
+        <h3 id="niTitle">Ny ö</h3>
+        <label>Öns nummer (1000 till 9999), tomt för slump<input id="niSeed" type="number" min="1000" max="9999" placeholder="auto" inputmode="numeric"></label>
+        <div class="hint2" id="niName"></div>
+        <label>Klockslag vid start, tomt för öns eget<input id="niTime" type="time" step="900"></label>
+        <div class="row2"><button class="btn" id="niCancel" type="button">Avbryt</button><button class="btn" id="niGo" type="button">Starta</button></div>
+      </div></div>
     </div>
   </header>
   <main class="stage">
@@ -287,7 +302,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon.</li>
-      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, autopaus, Starta om ön och Ny ö (de två sista kräver ett andra klick). Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
@@ -3559,7 +3574,18 @@ document.addEventListener('click',()=>{if(!$('settings').hidden)setMenu(false);}
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hidden){setMenu(false);ev.stopPropagation();}},true);
 const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
 confirmBtn('bRestart',()=>restart(G.seed));
-confirmBtn('bNewIsland',()=>restart(1000+Math.floor(Math.random()*9000)));
+/* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
+const niSeed=$('niSeed'),niTime=$('niTime'),niName=$('niName');
+const niVal=()=>{const n=Math.round(+niSeed.value);return niSeed.value!==''&&n>=1000&&n<=9999?n:null;};
+const niShow=()=>{const n=niVal();niName.textContent=niSeed.value===''?'En slumpad ö.':n?islandName(n)+' (ö '+n+')':'Numret ska vara mellan 1000 och 9999.';$('niGo').disabled=niSeed.value!==''&&!n;};
+function newIsleDialog(open){$('newIsle').hidden=!open;if(open){setMenu(false);niSeed.value='';niTime.value='';niShow();setTimeout(()=>niSeed.focus(),0);}}
+$('bNewIsland').addEventListener('click',()=>newIsleDialog(true));
+niSeed.addEventListener('input',niShow);
+$('niCancel').addEventListener('click',()=>newIsleDialog(false));
+$('newIsle').addEventListener('click',e=>{if(e.target.id==='newIsle')newIsleDialog(false);});
+$('niGo').addEventListener('click',()=>{const n=niVal();if(niSeed.value!==''&&!n)return;const t=niTime.value;newIsleDialog(false);
+  restart(n||1000+Math.floor(Math.random()*9000));if(t){const[h,m]=t.split(':').map(Number);G.tod=(h+(m||0)/60)%24;uiTick(true);}});
+$('newIsle').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')newIsleDialog(false);else if(e.key==='Enter')$('niGo').click();});
 // X (or the MUS button): from a VARG, put its MUS out and drive it; on a MUS, take control of it
 function roverKey(){const c=G.ctrl?unitById(G.ctrl):null;if(c&&c.kind==='mus')return;const v=c&&c.kind==='tank'?c:null;
   if(v){roverOut(v);return;}const s=selUnits();const m=s.find(u=>u.kind==='mus');if(m){setCtrl(m.id);return;}
