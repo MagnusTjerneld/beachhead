@@ -41,9 +41,16 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
  const v2=G.units.filter(u=>u.kind==='tank')[1];v2.x=L.x+300;v2.y=L.y+200;e.x=9999;e.dead=true;v2.hp=20;v2.orders=[];for(let i=0;i<10;i++)B.step(.05);ok(v2.rtb,'without a BÄVER it retreats to the ship');
  B.giveOrder(v2,{type:'move',x:L.x,y:L.y,post:'off'},false);for(let i=0;i<20;i++)B.step(.05);ok(!v2.rtb&&v2.orders[0]&&v2.orders[0].type==='move','a player order keeps it in the fight');}
 // 7. HÖK carries two robots and fires them by hand at the target in its sight
-{B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone');ok(h.maxAmmo===2&&h.ammo===2,'HÖK carries two robots');
+{B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone');ok(h.maxAmmo===4&&h.ammo===4&&h.maxhp===60,'HÖK carries four robots and 60 hull');
  const t=G.enemies.find(x=>x.kind==='light'||x.kind==='inf');for(const e of G.enemies)if(e!==t)e.dead=true;t.seen=true;t.visibleNow=true;t.lx=t.x;t.ly=t.y;t.hp=999;
- h.x=t.x-80;h.y=t.y;h.heading=0;G.ctrl=h.id;B.droneRocket(h);ok(h.ammo===1,'R fires a robot at the target in the sight');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'second robot');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'no third');G.ctrl=null;}
+ h.x=t.x-80;h.y=t.y;h.heading=0;G.ctrl=h.id;B.droneRocket(h);ok(h.ammo===3,'R fires a robot at the target in the sight');for(let k=0;k<3;k++){h.cd=0;B.droneRocket(h);}ok(h.ammo===0,'all four');h.cd=0;B.droneRocket(h);ok(h.ammo===0,'no fifth');G.ctrl=null;}
+// 7b. homing robots reach 50 m further at a target another unit has eyes on, never at one only the HÖK itself sees
+{B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(x=>x.kind==='light'||x.kind==='inf');for(const e of G.enemies)if(e!==t)e.dead=true;t.hp=999;t.seen=true;
+ for(const u of G.units)if(u!==h){u.x=50;u.y=50;}h.x=t.x-160;h.y=t.y;h.heading=0;h.orders=[];h.orbit={x:h.x,y:h.y};B.step(.05);
+ ok(t.visibleNow&&B.reachR(h,t)===h.range,'only the HÖK sees it: normal reach');G.ctrl=h.id;h.heading=Math.atan2(t.y-h.y,t.x-h.x);B.droneRocket(h);ok(h.ammo===4,'no robot fired at 160 m');
+ G.ctrl=null;const sc=B.makeUnit('scout',t.x+40,t.y);G.units.push(sc);sc.orders=[];sc.mission=null;sc.orbit={x:sc.x,y:sc.y};B.step(.05);G.ctrl=h.id;
+ ok(B.reachR(h,t)===h.range+50,'a SPARV has eyes on it: reach '+B.reachR(h,t)+' m');h.cd=0;h.heading=Math.atan2(t.y-h.y,t.x-h.x);B.droneRocket(h);ok(h.ammo===3,'robot fired at 160 m');G.ctrl=null;
+ const hp0=t.hp;t.mobile=true;for(let i=0;i<60;i++){t.x+=.4;B.step(.05);}ok(t.hp<hp0,'the homing robot hits a target that moves');}
 // 8. a VARG attacking a camouflaged bunker it cannot see gets an idle HÖK to spot it from outside its air range, and kills it
 {B.newGame(6556);const G=B.G;G.running=true;const t=G.enemies.find(x=>x.kind==='turret');for(const e of G.enemies)if(e!==t)e.dead=true;t.seen=true;t.lx=t.x;t.ly=t.y;
  const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');for(const u of G.units)if(u!==v&&u!==h){u.dead=true;}

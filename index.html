@@ -259,7 +259,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Varje variant är en ny karta.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
-      <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Kulsprutan (80 m) biter på infanteri, robotarna (två, 120 m) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
+      <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
       <li><span class="em">SPARV är spanaren.</span> Billig (40), byggs på 8 sekunder, ser 120 m, batteri för tio minuter och tål nästan ingenting. Den flyger lågt: robotskyttar och bunkrar märker den först på 45 m och luftvärnets radar på 110 m, så den ser luftvärnet strax innan luftvärnet ser den. En ny SPARV utforskar ön på egen hand: den flyger till närmaste ospanade mark, håller sig utanför räckhåll för kända hot, laddar vid fartyget och fortsätter tills ön är spanad. Behöver en VARG spaning mot ett kamouflerat mål går en SPARV före HÖK. Utforska ger du också i hjulet. Inget vapen.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 150 m, längre än bunkrarna, men bara mot mål som någon ser. Anfaller den ett kamouflerat mål som ingen ser skickar den efter en ledig HÖK som spanar från utanför luftvärnets räckvidd, och väntar själv utom räckhåll tills målet syns. Finns ingen ledig HÖK får du en knapp för att skicka en. Svag mot infanteri, sårbar för pansarvärn.</li>
       <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: en ny BÄVER står i byggbädden på HMS Birkas däck, och KROK lyfter den i land, vilket beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. Lagar fordon i fält: peka på en skadad VARG och tryck B, eller låt en ledig BÄVER göra det själv. Båda måste stå still och vara utanför eld, lagningen går upp till 75 % och kostar material. Bakom en oröjd spärr är det den enda reparation som finns. En svårt skadad VARG som kommit ur elden kör till närmaste BÄVER i stället för till fartyget, och en order från dig håller den kvar i striden. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget.</li>
@@ -865,7 +865,7 @@ const groundY=(x,y)=>Math.max(heightAt(x,y),0);
 /* ---------- game state ---------- */
 const TYPES={
   scout:{label:'SPARV',tag:'S',role:'spaning',cost:40,build:8,hp:5,speed:19,vision:120,fuel:600,air:true,sig:45},
-  drone:{label:'HÖK',air:true,tag:'H',role:'spanare',cost:120,build:15,hp:40,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:2},
+  drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:100,speed:11,vision:115,range:150,dmg:11,rate:1,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85}
 };
@@ -985,7 +985,7 @@ function step(dt){
     else{if(b.pmsg){b.pmsg=0;say(null,'Fältvarvet '+r.id+' bygger igen.');}b.t-=dt;
       if(b.t<=0){G.fbuild.shift();const a=Math.random()*TAU,sp=dropSpot({x:r.x+Math.cos(a)*18,y:r.y+Math.sin(a)*18});const u=makeUnit(b.kind,sp.x,sp.y);G.units.push(u);if(u.kind==='scout')u.mission={type:'explore',post:'def'};say(u,'Klar på fältvarvet '+r.id+'.');}}}
   if(G.fires.length)G.fires=G.fires.filter(f=>G.time-f.t0<f.dur);
-  for(const f of G.fx){f.t+=dt;if(f.k==='shot'&&!f.done&&f.t>=f.ttl)resolveShot(f);}
+  for(const f of G.fx){f.t+=dt;if(f.k==='shot'&&!f.done&&f.hit&&f.ws==='rocket'&&f.side==='f'&&f.tg&&!f.tg.dead&&!f.tg.isStruct){f.x2=f.tg.x;f.y2=f.tg.y;f.h2=hOf(f.tg);}if(f.k==='shot'&&!f.done&&f.t>=f.ttl)resolveShot(f);}
   G.fx=G.fx.filter(f=>f.t<f.ttl||(f.k==='shot'&&!f.done));
   const before=G.units.length;
   G.units=G.units.filter(u=>!u.dead||G.time-u.diedAt<4);
@@ -1078,18 +1078,22 @@ function manualDrive(u,dt){
 const MG={range:80,dmg:3,rate:2,acc:.6};
 const effRange=u=>u.maxAmmo&&u.ammo<1?MG.range:u.range;
 /* robots hurt armor only at half effect, so a HÖK takes on armor only when told to (explicit), never on its own */
+/* HÖK robots are homing: on a target that another unit (or a taken point) has eyes on right now they reach 50 m further */
+const ROCKET_EXT=50;
+function eyesOn(e,u){for(const v of G.units){if(v===u||v.dead||v.carried)continue;const rr=e.camo&&!v.air?60:v.vision;if(dist(v,e)<rr)return true;}for(const r of G.relays)if(r.captured&&dist(r,e)<(r.type==='radar'?RADAR_SEE:110))return true;return false;}
+const reachR=(u,e)=>u.kind==='drone'&&u.ammo>=1&&e&&!e.isStruct&&!e.dead&&e.visibleNow&&eyesOn(e,u)?u.range+ROCKET_EXT:u.kind==='drone'&&u.ammo>=1?u.range:effRange(u);
 const canHit=(u,e,explicit)=>!u.maxAmmo||e.cls!=='armor'||(!!explicit&&u.ammo>=1);
 const slabel=s=>STRUCT[s.kind].label.toLowerCase()+' '+s.id;
 const wlabel=w=>w.own?'vrak':DEBRIS[w.kind]?DEBRIS[w.kind].toLowerCase():'vrak';
 function aimTarget(u,hidden){
   let best=null,bd=1e9;
-  for(const t of G.enemies.concat(G.structs)){if(t.dead)continue;if(!hidden&&!t.isStruct&&!(t.visibleNow||(t.seen&&!t.mobile)))continue;const d=dist(u,t);if(d>u.range||d<3)continue;const a=Math.atan2(t.y-u.y,t.x-u.x),tol=Math.atan2(t.isStruct?6:3.5,d)+.03;if(Math.abs(angWrap(a-u.turret))>tol)continue;if(d<bd){bd=d;best=t;}}
+  for(const t of G.enemies.concat(G.structs)){if(t.dead)continue;if(!hidden&&!t.isStruct&&!(t.visibleNow||(t.seen&&!t.mobile)))continue;const d=dist(u,t);if(d>(u.kind==='drone'?reachR(u,t):u.range)||d<3)continue;const a=Math.atan2(t.y-u.y,t.x-u.x),tol=Math.atan2(t.isStruct?6:3.5,d)+.03;if(Math.abs(angWrap(a-u.turret))>tol)continue;if(d<bd){bd=d;best=t;}}
   return best;
 }
 function droneRocket(u){
   if(u.ammo<1){say(u,'Inga robotar kvar. Laddas om vid fartyget eller en verkstad.');return;}if(u.cd>0)return;
-  u.turret=u.heading;const t=aimTarget(u);if(!t||dist(u,t)>u.range){say(u,'Inget mål i siktet inom '+u.range+' m.');return;}
-  u.cd=1/u.rate;u.ammo-=1;if(!t.isStruct)t.reveal=Math.max(t.reveal,2);shoot(u,t,u.dmg,.9,'f','rocket');if(u.ammo<1)say(u,'Robotarna slut. Laddas om vid fartyget.');
+  u.turret=u.heading;const t=aimTarget(u);if(!t||dist(u,t)>reachR(u,t)){say(u,'Inget mål i siktet inom '+u.range+' m ('+(u.range+ROCKET_EXT)+' m om någon annan har ögon på målet).');return;}
+  u.cd=1/u.rate;u.ammo-=1;if(!t.isStruct)t.reveal=Math.max(t.reveal,2);shoot(u,t,u.dmg,.95,'f','rocket');if(u.ammo<1)say(u,'Robotarna slut. Laddas om vid fartyget.');
   for(const m of G.enemies)if(m.mobile&&!m.dead&&dist(m,u)<320)m.alert={x:u.x,y:u.y,t:G.time};}
 function manualFire(u){
   if(u.cd>0)return;u.cd=1/u.rate;
@@ -1103,7 +1107,7 @@ function manualFire(u){
 function fireAt(u,tgt){
   if(!u.maxAmmo){if(u.cd>0)return;u.cd=1/u.rate;shoot(u,tgt,u.dmg,u.acc,'f','cannon');return;}
   const d=dist(u,tgt);
-  if(u.ammo>=1&&u.cd<=0&&d<=u.range){u.cd=1/u.rate;u.ammo-=1;shoot(u,tgt,u.dmg,u.acc,'f','rocket');if(u.ammo<1)say(u,'Robotarna slut. Laddas om vid fartyget.');}
+  if(u.ammo>=1&&u.cd<=0&&d<=reachR(u,tgt)){u.cd=1/u.rate;u.ammo-=1;shoot(u,tgt,u.dmg,.95,'f','rocket');if(u.ammo<1)say(u,'Robotarna slut. Laddas om vid fartyget.');}
   if(!tgt.dead&&u.mgcd<=0&&d<=MG.range&&tgt.cls!=='armor'){u.mgcd=1/MG.rate;shoot(u,tgt,MG.dmg,MG.acc,'f','mg');}
 }
 /* escort targets: Offensiv hunts anything it can hit near the group, other postures go after whoever is shooting at the group */
@@ -1119,11 +1123,11 @@ function escortTarget(u,o){
 }
 function tankCombat(u,dt,post){
   let tgt=null;const o=u.orders[0],R=effRange(u);
-  if(o&&o.type==='attack'){if(o.enemy.dead){u.orders.shift();u.path=null;}else if(o.enemy.visibleNow&&dist(u,o.enemy)<=R&&canHit(u,o.enemy,true))tgt=o.enemy;}
+  if(o&&o.type==='attack'){if(o.enemy.dead){u.orders.shift();u.path=null;}else if(o.enemy.visibleNow&&dist(u,o.enemy)<=(u.kind==='drone'?reachR(u,o.enemy):R)&&canHit(u,o.enemy,true))tgt=o.enemy;}
   if(!tgt&&!u.rtb&&post!=='dold'){
     let bd=1e9;
     for(const e of G.enemies){
-      if(e.dead||!e.visibleNow||!canHit(u,e))continue;const d=dist(u,e);if(d>R||d>=bd)continue;
+      if(e.dead||!e.visibleNow||!canHit(u,e))continue;const d=dist(u,e);if(d>(u.kind==='drone'?reachR(u,e):R)||d>=bd)continue;
       if(post==='off'||(u.hitBy[e.id]&&G.time-u.hitBy[e.id]<5)||(e===u.escTgt&&o&&o.escort)){bd=d;tgt=e;}
     }
   }
@@ -1242,7 +1246,7 @@ function move(u,dt){
     tx=o.tgt.x;ty=o.tgt.y;arr=12;u.state='Utforskar · '+Math.round((G.landPct||0)*100)+' % av ön spanat';}
   else if(o.type==='obs'){if(o.spotFor&&(o.spotFor.dead||!spotNeeded(o.spotFor))){u.orders.shift();u.path=null;if(!u.orders.length&&!u.mission&&o.back)u.orders.push({type:'move',x:o.back.x,y:o.back.y,post:'def'});say(u,o.spotFor.dead?ename(o.spotFor)+' utslagen. Spaningen klar.':'Ingen anfaller '+ename(o.spotFor)+' längre. Avbryter spaningen.');return;}tx=o.x;ty=o.y;arr=u.air?14:10;u.state=o.spotFor?'På väg att spana på '+ename(o.spotFor):'Till observationspunkt '+sq(tx,ty);}
   else if(o.type==='capture'){if(o.relay.captured){u.orders.shift();u.path=null;return;}tx=o.relay.x;ty=o.relay.y;arr=16;u.state='På väg mot '+pname(o.relay)+' · '+POST[o.post].toLowerCase();}
-  else if(o.type==='attack'){if(o.enemy.dead){u.orders.shift();u.path=null;return;}if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;u.path=null;}if(o.fp){tx=o.fp.x;ty=o.fp.y;arr=6;}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?effRange(u)*.8:45;}u.state='Anfaller '+ename(o.enemy);if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400){o.spotAsk=1;requestSpot(u,o.enemy);}if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
+  else if(o.type==='attack'){if(o.enemy.dead){u.orders.shift();u.path=null;return;}if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;u.path=null;}if(o.fp){tx=o.fp.x;ty=o.fp.y;arr=6;}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?(u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):45;}u.state='Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':'');if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400){o.spotAsk=1;requestSpot(u,o.enemy);}if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
   else if(o.type==='clear'){const b=o.barrier;if(b.cleared){u.orders.shift();u.path=null;return;}const bd=barrierDist(b,u);if(bd<34){workBarrier(b,u,dt);return;}if(!o.sd||(u.waitT&&G.time<u.waitT))o.sd=barrierSide(b,u);const sd=o.sd;tx=sd.x;ty=sd.y;arr=3;u.state='På väg mot spärr '+b.id;}
   else if(o.type==='demolish'){const st=o.s;if(st.dead){u.orders.shift();u.path=null;return;}tx=st.x;ty=st.y;arr=16;u.state='På väg att riva '+slabel(st);}
   else if(o.type==='demine'){const m=o.mine;if(m.cleared){u.orders.shift();u.path=null;return;}if(dist(u,m)<m.r+13){workMine(m,u,dt);return;}if(!o.sd||(u.waitT&&G.time<u.waitT))o.sd=mineSide(m,u);tx=o.sd.x;ty=o.sd.y;arr=4;u.state='På väg mot minfält '+m.id;}
@@ -1890,7 +1894,7 @@ function callIn(kind,pk,asMission,who){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -2966,7 +2970,7 @@ function drawHud(ctx,w,h){
       const rl=clamp(1-u.cd*u.rate,0,1);ctx.strokeStyle=rl>=1?'rgba(240,196,90,.9)':'rgba(240,196,90,.45)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx2,cy2,24,-PI/2,-PI/2+TAU*rl);ctx.stroke();
       ctx.font=mono(11);ctx.textBaseline='top';ctx.fillStyle=t?'#ffd0de':'rgba(240,244,240,.75)';
       ctx.fillText(t?(t.isStruct?STRUCT[t.kind].label.toUpperCase()+' '+t.id:ENEMY[t.kind].label.toUpperCase()+' '+t.id)+' · '+Math.round(dist(u,t))+' m':'INGET MÅL INOM '+u.range+' m',cx2,cy2+32);
-      if(u.kind==='drone'){ctx.fillStyle='#f0c45a';ctx.fillText('R ROBOT '+Math.floor(u.ammo)+'/'+u.maxAmmo+' · KULSPRUTA '+MG.range+' m',cx2,cy2+48);}}}
+      if(u.kind==='drone'){ctx.fillStyle='#f0c45a';ctx.fillText('R ROBOT '+Math.floor(u.ammo)+'/'+u.maxAmmo+(u.target&&!u.target.isStruct&&reachR(u,u.target)>u.range?' · MÅLET UTPEKAT, NÅR '+reachR(u,u.target)+' m':' · '+u.range+' m')+' · KULSPRUTA '+MG.range+' m',cx2,cy2+48);}}}
   ctx.shadowBlur=0;
   if(G.ctrl===u.id&&u.kind==='krok'&&isMain('cam')){const r=pipRect(w,h),c={x:r.x+r.s/2,y:r.y+r.s/2},h2=krokHookTarget(u),a=u.mAct;
     ctx.strokeStyle='rgba(240,196,90,.9)';ctx.lineWidth=1.5;ctx.strokeRect(r.x+.5,r.y+.5,r.s,r.s);
