@@ -2312,7 +2312,7 @@ function callIn(kind,pk,asMission,who){
 
 /* expose for headless tests */
 globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return l;};
-if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -3859,7 +3859,7 @@ $('bStart').addEventListener('click',()=>{audInit();startGame();});
 $('title').addEventListener('click',()=>titleWake(false));
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
-$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
+$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 function restart(seed){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed);if(R3&&R3.seed!==WORLD.seed)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>restart(G.seed));
 $('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000)));
@@ -4306,8 +4306,37 @@ function titleRoute(extra){extra=extra||85;
   const N=pts.length,len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}
   // start on the far side from the ship so the first seconds show the island, not the carrier
   let i0=0,bd=-1;for(let i=0;i<N;i++){const d=Math.hypot(pts[i].x-CARRIER.x,pts[i].z-CARRIER.y);if(d>bd){bd=d;i0=i;}}
-  return{pts,len,L:len[N],N,off:len[i0]};
+  let cx=0,cy=0;for(const q of P){cx+=q.x;cy+=q.y;}
+  return{pts,len,L:len[N],N,off:len[i0],c:{x:cx/P.length,y:cy/P.length}};
 }
+/* The intro camera is a small director. Most of the time it frames the island: it looks past the HÖK toward the island's middle,
+   turned up to 45 degrees toward the island and never more than 15 toward the sea, with a slow drift so it is never still. Every
+   15 to 25 seconds it looks for a point of interest ahead or to the side (Birka first, then the ferries and big ships in the
+   fairway, the archipelago steamer, sailing and motor boats, the lighthouse), turns out to frame it for about 8 seconds and swings
+   back. The turn is a damped spring on the camera's angle to the HÖK's heading, so it eases out and in without overshoot.
+   The camera stands behind the HÖK a little off the line of sight, so the HÖK sits to one side and the subject beyond it. */
+function titlePois(){const W=WORLD,out=[{x:CARRIER.x,y:CARRIER.y,w:1.3,id:'birka',r:1300}];
+  let mv=null,stm=null;try{mv=R3&&R3.movers;stm=R3&&R3.steamer;}catch(_){}/* the headless tests have no 3D */
+  if(mv)mv.forEach((m,i)=>{const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900});});
+  if(W.decor&&W.decor.light)out.push({x:W.decor.light.x,y:W.decor.light.y,w:.55,id:'fyr',r:800});
+  // the inner archipelago, which always lies to the west: a look out over the backdrop islands
+  out.push({x:-500,y:clamp(CARRIER.y,300,WH-300),w:.5,id:'skargard',r:2600});
+  return out;}
+function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0,poi:null,until:0,next:12,seen:{}});
+  const relTo=(x,y)=>angWrap(Math.atan2(y-p.z,x-p.x)-hd),deg=PI/180;
+  const isl=relTo(RT.c.x,RT.c.y),side=Math.sign(isl)||1;
+  // the island shot: toward the middle of the island, at most 45 degrees to the island side, 15 to the sea side, slow drift
+  let want=side*Math.min(Math.abs(isl)*.85,(32+13*Math.sin(T.t*.09))*deg);want=clamp(want,side>0?-15*deg:-45*deg,side>0?45*deg:15*deg);
+  if(D.poi&&T.t>D.until){D.seen[D.poi.id]=T.t;D.poi=null;D.next=T.t+15+Math.random()*10;}
+  if(!D.poi&&T.t>D.next){let best=null,bs=.25;
+    for(const q of titlePois()){const d=Math.hypot(q.x-p.x,q.y-p.z);if(d<90||d>q.r)continue;const r=relTo(q.x,q.y);if(Math.abs(r)>100*deg)continue;
+      const fresh=T.t-(D.seen[q.id]??-999)>60?1:.2,sc=q.w*fresh*(1-d/q.r)*(.6+.4*Math.cos(r));if(sc>bs){bs=sc;best=q;}}
+    if(best){D.poi=best;D.until=T.t+7+Math.random()*3;}else D.next=T.t+3;}
+  let pullOut=0;if(D.poi){const q=titlePois().find(o=>o.id===D.poi.id)||D.poi;want=clamp(relTo(q.x,q.y),-75*deg,75*deg);pullOut=1;}
+  // damped spring: about six seconds to settle, no overshoot, never faster than 18 degrees a second
+  const k=.45,c=2*Math.sqrt(k)*1.05,dt=Math.min(dtr,.1);D.vel=clamp(D.vel+(k*(want-D.yaw)-c*D.vel)*dt,-18*deg,18*deg);D.yaw+=D.vel*dt;
+  D.pull=(D.pull??0)+(pullOut-(D.pull??0))*(1-Math.exp(-.6*dt));
+  return D;}
 function titleCam(dtr){
   TITLE.t+=dtr;if(!TITLE.route)TITLE.route=titleRoute();const RT=TITLE.route;
   const P=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const m=(lo+hi)>>1;if(RT.len[m]<=d)lo=m;else hi=m;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a=RT.pts[lo],b=RT.pts[(lo+1)%RT.N];return{x:lerp(a.x,b.x,f),z:lerp(a.z,b.z,f)};};
@@ -4324,10 +4353,10 @@ function titleCam(dtr){
   if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:1});R3.scene.add(TITLE.drone);}
   const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.05+bank);
   if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
-  // camera swings slowly between 15 degrees either side behind the HÖK (a full swing in about a minute), looking at it with the scenery beyond
-  const th=hd+PI+Math.sin(TITLE.t*.105)*PI/12,R0=30+Math.sin(TITLE.t*.11)*5;
-  const cp=tmpV.set(m.position.x+Math.cos(th)*R0,TITLE.alt+7+Math.sin(TITLE.t*.07)*3,m.position.z+Math.sin(th)*R0);
-  const la=tmpV2.set(m.position.x,TITLE.alt-2,m.position.z);
+  // the director picks the view angle (see titleDirector); the camera stands behind the HÖK on that line, a little to the side
+  const Dr=titleDirector(dtr,p,hd,TITLE),L=hd+Dr.yaw,off=(Dr.yaw>=0?-1:1)*.2,R0=30+Dr.pull*10+Math.sin(TITLE.t*.11)*4;
+  const cp=tmpV.set(m.position.x-Math.cos(L+off)*R0,TITLE.alt+8+Dr.pull*3+Math.sin(TITLE.t*.07)*2.5,m.position.z-Math.sin(L+off)*R0);
+  const ahead=70+Dr.pull*50,la=tmpV2.set(m.position.x+Math.cos(L)*ahead,TITLE.alt-9+Dr.pull*4,m.position.z+Math.sin(L)*ahead);
   if(!TITLE.cam){TITLE.cam=cp.clone();TITLE.look=la.clone();}
   const k=1-Math.exp(-2.2*dtr);TITLE.cam.lerp(cp,k);TITLE.look.lerp(la,k);{const f=camFloor(TITLE.cam.x,TITLE.cam.z);if(TITLE.cam.y<f)TITLE.cam.y=f;}R3.cam.position.copy(TITLE.cam);R3.cam.lookAt(TITLE.look);R3.lookAt.copy(TITLE.look);
 }
@@ -4340,7 +4369,7 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.route=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
