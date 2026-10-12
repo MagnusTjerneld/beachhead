@@ -38,7 +38,7 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const alt=it.find(x=>x.l.startsWith(es[1].name));ok(!!alt,'the other BÄVER is offered by name');alt.f();
  ok(es[1].orders[0]&&es[1].orders[0].type==='capture'&&!es[0].orders.length,'the chosen BÄVER takes the relay, the nearest stays');}
 // HÖK in a mixed group flies air cover for the ground units, and spots for them when they attack something camouflaged
-{B.newGame(6556);const G=B.G;G.running=true;const t=G.enemies.find(x=>x.kind==='turret');for(const e of G.enemies)if(e!==t)e.dead=true;
+{B.newGame(6556);const G=B.G;G.running=true;G.netAll=true;const t=G.enemies.find(x=>x.kind==='turret');for(const e of G.enemies)if(e!==t)e.dead=true;
  const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');const a=Math.atan2(h.y-t.y,h.x-t.x);v.x=t.x+Math.cos(a)*142;v.y=t.y+Math.sin(a)*142;v.orders=[];h.orders=[];
  G.selIds=[v.id,h.id];G.sel=v.id;B.groupOrder({world:{x:t.x+Math.cos(a)*150,y:t.y+Math.sin(a)*150}},false);
  ok(h.mission&&h.mission.type==='follow'&&h.mission.escort&&h.mission.unit===v,'HÖK in the group escorts the VARG instead of flying to the point');
@@ -49,7 +49,7 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  for(let i=0;i<120&&!t.dead;i++)run(1);ok(t.dead,'bunker killed');run(3);
  ok(h.orders[0]&&h.orders[0]===h.mission&&h.mission.type==='follow','HÖK back to escorting afterwards');}
 // optional autopause: a new contact found by another unit pauses, one found by the unit you drive does not
-{B.newGame(7341);const G=B.G;G.running=true;run(2);const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(e=>!e.seen&&e.kind==='turret');ok(!!t,'an unseen bunker to find');
+{B.newGame(7341);const G=B.G;G.running=true;G.netAll=true;run(2);const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(e=>!e.seen&&e.kind==='turret');ok(!!t,'an unseen bunker to find');
  B.AUTOPAUSE.on=false;h.orders=[];h.x=t.x+120;h.y=t.y;h.orbit={x:h.x,y:h.y};B.step(.05);ok(t.seen&&!G.paused,'option off: no pause');
  const t2=G.enemies.find(e=>!e.seen&&e.kind==='turret'&&Math.hypot(e.x-t.x,e.y-t.y)>400);B.AUTOPAUSE.on=true;G.ctrl=h.id;h.x=t2.x+120;h.y=t2.y;B.step(.05);ok(t2.seen&&!G.paused,'found by the unit you drive: no pause');G.ctrl=null;
  const t3=G.enemies.find(e=>!e.seen&&Math.hypot(e.x-t2.x,e.y-t2.y)>400);h.x=t3.x+100;h.y=t3.y;B.step(.05);ok(t3.seen&&G.paused,'found by another unit: paused');
@@ -82,4 +82,10 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  for(const u of G.units)if(u.kind==='eng'){u.x=1100;u.y=1950;}const L0=B.linkAt(1100,1100);sc.x=L0.relay.x+(1100-L0.relay.x)*(B.RADIO.r+150)/L0.d;sc.y=L0.relay.y+(1100-L0.relay.y)*(B.RADIO.r+150)/L0.d;const d0=B.linkAt(sc.x,sc.y).d;for(let i=0;i<20*20;i++)B.step(.05);
  ok(d0>B.RADIO.r&&B.linkAt(sc.x,sc.y).d<=B.RADIO.r+8,'link lost: it turns back until it has the link again');
  const h=G.units.find(u=>u.kind==='drone');h.x=200;h.y=200;ok(!B.linkAt(210,210).ok,'a HÖK does not carry the link');}
+// command net: Birka reaches 800 m, a taken point 500 m, the radio mast the whole island; outside it no new orders and nothing reported
+{B.newGame(7341);const G=B.G;G.running=true;const v=G.units.find(u=>u.kind==='tank'),R2=G.relays[1];ok(R2.type==='radar','R2 is always the radio mast (radar station)');
+ v.x=R2.x;v.y=R2.y;v.orders=[];ok(!B.inNet(v.x,v.y),'R2 lies outside the first net');G.selIds=[v.id];G.sel=v.id;B.groupOrder({world:{x:v.x+50,y:v.y}},false);ok(!v.orders.length,'no new order outside the net');
+ ok(G.log.some(l=>/Ingen radiokontakt/.test(l.text)),'the captain is told there is no contact');
+ const e=G.enemies.find(x=>!x.dead&&!x.seen&&!x.camo&&!B.inNet(x.x+40,x.y));if(e){v.x=e.x+40;v.y=e.y;B.step(.05);ok(!e.seen,'what it sees outside the net is not reported');}
+ B.capturePoint(R2,v);ok(G.netAll&&B.inNet(50,50),'radio mast taken: the net covers the whole island');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
