@@ -15,9 +15,19 @@ Designdokumentet "Uppdrag Arkipelag: designdokument" (https://claude.ai/artifact
 - Använd aldrig tankstreck eller pratstreck (U+2013 och U+2014), varken i svar, kod, commits eller dokument.
 - Säg emot när något verkar fel. Bästa möjliga resultat går före att hålla med.
 
+## Arbetssätt: matcha insatsen mot frågan
+
+- Utgå från att Magnus meddelanden är designdiskussion, om han inte uttryckligen säger "gör", "implementera", "ändra" eller liknande. "Vi måste åtgärda X" betyder att X är ett problem att lösa på sikt, inte en order nu.
+- Designdiskussion: svara kort med en bedömning utifrån det du redan vet om koden och designen. Säg vad som är osäkert och vilken simulering som skulle avgöra det. Kör ingenting.
+- Är du osäker på om han vill ha en ändring: fråga i en mening i slutet av svaret.
+- Tydlig ändringsinstruktion: gör ändringen och kör de snabba testerna. Fråga innan du kör testboten eller andra simuleringar.
+- Allt som tar mer än cirka två minuter kräver att han sagt ja först.
+- Vänta aldrig med fasta sleeps. Korta jobb körs i förgrunden; längre jobb i bakgrunden med en .done-flagga och en kort poll-loop med tak.
+
 ## Spelet
 
 - Spelet är en enda fil, `index.html` (Three.js r128 från cdnjs, sjökortet på 2D-canvas).
-- Kör testerna innan commit: `cd tests && python3 mk.py && node t23.js && node t51.js && node t58.js && node t60.js && node t61.js`. `t45.js` är testboten (långsam); kör den när fiendens försvar eller enheternas beteende ändras och jämför vinstandelen.
+- Kör de snabba testerna innan commit: `node tests/run.js` (bygger g2.js och kör t23, t51, t58, t60 och t61, cirka en halv minut).
+- `tests/t45.js` är testboten: `node tests/t45.js base quick` (fyra öar, cirka en minut) eller `node tests/t45.js` (tio öar, två till tre minuter). Den hör till faktiska ändringar av fiendens försvar eller enheternas beteende, inte till resonemang, och körs bara efter att Magnus sagt ja.
 - Varje ny version committas och pushas till GitHub (MagnusTjerneld/beachhead) och publiceras till spelets artefakt ("Uppdrag Arkipelag", tidigare "Brohuvud 2") (https://claude.ai/artifact/FW4tJouRfh7tvCG1j6wCEc).
 - Håll README.md och spelets hjälptext ("Hur man spelar") i takt med ändringarna.

@@ -52,6 +52,7 @@ Hela reglerna finns under "Hur man spelar" i spelet.
 Testerna kör spelets skript utan webbläsare. `mk.py` plockar ut skriptet ur `index.html` till `tests/g2.js`.
 
 ```
+node tests/run.js  # bygger g2.js och kör de fem snabba testerna parallellt (cirka en halv minut)
 cd tests
 python3 mk.py
 node t23.js        # kartvalidering: målen nåbara, ledningscentralen försvarad, budgeten använd
@@ -59,7 +60,8 @@ node t51.js        # strategiska punkter: verkstad, radar, fältvarv, vinst
 node t58.js        # låsta sektorer, minor och inropning
 node t61.js        # uppdrag och tillfälliga order
 node t60.js        # luftvärn efter målstorlek, KROK för hand, fältreparation, luckor och luftlandningsfickor
-node t45.js base   # datorspelare som spelar hela öar (tar några minuter per ö)
+node t45.js base quick  # datorspelare på fyra öar (cirka en minut)
+node t45.js base        # datorspelare på tio öar (två till tre minuter; öarna körs parallellt om det finns flera kärnor)
 ```
 
 | Test | Prövar |

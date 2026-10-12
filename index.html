@@ -343,19 +343,24 @@ function along(p,d0){let acc=0;for(let i=1;i<p.length;i++){const d=Math.hypot(p[
 function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 
 /* ---------- pathfinding ---------- */
-class Heap{constructor(){this.a=[];this.f=[];}
-  get size(){return this.a.length;}
-  push(i,f){const a=this.a,F=this.f;a.push(i);F.push(f);let k=a.length-1;while(k>0){const p=(k-1)>>1;if(F[p]<=F[k])break;[a[p],a[k]]=[a[k],a[p]];[F[p],F[k]]=[F[k],F[p]];k=p;}}
-  pop(){const a=this.a,F=this.f;const r=a[0];const li=a.pop(),lf=F.pop();if(a.length){a[0]=li;F[0]=lf;let k=0;for(;;){const l=2*k+1,q=l+1;let m=k;if(l<a.length&&F[l]<F[m])m=l;if(q<a.length&&F[q]<F[m])m=q;if(m===k)break;[a[m],a[k]]=[a[k],a[m]];[F[m],F[k]]=[F[k],F[m]];k=m;}}return r;}}
+/* binary heap on typed arrays: no allocation per swap (the destructuring swaps it replaced made A* a third of the bot's time) */
+class Heap{constructor(){this.a=new Int32Array(1024);this.f=new Float64Array(1024);this.n=0;}
+  get size(){return this.n;}
+  push(i,f){if(this.n===this.a.length){const a2=new Int32Array(this.n*2),f2=new Float64Array(this.n*2);a2.set(this.a);f2.set(this.f);this.a=a2;this.f=f2;}
+    const a=this.a,F=this.f;let k=this.n++;a[k]=i;F[k]=f;while(k>0){const p=(k-1)>>1;if(F[p]<=F[k])break;const ti=a[p];a[p]=a[k];a[k]=ti;const tf=F[p];F[p]=F[k];F[k]=tf;k=p;}}
+  pop(){const a=this.a,F=this.f;const r=a[0];const n=--this.n;if(n>0){a[0]=a[n];F[0]=F[n];let k=0;for(;;){const l=2*k+1,q=l+1;let m=k;if(l<n&&F[l]<F[m])m=l;if(q<n&&F[q]<F[m])m=q;if(m===k)break;const ti=a[m];a[m]=a[k];a[k]=ti;const tf=F[m];F[m]=F[k];F[k]=tf;k=m;}}return r;}}
 function nearestPass(t,pass){const seen=new Uint8Array(GW*GH);const qu=[t];seen[t]=1;for(let h=0;h<qu.length;h++){const c=qu[h];if(pass(c))return c;const cx=c%GW,cy=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!seen[n]){seen[n]=1;qu.push(n);}}}return -1;}
+/* the search buffers are kept between calls and invalidated by a stamp instead of being refilled */
+const AS={N:0,g:null,came:null,gs:null,cs:null,stamp:0};
 function astarCells(s,t,pass,cost,hs){
-  const N=GW*GH,g=new Float32Array(N).fill(1e9),came=new Int32Array(N).fill(-1),closed=new Uint8Array(N);
+  const N=GW*GH;if(AS.N!==N){AS.N=N;AS.g=new Float32Array(N);AS.came=new Int32Array(N);AS.gs=new Uint32Array(N);AS.cs=new Uint32Array(N);AS.stamp=0;}
+  const st=++AS.stamp,g=AS.g,came=AS.came,gs=AS.gs,cs=AS.cs;
   const tx0=t%GW,ty0=(t/GW)|0;hs=hs||1;
   const H=i=>{const dx=Math.abs(i%GW-tx0),dy=Math.abs(((i/GW)|0)-ty0);return (Math.max(dx,dy)+.414*Math.min(dx,dy))*hs;};
-  const hp=new Heap();g[s]=0;hp.push(s,H(s));let found=s===t;
-  while(hp.size&&!found){const c=hp.pop();if(closed[c])continue;closed[c]=1;if(c===t){found=true;break;}
-    const cx=c%GW,cy=(c/GW)|0;
-    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const ni=ny*GW+nx;if(closed[ni]||!pass(ni))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;const stp=(dx&&dy?1.414:1)*(cost?cost(ni):1);const ng=g[c]+stp;if(ng<g[ni]){g[ni]=ng;came[ni]=c;hp.push(ni,ng+H(ni));}}}
+  const hp=new Heap();g[s]=0;gs[s]=st;came[s]=-1;hp.push(s,H(s));let found=s===t;
+  while(hp.size&&!found){const c=hp.pop();if(cs[c]===st)continue;cs[c]=st;if(c===t){found=true;break;}
+    const cx=c%GW,cy=(c/GW)|0,gc=g[c];
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const ni=ny*GW+nx;if(cs[ni]===st||!pass(ni))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;const stp=(dx&&dy?1.414:1)*(cost?cost(ni):1);const ng=gc+stp;if(gs[ni]!==st||ng<g[ni]){g[ni]=ng;gs[ni]=st;came[ni]=c;hp.push(ni,ng+H(ni));}}}
   if(!found)return null;
   const cells=[];for(let c=t;c!==-1&&c!==s;c=came[c])cells.push(c);cells.reverse();return cells;
 }
@@ -471,6 +476,10 @@ function validWorld(W){
   const open=flood(none),shut=flood(bar),at=p=>cellIdx(p.x,p.y);
   return W.relays.every(r=>open[at(r)])&&shut[at(W.relays[0])]&&!shut[at(W.relays[1])]&&!shut[at(W.relays[2])]&&(W.gateCells||[]).length>0&&W.enemies.filter(e=>e.kind==='turret'&&Math.hypot(e.x-W.relays[2].x,e.y-W.relays[2].y)<200).length>=2;
 }
+/* for each candidate point, the indices of targets within radius r: the planner's greedy AA and MANPADS placement used to scan
+   every target for every candidate on every pick, which was most of the time it takes to build an island */
+function nearLists(cand,tg,r){const B=new Map(),key=(x,y)=>x*4096+y;for(let j=0;j<tg.length;j++){const k=key(Math.floor(tg[j].x/r),Math.floor(tg[j].y/r));let a=B.get(k);if(!a){a=[];B.set(k,a);}a.push(j);}
+  return cand.map(c=>{const bx=Math.floor(c.x/r),by=Math.floor(c.y/r),o=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const a=B.get(key(bx+dx,by+dy));if(!a)continue;for(const j of a)if(Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<r)o.push(j);}return Int32Array.from(o);});}
 function buildWorldTry(seed,tryK){
   const s=seed+tryK*7919,V=levelFor(s),R=rng(s*13+5);
   V.passMap=new Map();V.harbor={a:0,w:0,depth:2};V.beach={a:0,w:0};V.cove=null;
@@ -646,7 +655,8 @@ function buildWorldTry(seed,tryK){
     const aas=()=>E.filter(e=>e.kind==='aa');const cov=new Uint8Array(tg.length);
     const mark=()=>{for(const e of aas())tg.forEach((t,j)=>{if(!cov[j]&&Math.hypot(t.x-e.x,t.y-e.y)<AR)cov[j]=1;});};mark();
     const held=c=>E.some(e=>e.kind==='turret'&&Math.hypot(e.x-c.x,e.y-c.y)<110)||Dz.has(zid[cellIdx(c.x,c.y)])?1.3:1;
-    while(nA<DOC.aaN){let best=null,bn=0,bsc=0;for(const c of cand){if(aas().some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;for(let j=0;j<tg.length;j++)if(!cov[j]&&Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<AR)n++;const sc=n*held(c);if(sc>bsc){bsc=sc;bn=n;best=c;}}
+    const nlA=nearLists(cand,tg,AR);
+    while(nA<DOC.aaN){let best=null,bn=0,bsc=0;for(let ci=0;ci<cand.length;ci++){const c=cand[ci];if(aas().some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;const L=nlA[ci];for(let q=0;q<L.length;q++)if(!cov[L[q]])n++;const sc=n*held(c);if(sc>bsc){bsc=sc;bn=n;best=c;}}
       if(!best||bn<tg.length*.02||!take('aa'))break;add('aa','L',best);mark();nA++;}
     W.aaCover=tg.length?cov.reduce((a2,b2)=>a2+b2,0)/tg.length:1;}
   // reserve: where its routes to the lines are shortest (interior lines)
@@ -657,7 +667,8 @@ function buildWorldTry(seed,tryK){
     const tg=[],cand=[];for(let gy=0;gy<GH;gy+=2)for(let gx=0;gx<GW;gx+=2){const i=gy*GW+gx;if(!isL(i))continue;const c=cellCenter(i);if(Math.hypot(c.x-landing.x,c.y-landing.y)<300)continue;if(aaL.some(a2=>Math.hypot(a2.x-c.x,a2.y-c.y)<185))continue;tg.push(c);}
     for(let gy=1;gy<GH;gy+=3)for(let gx=1;gx<GW;gx+=3){const i=gy*GW+gx;if(!isL(i)||grid[i]!==LAND||W.road[i]||barC[i])continue;const c=cellCenter(i);if(Math.hypot(c.x-landing.x,c.y-landing.y)<330)continue;cand.push(c);}
     const cov=new Uint8Array(tg.length),rbs=[];const mark=q=>tg.forEach((t,j)=>{if(!cov[j]&&Math.hypot(t.x-q.x,t.y-q.y)<RR)cov[j]=1;});
-    while(nR<DOC.rbMax){let best=null,bn=0;for(const c of cand){if(rbs.some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;for(let j=0;j<tg.length;j++)if(!cov[j]&&Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<RR)n++;if(n>bn){bn=n;best=c;}}
+    const nlR=nearLists(cand,tg,RR);
+    while(nR<DOC.rbMax){let best=null,bn=0;for(let ci=0;ci<cand.length;ci++){const c=cand[ci];if(rbs.some(e=>Math.hypot(e.x-c.x,e.y-c.y)<150))continue;let n=0;const L=nlR[ci];for(let q=0;q<L.length;q++)if(!cov[L[q]])n++;if(n>bn){bn=n;best=c;}}
       if(!best||bn<tg.length*.03||!take('rb'))break;add('rb','RB',best);rbs.push(best);mark(best);nR++;}
     W.rbCover=tg.length?cov.reduce((a2,b2)=>a2+b2,0)/tg.length:1;}
   // air-landing pockets: a barrier does not close the sky. Where KROK could set down inside the defended region past every
@@ -1511,15 +1522,17 @@ function krokRetreat(k){
   k.retreat=true;say(k,'Träffad, skrovet '+Math.round(k.hp/k.maxhp*100)+' %. Avbryter och drar mig tillbaka till fartyget.');
 }
 /* cells KROK can reach from the ship over known ground without entering a known air threat (cached) */
-let reachKey='',reachArr=null;
+let reachKey='',reachArr=null,reachT=-1,reachTh='';
+/* recomputed when the known air threats change, and at most twice a second while the known area grows (it changes nearly every step) */
 function krokReach(){
-  const key=G.knownV+':'+(G.tver||0)+':'+G.enemies.filter(e=>e.seen&&!e.dead&&e.canAir).length;if(key===reachKey&&reachArr)return reachArr;
-  const K=G.known,ok=new Uint8Array(GW*GH);for(let i=0;i<ok.length;i++)ok[i]=K[i];
-  for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;const r=(e.kRange||e.range)+25;const x0=Math.max(0,Math.floor((e.lx-r)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+r)/CELL)),y0=Math.max(0,Math.floor((e.ly-r)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+r)/CELL));
-    for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++)if(Math.hypot(gx*CELL+5-e.lx,gy*CELL+5-e.ly)<r)ok[gy*GW+gx]=0;}
-  const R=new Uint8Array(GW*GH),s0=cellIdx(CARRIER.x,CARRIER.y),q=[s0];R[s0]=1;
-  for(let h=0;h<q.length;h++){const c=q[h],cx=c%GW,cy=(c/GW)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!R[n]&&ok[n]){R[n]=1;q.push(n);}}}
-  reachKey=key;reachArr=R;return R;
+  const th=(G.tver||0)+':'+G.enemies.filter(e=>e.seen&&!e.dead&&e.canAir).length,key=G.knownV+':'+th;
+  if(reachArr&&(key===reachKey||(th===reachTh&&G.time-reachT<.5&&G.time>=reachT)))return reachArr;
+  const N=GW*GH,K=G.known,ok=new Uint8Array(N);ok.set(K);
+  for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;const r=(e.kRange||e.range)+25,r2=r*r;const x0=Math.max(0,Math.floor((e.lx-r)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+r)/CELL)),y0=Math.max(0,Math.floor((e.ly-r)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+r)/CELL));
+    for(let gy=y0;gy<=y1;gy++){const dy=gy*CELL+5-e.ly;for(let gx=x0;gx<=x1;gx++){const dx=gx*CELL+5-e.lx;if(dx*dx+dy*dy<r2)ok[gy*GW+gx]=0;}}}
+  const R=new Uint8Array(N),s0=cellIdx(CARRIER.x,CARRIER.y),q=new Int32Array(N);let qt=0;q[qt++]=s0;R[s0]=1;
+  for(let h=0;h<qt;h++){const c=q[h],cx=c%GW,cy=(c/GW)|0;for(let dy=-1;dy<=1;dy++){const ny=cy+dy;if(ny<0||ny>=GH)continue;for(let dx=-1;dx<=1;dx++){const nx=cx+dx;if(nx<0||nx>=GW)continue;const n=ny*GW+nx;if(!R[n]&&ok[n]){R[n]=1;q[qt++]=n;}}}}
+  reachKey=key;reachTh=th;reachT=G.time;reachArr=R;return R;
 }
 function wreckSafe(w){return isKnown(w.x,w.y)&&!lockedAt(w.x,w.y)&&!!krokReach()[cellIdx(w.x,w.y)]&&G.enemies.every(e=>e.dead||!e.seen||Math.hypot(e.lx-w.x,e.ly-w.y)>(e.kRange||e.range)+20);}
 /* automatic salvage only where the ground around the pile has been looked at; an explicit order skips this */
