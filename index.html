@@ -230,6 +230,7 @@ button:disabled{opacity:.45;cursor:default}
           <button class="btn" id="bStop" type="button">Stoppa</button>
           <button class="btn" id="bRtb" type="button">Till service</button>
           <button class="btn" id="bExplore" type="button" hidden title="SPARV utforskar ön fritt; zon väljer du i hjulet">Utforska</button>
+          <button class="btn" id="bMus" type="button" hidden title="X: sätter ut VARG:ens MUS och tar kontroll över den">MUS (X)</button>
           <button class="btn" id="bCtrl" type="button" aria-pressed="false" title="E">Ta kontroll (E)</button>
           <button class="btn" id="bFollowMe" type="button" aria-pressed="false" title="G" hidden>Gruppen följer (G)</button>
           <button class="btn alarm" id="bOverride" type="button" hidden>Kör ändå</button>
@@ -274,6 +275,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Infanteri och pansarvärn i skog eller bebyggelse syns även från luften först på 40 m. Den som skjuter syns av alla inom synhåll så länge mynningsflamman lyser. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
       <li><span class="em">SPARV är spanaren.</span> Billig (40), byggs på 8 sekunder, ser 120 m, batteri för tio minuter och tål nästan ingenting. Den flyger lågt: robotskyttar och bunkrar märker den först på 45 m och luftvärnets radar på 110 m, så den ser luftvärnet strax innan luftvärnet ser den. SPARV har kort radio: den fungerar bara inom 250 m från Birka eller ett fordon, BÄVER eller VARG, som själv är inom ledningsnätet, och sjökortet visar nätet när en SPARV är vald. En waypoint längre ut stannar vid gränsen, och tappar den länken vänder den tillbaka. Ger du en SPARV ordern Utforska (knappen Utforska, eller i hjulet: fritt eller bara zonen du pekar på) utforskar den inom nätet på egen hand: den flyger till närmaste ospanade mark, håller sig utanför räckhåll för kända hot, laddar vid fartyget och fortsätter tills ön är spanad. Behöver en VARG spaning mot ett kamouflerat mål går en SPARV före HÖK. Utforska ger du också i hjulet. Inget vapen.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 140 m, lika långt som fiendens stridsvagnar, bunkrar, lätta pansar och robotskyttar (mot mark), men bara mot mål som någon ser. Inget markförsvar går att skjuta ut från ett avstånd där det inte kan svara; bara pansarvärnet når längre. Anfaller den ett kamouflerat mål som ingen ser skickar den efter en ledig HÖK som spanar från utanför luftvärnets räckvidd, och väntar själv utom räckhåll tills målet syns. Finns ingen ledig HÖK får du en knapp för att skicka en. Tål 150. VARG i samma wing stöttar varandra: beskjuts en, kör de andra fram tills skytten är inom räckhåll och bekämpar den, och återgår till sin order när skytten är slagen eller tyst. Infanteriet har granatgevär som når 150 m, laddar om på sex sekunder och hör VARG på 220 m, så det skjuter ofta först. Det är svagt mot flyg (bara granatgeväret, som sällan träffar), så HÖK är svaret på infanteri. Robotskyttarna skjuter även mot mark med halv verkan. Pansarvärnets robot når 170 m, längre än VARG. Fienden skyddar sitt luftvärn och sina robotskyttar (utom kring R1) med dolda pansarvärnslag på flanken, så luftvärnet går inte att plocka på avstånd. Spana fram dem och slå dem med HÖK: pansarvärnet kan inte skjuta mot flyg, men HÖK måste in under luftvärnet för att nå dem.</li>
+      <li><span class="em">MUS är fjärrspanaren.</span> Varje VARG bär en MUS, en liten fjärrstyrd terrängbil utan egen vilja. Välj VARG och tryck X (eller knappen MUS): den sätts ut och du kör den med W A S D; E släpper den och den står kvar. Den fungerar inom 200 m från sin VARG och stannar vid gränsen. Den ser 70 m, även kamouflage och trupp i skog, hittar minor inom 30 m och utlöser dem inte. F spränger laddningen: allt inom 8 m förstörs, även en stridsvagn eller bunker, och skadan avtar ut till 12 m. Rörliga förband ser den på 35 m och skjuter med gevär, fasta ställningar på 40 m men träffar sällan något så litet. Kör tillbaka till sin VARG kommer den ombord igen. En förbrukad eller förlorad MUS ersätts vid Birka, en tagen verkstad eller ett fältvarv: 30 material och 15 sekunder.</li>
       <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: en ny BÄVER står i byggbädden på HMS Birkas däck, och KROK lyfter den i land, vilket beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. Lagar fordon i fält: peka på en skadad VARG och tryck B, eller låt en ledig BÄVER göra det själv. Båda måste stå still och vara utanför eld, lagningen går upp till 75 % och kostar material. Bakom en oröjd spärr är det den enda reparation som finns. En svårt skadad VARG som kommit ur elden kör till närmaste BÄVER i stället för till fartyget, och en order från dig håller den kvar i striden. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget. Säkerheten går före: BÄVER kör inte in i räckhåll för kända fiender, och ber den själv om lufttransport landar KROK den bara på spanad mark utanför kända hot. Finns ingen säker väg eller landningsplats väntar den; Kör ändå (eller Flyg ändå i loggen) skickar den ändå.</li>
       <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
       <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. Minorna är nedgrävda och syns inte från luften. Bara BÄVER hittar dem, med sin detektor på 48 m; en VARG märker dem först när den kör på en och tar svår skada. Skicka BÄVER före genom trånga passager. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
@@ -289,7 +291,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna, och hjulet visar också de enskilda enheterna med avstånd, så att du kan välja vem som går utan att välja den först. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder visar andra enheter, helst de som strider; FÄST låser en bild vid enheten, klick visar den i kameran. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
-      <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
+      <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. Automatiskt flyger den bara över spanat område och sätter aldrig ned inom räckhåll för kända hot. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, SPARV först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
@@ -906,8 +908,15 @@ const TYPES={
   scout:{label:'SPARV',tag:'S',role:'spaning',cost:40,build:8,hp:5,speed:19,vision:120,fuel:600,air:true,sig:45},
   drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:115,range:140,dmg:11,rate:1,acc:.85},
-  eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85}
+  eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
+  mus:{label:'MUS',tag:'M',role:'spaning',cost:30,build:15,hp:10,speed:14,vision:70}
 };
+/* MUS: a small remote-controlled ground scout that every VARG carries one of. No autonomy: it moves only when the captain drives it
+   (X puts it out and takes control, E lets go). It works within 200 m of its VARG, sees camouflage and troops in the woods at its
+   full 70 m, finds mines within 30 m and does not set them off. Its charge (F) destroys anything within 8 m, a tank included, and
+   damages out to 12 m. Mobile troops see it at 35 m, fixed positions at 40 m; heavy guns rarely hit something that small, troops use
+   their rifles. A spent or lost MUS is replaced at Birka or a taken workshop or field yard: 30 material and 15 s. */
+const ROVER={link:200,cost:30,build:15,full:8,blast:12,dmg:200,mines:30,seeMobile:35,seeFixed:40,heavyAcc:.15,rifle:{dmg:3,cd:.5,acc:.3}};
 /* Brohuvud palette. Night chrome and chart paper as grounds; three signal colours with a dark-ground and a paper-ground tone:
    SIGNAL amber = ours / command / logistics (KROK, selection, buttons), HOT magenta = enemy and danger (as on a real nautical chart),
    KLAR green = healthy / taken. Friendly units only use the cool band so they never read as a signal. */
@@ -934,7 +943,7 @@ function makeUnit(kind,x,y){
 function makeEnemy(e){const st=ENEMY[e.kind];return Object.assign({},st,e,{maxhp:st.hp,cd:Math.random(),seen:false,visibleNow:false,reveal:0,lx:e.x,ly:e.y,hx:e.x,hy:e.y,alert:null,dead:false,avoid:false,aim:Math.random()*TAU,dir:1,ri:e.route?Math.floor(e.route.length/2):0,route:e.route?e.route.map(p=>({x:p.x,y:p.y})):null});}
 function newGame(seed){
   const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed);WORLD.cfgKey=cfgKey;}
-  G={seed,time:0,res:300,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
+  G={seed,time:0,res:300,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
     relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
@@ -1008,7 +1017,7 @@ function step(dt){
     e.reveal=Math.max(0,e.reveal-dt);
     let spot=null;const camo=!!e.camo;
     const flash=e.reveal>0,hid=camo&&hides(e);
-    let spotIn=null;for(const u of G.units){if(u.dead||u.carried)continue;const rr=!camo||flash?u.vision:u.air?(hid?Math.min(HIDE_AIR,u.vision):u.vision):60;if(dist(u,e)<rr){if(!spot)spot=u;if(inNet(u.x,u.y)){spotIn=u;break;}}}
+    let spotIn=null;for(const u of G.units){if(u.dead||u.carried)continue;const rr=!camo||flash||u.kind==='mus'?u.vision:u.air?(hid?Math.min(HIDE_AIR,u.vision):u.vision):60;if(dist(u,e)<rr){if(!spot)spot=u;if(netOf(u)){spotIn=u;break;}}}
     let vis=!!spot,rep=!!spotIn;if(spotIn)spot=spotIn;
     if(!rep)for(const r of G.relays)if(r.captured&&dist(r,e)<(r.type==='radar'?RADAR_SEE:110)){vis=true;rep=true;}
     if((rep||e.reveal>0)&&!e.seen){e.seen=true;if(!spot||spot.id!==G.ctrl)(G.newC||(G.newC=[])).push({e,by:spot});if(e.canAir){G.tver=(G.tver||0)+1;for(const v of G.units)if(v.air)v.path=null;}say(spot,(vis?'':'Mynningsflamma, kamouflerad. ')+'Kontakt: '+ename(e)+' i ruta '+sq(e.x,e.y)+'.');}
@@ -1053,6 +1062,8 @@ function goRtb(u,msg){if(!u.air&&lockedAt(u.x,u.y)){cutOff(u);return;}u.saved=u.
 const curPost=u=>u.orders[0]?u.orders[0].post:u.post;
 
 function updateUnit(u,dt){
+  if(u.kind==='mus'){if(!u.dead)roverTick(u,dt);return;}
+  if(u.kind==='tank'&&!u.dead)roverSupply(u,dt);
   if(!u.dead&&!u.carried&&G.time-(u.netT||-9)>=1){u.netT=G.time;const on=inNet(u.x,u.y);if(!on&&!u.offNet){u.offNet=true;say(null,u.name+' utanför ledningsnätet. Fortsätter med senaste ordern, ingen kontakt.');}else if(on&&u.offNet){u.offNet=false;say(u,'Kontakt med '+u.name+' igen.');}}
   if(u.dead)return;
   if(u.carried){const k=G.kroks.find(x=>x.id===u.carried);if(k){u.x=k.x;u.y=k.y;}u.state='Lufttransport med '+(k?k.name:'KROK');return;}
@@ -1102,7 +1113,7 @@ function manualDrive(u,dt){
   let sp=u.speed*CTRL.thr*(CTRL.thr<0?.5:1);
   if(!air){const c=cellIdx(u.x,u.y),t=WORLD.grid[c];if(t<=SHAL)sp*=.7;else if(WORLD.road[c])sp*=1.4;}
   const nx=clamp(u.x+Math.cos(u.heading)*sp*dt,6,WW-6),ny=clamp(u.y+Math.sin(u.heading)*sp*dt,6,WH-6);
-  if(air||(u.kind==='eng'?passLand:passAmph)(cellIdx(nx,ny))){u.x=nx;u.y=ny;}
+  if(air||(u.kind==='eng'||u.kind==='mus'?passLand:passAmph)(cellIdx(nx,ny))){u.x=nx;u.y=ny;}
   u.state='Manuell styrning';
   if(u.kind==='drone'&&G.mlook){
     u.mgcd=(u.mgcd||0)-dt;u.turret=u.heading;u.target=aimTarget(u);
@@ -1167,6 +1178,39 @@ function escortTarget(u,o){
     const sc=dg-(att?120:0);if(sc<bs){bs=sc;best=e;}}
   return best;
 }
+/* ---------- MUS (see ROVER) ---------- */
+function spawnRover(v){const m=makeUnit('mus',v.x,v.y);G.colorIdx--;m.color=v.color;m.ink=v.ink;m.name='MUS '+v.tag;m.owner=v.id;m.carried=v.id;m.post='off';G.units.push(m);v.musId=m.id;return m;}
+function roverOwner(m){const v=m.owner?unitById(m.owner):null;if(v&&!v.dead)return v;
+  // a MUS whose VARG is gone links to the nearest VARG within reach that has none
+  let best=null,bd=ROVER.link;for(const w of G.units){if(w.kind!=='tank'||w.dead||w.carried)continue;const h=w.musId?unitById(w.musId):null;if(h&&!h.dead)continue;const d=dist(w,m);if(d<bd){bd=d;best=w;}}
+  if(best){m.owner=best.id;best.musId=m.id;say(best,m.name+' länkad till '+best.name+'.');}return best;}
+function roverSupply(v,dt){let m=v.musId?unitById(v.musId):null;if(m&&(m.dead||m.owner!==v.id)){v.musId=null;m=null;}if(m)return;
+  if(!v.musGiven){v.musGiven=true;spawnRover(v);return;}
+  const hm=homeFor(v);if(dist(v,hm)<hm.r&&G.res>=ROVER.cost){v.musT=(v.musT||0)+dt;if(v.musT>=ROVER.build){v.musT=0;G.res-=ROVER.cost;spawnRover(v);say(v,'Ny MUS ombord ('+ROVER.cost+' material).');}}else v.musT=0;}
+// X: put the MUS out beside its VARG (or take the one already out) and drive it
+function roverOut(v){const m=v&&v.musId?unitById(v.musId):null;
+  if(!m||m.dead){if(v)say(v,'Ingen MUS ombord. En ny fås vid Birka, en tagen verkstad eller ett fältvarv ('+ROVER.cost+' material).');return false;}
+  if(m.carried){let p=null;for(let r=7;r<=21&&!p;r+=7)for(let k=0;k<12&&!p;k++){const b=v.heading+PI+k/12*TAU,q={x:v.x+Math.cos(b)*r,y:v.y+Math.sin(b)*r};if(passLand(cellIdx(q.x,q.y)))p=q;}
+    if(!p){say(v,'MUS kör bara på land. Kör '+v.name+' närmare land.');return false;}
+    m.carried=null;m.x=p.x;m.y=p.y;m.heading=v.heading;m.outT=G.time;}
+  if(hasDOM)setCtrl(m.id);else G.ctrl=m.id;return true;}
+// F while driving it: the charge. Everything within 8 m is destroyed, a tank included; damage falls off to nothing at 12 m
+function roverBlast(m){if(m.dead||m.carried)return false;const x=m.x,y=m.y;G.fx.push({k:'boom',x,y,t:0,ttl:1.2});
+  const hurt=d=>d<=ROVER.full?ROVER.dmg:d<ROVER.blast?ROVER.dmg*(ROVER.blast-d)/(ROVER.blast-ROVER.full):0;
+  for(const e of G.enemies){if(e.dead)continue;const h=hurt(Math.hypot(e.x-x,e.y-y));if(h>0){e.hp-=h;e.reveal=Math.max(e.reveal,2);if(e.hp<=0)killEnemy(e,m);}}
+  for(const u of G.units){if(u===m||u.dead||u.carried||u.air)continue;const h=hurt(dist(u,m));if(h>0){u.hp-=h;u.lastHit=G.time;if(u.hp<=0)killUnit(u,'Träffad av MUS-laddningen.');}}
+  for(const st of G.structs||[]){if(st.dead)continue;const h=hurt(Math.hypot(st.x-x,st.y-y));if(h>0){st.hp-=h;if(st.hp<=0)killStruct(st,m,'blast');}}
+  const v=unitById(m.owner);if(G.ctrl===m.id)dropCtrl();m.dead=true;m.diedAt=G.time;m.hp=0;if(v&&v.musId===m.id)v.musId=null;
+  say(v&&!v.dead?v:null,m.name+' detonerade i ruta '+sq(x,y)+'.');if(v&&!v.dead&&hasDOM)setCam(v.id);return true;}
+function roverTick(m,dt){
+  if(m.carried){const v0=unitById(m.owner);if(!v0||v0.dead){m.dead=true;m.diedAt=G.time;return;}m.x=v0.x;m.y=v0.y;m.heading=v0.heading;m.state='Ombord på '+v0.name;return;}
+  const v=roverOwner(m);m.link=!!v&&dist(m,v)<=ROVER.link;
+  // driven back to its VARG: aboard again
+  if(v&&!v.carried&&G.time-(m.outT||0)>3&&dist(m,v)<7){if(G.ctrl===m.id){dropCtrl();if(hasDOM)setCam(v.id);}m.carried=v.id;say(v,m.name+' ombord igen.');return;}
+  if(G.ctrl===m.id){if(!m.link&&!m.noLinkMsg){m.noLinkMsg=true;say(m,'Ingen länk till '+(v?v.name:'någon VARG')+'. Kör tillbaka inom '+ROVER.link+' m.');}
+    const px=m.x,py=m.y;manualDrive(m,dt);
+    if(v&&dist(m,v)>ROVER.link&&dist(m,v)>Math.hypot(px-v.x,py-v.y)){m.x=px;m.y=py;m.state='Vid länkens gräns, '+ROVER.link+' m från '+v.name;}else if(m.link)m.noLinkMsg=false;return;}
+  m.state=m.link?'Väntar på fjärrstyrning (E)':'Ingen länk, väntar';}
 /* wing support: a VARG whose mate (same wing, or a ground unit within 120 m when it has no wing) is under fire from a known
    enemy closes in to bring that shooter into range and fires on it; a hidden shooter is approached as any attack is (spotting
    first, waiting outside its reach). Done when the shooter is dead or has hit nobody for 12 s; then the unit's order resumes */
@@ -1416,13 +1460,14 @@ function updateEnemy(e,dt){
   e.cd-=dt;
   let tgt=null,bd=1e9;const look=e.mobile?e.vision:Math.max(e.range,e.airRange||0);
   if(e.canAir)for(const k of G.kroks){if(k.dead)continue;const d=dist(k,e);if(d<=Math.max(look,rVs(e,k))&&d<bd){bd=d;tgt=k;}}
-  for(const u of G.units){if(u.dead||u.carried)continue;if(u.air?!e.canAir:!e.canGround)continue;const d=dist(u,e),lim=u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim&&d<bd){bd=d;tgt=u;}}
+  for(const u of G.units){if(u.dead||u.carried)continue;if(u.air?!e.canAir:!e.canGround)continue;const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim&&d<bd){bd=d;tgt=u;}}
   const home=Math.hypot(e.x-e.hx,e.y-e.hy);
   if(tgt){
     e.aim=turnTo(e.aim,Math.atan2(tgt.y-e.y,tgt.x-e.x),3*dt);
     if(bd<=rVs(e,tgt)&&e.cd<=0){
-      e.cd=1/e.rate;e.reveal=1.6;
-      shoot(e,tgt,e.dmg,tgt.air&&e.kind==='turret'?e.acc*.55:tgt.air&&e.airAcc?e.airAcc:e.acc,'e');
+      e.reveal=1.6;
+      if(tgt.kind==='mus'){const rf=e.kind==='inf'||e.kind==='at';e.cd=rf?ROVER.rifle.cd:1/e.rate;shoot(e,tgt,rf?ROVER.rifle.dmg:e.dmg,rf?ROVER.rifle.acc:e.acc*ROVER.heavyAcc,'e',rf?'e_rifle':null);}
+      else{e.cd=1/e.rate;shoot(e,tgt,e.dmg,tgt.air&&e.kind==='turret'?e.acc*.55:tgt.air&&e.airAcc?e.airAcc:e.acc,'e');}
       if(!tgt.dead&&G.time-tgt.lastHitMsg>7){tgt.lastHitMsg=G.time;const ee=e;say(tgt,'Beskjuts av '+(e.seen?ename(e):'dold fiende')+', ruta '+sq(e.x,e.y)+'.',tgt.kind==='krok'?null:[{l:'Luftstöd',f:()=>callIn('air',ee.seen?{enemy:ee}:{world:{x:ee.x,y:ee.y}})},{l:'Visa',f:()=>focusUnit(tgt)}]);}
     }
     if(e.march&&bd>rVs(e,tgt)*.85){marchStep(e,dt);return;}
@@ -1462,7 +1507,7 @@ function canopyTop(x,y){
     const D=WORLD.decor;if(D){if(D.light)put(D.light.x,D.light.y,18);for(const v of D.villas||[])put(v.x,v.y,10);}}
   const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);let m=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=gx+dx,ny=gy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const v=canopyA[ny*GW+nx];if(v>m)m=v;}return m;}
 const flyAlt=(x,y,base,margin)=>{const g=groundY(x,y);return Math.max(g+base,canopyTop(x,y)+margin);};
-function hOf(o){const g=groundY(o.x,o.y);if(o.kind==='krok')return flyAlt(o.x,o.y,28,6);if(o.air)return flyAlt(o.x,o.y,o.kind==='scout'?12:24,o.kind==='scout'?4:6);if(o.isStruct)return g+3;if(o.kind==='inf'||o.kind==='at'||o.kind==='rb')return g+1.2;return g+2.7;}
+function hOf(o){const g=groundY(o.x,o.y);if(o.kind==='mus')return g+.6;if(o.kind==='krok')return flyAlt(o.x,o.y,28,6);if(o.air)return flyAlt(o.x,o.y,o.kind==='scout'?12:24,o.kind==='scout'?4:6);if(o.isStruct)return g+3;if(o.kind==='inf'||o.kind==='at'||o.kind==='rb')return g+1.2;return g+2.7;}
 function launch(a,t,x2,y2,h2,ws,side,hit,dmg,w){
   const W=WSPEC[ws],dx=x2-a.x,dy=y2-a.y,d=Math.hypot(dx,dy)||1,ang=a.turret!=null&&a.kind==='tank'?a.turret:a.aim!=null&&!a.mobile?a.aim:Math.atan2(dy,dx);
   const mx=a.x+Math.cos(ang)*3.4,my=a.y+Math.sin(ang)*3.4,h1=hOf(a)+(a.kind==='tank'?.3:0);
@@ -1473,7 +1518,7 @@ function shoot(a,t,dmg,acc,side,w){
   const hit=Math.random()<acc;
   if(side==='e')t.hitBy[a.id]=G.time;
   else for(const m of G.enemies)if(m.mobile&&!m.dead&&dist(m,t)<320)m.alert={x:a.x,y:a.y,t:G.time};
-  const ws=side==='f'?w:EW[a.kind]||'e_shell',air=!!t.air;
+  const ws=side==='f'?w:w||EW[a.kind]||'e_shell',air=!!t.air;
   const off=hit?0:(air?6:8)+Math.random()*8,oa=Math.random()*TAU;
   const x2=t.x+Math.cos(oa)*off,y2=t.y+Math.sin(oa)*off,h2=hit||air?hOf(t)+(air&&!hit?(Math.random()-.5)*8:0):groundY(x2,y2);
   launch(a,t,x2,y2,h2,ws,side,hit,dmg,w);
@@ -1567,7 +1612,8 @@ function workBarrier(b,u,dt){b.prog=Math.min(1,b.prog+dt/10);u.state='Spränger 
 const NET={ship:850,point:500};
 function netShapes(){const C=[{x:CARRIER.x,y:CARRIER.y,r:NET.ship}];for(const r of G.relays)if(r.captured)C.push({x:r.x,y:r.y,r:NET.point});return{C};}
 function inNet(x,y){if(G.netAll)return true;for(const c of netShapes().C)if(Math.hypot(x-c.x,y-c.y)<=c.r)return true;return false;}
-const heard=u=>!!u&&(u.dead||inNet(u.x,u.y));
+const netOf=u=>{if(u.kind!=='mus')return inNet(u.x,u.y);const v=unitById(u.owner);return !!v&&!v.dead&&inNet(v.x,v.y)&&dist(u,v)<=ROVER.link;};
+const heard=u=>!!u&&(u.dead||netOf(u));
 function noContact(us){const off=us.filter(u=>!heard(u));if(off.length)say(null,'Ingen radiokontakt med '+off.map(u=>u.name).join(' och ')+'. Utanför ledningsnätet fortsätter '+(off.length>1?'de':'den')+' med senaste ordern.');return us.filter(heard);}
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
@@ -1591,7 +1637,7 @@ function markKnown(){
   const K=G.known;let ch=0;
   const mark=(x,y,r)=>{const r2=r*r,x0=Math.max(0,Math.floor((x-r)/CELL)),x1=Math.min(GW-1,Math.floor((x+r)/CELL)),y0=Math.max(0,Math.floor((y-r)/CELL)),y1=Math.min(GH-1,Math.floor((y+r)/CELL));
     for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const i=gy*GW+gx;if(K[i])continue;const dx=gx*CELL+5-x,dy=gy*CELL+5-y;if(dx*dx+dy*dy<=r2){K[i]=1;ch++;}}};
-  for(const u of G.units){if(u.dead||u.carried||!inNet(u.x,u.y))continue;mark(u.x,u.y,u.air?u.vision:60);}
+  for(const u of G.units){if(u.dead||u.carried||!netOf(u))continue;mark(u.x,u.y,u.air||u.kind==='mus'?u.vision:60);}
   for(const r of G.relays)if(r.captured)mark(r.x,r.y,r.type==='radar'?RADAR_MAP:110);
   if(ch)G.knownV++;
 }
@@ -1865,6 +1911,7 @@ function defaultOrder(u,pk,post){
 const STANDING=o=>o&&(o.type==='follow'||o.type==='obs'||o.type==='explore');
 function mText(m){return !m?'':m.type==='explore'?(m.zone!=null?'Utforskar zonen vid '+zoneSq(m.zone):'Utforskar fritt'):m.type==='follow'?(m.escort?'Eskort ':'Följer ')+(m.unit?m.unit.name:''):m.type==='obs'?'Bevakar '+sq(m.x,m.y):oText(m);}
 function giveOrder(u,o,append,mode){
+  if(u.kind==='mus'){say(u,u.name+' har ingen egen styrning. Ta kontroll med E och kör den.');return;}
   if(!u||u.dead||!o)return;u.awaitRep=null;if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3)&&!o.toRep){u.holdHp=u.hp;u.rtb=false;u.saved=null;}
   if(G.ctrl===u.id)dropCtrl();
   if(append){if(u.rtb&&u.saved){u.saved.push(o);}else u.orders.push(o);}
@@ -1939,9 +1986,9 @@ function mineFound(m,by,blast){if(m.found)return;m.found=true;m.foundT=G.time;
 function mineTick(dt){
   if(!G.mines||!G.mines.length)return;G.mineT=(G.mineT||0)-dt;const scan=G.mineT<=0;if(scan)G.mineT=.25;
   for(const m of G.mines){if(m.cleared||m.found)continue;
-    if(scan)for(const u of G.units){if(u.dead||u.carried)continue;const R=u.kind==='eng'?48:0;if(R&&dist(u,m)<R+m.r){mineFound(m,u,false);break;}}
+    if(scan)for(const u of G.units){if(u.dead||u.carried)continue;const R=u.kind==='eng'?48:u.kind==='mus'?ROVER.mines:0;if(R&&dist(u,m)<R+m.r){mineFound(m,u,false);break;}}
     if(m.found)continue;
-    for(const u of G.units){if(u.dead||u.air||u.carried||dist(u,m)>=m.r)continue;
+    for(const u of G.units){if(u.dead||u.air||u.carried||u.kind==='mus'||dist(u,m)>=m.r)continue;
       mineFound(m,u,true);u.hp-=u.kind==='tank'?55:45;u.lastHit=G.time;G.fx.push({k:'boom',x:u.x,y:u.y,t:0,ttl:1.1,small:true});
       if(u.hp<=0)killUnit(u,'Gick på en mina.');
       else say(u,'Mina! '+Math.round(u.hp/u.maxhp*100)+' % skrov kvar. Fältet i ruta '+sq(m.x,m.y)+' är markerat.',[{l:'Skicka BÄVER',f:()=>callIn('eng',{mine:m})}]);break;}}
@@ -1981,7 +2028,7 @@ function obstacleFor(u,tx,ty){let best=null,bd=230;
 function cancelBuild(where,i){const L=where==='ship'?G.build:G.fbuild,b=L[i];if(!b)return 0;
   const cost=b.kind==='krok'?KROK_COST:TYPES[b.kind].cost,back=i===0?Math.round(cost*clamp(b.t/b.total,0,1)):cost;
   L.splice(i,1);G.res+=back;say(null,(b.kind==='krok'?'KROK':TYPES[b.kind].label)+' struken ur byggkön'+(where==='ship'?'':' på fältvarvet')+'. '+back+' material tillbaka'+(i===0&&back<cost?' (det som redan skrivits ut går förlorat)':'')+'.');return back;}
-function queueBuild(k){const T=TYPES[k],alive=G.units.filter(u=>!u.dead).length;
+function queueBuild(k){const T=TYPES[k],alive=G.units.filter(u=>!u.dead&&u.kind!=='mus').length;
   if(G.res<T.cost){say(null,'Inte nog material för '+T.label+' ('+T.cost+').');return false;}
   if(alive+G.build.filter(b=>b.kind!=='krok').length+G.fbuild.length>=MAXUNITS){say(null,'Fullt, max '+MAXUNITS+' enheter.');return false;}
   G.res-=T.cost;G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö på fartyget.');return true;}
@@ -2039,7 +2086,7 @@ function callIn(kind,pk,asMission,who){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -2362,6 +2409,10 @@ function mkPointMesh(r){
 }
 function mkUnitMesh(u){
   const g=new THREE.Group();
+  if(u.kind==='mus'){g.add(mesh(box(1.7,.55,1.1),mat(0x5a6150),0,.62,0));g.add(mesh(box(1.72,.16,1.12),mat(u.color),0,.95,0));
+    for(const[x,z]of[[.58,.62],[-.58,.62],[.58,-.62],[-.58,-.62]]){const w=mesh(cyl(.32,.32,.24,10),mat(0x1b1c1e),x,.33,z);w.rotation.x=PI/2;g.add(w);}
+    g.add(mesh(new THREE.SphereGeometry(.26,10,8),mat(0x22282e),.45,1.18,0));g.add(mesh(cyl(.025,.025,1.6,4),mat(0x2a2a2a),-.6,1.8,.35));
+    g.add(mesh(box(.12,.1,.5),R3.lampMat,.86,.7,0));return g;}
   if(u.kind==='tank'){
     if(!R3.skirtGeo){const sh=new THREE.Shape(),w=4.1,h=2.75,r=1.6;sh.moveTo(-w+r,-h);sh.lineTo(w-r,-h);sh.quadraticCurveTo(w,-h,w,-h+r);sh.lineTo(w,h-r);sh.quadraticCurveTo(w,h,w-r,h);sh.lineTo(-w+r,h);sh.quadraticCurveTo(-w,h,-w,h-r);sh.lineTo(-w,-h+r);sh.quadraticCurveTo(-w,-h,-w+r,-h);
       R3.skirtGeo=new THREE.ExtrudeGeometry(sh,{depth:.5,bevelEnabled:true,bevelThickness:.35,bevelSize:.4,bevelSegments:3,curveSegments:6});R3.skirtGeo.rotateX(-PI/2);R3.skirtGeo.translate(0,.35,0);}
@@ -3004,6 +3055,7 @@ function sync3D(dtr){
   for(const u of G.units){
     if(u.dead)continue;seen.add(u.id);
     let m=R3.units.get(u.id);if(!m){m=mkUnitMesh(u);D.add(m);R3.units.set(u.id,m);}
+    m.visible=!(u.kind==='mus'&&u.carried);if(!m.visible)continue;
     if(u.carried){const kk=G.kroks.find(x=>x.id===u.carried);if(kk){m.position.set(kk.x,unitY(kk,0)-8,kk.y);m.rotation.y=-kk.heading;continue;}}
     m.position.set(u.x,unitY(u,dtr),u.y);m.rotation.y=-u.heading;
     if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
@@ -3101,7 +3153,7 @@ let tmpV=hasDOM&&typeof THREE!=='undefined'?new THREE.Vector3():null,tmpV2=hasDO
 function updateCam(dtr){
   const u=unitById(G.cam);if(!u)return;
   const air=u.air||u.kind==='krok';const y=u.alt!=null&&air?u.alt:unitY(u,0);const small=u.kind==='scout';const aim=G.ctrl===u.id&&u.kind==='tank',daim=G.ctrl===u.id&&u.kind==='drone'&&G.mlook;
-  const fx=Math.cos(u.camH),fz=Math.sin(u.camH),back=small?9:air?22:aim?17:15,up=small?3.5:air?9:aim?6.5:6;
+  const mus=u.kind==='mus';const fx=Math.cos(u.camH),fz=Math.sin(u.camH),back=mus?4.5:small?9:air?22:aim?17:15,up=mus?1.8:small?3.5:air?9:aim?6.5:6;
   const px=u.x-fx*back,pz=u.y-fz*back;let py=Math.max(y+up,camFloor(px,pz)+.7);
   // keep the sight line from camera to unit above the terrain: raise the camera over a ridge or cliff between them
   for(let t=.15;t<1;t+=.1){const gx=lerp(px,u.x,t),gz=lerp(pz,u.y,t),need=heightAt(gx,gz)+1.2;const lineY=lerp(py,y+1,t);if(lineY<need)py+=(need-lineY)/(1-t);}
@@ -3166,12 +3218,12 @@ function drawHud(ctx,w,h){
   ctx.textBaseline='bottom';ctx.textAlign='left';ctx.fillText('KAM ▸ '+u.name,8,h-22);
   const st=(u.kind==='krok'?u.status:u.state)||'';ctx.fillText(st.toUpperCase().slice(0,Math.max(10,Math.floor(w/8.5))),8,h-6);
   ctx.textAlign='right';
-  const extra=u.kind==='scout'?'BATT '+Math.round(u.fuel/u.maxFuel*100)+'%':u.kind==='drone'?'BATT '+Math.round(u.fuel/u.maxFuel*100)+'%  ROB '+Math.floor(u.ammo)+'/'+u.maxAmmo:u.kind==='krok'?'BÄRGNING':'SKROV '+Math.round(u.hp/u.maxhp*100)+'%';
+  const extra=u.kind==='scout'?'BATT '+Math.round(u.fuel/u.maxFuel*100)+'%':u.kind==='drone'?'BATT '+Math.round(u.fuel/u.maxFuel*100)+'%  ROB '+Math.floor(u.ammo)+'/'+u.maxAmmo:u.kind==='krok'?'BÄRGNING':u.kind==='mus'?(()=>{const v=unitById(u.owner);return 'LÄNK '+(v&&!v.dead?Math.round(dist(u,v))+'/'+ROVER.link+' m':'SAKNAS');})():'SKROV '+Math.round(u.hp/u.maxhp*100)+'%';
   ctx.fillText('KURS '+String(Math.round(brg)%360).padStart(3,'0')+'°  '+extra,w-8,h-22);
   if(u.kind!=='krok'&&G.time-u.lastHit<1.2){ctx.fillStyle='#ff7aa8';ctx.fillText('TRÄFF',w-8,h-6);}
   else if(u.kind!=='krok'){ctx.fillText(G.ctrl===u.id?'MANUELL':POST[curPost(u)].toUpperCase(),w-8,h-6);}
   if(G.ctrl===u.id){ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#f0c45a';
-    ctx.font=mono(11);ctx.fillText(u.kind==='krok'?'MANUELL · W A S D FLYGER · F KROKEN · E SLÄPPER':u.kind==='drone'?(G.mlook?'MUSEN STYR · KLICK KULSPRUTA · R ROBOT · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D FLYGER · E SLÄPPER'):u.kind!=='tank'?'MANUELL · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':G.mlook?'MUSEN SIKTAR · KLICK SKJUTER · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D KÖR · E SLÄPPER',w/2,64);ctx.fillStyle='rgba(240,196,90,.75)';ctx.fillText('PEKA OCH TRYCK  B BÄVER · H LUFTSTÖD · V VARG · K KROK',w/2,80);ctx.fillStyle='#f0c45a';ctx.font=mono(12);
+    ctx.font=mono(11);ctx.fillText(u.kind==='mus'?'FJÄRRSTYRD · W A S D KÖR · F SPRÄNGER · E SLÄPPER · KÖR TILL VARG FÖR ATT KOMMA OMBORD':u.kind==='krok'?'MANUELL · W A S D FLYGER · F KROKEN · E SLÄPPER':u.kind==='drone'?(G.mlook?'MUSEN STYR · KLICK KULSPRUTA · R ROBOT · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D FLYGER · E SLÄPPER'):u.kind!=='tank'?'MANUELL · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':G.mlook?'MUSEN SIKTAR · KLICK SKJUTER · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D KÖR · E SLÄPPER',w/2,64);ctx.fillStyle='rgba(240,196,90,.75)';ctx.fillText('PEKA OCH TRYCK  B BÄVER · H LUFTSTÖD · V VARG · K KROK',w/2,80);ctx.fillStyle='#f0c45a';ctx.font=mono(12);
     if((u.kind==='tank'||u.kind==='drone')&&G.mlook){const cx2=w/2,cy2=h/2,t=u.target;ctx.shadowBlur=0;ctx.strokeStyle=t?'#ff7aa8':'rgba(240,244,240,.9)';ctx.lineWidth=1.5;
       ctx.beginPath();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){ctx.moveTo(cx2+dx*7,cy2+dy*7);ctx.lineTo(cx2+dx*18,cy2+dy*18);}ctx.stroke();
       const rl=clamp(1-u.cd*u.rate,0,1);ctx.strokeStyle=rl>=1?'rgba(240,196,90,.9)':'rgba(240,196,90,.45)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx2,cy2,24,-PI/2,-PI/2+TAU*rl);ctx.stroke();
@@ -3403,7 +3455,7 @@ document.addEventListener('pointerdown',e=>{if(!wheel.hidden&&!wheel.contains(e.
 const rosterEl=$('roster');let cardIds='';const cardRefs={};
 function buildRoster(){
   rosterEl.innerHTML='';
-  for(const u of[...G.units,...G.kroks]){
+  for(const u of[...G.units.filter(x=>!(x.kind==='mus'&&x.carried)),...G.kroks]){
     const el=document.createElement('button');el.type='button';el.className='ru'+(u.kind==='krok'?' service':'');
     el.innerHTML='<span class="rn"><i></i><span></span><em></em></span><span class="bars"><span class="b hp"><b></b></span>'+(u.air&&u.kind!=='krok'?'<span class="b fu"><b></b></span>':'')+'</span><span class="rs"></span><span class="rm"></span>';
     el.querySelector('.rn i').style.background=u.color;el.querySelector('.rn span').textContent=u.name;el.title='Klick väljer, Ctrl+klick lägger till, dubbelklick visar kameran';
@@ -3432,19 +3484,19 @@ function stopFollowMe(msg){if(!G.followMe)return;G.followMe=false;for(const v of
 function setCtrl(id){
   {const tu=id?unitById(id):null;if(tu&&!tu.kind.startsWith('krok')&&G.units.includes(tu)&&!heard(tu)){noContact([tu]);return;}}
   const prev=G.ctrl?unitById(G.ctrl):null;
-  if(!id){stopFollowMe(true);if(prev&&prev.kind==='krok'){krokHookStop(prev);prev.state=prev.carry?'back':'idle';}if(prev&&!prev.dead)say(prev,'Tillbaka i autonomi.');G.ctrl=null;G.joy=null;G.firing=false;if(document.pointerLockElement)document.exitPointerLock();return;}
+  if(!id){stopFollowMe(true);if(prev&&prev.kind==='krok'){krokHookStop(prev);prev.state=prev.carry?'back':'idle';}if(prev&&!prev.dead)say(prev,prev.kind==='mus'?prev.name+' står kvar och väntar.':'Tillbaka i autonomi.');G.ctrl=null;G.joy=null;G.firing=false;if(document.pointerLockElement)document.exitPointerLock();return;}
   const u=unitById(id);if(!u||u.dead)return;
   if(u.kind==='krok'){if(prev&&prev!==u)setCtrl(null);stopFollowMe(false);clearKrok(u);if(u.target){u.target.claimed=false;u.target=null;}u.retreat=false;if(u.state!=='back'||!u.carry)u.state='idle';
     G.ctrlSel=G.selIds.slice();G.ctrl=id;setCam(id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}G.pitch=0;say(u,'Manuell flygning. F sänker kroken över ett fordon eller en hög, eller sätter ned lasten. Inga automatiska säkerhetsmarginaler.');return;}
   stopFollowMe(false);G.ctrlSel=G.selIds.slice();u.orders=[];resetFor(u);G.ctrl=id;setCam(id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
-  G.pitch=0;say(u,'Manuell styrning.'+(u.kind==='tank'?' Klicka i kamerabilden för att sikta och skjuta själv, annars automatisk eld.':''));
+  G.pitch=0;say(u,u.kind==='mus'?u.name+' fjärrstyrs. W A S D kör, F spränger laddningen, E släpper. Kör tillbaka till VARG för att komma ombord.':'Manuell styrning.'+(u.kind==='tank'?' Klicka i kamerabilden för att sikta och skjuta själv, annars automatisk eld.':''));
 }
 $('bFollowMe').addEventListener('click',()=>{setFollowMe(!G.followMe);uiTick(true);});
 $('bCtrl').addEventListener('click',()=>{const u=selUnit(),sk=selKrok();if(G.ctrl)setCtrl(null);else if(sk)setCtrl(sk.id);else if(u)setCtrl(u.id);uiTick(true);});
 const yardRow=$('yardRow'),buildAtRow=$('buildAtRow');
 const unitBuilds=()=>G.build.filter(b=>b.kind!=='krok').length+G.fbuild.length,krokCount=()=>G.kroks.length+G.build.filter(b=>b.kind==='krok').length;
 for(const k of['scout','drone','tank','eng','krok']){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.k=k;b.innerHTML='<span></span><small></small>';const T=k==='krok'?{label:'KROK',cost:KROK_COST,build:KROK_BUILD}:TYPES[k];b.firstChild.textContent=T.label;b.lastChild.textContent=T.cost+' · '+T.build+' s';
-  b.addEventListener('click',()=>{const alive=G.units.filter(u=>!u.dead).length;if(G.res<T.cost)return;if(k==='krok'?krokCount()>=KROK_MAX:alive+unitBuilds()>=MAXUNITS)return;const fv=G.buildAt!=='ship'&&G.relays.find(r=>r.id===G.buildAt&&r.captured);if(fv&&!VARV_KINDS.includes(k))return;G.res-=T.cost;if(fv){G.fbuild.push({kind:k,t:T.build*VARV_SLOW,total:T.build*VARV_SLOW,at:fv.id});say(null,T.label+' i kö på fältvarvet '+fv.id+'.');}else{G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö.');}uiTick(true);});yardRow.appendChild(b);}
+  b.addEventListener('click',()=>{const alive=G.units.filter(u=>!u.dead&&u.kind!=='mus').length;if(G.res<T.cost)return;if(k==='krok'?krokCount()>=KROK_MAX:alive+unitBuilds()>=MAXUNITS)return;const fv=G.buildAt!=='ship'&&G.relays.find(r=>r.id===G.buildAt&&r.captured);if(fv&&!VARV_KINDS.includes(k))return;G.res-=T.cost;if(fv){G.fbuild.push({kind:k,t:T.build*VARV_SLOW,total:T.build*VARV_SLOW,at:fv.id});say(null,T.label+' i kö på fältvarvet '+fv.id+'.');}else{G.build.push({kind:k,t:T.build,total:T.build});say(null,T.label+' i byggkö.');}uiTick(true);});yardRow.appendChild(b);}
 $('bAuto').addEventListener('click',()=>{G.krokAuto=!G.krokAuto;G.krokMsg=null;say(null,G.krokAuto?'KROK hämtar allt i säkra områden.':'KROK hämtar bara det du beställer.');uiTick(true);});
 $('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of noContact(selUnits())){if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3))u.holdHp=u.hp;u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
 /* settings menu: opens under its button, closes on a click outside or Escape; restart asks for a second click to confirm */
@@ -3456,6 +3508,11 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hi
 const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
 confirmBtn('bRestart',()=>restart(G.seed));
 confirmBtn('bNewIsland',()=>restart(1000+Math.floor(Math.random()*9000)));
+// X (or the MUS button): from a VARG, put its MUS out and drive it; on a MUS, take control of it
+function roverKey(){const c=G.ctrl?unitById(G.ctrl):null;if(c&&c.kind==='mus')return;const v=c&&c.kind==='tank'?c:null;
+  if(v){roverOut(v);return;}const s=selUnits();const m=s.find(u=>u.kind==='mus');if(m){setCtrl(m.id);return;}
+  const t=s.find(u=>u.kind==='tank');if(t){if(!heard(t)){noContact([t]);return;}roverOut(t);}}
+$('bMus').addEventListener('click',()=>{roverKey();uiTick(true);});
 $('bExplore').addEventListener('click',()=>{for(const v of noContact(selUnits()))if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');uiTick(true);});
 $('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of noContact(selUnits())){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of noContact(selUnits())){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
@@ -3599,7 +3656,8 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyC'){if(G.sel)setCam(G.sel);uiTick(true);}
   if(e.code==='KeyF'&&!G.ctrl){toggleFull();}
   if(e.code==='KeyR'&&G.ctrl){const d=unitById(G.ctrl);if(d&&d.kind==='drone'){droneRocket(d);uiTick(true);}}
-  if(e.code==='KeyF'&&G.ctrl){const k=unitById(G.ctrl);if(k&&k.kind==='krok'){krokHook(k);uiTick(true);}}
+  if(e.code==='KeyF'&&G.ctrl){const k=unitById(G.ctrl);if(k&&k.kind==='krok'){krokHook(k);uiTick(true);}else if(k&&k.kind==='mus'){roverBlast(k);uiTick(true);}}
+  if(e.code==='KeyX'){roverKey();uiTick(true);}
   if(e.code==='KeyM'){audInit();setSound(!AUD.on);}
   if(e.code==='KeyN'){audInit();setMusic(!MUS.on);}
   if(e.code==='KeyG'&&G.ctrl){setFollowMe(!G.followMe);uiTick(true);}
@@ -3642,7 +3700,7 @@ function uiTick(force){
   $('islandId').textContent=islandName(G.seed)+' · ö '+G.seed;
   $('bPause').setAttribute('aria-pressed',String(G.paused));$('bPause').textContent=G.paused?'Fortsätt':'Paus';
   $('bSpeed').textContent=G.speed+'×';
-  const ids=[...G.units.map(u=>u.id),...G.kroks.map(k=>k.id)].join(',');
+  const ids=[...G.units.filter(u=>!(u.kind==='mus'&&u.carried)).map(u=>u.id),...G.kroks.map(k=>k.id)].join(',');
   if(ids!==cardIds){cardIds=ids;buildRoster();}
   for(const u of[...G.units,...G.kroks]){
     const r=cardRefs[u.id];if(!r)continue;
@@ -3663,10 +3721,11 @@ function uiTick(force){
   $('bStop').disabled=!us.length&&!sk;$('bRtb').disabled=!us.length&&!sk;
   $('bOverride').hidden=!us.some(x=>x.hold||(x.rtb&&x.saved&&x.saved.length));
   $('bExplore').hidden=!selUnits().some(v=>v.kind==='scout');
+  $('bMus').hidden=!selUnits().some(v=>v.kind==='mus'||(v.kind==='tank'&&v.musId&&unitById(v.musId)&&!unitById(v.musId).dead));
   const bc=$('bCtrl');bc.textContent=G.ctrl?'Släpp kontroll (E)':'Ta kontroll (E)';{const bf=$('bFollowMe');bf.hidden=!G.ctrl;bf.setAttribute('aria-pressed',String(!!G.followMe));bf.textContent=G.followMe?'Gruppen följer · på (G)':'Gruppen följer (G)';}bc.setAttribute('aria-pressed',String(!!G.ctrl));bc.disabled=!G.ctrl&&!u&&!sk;
   const selKey=G.selIds.slice().sort().join(',');
   for(const b of wingRow.children){const wg=G.wings[b.dataset.n];b.textContent=b.dataset.n+(wg?' · '+wg.length:' · tom');b.setAttribute('aria-pressed',String(!!wg&&wg.slice().sort().join(',')===selKey));}
-  const alive=G.units.filter(x=>!x.dead).length;
+  const alive=G.units.filter(x=>!x.dead&&x.kind!=='mus').length;
   const atV=G.buildAt!=='ship'&&G.relays.some(r=>r.id===G.buildAt&&r.captured);if(!atV)G.buildAt='ship';
   for(const b of yardRow.children){const k=b.dataset.k;b.disabled=(atV&&!VARV_KINDS.includes(k))||(k==='krok'?G.res<KROK_COST||krokCount()>=KROK_MAX:G.res<TYPES[k].cost||alive+unitBuilds()>=MAXUNITS);const T=k==='krok'?{cost:KROK_COST,build:KROK_BUILD}:TYPES[k];b.lastChild.textContent=T.cost+' · '+Math.round(T.build*(atV&&VARV_KINDS.includes(k)?VARV_SLOW:1))+' s';}
   {const vs=G.relays.filter(r=>r.captured&&r.type==='varv');$('buildAtWrap').hidden=!vs.length;const key=vs.map(r=>r.id).join()+'|'+G.buildAt;if(buildAtRow.dataset.k!==key){buildAtRow.dataset.k=key;buildAtRow.innerHTML='';
