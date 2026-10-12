@@ -113,4 +113,10 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
   h.x=R.x+150;h.y=R.y;h.ammo=0;B.sendToService(h,R.id);for(let i=0;i<60&&h.orders.length;i++)run(1);ok(h.ammo>=4&&!h.orders.length,'rearmed at the workshop, service done');
   h.ammo=0;h.orders=[{type:'move',x:R.x,y:R.y,post:'def'}];run(25);ok(h.ammo>=4,'a HÖK sent to the workshop and circling it rearms ('+h.ammo.toFixed(1)+')');}
  else ok(false,'no workshop on this island');}
+// recycling at Birka: 80 % of the build cost, a MUS aboard included; nothing away from the ship
+{B.newGame(1234);const G=B.G;G.running=true;run(.2);const C=B.CARRIER;const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');
+ G.wings={'1':[v.id,h.id]};h.x=C.x+400;h.y=C.y;ok(!B.atBirka(h),'a HÖK out at sea cannot be recycled');ok(B.recycle([h])===0&&G.units.includes(h),'and is not');
+ v.x=C.x;v.y=C.y;const r0=G.res;ok(B.recycleValue(v)===160+24,'a VARG is worth 160 plus 24 for its MUS ('+B.recycleValue(v)+')');
+ B.recycle([v]);ok(!G.units.includes(v)&&!G.units.some(u=>u.kind==='mus'&&u.owner===v.id),'the VARG and its MUS are gone');ok(Math.round(G.res-r0)===184,'184 material back');
+ ok(G.wings['1']&&!G.wings['1'].includes(v.id),'it leaves its wing');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
