@@ -55,4 +55,12 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const t3=G.enemies.find(e=>!e.seen&&Math.hypot(e.x-t2.x,e.y-t2.y)>400);h.x=t3.x+100;h.y=t3.y;B.step(.05);ok(t3.seen&&G.paused,'found by another unit: paused');
  B.setPaused(false);const t4=G.enemies.find(e=>!e.seen&&Math.hypot(e.x-t3.x,e.y-t3.y)>400);h.x=t4.x+100;h.y=t4.y;B.step(.05);ok(t4.seen&&!G.paused,'no new pause within 3 s of resuming');
  B.AUTOPAUSE.on=false;}
+// SPARV: built with the mission to explore, maps the island, keeps clear of a known AA, and spots for VARG before HÖK does
+{B.newGame(7341);const G=B.G;G.running=true;G.res=1000;B.queueBuild('scout');run(10);const sc=G.units.find(u=>u.kind==='scout');
+ ok(sc&&sc.mission&&sc.mission.type==='explore','a new SPARV starts exploring on its own');ok(sc.maxFuel>=600,'ten minutes of battery');
+ const aa=G.enemies.find(e=>e.kind==='aa');aa.seen=true;aa.lx=aa.x;aa.ly=aa.y;let minD=1e9;
+ for(let i=0;i<20*120;i++){B.step(.05);if(!sc.dead)minD=Math.min(minD,Math.hypot(sc.x-aa.x,sc.y-aa.y));}
+ ok(!sc.dead&&G.landPct>.1,'explored '+Math.round(G.landPct*100)+' % of the island in two minutes');ok(minD>110,'never inside the AA radar ('+Math.round(minD)+' m)');
+ const t=G.enemies.find(e=>e.kind==='turret'&&!e.dead);t.seen=true;t.lx=t.x;t.ly=t.y;t.visibleNow=false;const v=G.units.find(u=>u.kind==='tank');v.x=t.x+140;v.y=t.y;
+ B.requestSpot(v,t);ok(sc.orders[0]&&sc.orders[0].spotFor===t,'the SPARV is sent to spot, not the HÖK');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
