@@ -3355,6 +3355,7 @@ function sync3D(dtr){
   for(const[id,m]of R3.units)if(!seen.has(id)){D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
     km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;}
+  if(TITLE.on&&TITLE.land)titleLandingApply();
   seen.clear();
   for(const st of G.structs){if(st.dead)continue;seen.add(st.id);if(!R3.structs.has(st.id)){const m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}}
   for(const[id,m]of R3.structs)if(!seen.has(id)){D.remove(m);R3.structs.delete(id);}
@@ -4353,6 +4354,8 @@ function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h
   (D.villas||[]).forEach((q,i)=>out.push({x:q.x,y:q.y,h:q.h+4,w:.5,id:'v'+i,r:600,kind:'villa',low:true}));
   (D.secs||[]).forEach((q,i)=>out.push({x:q.x,y:q.y,h:q.h+3,w:.4,id:'s'+i,r:600,kind:'fyrlykta',low:true}));
   for(const lb of W.labels)if(lb.t==='Hamn'||lb.t==='Vik'||lb.t==='Strand')out.push({x:lb.x,y:lb.y,h:1,w:lb.t==='Hamn'?.75:.45,id:'l'+lb.t,r:700,kind:lb.t.toLowerCase(),low:true});
+  // the KROK landing BÄVER on the beach, while it is under way (film only)
+  {let L=null;try{L=TITLE.on&&TITLE.land;}catch(_){}if(L){const tau=TITLE.t-L.t0;if(tau>L.hook-4&&tau<L.drop+6){const km=R3&&R3.kroks&&R3.kroks.get(L.k.id);if(km)out.push({x:km.position.x,y:km.position.z,h:km.position.y-4,w:1,id:'landsattning',r:1500,kind:'krok'});}}}
   // the inner archipelago, which always lies to the west: a look out over the backdrop islands
   out.push({x:-500,y:clamp(CARRIER.y,300,WH-300),h:0,w:.5,id:'skargard',r:2600,kind:'skargard'});
   return out;}
@@ -4370,17 +4373,21 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   const geo=q=>{const dx=q.x-p.x,dz=q.y-p.z,d=Math.hypot(dx,dz)||1,along=dx*hx+dz*hz,lat=Math.abs(dx*hz-dz*hx),r=relTo(q.x,q.y);
     return{d,along,lat,r,sweep:V/Math.max(lat,1)/deg,now:V*Math.abs(Math.sin(r))/d/deg};};
   const take=(id,track,until)=>{D.poi={id,track};D.until=until;};
+  const PRIO=id=>id==='birka'||id==='vargar'||id==='landsattning';/* priority subjects: none cuts another short except the landing */
   /* Birka first: taken early, while still well ahead, so that the pan toward it is slow, and followed until it is behind. A close
      pass sweeps faster than the camera may pan; then the camera falls behind and lets it go rather than whip round. */
   {const g=geo({x:CARRIER.x,y:CARRIER.y});const closing=D.bd!=null&&g.d<D.bd-.05;D.bd=g.d;
-    if((!D.poi||(D.poi.id!=='birka'&&D.poi.id!=='vargar'))&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+75);
+    if((!D.poi||!PRIO(D.poi.id))&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+75);
     // hang on to Birka until a good way past: let go only when it is far behind (150 degrees and 250 m) or 1.6 km away
     if(D.poi&&D.poi.id==='birka'&&((Math.abs(g.r)>150*deg&&g.d>250)||g.d>1600))D.until=0;}
   /* the VARG patrol is a priority subject too (decided 12 okt), as high as Birka: neither cuts the other short, both cut anything
      else. Taken early while still well ahead, followed until it is far behind. */
-  const PRIO=id=>id==='birka'||id==='vargar';
+  /* the landing comes before everything: when it is under way within 900 m and not behind us, the camera takes it, even from
+     Birka or the patrol (KROK leaving Birka is the same story), and keeps it until BÄVER is down and it is behind */
+  {const lq=titlePois().find(o=>o.id==='landsattning');if(lq){const g=geo(lq);if((!D.poi||D.poi.id!=='landsattning')&&g.d<900&&Math.abs(g.r)<100*deg)take('landsattning',true,T.t+60);}
+    else if(D.poi&&D.poi.id==='landsattning')D.until=0;}
   {const vq=titlePois().find(o=>o.id==='vargar');if(vq){const g=geo(vq),cl=D.vd!=null&&g.d<D.vd-.05;D.vd=g.d;
-    if((!D.poi||!PRIO(D.poi.id))&&cl&&g.d<900&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.vargar??-999)>90)take('vargar',true,T.t+75);
+    if((!D.poi||!PRIO(D.poi.id))&&cl&&g.d<900&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.vargar??-999)>90)take('vargar',true,T.t+75);/* (the landing outranks it) */
     if(D.poi&&D.poi.id==='vargar'&&((Math.abs(g.r)>150*deg&&g.d>200)||g.d>1600))D.until=0;}}
   // the big lighthouse is always taken on the way past too, after Birka and the patrol, and also early
   {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(!PRIO(D.poi.id)&&D.poi.id!=='fyr'))){const g=geo(L),cl=D.ld!=null&&g.d<D.ld-.05;D.ld=g.d;
@@ -4389,7 +4396,7 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   if(D.poi&&D.poi.track&&!PRIO(D.poi.id)){const q=titlePois().find(o=>o.id===D.poi.id);if(!q||Math.abs(relTo(q.x,q.y))>120*deg||Math.hypot(q.x-p.x,q.y-p.z)>q.r*1.4)D.until=0;}
   if(D.poi&&T.t>D.until){D.seen[D.poi.id]=T.t;D.poi=null;D.next=T.t+DIR.gap[0]+Math.random()*(DIR.gap[1]-DIR.gap[0]);}
   if(!D.poi&&T.t>D.next){let best=null,bs=.22,bLock=false;
-    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr'||q.id==='vargar')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
+    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr'||q.id==='vargar'||q.id==='landsattning')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
       // the pan to reach it, and whether it crosses the picture to the other side of the HÖK
       const pan=Math.abs(g.r-D.yaw),cross=Math.sign(g.r)!==Math.sign(D.yaw)&&Math.abs(g.r)>12*deg&&Math.abs(D.yaw)>12*deg;
       if(pan>55*deg||Math.abs(g.r)>70*deg)continue;
@@ -4420,8 +4427,31 @@ function titleVargSync(){let mv=null;try{mv=R3&&R3.movers;}catch(_){}if(!mv||!mv
   for(const m of mv){if(!m.varg)continue;const VR=m.RT,sAt=VR.len[near(VR,pH)]+(m.dir<0?-1:1)*(m.back||0);/* the wingmen trail the leader */
     m.ph=((((sAt-m.dir*T*m.speed)/VR.L)%1)+1)%1;}
   return true;}
+/* KROK lifts BÄVER off Birka's deck and sets it down on the beach, timed so that BÄVER touches down as the HÖK passes closest
+   to the beach (decided 12 okt). Film only: the real KROK and BÄVER are moved by a fixed script and the game takes them back
+   when it starts. Keyframes in seconds from the start: lift off, over BÄVER, hook on, climb, fly to the beach, set down, let go,
+   climb, fly home, land. BÄVER then drives a little way up the beach. */
+function titleLandingPlan(RT){const k=G.kroks.find(x=>!x.dead),u=G.units.find(x=>x.kind==='eng'&&!x.dead),B=WORLD.landing;if(!k||!u||!B)return null;
+  const kY=unitY(k,0),bY=unitY(u,0),gy=groundY(B.x,B.y),cr=Math.max(kY,gy)+26,F=Math.hypot(B.x-u.x,B.y-u.y)/20,F2=Math.hypot(B.x-k.x,B.y-k.y)/20;
+  const kf=[[0,k.x,k.y,kY],[4,k.x,k.y,kY+12],[8,u.x,u.y,bY+14],[11,u.x,u.y,bY+8.6],[15,u.x,u.y,cr]];let t=15+F;kf.push([t,B.x,B.y,cr]);t+=6;kf.push([t,B.x,B.y,gy+8.6]);const drop=t;t+=3;kf.push([t,B.x,B.y,gy+13]);t+=F2;kf.push([t,k.x,k.y,cr]);t+=5;kf.push([t,k.x,k.y,kY]);
+  // when the HÖK is closest to the beach: the first pass that leaves time for the lead-in
+  let bi=0,bd=1e18;for(let i=0;i<RT.N;i++){const d=(RT.pts[i].x-B.x)**2+(RT.pts[i].z-B.y)**2;if(d<bd){bd=d;bi=i;}}
+  let tb=(((RT.len[bi]-RT.off)%RT.L)+RT.L)%RT.L/17;if(tb<drop+3)tb+=RT.L/17;
+  const sx=B.x-CARRIER.x,sz=B.y-CARRIER.y,sl=Math.hypot(sx,sz)||1;
+  return{t0:TITLE.t+tb-drop,kf,drop,hook:11,end:t,k,u,B,gy,inl:{x:sx/sl,y:sz/sl}};}
+function titleLandingApply(){const L=TITLE.land;if(!L)return;const tau=TITLE.t-L.t0;if(tau<0)return;
+  const km=R3.kroks.get(L.k.id),bm=R3.units.get(L.u.id);if(!km||!bm)return;
+  const kf=L.kf,last=kf[kf.length-1];let i=0;while(i<kf.length-1&&kf[i+1][0]<=tau)i++;
+  const a=kf[i],b=kf[Math.min(i+1,kf.length-1)],f=tau>=last[0]?1:sm((tau-a[0])/((b[0]-a[0])||1)),x=lerp(a[1],b[1],f),z=lerp(a[2],b[2],f),y=lerp(a[3],b[3],f);
+  const dx=b[1]-a[1],dz=b[2]-a[2];if(Math.hypot(dx,dz)>5)L.hd=Math.atan2(dz,dx);
+  km.position.set(x,y,z);if(L.hd!=null)km.rotation.y=-L.hd;
+  const carrying=tau>=L.hook&&tau<L.drop;km.userData.cable.visible=tau>=8&&tau<L.drop+2;km.userData.hook.visible=carrying;
+  if(tau<L.hook)return;
+  if(carrying){bm.position.set(x,y-8,z);if(L.hd!=null)bm.rotation.y=-L.hd;return;}
+  // set down on the beach, then a short drive inland
+  const d=sm((tau-L.drop-1)/6)*15,bx=L.B.x+L.inl.x*d,bz=L.B.y+L.inl.y*d;bm.position.set(bx,groundY(bx,bz)+.4,bz);bm.rotation.y=-Math.atan2(L.inl.y,L.inl.x);}
 function titleCam(dtr){
-  TITLE.t+=dtr;if(!TITLE.route)TITLE.route=titleRoute();const RT=TITLE.route;if(TITLE.vSync!==RT&&titleVargSync())TITLE.vSync=RT;
+  TITLE.t+=dtr;if(!TITLE.route)TITLE.route=titleRoute();const RT=TITLE.route;if(TITLE.vSync!==RT&&titleVargSync())TITLE.vSync=RT;if(TITLE.landFor!==RT){TITLE.land=titleLandingPlan(RT);TITLE.landFor=RT;}
   const P=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const m=(lo+hi)>>1;if(RT.len[m]<=d)lo=m;else hi=m;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a=RT.pts[lo],b=RT.pts[(lo+1)%RT.N];return{x:lerp(a.x,b.x,f),z:lerp(a.z,b.z,f)};};
   const D=RT.off+TITLE.t*17,p=P(D),q=P(D+40),gmax=Math.max(0,groundY(p.x,p.z),groundY(q.x,q.z),groundY((p.x+q.x)/2,(p.z+q.z)/2));
   // fly just above the cliff tops: sample the land inward from the drone so the coast stays below the horizon
@@ -4454,7 +4484,7 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
