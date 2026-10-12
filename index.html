@@ -38,6 +38,7 @@ html,body{height:100%;margin:0;overflow:hidden}
 .tpress{font-family:var(--f-mono);letter-spacing:.3em;font-size:16px;color:#f0c45a;text-shadow:0 1px 4px rgba(0,0,0,.9);animation:tpulse 1.6s ease-in-out infinite}
 @keyframes tpulse{50%{opacity:.35}}
 .tmenu{display:flex;gap:10px}
+.tfull{position:absolute;top:14px;right:14px;z-index:3;background:rgba(17,26,34,.7);backdrop-filter:blur(2px)}
 .tmenu .btn{min-width:150px;backdrop-filter:blur(2px)}
 .tfoot{position:absolute;bottom:18px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:rgba(238,241,234,.7);text-shadow:0 1px 2px #000}
 #intro{z-index:9}
@@ -274,6 +275,7 @@ button:disabled{opacity:.45;cursor:default}
 <div class="title" id="title">
   <div id="titleStage"></div>
   <div class="tshade"></div>
+  <button class="btn tfull" id="tFull" type="button" title="Helskärm (F)">Helskärm</button>
   <div class="tfront">
     <div id="logoWrap" hidden><canvas id="logo" aria-label="Uppdrag Arkipelag"></canvas><div class="tsub">Frigör skärgården, en ö i taget.</div></div>
     <div class="tgap"></div>
@@ -3357,7 +3359,7 @@ function sync3D(dtr){
   for(const[id,m]of R3.units)if(!seen.has(id)){D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
     km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;}
-  if(TITLE.on&&TITLE.land)titleLandingApply();
+  if(TITLE.on&&TITLE.land)titleLandingApply(dtr);
   seen.clear();
   for(const st of G.structs){if(st.dead)continue;seen.add(st.id);if(!R3.structs.has(st.id)){const m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}}
   for(const[id,m]of R3.structs)if(!seen.has(id)){D.remove(m);R3.structs.delete(id);}
@@ -3877,8 +3879,10 @@ setAutoPause(AUTOPAUSE.on);
 function toggleFull(){
   try{if(document.fullscreenElement){document.exitFullscreen();return;}const r=document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.'));}catch(_){say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.');}
 }
-document.addEventListener('fullscreenchange',()=>{const b=$('bFull');b.textContent=document.fullscreenElement?'Lämna helskärm':'Helskärm';fitPanes();});
+document.addEventListener('fullscreenchange',()=>{const t=document.fullscreenElement?'Lämna helskärm':'Helskärm';$('bFull').textContent=t;$('tFull').textContent=t;fitPanes();});
 $('bFull').addEventListener('click',toggleFull);
+// the same button on the title screen, which must not also count as the click that starts the menu
+$('tFull').addEventListener('click',ev=>{ev.stopPropagation();toggleFull();});$('tFull').addEventListener('pointerdown',ev=>ev.stopPropagation());
 $('bSound').addEventListener('click',()=>{audInit();setSound(!AUD.on);});
 $('bMusic').addEventListener('click',()=>{audInit();setMusic(!MUS.on);});
 document.addEventListener('pointerdown',()=>audInit(),{capture:true});
@@ -4441,17 +4445,20 @@ function titleLandingPlan(RT){const k=G.kroks.find(x=>!x.dead),u=G.units.find(x=
   let tb=(((RT.len[bi]-RT.off)%RT.L)+RT.L)%RT.L/17;if(tb<drop+3)tb+=RT.L/17;
   const sx=B.x-CARRIER.x,sz=B.y-CARRIER.y,sl=Math.hypot(sx,sz)||1;
   return{t0:TITLE.t+tb-drop,kf,drop,hook:11,end:t,k,u,B,gy,inl:{x:sx/sl,y:sz/sl}};}
-function titleLandingApply(){const L=TITLE.land;if(!L)return;const tau=TITLE.t-L.t0;if(tau<0)return;
+function titleLandingApply(dtr){const L=TITLE.land;if(!L)return;const tau=TITLE.t-L.t0;if(tau<0)return;
   const km=R3.kroks.get(L.k.id),bm=R3.units.get(L.u.id);if(!km||!bm)return;
   const kf=L.kf,last=kf[kf.length-1];let i=0;while(i<kf.length-1&&kf[i+1][0]<=tau)i++;
   const a=kf[i],b=kf[Math.min(i+1,kf.length-1)],f=tau>=last[0]?1:sm((tau-a[0])/((b[0]-a[0])||1)),x=lerp(a[1],b[1],f),z=lerp(a[2],b[2],f),y=lerp(a[3],b[3],f);
-  const dx=b[1]-a[1],dz=b[2]-a[2];if(Math.hypot(dx,dz)>5)L.hd=Math.atan2(dz,dx);
-  km.position.set(x,y,z);if(L.hd!=null)km.rotation.y=-L.hd;
+  /* heading: toward the next leg that moves sideways (so it turns while hovering, before it sets off), and the turn itself eased
+     at no more than 35 degrees a second; it used to snap 90 degrees in one frame when it left with the load */
+  let tgt=null;for(let j=i;j<kf.length-1;j++){const dx=kf[j+1][1]-kf[j][1],dz=kf[j+1][2]-kf[j][2];if(Math.hypot(dx,dz)>5){tgt=Math.atan2(dz,dx);break;}}
+  if(L.hd==null)L.hd=-km.rotation.y;const dt=Math.min(dtr||0,.1);if(tgt!=null){const e=angWrap(tgt-L.hd),mx=35*PI/180*dt;L.hd+=clamp(e*(1-Math.exp(-1.6*dt)),-mx,mx);}
+  km.position.set(x,y,z);km.rotation.y=-L.hd;
   const carrying=tau>=L.hook&&tau<L.drop;km.userData.cable.visible=tau>=8&&tau<L.drop+2;km.userData.hook.visible=carrying;
   if(tau<L.hook)return;
-  if(carrying){bm.position.set(x,y-8,z);if(L.hd!=null)bm.rotation.y=-L.hd;return;}
+  if(carrying){bm.position.set(x,y-8,z);bm.rotation.y=-L.hd;return;}
   // set down on the beach, then a short drive inland
-  const d=sm((tau-L.drop-1)/6)*15,bx=L.B.x+L.inl.x*d,bz=L.B.y+L.inl.y*d;bm.position.set(bx,groundY(bx,bz)+.4,bz);bm.rotation.y=-Math.atan2(L.inl.y,L.inl.x);}
+  const d=sm((tau-L.drop-1)/6)*15,bx=L.B.x+L.inl.x*d,bz=L.B.y+L.inl.y*d;bm.position.set(bx,groundY(bx,bz)+.4,bz);/* and turns up the beach gently, not in one frame */if(L.bh==null)L.bh=L.hd;L.bh+=angWrap(Math.atan2(L.inl.y,L.inl.x)-L.bh)*(1-Math.exp(-1.2*Math.min(dtr||0,.1)));bm.rotation.y=-L.bh;}
 function titleCam(dtr){
   TITLE.t+=dtr;if(!TITLE.route)TITLE.route=titleRoute();const RT=TITLE.route;if(TITLE.vSync!==RT&&titleVargSync())TITLE.vSync=RT;if(TITLE.landFor!==RT){TITLE.land=titleLandingPlan(RT);TITLE.landFor=RT;}
   const P=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const m=(lo+hi)>>1;if(RT.len[m]<=d)lo=m;else hi=m;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a=RT.pts[lo],b=RT.pts[(lo+1)%RT.N];return{x:lerp(a.x,b.x,f),z:lerp(a.z,b.z,f)};};
