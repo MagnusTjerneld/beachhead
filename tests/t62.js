@@ -46,4 +46,10 @@ const hp0=m.hp;m.x=mn.x;m.y=mn.y;mn.cells=[];{const gx=Math.floor(mn.x/10),gy=Ma
  for(let i=0;i<200;i++){const c=t.cd;run(.25);if(t.cd>c+.01)sh++;}hits=Math.round((h0-m.hp)/9);
  ok(sh>20,'a bunker shoots at a MUS 36 m away ('+sh+' shots)');ok(hits<sh*.3,'but rarely hits it ('+hits+' of '+sh+')');
 }
+// task marks: what BÄVER works on and what KROK is to lift are marked over the object
+{B.START.units=['drone','tank','tank','eng'];B.newGame(1234);const G=B.G;G.running=true;run(.2);const e=G.units.find(u=>u.kind==='eng'),b=G.barriers[0],v=G.units.find(u=>u.kind==='tank');
+ e.orders=[{type:'clear',barrier:b,post:'def'}];let M=B.taskMarks();ok(M.some(m=>m.g==='bomb'&&m.x===b.x),'a barrier BÄVER is to blow carries a bomb mark');
+ b.prog=.4;M=B.taskMarks();ok(M.find(m=>m.g==='bomb').p===.4,'with its progress');
+ G.kroks[0].orders=[{type:'lift',unit:v}];M=B.taskMarks();ok(M.some(m=>m.g==='hook'&&m.unit===v),'a unit KROK is to lift carries a hook mark');
+ e.orders=[];G.kroks[0].orders=[];ok(B.taskMarks().length===0,'no orders, no marks');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
