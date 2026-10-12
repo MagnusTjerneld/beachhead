@@ -3198,17 +3198,19 @@ function buildStatic(){
       st.add(tr);st.add(cr);}}
   R3.bobs=[];if(W.decor)mkDecor(W.decor,st);
   {R3.movers=[];const mv2=(g,RT,speed,ph,beam,half,dir,sail)=>{g.rotation.order='YXZ';st.add(g);const wk=mkWake();st.add(wk.mesh);R3.movers.push({g,RT,speed,ph,beam,half,dir,sail:!!sail,wake:wk,trail:[],tt:-1});};
-    R3.steamRoute=titleRoute(320);R3.steamer=mkSteamer();mv2(R3.steamer,R3.steamRoute,6,.37,5.6,12.5,1);
+    R3.steamRoute=titleRoute(320);R3.steamer=mkSteamer();mv2(R3.steamer,R3.steamRoute,4.5,.37,5.6,12.5,1);
     const hs=k=>hash2(W.seed,k,61);
     const SAIL_L=[[NAV_R,3.6,1.05,-1.02,'p'],[NAV_G,3.6,1.05,1.02,'s'],[NAV_W,-4.05,1,0,'t']],MOT_L=[[NAV_R,2.6,1.15,-1.22,'p'],[NAV_G,2.6,1.15,1.22,'s'],[NAV_W,-.4,2.4,0,'m'],[NAV_W,-3.25,1.1,0,'t']];
     navLights(R3.steamer,[[NAV_R,5.5,6.4,-1.75,'p'],[NAV_G,5.5,6.4,1.75,'s'],[NAV_W,9.5,11.1,0,'m'],[NAV_W,-12.4,6.5,0,'m'],[NAV_W,-13.1,1.8,0,'t']]);
-    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210),3.4,hs(1),2.4,4,-1,true);
-    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440),3,hs(2),2.4,4,1,true);
-    mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),9,hs(3),2.4,3.2,-1);
+    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210),2.4,hs(1),2.4,4,-1,true);
+    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440),2.2,hs(2),2.4,4,1,true);
+    mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),4.5,hs(3),2.4,3.2,-1);
     // three VARG on patrol in a V, in the intro film only, meeting the HÖK head on (shown and hidden with the title)
     {const VR=titleRoute(200),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;m.back=back;});}
-    // traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop
-    const FR=fairwayRoute(W);[['ferry',11,0],['tanker',6,.2],['box',7.5,.45],['ferry',11,.55],['cargo',6.5,.78]].forEach(([k,sp,ph],i)=>{const sh=mkBigShip(k);mv2(sh,FR,sp,(ph+hs(10+i)*.08)%1,sh.userData.beam,sh.userData.len/2,1);});}if(W.islets)mkIslets(W.islets,st);
+    /* traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop. Speeds in
+       m/s, kept below real service speeds (ferry 6.5 is about 13 knots): seen from a HÖK at 17 m/s the meeting speed is what the eye
+       reads, and at real speeds the ferries looked like 50 knots (12 okt) */
+    const FR=fairwayRoute(W);[['ferry',6.5,0],['tanker',3.5,.2],['box',4.5,.45],['ferry',6.5,.55],['cargo',4,.78]].forEach(([k,sp,ph],i)=>{const sh=mkBigShip(k);mv2(sh,FR,sp,(ph+hs(10+i)*.08)%1,sh.userData.beam,sh.userData.len/2,1);});}if(W.islets)mkIslets(W.islets,st);
   for(const r of G.relays){const g=mkPointMesh(r);g.position.set(r.x,groundY(r.x,r.y),r.y);st.add(g);R3.relays.set(r.id,g);}
   R3.bars.clear();
   for(const b of W.barriers){const im=new THREE.InstancedMesh(new THREE.BoxGeometry(5,1.1,1.1),mat(0x4a3a2c),b.cells.length*2);let n=0;for(const c of b.cells){const q=cellCenter(c);for(const rot of[PI/4,-PI/4]){dummy.position.set(q.x,groundY(q.x,q.y)+.9,q.y);dummy.rotation.set(0,rot,.35);dummy.scale.set(1,1,1);dummy.updateMatrix();im.setMatrixAt(n++,dummy.matrix);}}st.add(im);R3.bars.set(b.id,im);}
