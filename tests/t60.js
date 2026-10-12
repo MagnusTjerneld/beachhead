@@ -23,11 +23,15 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
  ok(B.callIn('eng',{unit:v}),'call-in B on a damaged VARG');ok(e.orders[0]&&e.orders[0].type==='repair','BÄVER got a repair order');
  v.lastHit=G.time;run(3);ok(v.hp<=21,'no repair while the VARG is under fire');run(40);
  ok(Math.abs(v.hp-v.maxhp*B.REP.cap)<1,'repaired to '+Math.round(v.hp)+' of '+v.maxhp);ok(G.res<500-10,'repair cost material, net of income ('+Math.round(500-G.res)+')');
- ok(!e.orders.length,'order done');v.hp=30;run(4);ok(e.orders[0]&&e.orders[0].type==='repair'&&e.orders[0].auto,'idle BÄVER starts repairing on its own');}
+ ok(!e.orders.length,'order done');v.hp=v.maxhp*.3;run(4);ok(e.orders[0]&&e.orders[0].type==='repair'&&e.orders[0].auto,'idle BÄVER starts repairing on its own');}
 // 4. planner: deliberate gaps on long lines, LC always held, pockets closed by fortress and depth defence
 {let gaps=0,plans=0,pk=0;for(const s of [1234,7341,4242,9001,2718,5555,31,77,1001,1002])for(const d of ['framskjutet','djup','fastning','rorligt']){B.ENEMY_CFG.doctrine=d;B.newGame(s);const P=B.W.plan;plans++;if(P.cracks>0)gaps++;if(d==='djup'||d==='fastning')pk+=P.airPockets;
    const lc=B.G.relays[2];if(B.G.enemies.filter(e=>e.guard===2).length<2){ok(false,'LC under-defended on '+s+' '+d);}}
- B.ENEMY_CFG.doctrine=null;ok(gaps>=plans*.7,'gaps in '+gaps+' of '+plans+' plans');ok(pk===0,'fortress and depth leave no air-landing pockets ('+pk+')');}
+ B.ENEMY_CFG.doctrine=null;
+ {let bare=0,n=0,lea=0;for(const s of [1234,7341,4242,9001,2718,5555]){B.newGame(s);const G=B.G,R1=G.relays[0];for(const a of G.enemies.filter(e=>e.kind==='aa'&&Math.hypot(e.x-R1.x,e.y-R1.y)>260)){n++;if(!G.enemies.some(f=>f.kind==='at'&&f.cover===a.id&&Math.hypot(f.x-a.x,f.y-a.y)<70))bare++;}
+   for(const f of G.enemies)if(f.cover&&f.kind==='at'&&f.leash>40)lea++;}
+  ok(n>0&&bare<=n*.1,'air defence beyond R1 has its own anti-tank cover ('+(n-bare)+' of '+n+')');ok(lea===0,'cover teams hold their post');}
+ ok(gaps>=plans*.7,'gaps in '+gaps+' of '+plans+' plans');ok(pk===0,'fortress and depth leave no air-landing pockets ('+pk+')');}
 // 5. a build can be cancelled: queued gives everything back, the one in production what is not printed yet
 {B.newGame(7341);const G=B.G;G.running=true;G.res=1000;B.queueBuild('tank');B.queueBuild('drone');const r0=G.res;
  B.cancelBuild('ship',1);ok(G.res===r0+120&&G.build.length===1,'queued HÖK cancelled, full refund');

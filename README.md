@@ -43,6 +43,7 @@ python3 -m http.server 8000
 - **Omgivande skärgård:** runt spelytan ligger en kuliss av öar, slumpad per ö mellan inner- och ytterskärgård med havet alltid i öster: höga skogklädda öar och sund i väster, kala hällar och öppen horisont i öster. En sammanslagen lågpolygonmesh utan träd eller skuggor (cirka 30 000 trianglar), tunnare dis än över spelytan, tända fönster och blinkande sektorfyrar på natten, och landkonturer utanför sjökortets ram.
 - **Luftstöd i gruppen:** en order till en grupp eller wing med både fordon och HÖK gör HÖK till eskort åt fordonen (uppdrag), och den HÖK:en går först när fordonen behöver spaning. Välj HÖK ensam för att skicka den på egen hand.
 - **Spaning åt VARG:** en VARG som anfaller ett kamouflerat mål som ingen ser ropar in en ledig HÖK som spanar från utanför känt luftvärn och väntar själv utom målets räckvidd. HÖK har fyra målsökande robotar som når 120 m (som robotskyttarnas), eller 170 m mot ett mål som en annan enhet har ögon på just nu, och har halv verkan mot pansar; bunkrar skjuter mot flyg på 130 m. Med en SPARV som pekar ut målet kan HÖK alltså slå från utanför bunkrarnas räckvidd.
+- **Markskydd för luftvärnet:** fienden har en egen öronmärkt budget för marktrupp (30 poäng utöver grundbudgeten 130). Den ställer ett dolt pansarvärnslag på flanken av varje luftvärn och varje robotskytt utan bunker i närheten, två vid de första nästena, och en stridsvagn vid ett luftvärn om det blir över. Området kring R1 lämnas som förut. Lagen håller sin plats i stället för att jaga larm. Pansarvärnets robot når 170 m (VARG 150) och laddar om på fyra sekunder, så luftvärnet går inte att plocka på avstånd: spana fram lagen och slå dem med HÖK (de kan inte skjuta mot flyg), eller ta striden. VARG tål 150 för att orka den. Testboten vinner lika ofta som före ändringen men tar längre tid och förlorar fler enheter.
 - **KROK för hand:** välj KROK och tryck E. Inga säkerhetsmarginaler, en kamera rakt nedåt i hörnet, F lyfter fordonet eller högen under dig eller sätter ned lasten.
 - **Fältreparation:** BÄVER lagar markfordon upp till 75 % där de står (B på en skadad VARG, eller automatiskt när den är ledig). Båda måste stå still och vara utanför eld, och det kostar material. Bakom en oröjd spärr är det den enda reparationen.
 - **Ekonomi:** bärgning. Riv med BÄVER för fullt värde, skjut sönder för mindre.
@@ -83,7 +84,7 @@ node t45.js base        # datorspelare på tio öar (två till tre minuter; öar
 | `t57.js` | BÄVER beställer lufttransport från fartyget |
 | `t58.js` | Låsta sektorer, försörjning bakom spärr, minor och inropning |
 | `t61.js` | Uppdrag och tillfälliga order: inropning återgår till uppdraget, Skift ger nytt uppdrag; välj enhet i hjulet, HÖK som luftstöd i blandad grupp, autopaus |
-| `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor, avbrutna byggen, fältlagning, HÖK-robotar, spaning åt VARG mot kamouflerade mål |
+| `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor, markskydd för luftvärnet, avbrutna byggen, fältlagning, HÖK-robotar, spaning åt VARG mot kamouflerade mål |
 
 `smoke.py` laddar spelet i Chromium med Playwright, öppnar ordershjulet och fångar sidfel. Den behöver `npm install` i `tests/` (för Three.js) och Playwright för Python.
 
