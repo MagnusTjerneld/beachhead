@@ -16,12 +16,12 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
  r2.captured=true;const hm=B.homeFor(v);ok(hm.ship||!/verkstad|fältvarv/.test(hm.name)||hm.name.indexOf(r2.id)<0,'captured point in a locked sector gives no service ('+hm.name+')');
  run(G,3);ok(!v.rtb,'cut-off VARG does not head for service');ok(G.log.some(l=>/Avskuren bakom spärr/.test(l.text)&&l.acts&&l.acts.length),'cut-off notice with actions');
  const w={x:r2.x+40,y:r2.y,value:30,id:'wX',kind:'crate'};G.wrecks.push(w);G.known.fill(1);ok(!B.callIn('krok',{wreck:w})||!G.krokQ.includes('wX'),'KROK refuses salvage behind the barrier');}
-// 3. mines: HÖK finds a field, the ground closes, a BÄVER clears it
+// 3. mines: buried, so a HÖK right above sees nothing; BÄVER's detector finds the field, the ground closes, the BÄVER clears it
 {B.newGame(8080);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const m=G.mines[0];
- const h=G.units.find(u=>u.kind==='drone');h.x=m.x+60;h.y=m.y;h.alt=30;run(G,1);
- ok(m.found,'HÖK detects minefield '+m.id);ok(m.walled.length>0,'found field closes '+m.walled.length+' cells');
+ const h=G.units.find(u=>u.kind==='drone');h.x=m.x+20;h.y=m.y;h.alt=30;h.orders=[];h.orbit={x:h.x,y:h.y};run(G,1);ok(!m.found,'HÖK does not see buried mines');
+ const e=G.units.find(u=>u.kind==='eng');e.x=m.x+40;e.y=m.y+5;run(G,1);
+ ok(m.found,'BÄVER detects minefield '+m.id);ok(m.walled.length>0,'found field closes '+m.walled.length+' cells');
  ok(G.log.some(l=>/Minfält upptäckt/.test(l.text)&&l.acts),'mine notice offers BÄVER');
- const e=G.units.find(u=>u.kind==='eng');e.x=m.x+40;e.y=m.y+5;
  ok(B.callIn('eng',{mine:m}),'call-in BÄVER on minefield');for(let t=0;t<200&&!m.cleared;t++)run(G,1);
  ok(m.cleared,'field cleared at t '+Math.round(G.time)+' s');}
 // 4. a VARG drives into an unfound field and is hurt

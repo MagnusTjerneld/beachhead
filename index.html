@@ -264,7 +264,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land. Når 150 m, längre än bunkrarna, men bara mot mål som någon ser. Anfaller den ett kamouflerat mål som ingen ser skickar den efter en ledig HÖK som spanar från utanför luftvärnets räckvidd, och väntar själv utom räckhåll tills målet syns. Finns ingen ledig HÖK får du en knapp för att skicka en. Svag mot infanteri, sårbar för pansarvärn.</li>
       <li><span class="em">BÄVER är ingenjören.</span> Den kör bara på land: en ny BÄVER står i byggbädden på HMS Birkas däck, och KROK lyfter den i land, vilket beställs automatiskt när du ger den en order. Spränger spärrarna på ramperna och i porten, röjer minfält och tar strategiska punkter. Lagar fordon i fält: peka på en skadad VARG och tryck B, eller låt en ledig BÄVER göra det själv. Båda måste stå still och vara utanför eld, lagningen går upp till 75 % och kostar material. Bakom en oröjd spärr är det den enda reparation som finns. En svårt skadad VARG som kommit ur elden kör till närmaste BÄVER i stället för till fartyget, och en order från dig håller den kvar i striden. En punkt kan inte tas förrän bunkrarna och luftvärnet som skyddar den är utslagna (låset på sjökortet). Byggs bara på fartyget.</li>
       <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
-      <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. HÖK och SPARV ser minfälten från luften, BÄVER med sin detektor på nära håll; en VARG märker dem först när den kör på en. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
+      <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. Minorna är nedgrävda och syns inte från luften. Bara BÄVER hittar dem, med sin detektor på 48 m; en VARG märker dem först när den kör på en och tar svår skada. Skicka BÄVER före genom trånga passager. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
       <li><span class="em">Fienden</span> har bunkrar, luftvärn (bara mot luftmål), robotskyttar med bärbart luftvärn (120 m, kamouflerade, spridda över hela ön utom vid stranden; ser du dem först med HÖK går de att undvika, VARG slår ut dem lätt), infanteri, pansarvärn, lätt pansar och stridsvagnar. Rörliga förband rycker ut när något i närheten anfalls.</li>
       <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer.</li>
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
@@ -1781,8 +1781,8 @@ function lockBarrier(p){let best=null,bd=1e9;for(const b of G.barriers){if(b.cle
 function cutOff(u){u.state='Avskuren bakom spärr, ingen service';
   if(!u.cutMsgT||G.time>u.cutMsgT){u.cutMsgT=G.time+30;const b=lockBarrier(u);
     say(u,'Avskuren bakom spärr '+(b?b.id:'')+'. Ingen service förrän spärren är sprängd.',[...(b?[{l:'Skicka BÄVER',f:()=>callIn('eng',{barrier:b})}]:[]),{l:'Lyft ut med KROK',f:()=>airlift([u],WORLD.landing)}]);}}
-/* ---------- mines: hidden fields on the roads through narrow ground. HÖK, SPARV and BÄVER find them, a VARG only by
-   driving into one. A found field closes the ground until a BÄVER has cleared it ---------- */
+/* ---------- mines: hidden fields on the roads through narrow ground. Buried mines cannot be seen from the air: only BÄVER's
+   detector finds them, and a VARG only by driving into one. A found field closes the ground until a BÄVER has cleared it ---------- */
 function mkMines(sites){
   for(const q of sites){const r=16,cells=[];for(let gy=Math.floor((q.y-r)/CELL);gy<=Math.floor((q.y+r)/CELL);gy++)for(let gx=Math.floor((q.x-r)/CELL);gx<=Math.floor((q.x+r)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx;if(Math.hypot(gx*CELL+5-q.x,gy*CELL+5-q.y)<=r)cells.push(i);}
     G.mines.push({id:'M'+(G.mines.length+1),x:q.x,y:q.y,r,cells,walled:[],found:false,cleared:false,prog:0});}
@@ -1794,7 +1794,7 @@ function mineFound(m,by,blast){if(m.found)return;m.found=true;m.foundT=G.time;
 function mineTick(dt){
   if(!G.mines||!G.mines.length)return;G.mineT=(G.mineT||0)-dt;const scan=G.mineT<=0;if(scan)G.mineT=.25;
   for(const m of G.mines){if(m.cleared||m.found)continue;
-    if(scan)for(const u of G.units){if(u.dead||u.carried)continue;const R=u.air?Math.min(85,u.vision*.5):u.kind==='eng'?48:0;if(R&&dist(u,m)<R+m.r){mineFound(m,u,false);break;}}
+    if(scan)for(const u of G.units){if(u.dead||u.carried)continue;const R=u.kind==='eng'?48:0;if(R&&dist(u,m)<R+m.r){mineFound(m,u,false);break;}}
     if(m.found)continue;
     for(const u of G.units){if(u.dead||u.air||u.carried||dist(u,m)>=m.r)continue;
       mineFound(m,u,true);u.hp-=u.kind==='tank'?55:45;u.lastHit=G.time;G.fx.push({k:'boom',x:u.x,y:u.y,t:0,ttl:1.1,small:true});
