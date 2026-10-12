@@ -478,6 +478,8 @@ const SHAPE_CFG={force:null,mix:{rund:1,as:1,hastsko:1,nas:1,udde:1},rough:1};
 /* the intro director's pace (see titleDirector): pan and acceleration in degrees, the spring, the fastest sweep a locked or held
    subject may make across the view, and the pause between shots in seconds */
 const DIR={pan:6,acc:2.5,k:.16,lockSweep:5,holdSweep:3.5,gap:[20,35]};
+/* the intro camera's hard limits on the final view: turn rate (degrees a second), acceleration, and how far the aim may stray from the HÖK */
+const CAMMAX={yaw:7,pitch:3,acc:3,keep:20};
 function smin(a,b,k){const h=clamp(.5+.5*(b-a)/k,0,1);return lerp(b,a,h)-k*h*(1-h);}
 function lobeD(L,x,y){const px=x-L.x,py=y-L.y;return Math.hypot((px*L.c+py*L.s)/L.rx,(-px*L.s+py*L.c)/L.ry);}
 function shapeD(S,x,y){let d=lobeD(S.lobes[0],x,y);for(let i=1;i<S.lobes.length;i++)d=smin(d,lobeD(S.lobes[i],x,y),S.k);for(const H of S.holes)d=Math.max(d,2-lobeD(H,x,y));return d;}
@@ -4473,7 +4475,19 @@ function titleCam(dtr){
   // a locked subject pulls the point the camera looks at onto itself, so it stays in the middle of the picture as we pass
   if(Dr.atP&&Dr.lock>.01){const w=Dr.lock*.6;la.x+=(Dr.atP.x-la.x)*w;la.y+=(Dr.atP.h-la.y)*w;la.z+=(Dr.atP.y-la.z)*w;}
   if(!TITLE.cam){TITLE.cam=cp.clone();TITLE.look=la.clone();}
-  const k=1-Math.exp(-2.2*dtr);TITLE.cam.lerp(cp,k);TITLE.look.lerp(la,k);/* the floor lifts the camera gently, not in a jump, when it passes over a cliff */{const f=camFloor(TITLE.cam.x,TITLE.cam.z)+2;TITLE.floor=TITLE.floor==null?f:TITLE.floor+(f-TITLE.floor)*(1-Math.exp(-3*dtr));if(TITLE.cam.y<TITLE.floor)TITLE.cam.y=TITLE.floor;}R3.cam.position.copy(TITLE.cam);R3.cam.lookAt(TITLE.look);R3.lookAt.copy(TITLE.look);
+  const k=1-Math.exp(-2.2*dtr);TITLE.cam.lerp(cp,k);TITLE.look.lerp(la,k);/* the floor lifts the camera gently, not in a jump, when it passes over a cliff */{const f=camFloor(TITLE.cam.x,TITLE.cam.z)+2;TITLE.floor=TITLE.floor==null?f:TITLE.floor+(f-TITLE.floor)*(1-Math.exp(-3*dtr));if(TITLE.cam.y<TITLE.floor)TITLE.cam.y=TITLE.floor;}R3.cam.position.copy(TITLE.cam);
+  /* the last word on the picture (decided 12 okt): however the director aims, the view itself turns at most CAMMAX.yaw degrees a
+     second (and CAMMAX.pitch up or down), speeds up and slows down gently, and never lets the HÖK out of the frame: the aim is held
+     within CAMMAX.keep degrees of the HÖK as seen from the camera */
+  {const c=TITLE.cam,ang=(t)=>({y:Math.atan2(t.z-c.z,t.x-c.x),p:Math.atan2(t.y-c.y,Math.hypot(t.x-c.x,t.z-c.z))}),dg=PI/180,dt=Math.min(dtr,.1);
+    const A=ang(TITLE.look),H=ang(m.position);let ty=H.y+clamp(angWrap(A.y-H.y),-CAMMAX.keep*dg,CAMMAX.keep*dg),tp=H.p+clamp(A.p-H.p,-CAMMAX.keep*.7*dg,CAMMAX.keep*.7*dg);
+    if(TITLE.vy==null){TITLE.vy=ty;TITLE.vp=tp;TITLE.vyv=0;TITLE.vpv=0;}
+    const ey=angWrap(ty-TITLE.vy),ep=tp-TITLE.vp;
+    TITLE.vyv=clamp(TITLE.vyv+clamp(ey*1.2-TITLE.vyv*2.2,-CAMMAX.acc*dg,CAMMAX.acc*dg)*dt,-CAMMAX.yaw*dg,CAMMAX.yaw*dg);
+    TITLE.vpv=clamp(TITLE.vpv+clamp(ep*1.2-TITLE.vpv*2.2,-CAMMAX.acc*dg,CAMMAX.acc*dg)*dt,-CAMMAX.pitch*dg,CAMMAX.pitch*dg);
+    // the HÖK itself may never leave the frame, so the limit gives way only at the frame's edge
+    TITLE.vy=H.y+clamp(angWrap(TITLE.vy+TITLE.vyv*dt-H.y),-(CAMMAX.keep+6)*dg,(CAMMAX.keep+6)*dg);TITLE.vp=clamp(TITLE.vp+TITLE.vpv*dt,H.p-CAMMAX.keep*dg,H.p+CAMMAX.keep*dg);
+    const L=tmpV2.set(c.x+Math.cos(TITLE.vy)*Math.cos(TITLE.vp)*100,c.y+Math.sin(TITLE.vp)*100,c.z+Math.sin(TITLE.vy)*Math.cos(TITLE.vp)*100);R3.cam.lookAt(L);R3.lookAt.copy(L);}
 }
 function titleTick(dtr){
   if(!TITLE.on)return;
@@ -4484,7 +4498,7 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
