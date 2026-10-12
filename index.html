@@ -4344,7 +4344,7 @@ function titleRoute(extra){extra=extra||85;
    The camera stands behind the HÖK a little off the line of sight, so the HÖK sits to one side and the subject beyond it. */
 function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h:10,w:1.3,id:'birka',r:1300,kind:'birka'}];
   let mv=null,stm=null;try{mv=R3&&R3.movers;stm=R3&&R3.steamer;}catch(_){}/* the headless tests have no 3D */
-  if(mv)mv.forEach((m,i)=>{if(m.title&&!m.g.visible)return;if(m.varg){if(m.varg===1)out.push({x:m.g.position.x,y:m.g.position.z,h:2,w:1,id:'vargar',r:550,kind:'vargar',low:true});return;}const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,h:big?12:3,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900,kind:big?'fartyg':'bat'});});
+  if(mv)mv.forEach((m,i)=>{if(m.title&&!m.g.visible)return;if(m.varg){if(m.varg===1)out.push({x:m.g.position.x,y:m.g.position.z,h:2,w:1,id:'vargar',r:1500,kind:'vargar',low:true});return;}const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,h:big?12:3,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900,kind:big?'fartyg':'bat'});});
   if(D.light)out.push({x:D.light.x,y:D.light.y,h:D.light.h+9,w:1,id:'fyr',r:900,kind:'fyr'});
   // the small things that make it an archipelago: jetties and the boats at them, boats at anchor, villas, sector lights, the
   // harbour inlet, the beach and the cove
@@ -4373,17 +4373,23 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   /* Birka first: taken early, while still well ahead, so that the pan toward it is slow, and followed until it is behind. A close
      pass sweeps faster than the camera may pan; then the camera falls behind and lets it go rather than whip round. */
   {const g=geo({x:CARRIER.x,y:CARRIER.y});const closing=D.bd!=null&&g.d<D.bd-.05;D.bd=g.d;
-    if((!D.poi||D.poi.id!=='birka')&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+75);
+    if((!D.poi||(D.poi.id!=='birka'&&D.poi.id!=='vargar'))&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+75);
     // hang on to Birka until a good way past: let go only when it is far behind (150 degrees and 250 m) or 1.6 km away
     if(D.poi&&D.poi.id==='birka'&&((Math.abs(g.r)>150*deg&&g.d>250)||g.d>1600))D.until=0;}
-  // the big lighthouse is always taken on the way past too, after Birka, and also early
-  {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(D.poi.id!=='birka'&&D.poi.id!=='fyr'))){const g=geo(L),cl=D.ld!=null&&g.d<D.ld-.05;D.ld=g.d;
+  /* the VARG patrol is a priority subject too (decided 12 okt), as high as Birka: neither cuts the other short, both cut anything
+     else. Taken early while still well ahead, followed until it is far behind. */
+  const PRIO=id=>id==='birka'||id==='vargar';
+  {const vq=titlePois().find(o=>o.id==='vargar');if(vq){const g=geo(vq),cl=D.vd!=null&&g.d<D.vd-.05;D.vd=g.d;
+    if((!D.poi||!PRIO(D.poi.id))&&cl&&g.d<900&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.vargar??-999)>90)take('vargar',true,T.t+75);
+    if(D.poi&&D.poi.id==='vargar'&&((Math.abs(g.r)>150*deg&&g.d>200)||g.d>1600))D.until=0;}}
+  // the big lighthouse is always taken on the way past too, after Birka and the patrol, and also early
+  {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(!PRIO(D.poi.id)&&D.poi.id!=='fyr'))){const g=geo(L),cl=D.ld!=null&&g.d<D.ld-.05;D.ld=g.d;
     if(cl&&g.d<750&&g.along>0&&Math.abs(g.r)<65*deg&&T.t-(D.seen.fyr??-999)>120)take('fyr',true,T.t+45);}}
   // a locked subject is followed until it is well behind or out of reach; a held one for its time
-  if(D.poi&&D.poi.track&&D.poi.id!=='birka'){const q=titlePois().find(o=>o.id===D.poi.id);if(!q||Math.abs(relTo(q.x,q.y))>120*deg||Math.hypot(q.x-p.x,q.y-p.z)>q.r*1.4)D.until=0;}
+  if(D.poi&&D.poi.track&&!PRIO(D.poi.id)){const q=titlePois().find(o=>o.id===D.poi.id);if(!q||Math.abs(relTo(q.x,q.y))>120*deg||Math.hypot(q.x-p.x,q.y-p.z)>q.r*1.4)D.until=0;}
   if(D.poi&&T.t>D.until){D.seen[D.poi.id]=T.t;D.poi=null;D.next=T.t+DIR.gap[0]+Math.random()*(DIR.gap[1]-DIR.gap[0]);}
   if(!D.poi&&T.t>D.next){let best=null,bs=.22,bLock=false;
-    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
+    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr'||q.id==='vargar')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
       // the pan to reach it, and whether it crosses the picture to the other side of the HÖK
       const pan=Math.abs(g.r-D.yaw),cross=Math.sign(g.r)!==Math.sign(D.yaw)&&Math.abs(g.r)>12*deg&&Math.abs(D.yaw)>12*deg;
       if(pan>55*deg||Math.abs(g.r)>70*deg)continue;
@@ -4395,12 +4401,12 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   /* a new subject is faded in, not jumped to: the aim moves from the island shot to the subject over about eight seconds (and back
      the same way when it is let go), so the turn starts and ends without a visible kick even when the subject is far off */
   let pullOut=0,lockOn=0,low=0,aimQ=null;D.at=null;if(D.poi){const q=titlePois().find(o=>o.id===D.poi.id)||(D.poi.id==='birka'?{x:CARRIER.x,y:CARRIER.y,h:10,id:'birka'}:null);
-    if(q){D.last={x:q.x,y:q.y,lim:D.poi.id==='birka'?160:D.poi.track?125:75};pullOut=q.low?.4:1;lockOn=D.poi.track?.8:.4;low=q.low?1:0;D.at=q;aimQ=q;}}
+    if(q){D.last={x:q.x,y:q.y,lim:PRIO(D.poi.id)?160:D.poi.track?125:75};pullOut=q.low?.4:1;lockOn=D.poi.track?.8:.4;low=q.low?1:0;D.at=q;aimQ=q;}}
   const dt=Math.min(dtr,.1);D.blend=clamp((D.blend??0)+(aimQ?1:-1)*dt/8,0,1);const bw=sm(D.blend);
   if(D.last&&bw>0){const poiWant=clamp(relTo(D.last.x,D.last.y),-D.last.lim*deg,D.last.lim*deg);want=lerp(want,poiWant,bw);}
   // a gentle spring on the camera's angle to the heading: slow to start, slow to stop, never faster than DIR.pan degrees a second;
-  // only on Birka's close pass may it go up to half again as fast, so the camera keeps it as we go by
-  const k=DIR.k,c=2*Math.sqrt(k)*1.1,bd=D.poi&&D.poi.id==='birka'?Math.hypot(CARRIER.x-p.x,CARRIER.y-p.z):1e9,bk=1+.5*clamp((450-bd)/200,0,1),acc=clamp(k*(want-D.yaw)-c*D.vel,-DIR.acc*bk*deg,DIR.acc*bk*deg);D.vel=clamp(D.vel+acc*dt,-DIR.pan*bk*deg,DIR.pan*bk*deg);D.yaw+=D.vel*dt;
+  // only on a close pass of Birka or the patrol may it go up to half again as fast, so the camera keeps it as we go by
+  const k=DIR.k,c=2*Math.sqrt(k)*1.1,bd=D.poi&&PRIO(D.poi.id)&&D.at?Math.hypot(D.at.x-p.x,D.at.y-p.z):1e9,bk=1+.5*clamp((450-bd)/200,0,1),acc=clamp(k*(want-D.yaw)-c*D.vel,-DIR.acc*bk*deg,DIR.acc*bk*deg);D.vel=clamp(D.vel+acc*dt,-DIR.pan*bk*deg,DIR.pan*bk*deg);D.yaw+=D.vel*dt;
   const ez=1-Math.exp(-.35*dt);D.pull=(D.pull??0)+(pullOut-(D.pull??0))*ez;D.lock=(D.lock??0)+(lockOn-(D.lock??0))*ez;D.low=(D.low??0)+(low-(D.low??0))*ez;
   if(D.at)D.atP={x:D.at.x,y:D.at.y,h:D.at.h};
   return D;}
