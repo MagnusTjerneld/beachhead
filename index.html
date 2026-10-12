@@ -71,7 +71,7 @@ button:disabled{opacity:.45;cursor:default}
 .btn:hover:not(:disabled){border-color:#41566a}
 .btn[aria-pressed="true"]{background:var(--signal);color:#1b1a12;border-color:var(--signal)}
 .btn.alarm{background:var(--mag);border-color:var(--mag);color:#fff}
-.stage{display:grid;grid-template-columns:minmax(0,1fr) clamp(380px,23vw,460px);gap:12px;min-height:0;padding-bottom:12px}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 8px var(--sideW,clamp(380px,23vw,460px));gap:2px;min-height:0;padding-bottom:12px}
 .slot{position:relative;min-height:0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:#0b1015}
 .pane{position:absolute;inset:0}
 .pane canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
@@ -81,6 +81,9 @@ button:disabled{opacity:.45;cursor:default}
 #subSlot .zoom{display:none}
 .vlabel{position:absolute;left:8px;top:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;background:rgba(17,26,34,.82);color:var(--ink);padding:3px 7px;border-radius:2px;pointer-events:none;z-index:2}
 #subSlot{aspect-ratio:4/3;flex:none}
+.sgrip{cursor:col-resize;position:relative;touch-action:none;outline:none}
+.sgrip::after{content:'';position:absolute;left:3px;top:50%;height:48px;margin-top:-24px;width:2px;border-radius:1px;background:var(--line)}
+.sgrip:hover::after,.sgrip:focus-visible::after,.sgrip.drag::after{background:var(--signal);top:0;height:100%;margin-top:0}
 .side{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
 .side > *{flex-shrink:0}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;min-height:84px}
@@ -233,6 +236,7 @@ button:disabled{opacity:.45;cursor:default}
       <div class="wheel" id="wheel" hidden><div class="ring" id="wRing"></div><div class="wchips" id="wChips"></div></div>
     </div>
     <div class="roster" id="roster" role="toolbar" aria-label="Enheter"></div></div>
+    <div class="sgrip" id="sgrip" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Sidopanelens bredd" title="Dra för bredare sidopanel och större livebilder. Dubbelklicka för standardbredd."></div>
     <aside class="side">
       <div class="feeds" id="feeds"></div>
       <div class="slot" id="subSlot"><button class="swap" id="bSwap" type="button" title="Byt huvudvy (Q)">⇄ Byt vy</button>
@@ -308,7 +312,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
-      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
+      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. Automatiskt flyger den bara över spanat område och sätter aldrig ned inom räckhåll för kända hot. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, SPARV först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
@@ -3820,6 +3824,22 @@ function mkFeeds(){const box=$('feeds');box.innerHTML='';FEED.list=[];
     F.pinB.addEventListener('click',ev=>{ev.stopPropagation();F.pin=!F.pin;F.pinB.setAttribute('aria-pressed',String(F.pin));});
     FEED.list.push(F);}
   setFeeds(FEED.on);}
+/* resizable side panel: drag the grip between the main view and the side column; width is a per-viewer convenience kept in localStorage */
+const SIDEW={min:300,maxF:.6};
+function setSideW(w,save){const st=document.querySelector('.stage');if(!st)return;
+  if(w==null){st.style.removeProperty('--sideW');try{localStorage.removeItem('bh.sideW');}catch(_){}return;}
+  w=clamp(Math.round(w),SIDEW.min,Math.max(SIDEW.min,Math.round(window.innerWidth*SIDEW.maxF)));st.style.setProperty('--sideW',w+'px');
+  if(save){try{localStorage.setItem('bh.sideW',String(w));}catch(_){}}}
+(function(){const g=$('sgrip'),side=document.querySelector('.side');if(!g||!side)return;
+  try{const v=+localStorage.getItem('bh.sideW');if(v>0)setSideW(v,false);}catch(_){}
+  let drag=false;
+  g.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag=true;g.classList.add('drag');try{g.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+  g.addEventListener('pointermove',e=>{if(!drag)return;setSideW(side.getBoundingClientRect().right-e.clientX-5,false);});
+  const end=e=>{if(!drag)return;drag=false;g.classList.remove('drag');setSideW(side.getBoundingClientRect().width,true);};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('dblclick',()=>setSideW(null));
+  g.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?40:e.key==='ArrowRight'?-40:0;if(!d)return;e.preventDefault();e.stopPropagation();setSideW(side.getBoundingClientRect().width+d,true);});
+  window.addEventListener('resize',()=>{const st=document.querySelector('.stage');if(st&&st.style.getPropertyValue('--sideW'))setSideW(side.getBoundingClientRect().width,false);});})();
 function setFeeds(on){FEED.on=on;try{localStorage.setItem('bh.feeds',on?'1':'0');}catch(_){}$('feeds').hidden=!on;const b=$('bFeeds');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Livebilder':'Livebilder av';}
 /* the two small live pictures: the first follows the active unit (the first selected one that the main camera is not already
    showing), the second the unit that last reported in the log, or the build bay when a build is started on the ship. A pinned
@@ -3960,8 +3980,12 @@ function audInit(){
   if(AUD.ctx){if(AUD.ctx.state==='suspended')AUD.ctx.resume();return;}
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   let c;try{c=new AC();}catch(_){return;}AUD.ctx=c;
-  const comp=c.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;comp.connect(c.destination);
-  AUD.master=c.createGain();AUD.master.gain.value=AUD.on?AUD.vol:0;AUD.master.connect(comp);
+  // master: high-pass at 40 Hz (no speaker plays lower, it only eats headroom), a compressor slow enough not to bend the low
+  // waveforms, then a limiter just under full scale so a pile of engines never clips
+  const lim=c.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.002;lim.release.value=.12;lim.connect(c.destination);
+  const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=12;comp.ratio.value=4;comp.attack.value=.03;comp.release.value=.3;comp.connect(lim);
+  const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=40;hp.Q.value=.7;hp.connect(comp);
+  AUD.master=c.createGain();AUD.master.gain.value=AUD.on?AUD.vol:0;AUD.master.connect(hp);
   const nb=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AUD.noise=nb;
   // sea and wind bed
   const sea=noiseSrc();const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=420;const g=c.createGain();g.gain.value=.05;
@@ -4040,7 +4064,7 @@ function mkVoice(u){
   if(u.kind==='tank'||u.kind==='eng'){
     const f0=u.kind==='tank'?34:41;const o1=st(c.createOscillator());o1.type='sawtooth';o1.frequency.value=f0;const o2=st(c.createOscillator());o2.type='square';o2.frequency.value=f0*2.01;
     const g2=c.createGain();g2.gain.value=.3;o2.connect(g2);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=380;o1.connect(f);g2.connect(f);
-    const am=c.createGain();am.gain.value=.6;f.connect(am);const lfo=st(c.createOscillator());lfo.type='square';lfo.frequency.value=f0*.45;const ld=c.createGain();ld.gain.value=.35;lfo.connect(ld);ld.connect(am.gain);am.connect(out);
+    const am=c.createGain();am.gain.value=.5;f.connect(am);const lfo=st(c.createOscillator());lfo.type='triangle';lfo.frequency.value=f0*.45;const ld=c.createGain();ld.gain.value=.22;lfo.connect(ld);ld.connect(am.gain);am.connect(out);
     const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=1500;nf.Q.value=2.5;const ng=c.createGain();ng.gain.value=0;n.connect(nf);nf.connect(ng);ng.connect(out);
     const cl=st(c.createOscillator());cl.type='square';cl.frequency.value=6;const cg=c.createGain();cg.gain.value=0;cl.connect(cg);cg.connect(ng.gain);
     V.set=(sp,mv)=>{const t=c.currentTime;o1.frequency.setTargetAtTime(f0*(1+.5*mv),t,.3);o2.frequency.setTargetAtTime(f0*2.01*(1+.5*mv),t,.3);lfo.frequency.setTargetAtTime(f0*.45*(1+.5*mv),t,.3);f.frequency.setTargetAtTime(380+420*mv,t,.3);
@@ -4052,11 +4076,15 @@ function mkVoice(u){
     const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.7;const ng=c.createGain();ng.gain.value=.25;n.connect(nf);nf.connect(ng);ng.connect(out);
     V.set=(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.18*mv),t,.25);b.frequency.setTargetAtTime(f0*1.034*(1+.18*mv),t,.25);};
     V.base=u.kind==='drone'?.38:.22;
+  }else if(u.kind==='mus'){ // MUS: a small electric drive, a thin whine and a little gravel
+    const a=st(c.createOscillator());a.type='triangle';a.frequency.value=520;const g=c.createGain();g.gain.value=.18;a.connect(g);g.connect(out);
+    const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=3200;nf.Q.value=1.2;const ng=c.createGain();ng.gain.value=.08;n.connect(nf);nf.connect(ng);ng.connect(out);
+    V.set=(sp,mv)=>{a.frequency.setTargetAtTime(520+680*mv,c.currentTime,.15);};V.base=.16;
   }else{ // KROK: rotor thump plus turbine
-    const n=st(noiseSrc()),f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=230;n.connect(f);const am=c.createGain();am.gain.value=.15;f.connect(am);
-    const lfo=st(c.createOscillator());lfo.frequency.value=4.6;const ld=c.createGain();ld.gain.value=1.1;lfo.connect(ld);ld.connect(am.gain);am.connect(out);
+    const n=st(noiseSrc()),f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=230;n.connect(f);const am=c.createGain();am.gain.value=.38;f.connect(am);
+    const lfo=st(c.createOscillator());lfo.frequency.value=4.6;const ld=c.createGain();ld.gain.value=.32;lfo.connect(ld);ld.connect(am.gain);am.connect(out);
     const tb=st(c.createOscillator());tb.type='sine';tb.frequency.value=1180;const tg=c.createGain();tg.gain.value=.035;tb.connect(tg);tg.connect(out);
-    V.set=(sp,mv)=>{lfo.frequency.setTargetAtTime(4.6+.6*mv,c.currentTime,.4);};V.base=.8;
+    V.set=(sp,mv)=>{lfo.frequency.setTargetAtTime(4.6+.6*mv,c.currentTime,.4);};V.base=.6;
   }
   return V;
 }
