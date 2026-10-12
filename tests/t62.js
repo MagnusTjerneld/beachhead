@@ -20,7 +20,10 @@ function openSpot(W,x,y,r){for(let k=0;k<72;k++){const b=k*Math.PI/36;let okL=tr
  G.ctrl=null;run(3);ok(Math.hypot(m.x-v.x,m.y-v.y)===d,'let go, it stands still (no autonomy)');
  // mines: found, never set off
  const mn={x:m.x+Math.cos(a)*-10,y:m.y+Math.sin(a)*-10,r:9,cleared:false,found:false,cells:[],walled:[]};G.mines=[mn];
- const hp0=m.hp;m.x=mn.x;m.y=mn.y;run(1);ok(mn.found&&!m.dead&&m.hp===hp0,'a MUS on a mine finds it and does not set it off');
+const hp0=m.hp;m.x=mn.x;m.y=mn.y;mn.cells=[];{const gx=Math.floor(mn.x/10),gy=Math.floor(mn.y/10);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)mn.cells.push((gy+dy)*220+gx+dx);}
+ G.ctrl=m.id;run(1);ok(mn.found&&!m.dead&&m.hp===hp0,'a MUS on a mine finds it and does not set it off');
+ ok(mn.walled.length>0,'the found field closes the ground');{const x0=m.x,y0=m.y;m.heading=a+Math.PI;B.CTRL.thr=1;run(2);B.CTRL.thr=0;ok(Math.hypot(m.x-x0,m.y-y0)>15,'a MUS drives on through the closed ground ('+Math.round(Math.hypot(m.x-x0,m.y-y0))+' m)');}
+ G.ctrl=null;
  // the charge kills a tank and spares what is beyond 12 m
  const tk=G.enemies.find(e=>e.kind==='tank')||G.enemies[0];tk.kind='tank';tk.dead=false;tk.hp=160;tk.x=m.x+5;tk.y=m.y;tk.hx=tk.x;tk.hy=tk.y;tk.leash=0;
  const far=G.enemies.find(e=>e!==tk);far.dead=false;far.hp=40;far.x=m.x+30;far.y=m.y;far.hx=far.x;far.hy=far.y;far.leash=0;
