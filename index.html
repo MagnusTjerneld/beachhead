@@ -310,7 +310,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
-      <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
+      <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen eskorterar. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
@@ -3511,25 +3511,44 @@ function wheelWho(sx,sy,pk,srcEl,kind){
   const go=ids=>{if(!ids.length)return;setSel(ids);reopen();};
   const tp=callTarget(pk)||pk.world||{x:CARRIER.x,y:CARRIER.y};
   let title,sub,items=[];
-  if(!kind){title='VEM?';sub=targetLabel(pk)||'';
+  if(!kind){title='VEM?';sub=pk.unit?'mål: '+pk.unit.name:targetLabel(pk)||'';
     for(const[k,l]of WHO){const L=avail(k);items.push({l:l+(L.length>1?' · '+L.length:''),off:!L.length,keep:true,f:()=>{
       if(L.length>1){wheelWho(sx,sy,pk,srcEl,k);return;}if(k==='krok'){selectKrok(L[0]);reopen();}else go([L[0].id]);}});}}
   else{const L=avail(kind),lab=WHO.find(w=>w[0]===kind)[1];title=lab;sub='vilken?';
     if(kind!=='krok')items.push({l:'Alla '+lab,keep:true,f:()=>go(L.filter(heard).map(v=>v.id))});
-    for(const v of L){const out=kind!=='krok'&&!heard(v);items.push({l:v.name+' · '+Math.round(dist(v,tp))+' m'+(out?' · ingen kontakt':v.orders&&v.orders.length?' · upptagen':''),off:out,keep:true,
+    for(const v of L){const out=kind!=='krok'&&!heard(v);items.push({l:v.name+(pk.unit===v?' · målet':' · '+Math.round(dist(v,tp))+' m')+(out?' · ingen kontakt':v.orders&&v.orders.length?' · upptagen':''),off:out,keep:true,
       f:()=>{if(kind==='krok'){selectKrok(v);reopen();}else go([v.id]);}});}}
   renderWheel(sx,sy,srcEl,title,sub,items,()=>{if(kind)return false;
     const lab=document.createElement('div');lab.className='lab';lab.textContent='Wing (1 till 4)';wChips.appendChild(lab);
     for(let n=1;n<=4;n++){const k=String(n),w=(G.wings[k]||[]).filter(id=>G.units.some(u=>u.id===id&&!u.dead));const b=document.createElement('button');b.type='button';b.className='chip wing';b.textContent=k+' · '+(w.length||'tom');b.disabled=!w.length;
       b.addEventListener('click',ev=>{ev.stopPropagation();selectWing(k);reopen();});wChips.appendChild(b);}
-    return true;},kind?()=>wheelWho(sx,sy,pk,srcEl,null):null);}
+    return true;},kind?()=>wheelWho(sx,sy,pk,srcEl,null):pk.unit&&!pk.unit.dead?{f:()=>selfMenu(sx,sy,pk,srcEl),hint:pk.unit.name+' själv',title:pk.unit.name}:null);}
+/* a unit's own menu: what you do with the unit itself rather than with a target. Reached by right-clicking the unit and
+   then the middle of the first level, or by right-clicking the unit you have selected. Orders go to that unit directly. */
+function selfItems(t){const it=[],sel=G.selIds.includes(t.id),sole=sel&&G.selIds.length===1,ok=heard(t),off=!ok;
+  if(!sole)it.push({l:'Välj',f:()=>setSel([t.id])});
+  if(G.selIds.length&&!sole)it.push({l:sel?'Ta ur urval':'Lägg till i urval',f:()=>toggleSel(t.id)});
+  it.push({l:'Kamera',f:()=>setCam(t.id)});
+  if(atBirka(t))it.push({l:'Återvinn ('+recycleValue(t)+')',danger:true,f:()=>recycle([t])});
+  const dm=v=>Math.round(Math.hypot(v.x-t.x,v.y-t.y)),nc=ok?'':' · ingen kontakt';
+  if(t.kind==='scout'){it.push({l:'Utforska fritt'+nc,off,f:()=>giveOrder(t,{type:'explore',post:'def'},false,'mission')});
+    const z=WORLD.zid[cellIdx(t.x,t.y)];if(z>=0)it.push({l:'Utforska zonen här'+nc,off,f:()=>giveOrder(t,{type:'explore',zone:z,post:'def'},false,'mission')});
+    it.push({l:'Till service'+nc,off,f:()=>goRtb(t,'Återvänder till '+homeFor(t).name+'.')});}
+  if(t.kind==='eng'){wheelPost=t.post;
+    const room=()=>it.length<8;
+    for(const r of G.relays.filter(r=>!r.captured).sort((a,b)=>dm(a)-dm(b)).slice(0,2))if(room())it.push({l:'Ta '+r.id+' · '+PTYPE[r.type].label.toLowerCase()+' ('+dm(r)+' m)'+nc,off,f:()=>giveOrder(t,{type:'capture',relay:r,post:wheelPost},false)});
+    for(const b of G.barriers.filter(b=>!b.cleared).sort((a,b)=>dm(a)-dm(b)).slice(0,1))if(room())it.push({l:'Spräng spärr '+b.id+' ('+dm(b)+' m)'+nc,off,f:()=>giveOrder(t,{type:'clear',barrier:b,post:wheelPost},false)});
+    for(const st of G.structs.filter(st=>!st.dead&&isKnown(st.x,st.y)&&dm(st)<500).sort((a,b)=>dm(a)-dm(b)).slice(0,2))if(room())it.push({l:'Riv '+slabel(st)+' ('+dm(st)+' m)'+nc,off,f:()=>{st.krok=true;giveOrder(t,{type:'demolish',s:st,post:wheelPost},false);}});}
+  return it;}
+function selfMenu(sx,sy,pk,srcEl){const t=pk.unit;if(!t||t.dead)return;
+  renderWheel(sx,sy,srcEl,t.name,'egen meny',selfItems(t),()=>false,()=>wheelWho(sx,sy,pk,srcEl,null));}
 function openWheel(sx,sy,pk,srcEl,pick){
   if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
   lastWheel={sx,sy,pk,srcEl};
-  if(!pk.wp&&!pk.unit&&(pick||(!selUnit()&&!selKrok()))){wheelWho(sx,sy,pk,srcEl,typeof pick==='string'?pick:null);return;}
+  if(!pk.wp&&(pick||(!selUnit()&&!selKrok()))){wheelWho(sx,sy,pk,srcEl,typeof pick==='string'?pick:null);return;}
   {const su=selUnit();if(su&&!heard(su)&&!selKrok()){noContact([su]);return;}}
   const u=selUnit();
-  let title='',sub='',items=[],postTarget=null;
+  let title='',sub='',items=[],postTarget=null,followT=null;
   const sk=selKrok();
   if(sk){
     title=sk.name;sub=sk.orders.length?sk.orders.length+' order i kö':'ingen kö';
@@ -3549,21 +3568,12 @@ function openWheel(sx,sy,pk,srcEl,pick){
     if(hasEng)items.push({l:'Riv + beställ KROK',f:()=>{st.krok=true;groupOrder({struct:st,only:'eng'},false,wheelPost);}});
     if(hasGun)items.push({l:'Skjut sönder ('+(T.boom?30:60)+' %)',danger:!T.boom,f:()=>groupOrder({struct:st,only:'gun'},false,'off')});
     items.push({l:st.krok?'Ingen KROK efteråt':'KROK efteråt',f:()=>{st.krok=!st.krok;say(null,st.krok?'KROK hämtar rasmassorna när '+slabel(st)+' är riven.':'KROK hämtar inte '+slabel(st)+' automatiskt.');}});
-  }else if(pk.unit&&(!u||pk.unit.id!==u.id)){
-    const t=pk.unit;title=t.name;sub='egen enhet';
-    items.push({l:'Välj',f:()=>setSel([t.id])});
-    if(atBirka(t))items.push({l:'Återvinn ('+recycleValue(t)+')',danger:true,f:()=>recycle([t])});items.push({l:G.selIds.includes(t.id)?'Ta ur urval':'Lägg till i urval',f:()=>toggleSel(t.id)});items.push({l:'Kamera',f:()=>setCam(t.id)});
-    if(u){items.push({l:'Följ',f:()=>groupFollow(t,wheelPost,false)});items.push({l:'Eskortera',f:()=>groupFollow(t,wheelPost,true)});}
-  }else if(pk.unit&&u&&pk.unit.id===u.id&&u.kind==='scout'){
-    title=u.name;sub='spanare';items.push({l:'Utforska fritt',f:()=>giveOrder(u,{type:'explore',post:'def'},false,'mission')});{const z=WORLD.zid[cellIdx(u.x,u.y)];if(z>=0)items.push({l:'Utforska zonen här',f:()=>giveOrder(u,{type:'explore',zone:z,post:'def'},false,'mission')});}items.push({l:'Till service',f:()=>goRtb(u,'Återvänder till '+homeFor(u).name+'.')});
-  }else if(pk.unit&&u&&pk.unit.id===u.id&&u.kind==='eng'){
-    title=u.name;sub='ingenjör · uppgifter i närheten';wheelPost=u.post;const dm=v=>Math.round(Math.hypot(v.x-u.x,v.y-u.y));
-    const pts=G.relays.filter(r=>!r.captured).sort((a,b)=>dm(a)-dm(b)).slice(0,2);
-    for(const r of pts)items.push({l:'Ta '+r.id+' · '+PTYPE[r.type].label.toLowerCase()+' ('+dm(r)+' m)',f:()=>giveOrder(u,{type:'capture',relay:r,post:wheelPost},false)});
-    const bs=G.barriers.filter(b=>!b.cleared).sort((a,b)=>dm(a)-dm(b)).slice(0,1);
-    for(const b of bs)items.push({l:'Spräng spärr '+b.id+' ('+dm(b)+' m)',f:()=>giveOrder(u,{type:'clear',barrier:b,post:wheelPost},false)});
-    const ss=G.structs.filter(st=>!st.dead&&isKnown(st.x,st.y)&&dm(st)<500).sort((a,b)=>dm(a)-dm(b)).slice(0,3);
-    for(const st of ss)items.push({l:'Riv '+slabel(st)+' ('+dm(st)+' m)',f:()=>{st.krok=true;giveOrder(u,{type:'demolish',s:st,post:wheelPost},false);}});
+  }else if(pk.unit&&u&&pk.unit.id!==u.id){
+    /* the selected units act on another own unit; its own menu (Välj, Kamera, ...) is in the middle of the first level */
+    const t=pk.unit;title=t.name;sub=selUnits().length>1?selUnits().length+' valda':u.name;
+    followT=t;
+  }else if(pk.unit&&u&&pk.unit.id===u.id){
+    title=u.name;sub='egen meny';items=selfItems(u);
     if(!items.length)return;
   }else if(!u){title=targetLabel(pk);sub='ropa in';}
   else if(pk.wp){
@@ -3598,10 +3608,11 @@ function openWheel(sx,sy,pk,srcEl,pick){
     const lift=selUnits().filter(v=>v.kind==='tank'||v.kind==='eng');if(lift.length&&G.kroks.some(k=>!k.dead))items.push({l:'Flyg dit med KROK',f:()=>airlift(lift,pt)});
     if(selUnits().some(v=>v.kind==='tank'&&v.musId&&unitById(v.musId)&&!unitById(v.musId).dead))items.push({l:'Sätt ut MUS (X)',f:()=>roverKey()});
   }
-  if(!sk&&u){const kinds=new Set(selUnits().map(v=>v.kind));for(const c2 of callItems(pk,true))if(kinds.has(c2.kind)&&items.length<8)items.push(c2);}
+  if(!sk&&u&&!(pk.unit&&pk.unit.id===u.id)){const kinds=new Set(selUnits().map(v=>v.kind));for(const c2 of callItems(pk,true))if(kinds.has(c2.kind)&&items.length<8)items.push(c2);}
+  if(followT){const t=followT;items.push({l:'Följ',f:()=>groupFollow(t,wheelPost,false)});items.push({l:'Eskortera',f:()=>groupFollow(t,wheelPost,true)});}
   if(!items.length)return;
-  const canBack=!pk.wp&&!pk.unit;
-  const showChips=!sk&&!!u&&!pk.wreck&&!(pk.unit&&pk.unit.id!==u.id);
+  const canBack=!pk.wp;
+  const showChips=!sk&&!!u&&!pk.wreck&&!pk.unit;
   renderWheel(sx,sy,srcEl,title,sub,items,()=>{if(!showChips)return false;
     const lab=document.createElement('div');lab.className='lab';lab.textContent=postTarget?'Hållning för punkten':'Hållning för ordern';wChips.appendChild(lab);
     for(const p of PK){const b=document.createElement('button');b.type='button';b.className='chip';b.innerHTML=postSvg(p)+'<span></span>';b.lastChild.textContent=POST[p];b.setAttribute('aria-pressed',String(wheelPost===p));
@@ -3609,9 +3620,9 @@ function openWheel(sx,sy,pk,srcEl,pick){
     return true;},canBack?()=>openWheel(sx,sy,pk,srcEl,true):null);
 }
 function renderWheel(sx,sy,srcEl,title,sub,items,fillChips,back){
-  wRing.innerHTML='';
-  const c=document.createElement(back?'button':'div');if(back)c.type='button';c.className='wc'+(back?' back':'');c.innerHTML='<b></b><span></span>'+(back?'<i>annan enhet</i>':'');c.children[0].textContent=title;c.children[1].textContent=sub;
-  if(back)c.addEventListener('click',ev=>{ev.stopPropagation();back();});wRing.appendChild(c);
+  wRing.innerHTML='';const bk=typeof back==='function'?{f:back,hint:'annan enhet'}:back||null;
+  const c=document.createElement(bk?'button':'div');if(bk)c.type='button';c.className='wc'+(bk?' back':'');c.innerHTML='<b></b><span></span>'+(bk?'<i></i>':'');c.children[0].textContent=title;c.children[1].textContent=sub;if(bk)c.children[2].textContent=bk.hint;
+  if(bk)c.addEventListener('click',ev=>{ev.stopPropagation();bk.f();});wRing.appendChild(c);
   const n=items.length;
   items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.className='wi'+(it.danger?' danger':'')+(it.call?' call':'')+(it.off?' off':'');b.textContent=it.l;b.disabled=!!it.off;const a=-PI/2+i*TAU/n,rx=n>4?150:86,ry=n>4?100:86;b.style.left=(125+Math.cos(a)*rx)+'px';b.style.top=(125+Math.sin(a)*ry)+'px';
     b.addEventListener('click',ev=>{ev.stopPropagation();if(it.off)return;it.f();if(!it.keep)closeWheel();uiTick(true);});wRing.appendChild(b);});
@@ -3810,7 +3821,7 @@ function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map();
 }
 /* ---------- live feeds: two small cameras on other units, own renderers, no shadows, each refreshed about 15 times a second ---------- */
 const FEED={list:[],n:0,on:true,pickT:0};
-globalThis.__BHUI={FEED,feedPick:()=>feedPick(),setSel:ids=>setSel(ids)};   // for the browser checks
+globalThis.__BHUI={FEED,feedPick:()=>feedPick(),setSel:ids=>setSel(ids),get G(){return G;},openWheel:(x,y,pk,pick)=>openWheel(x,y,pk,null,pick),addUnit:(k,x,y)=>{const u=makeUnit(k,x,y);G.units.push(u);return u;}};   // for the browser checks
 try{FEED.on=localStorage.getItem('bh.feeds')!=='0';}catch(_){}
 function mkFeeds(){const box=$('feeds');box.innerHTML='';FEED.list=[];
   for(let i=0;i<2;i++){const el=document.createElement('div');el.className='feed';
