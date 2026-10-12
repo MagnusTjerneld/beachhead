@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];/* the old start, so results compare */
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */
 B.newGame(1234);const G=B.G;G.running=true;
 const k=G.kroks[0],t=G.units.find(u=>u.kind==='tank'),e=G.units.find(u=>u.kind==='eng');
 const R2=G.relays[1];

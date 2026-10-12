@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require(process.argv[3]||'./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];/* the old start, so results compare */
+require(process.argv[3]||'./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */
 for(const seed of (process.argv[2]||'7341,1234,9001,31,77').split(',').map(Number)){
   B.newGame(seed);const G=B.G;G.running=true;const k=G.kroks[0],d=G.units.find(u=>u.kind==='drone'),t=G.units.find(u=>u.kind==='tank');
   const R1=G.relays[0],W=B.W;

@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];/* the old start, so results compare */const C=B.CTRL;
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */const C=B.CTRL;
 B.newGame(7341);const G=B.G;G.running=true;
 const ts=G.units.filter(u=>u.kind==='tank'),d=G.units.find(u=>u.kind==='drone'),e=G.units.find(u=>u.kind==='eng');
 B.setSel([ts[0].id,ts[1].id,d.id,e.id]);B.assignWing(1);

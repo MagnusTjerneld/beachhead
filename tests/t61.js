@@ -1,6 +1,6 @@
 // missions and temporary orders: a call-in is done, then the unit goes back to its mission; Shift makes a new mission
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};
 const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;};
 // 1. HÖK on escort is called in against an enemy, kills it and returns to the escort
@@ -122,5 +122,5 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
 // a BÄVER from the yard drives along the deck to a stern pad no KROK owns
 {B.START.units=['eng'];B.newGame(1234);const G=B.G;G.running=true;const e=G.units.find(u=>u.kind==='eng'),k=G.kroks[0];run(15);
  ok(Math.hypot(e.x-k.pad.x,e.y-k.pad.y)>6&&B.freePad(e)!==null,'the BÄVER is not on the KROK pad');ok(/helikopterplattan/.test(e.state)||e.state==='Väntar på order','it waits on a free pad ('+e.state+')');
- B.START.units=['drone','tank','tank','eng'];}
+ B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
