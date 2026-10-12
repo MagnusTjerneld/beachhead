@@ -3201,6 +3201,8 @@ function buildStatic(){
     mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210),3.4,hs(1),2.4,4,-1,true);
     mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440),3,hs(2),2.4,4,1,true);
     mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),9,hs(3),2.4,3.2,-1);
+    // three VARG on patrol in a V, in the intro film only, meeting the HÖK head on (shown and hidden with the title)
+    {const VR=titleRoute(200),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;});}
     // traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop
     const FR=fairwayRoute(W);[['ferry',11,0],['tanker',6,.2],['box',7.5,.45],['ferry',11,.55],['cargo',6.5,.78]].forEach(([k,sp,ph],i)=>{const sh=mkBigShip(k);mv2(sh,FR,sp,(ph+hs(10+i)*.08)%1,sh.userData.beam,sh.userData.len/2,1);});}if(W.islets)mkIslets(W.islets,st);
   for(const r of G.relays){const g=mkPointMesh(r);g.position.set(r.x,groundY(r.x,r.y),r.y);st.add(g);R3.relays.set(r.id,g);}
@@ -3379,8 +3381,10 @@ function sync3D(dtr){
   if(R3.movers){const T=R3.decoT||0;
     for(const m of R3.movers){const RT=m.RT,at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const k=(lo+hi)>>1;if(RT.len[k]<=d)lo=k;else hi=k;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a2=RT.pts[lo],b2=RT.pts[(lo+1)%RT.N];return{x:lerp(a2.x,b2.x,f),z:lerp(a2.z,b2.z,f)};};
       const push=q=>{const dx=q.x-CARRIER.x,dz=q.z-CARRIER.y,d=Math.hypot(dx,dz)||1;if(d<170){q.x+=dx/d*(170-d);q.z+=dz/d*(170-d);}return q;};
+      if(m.title){const on=!!TITLE.on;m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
       const dd=m.dir*T*m.speed+RT.L*m.ph,p0=push(at(dd)),p1=push(at(dd+m.dir*20)),hd=Math.atan2(p1.z-p0.z,p1.x-p0.x);
-      const big=m.g.userData.big;m.g.position.set(p0.x,(m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
+      if(m.lat){const lx=-Math.sin(hd)*m.lat,lz=Math.cos(hd)*m.lat;p0.x+=lx;p0.z+=lz;}
+      const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.9:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
       const sx=p0.x-Math.cos(hd)*m.half,sz=p0.z-Math.sin(hd)*m.half;
       if(m.tt<0||T-m.tt>.25){m.tt=T;m.trail.unshift({x:sx,z:sz,t:T});if(m.trail.length>m.wake.N)m.trail.pop();}
       updWake(m,{x:sx,z:sz,t:T},T);
@@ -4339,7 +4343,7 @@ function titleRoute(extra){extra=extra||85;
    The camera stands behind the HÖK a little off the line of sight, so the HÖK sits to one side and the subject beyond it. */
 function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h:10,w:1.3,id:'birka',r:1300,kind:'birka'}];
   let mv=null,stm=null;try{mv=R3&&R3.movers;stm=R3&&R3.steamer;}catch(_){}/* the headless tests have no 3D */
-  if(mv)mv.forEach((m,i)=>{const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,h:big?12:3,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900,kind:big?'fartyg':'bat'});});
+  if(mv)mv.forEach((m,i)=>{if(m.title&&!m.g.visible)return;if(m.varg){if(m.varg===1)out.push({x:m.g.position.x,y:m.g.position.z,h:2,w:1,id:'vargar',r:1200,kind:'vargar',low:true});return;}const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,h:big?12:3,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900,kind:big?'fartyg':'bat'});});
   if(D.light)out.push({x:D.light.x,y:D.light.y,h:D.light.h+9,w:1,id:'fyr',r:900,kind:'fyr'});
   // the small things that make it an archipelago: jetties and the boats at them, boats at anchor, villas, sector lights, the
   // harbour inlet, the beach and the cove
@@ -4368,8 +4372,9 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   /* Birka first: taken early, while still well ahead, so that the pan toward it is slow, and followed until it is behind. A close
      pass sweeps faster than the camera may pan; then the camera falls behind and lets it go rather than whip round. */
   {const g=geo({x:CARRIER.x,y:CARRIER.y});const closing=D.bd!=null&&g.d<D.bd-.05;D.bd=g.d;
-    if((!D.poi||D.poi.id!=='birka')&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+50);
-    if(D.poi&&D.poi.id==='birka'&&(Math.abs(g.r)>120*deg||g.d>1400))D.until=0;}
+    if((!D.poi||D.poi.id!=='birka')&&closing&&g.d<950&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.birka??-999)>120)take('birka',true,T.t+75);
+    // hang on to Birka until a good way past: let go only when it is far behind (150 degrees and 250 m) or 1.6 km away
+    if(D.poi&&D.poi.id==='birka'&&((Math.abs(g.r)>150*deg&&g.d>250)||g.d>1600))D.until=0;}
   // the big lighthouse is always taken on the way past too, after Birka, and also early
   {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(D.poi.id!=='birka'&&D.poi.id!=='fyr'))){const g=geo(L),cl=D.ld!=null&&g.d<D.ld-.05;D.ld=g.d;
     if(cl&&g.d<750&&g.along>0&&Math.abs(g.r)<65*deg&&T.t-(D.seen.fyr??-999)>120)take('fyr',true,T.t+45);}}
@@ -4387,9 +4392,9 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
       if(sc>bs){bs=sc;best=q;bLock=canLock&&(!canHold||Math.random()<.5);}}
     if(best)take(best.id,bLock,T.t+(bLock?40:7+Math.random()*4));else D.next=T.t+4;}
   let pullOut=0,lockOn=0,low=0;D.at=null;if(D.poi){const q=titlePois().find(o=>o.id===D.poi.id)||(D.poi.id==='birka'?{x:CARRIER.x,y:CARRIER.y,h:10}:null);
-    if(q){const lim=D.poi.track?125:75;want=clamp(relTo(q.x,q.y),-lim*deg,lim*deg);pullOut=q.low?.4:1;lockOn=D.poi.track?.8:.4;low=q.low?1:0;D.at=q;}}
+    if(q){const lim=D.poi.id==='birka'?160:D.poi.track?125:75;want=clamp(relTo(q.x,q.y),-lim*deg,lim*deg);pullOut=q.low?.4:1;lockOn=D.poi.track?.8:.4;low=q.low?1:0;D.at=q;}}
   // a gentle spring on the camera's angle to the heading: slow to start, slow to stop, never faster than DIR.pan degrees a second
-  const dt=Math.min(dtr,.1),k=DIR.k,c=2*Math.sqrt(k)*1.1,acc=clamp(k*(want-D.yaw)-c*D.vel,-DIR.acc*deg,DIR.acc*deg);D.vel=clamp(D.vel+acc*dt,-DIR.pan*deg,DIR.pan*deg);D.yaw+=D.vel*dt;
+  const dt=Math.min(dtr,.1),k=DIR.k,c=2*Math.sqrt(k)*1.1,bk=D.poi&&D.poi.id==='birka'?1.5:1,acc=clamp(k*(want-D.yaw)-c*D.vel,-DIR.acc*bk*deg,DIR.acc*bk*deg);D.vel=clamp(D.vel+acc*dt,-DIR.pan*bk*deg,DIR.pan*bk*deg);/* Birka may be followed a little faster, so the camera keeps it as we pass */D.yaw+=D.vel*dt;
   const ez=1-Math.exp(-.35*dt);D.pull=(D.pull??0)+(pullOut-(D.pull??0))*ez;D.lock=(D.lock??0)+(lockOn-(D.lock??0))*ez;D.low=(D.low??0)+(low-(D.low??0))*ez;
   if(D.at)D.atP={x:D.at.x,y:D.at.y,h:D.at.h};
   return D;}
