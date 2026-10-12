@@ -34,6 +34,7 @@ python3 -m http.server 8000
 - **Fiendens försvar:** fienden planerar försvaret när ön skapas. Den analyserar var man kan gå i land och vilka pass vägen till ledningscentralen måste ta, väljer doktrin (framskjutet, djup, fästning, rörligt) och fördelar en budget på spärrar, minfält, bunkrar, luftvärn, robotskyttar och reserv. Långa linjer stängs aldrig helt: det minst trafikerade passet lämnas öppet med en bunker bakom. Där en helikopter kan landsätta innanför försvaret förbi allt luftvärn stänger fästning och djupförsvar fickan med robotskyttar, medan framskjutet och rörligt försvar lämnar den. Laborera med `?budget=150&doktrin=djup` i adressen (standard 130, doktrinen väljs annars per ö).
 - **Låsta sektorer och minor:** allt bakom en oröjd spärr är låst och kan inte försörjas (ingen service, ingen bärgning). Minfält på trånga vägar syns från luften och röjs av BÄVER.
 - **Spanat område:** KROK flyger och bärgar bara där någon har tittat när den flyger själv. Luftvärnet ser och skjuter på KROK på 275 m, HÖK på 200 m och SPARV först inom radarns 110 m. Luftvärnet kan inte skjuta på markmål, så det slås ut från marken.
+- **Autopaus:** valfri (av från början, sparas i webbläsaren). Spelet pausar när någon annan enhet än den du kör upptäcker en ny fiende, med en rad i loggen och knappar för att visa enheten och fortsätta. Ingen ny autopaus inom 3 s efter att du fortsatt.
 - **Omgivande skärgård:** runt spelytan ligger en kuliss av öar, slumpad per ö mellan inner- och ytterskärgård med havet alltid i öster: höga skogklädda öar och sund i väster, kala hällar och öppen horisont i öster. En sammanslagen lågpolygonmesh utan träd eller skuggor (cirka 30 000 trianglar), tunnare dis än över spelytan, tända fönster och blinkande sektorfyrar på natten, och landkonturer utanför sjökortets ram.
 - **Luftstöd i gruppen:** en order till en grupp eller wing med både fordon och HÖK gör HÖK till eskort åt fordonen (uppdrag), och den HÖK:en går först när fordonen behöver spaning. Välj HÖK ensam för att skicka den på egen hand.
 - **Spaning åt VARG:** en VARG som anfaller ett kamouflerat mål som ingen ser ropar in en ledig HÖK som spanar från utanför känt luftvärn och väntar själv utom målets räckvidd. HÖK:s robotar når 120 m (som robotskyttarnas) och har halv verkan mot pansar; bunkrar skjuter mot flyg på 130 m.
@@ -74,7 +75,7 @@ node t45.js base   # datorspelare som spelar hela öar (tar några minuter per �
 | `t55.js` | VARG skjuter under förflyttning |
 | `t57.js` | BÄVER beställer lufttransport från fartyget |
 | `t58.js` | Låsta sektorer, försörjning bakom spärr, minor och inropning |
-| `t61.js` | Uppdrag och tillfälliga order: inropning återgår till uppdraget, Skift ger nytt uppdrag |
+| `t61.js` | Uppdrag och tillfälliga order: inropning återgår till uppdraget, Skift ger nytt uppdrag; välj enhet i hjulet, HÖK som luftstöd i blandad grupp, autopaus |
 | `t60.js` | Luftvärn efter målstorlek, KROK för hand, BÄVER lagar i fält, planerarens luckor och luftlandningsfickor, avbrutna byggen, fältlagning, HÖK-robotar, spaning åt VARG mot kamouflerade mål |
 
 `smoke.py` laddar spelet i Chromium med Playwright, öppnar ordershjulet och fångar sidfel. Den behöver `npm install` i `tests/` (för Three.js) och Playwright för Python.

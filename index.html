@@ -193,6 +193,7 @@ button:disabled{opacity:.45;cursor:default}
       <button class="btn" id="bClock" type="button" title="Spola fram tre timmar på dygnet">+3 h</button>
       <button class="btn" id="bSpeed" type="button">1×</button>
       <button class="btn" id="bPause" type="button" aria-pressed="false">Paus</button>
+      <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
       <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
       <button class="btn" id="bFull" type="button" title="Helskärm (F)">Helskärm</button>
       <button class="btn" id="bHelp" type="button" aria-label="Instruktioner">?</button>
@@ -269,6 +270,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
+      <li><span class="em">Autopaus:</span> knappen Autopaus i översta raden (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick ger samma val i hjulet, i båda vyerna, och hjulet visar också de enskilda enheterna med avstånd, så att du kan välja vem som går utan att välja den först. I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
@@ -946,6 +948,14 @@ function say(u,text,acts){
 }
 
 /* ---------- simulation ---------- */
+/* optional autopause: a new enemy found by any unit other than the one you drive (or by a captured point) stops the clock.
+   Not within 3 s of resuming, so a burst of contacts gives one pause, not one per contact. */
+const AUTOPAUSE={on:false};try{AUTOPAUSE.on=localStorage.getItem('bh.autopause')==='1';}catch(_){}
+function autoPause(L){
+  if(!AUTOPAUSE.on||G.paused||G.time<1||G.time-(G.resumedAt??-99)<3)return;
+  G.paused=true;const e=L[0].e,by=L[0].by;ping(e.x,e.y);
+  say(null,'Autopaus: '+(L.length>1?L.length+' nya kontakter, bland annat ':'ny kontakt: ')+ename(e)+' i ruta '+sq(e.x,e.y)+(by?', upptäckt av '+by.name:'')+'. Mellanslag fortsätter.',[{l:'Visa',f:()=>{if(by&&!by.dead)setCam(by.id);}},{l:'Fortsätt',f:()=>{setPaused(false);uiTick(true);}}]);}
+function setPaused(p){if(!G.running&&p)return;if(G.paused&&!p)G.resumedAt=G.time;G.paused=p;}
 function step(dt){
   G.time+=dt;G.tod=(G.tod+dt/240)%24;
   const cap=G.relays.filter(r=>r.captured).length;
@@ -957,9 +967,10 @@ function step(dt){
     for(const u of G.units){if(u.dead||u.carried)continue;const rr=camo&&!u.air?60:u.vision;if(dist(u,e)<rr){spot=u;break;}}
     let vis=!!spot;
     if(!vis)for(const r of G.relays)if(r.captured&&dist(r,e)<(r.type==='radar'?RADAR_SEE:110))vis=true;
-    if((vis||e.reveal>0)&&!e.seen){e.seen=true;if(e.canAir){G.tver=(G.tver||0)+1;for(const v of G.units)if(v.air)v.path=null;}say(spot,(vis?'':'Mynningsflamma, kamouflerad. ')+'Kontakt: '+ename(e)+' i ruta '+sq(e.x,e.y)+'.');}
+    if((vis||e.reveal>0)&&!e.seen){e.seen=true;if(!spot||spot.id!==G.ctrl)(G.newC||(G.newC=[])).push({e,by:spot});if(e.canAir){G.tver=(G.tver||0)+1;for(const v of G.units)if(v.air)v.path=null;}say(spot,(vis?'':'Mynningsflamma, kamouflerad. ')+'Kontakt: '+ename(e)+' i ruta '+sq(e.x,e.y)+'.');}
     e.visibleNow=vis;if(vis||e.reveal>0){e.lx=e.x;e.ly=e.y;}
   }
+  if(G.newC){const L=G.newC;G.newC=null;autoPause(L);}
   for(const u of G.units)updateUnit(u,dt);
   for(const e of G.enemies)updateEnemy(e,dt);
   G.kt+=dt;if(G.kt>=.25){G.kt=0;markKnown();}
@@ -1863,7 +1874,7 @@ function callIn(kind,pk,asMission,who){
 }
 
 /* expose for headless tests */
-if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={ENEMY_CFG,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -3205,7 +3216,10 @@ $('bAuto').addEventListener('click',()=>{G.krokAuto=!G.krokAuto;G.krokMsg=null;s
 $('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of selUnits()){if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3))u.holdHp=u.hp;u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
 $('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of selUnits()){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of selUnits()){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
-$('bPause').addEventListener('click',()=>{G.paused=!G.paused;uiTick(true);});
+$('bPause').addEventListener('click',()=>{setPaused(!G.paused);uiTick(true);});
+function setAutoPause(on){AUTOPAUSE.on=on;try{localStorage.setItem('bh.autopause',on?'1':'0');}catch(_){}const b=$('bAutoPause');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Autopaus på':'Autopaus av';}
+$('bAutoPause').addEventListener('click',()=>{setAutoPause(!AUTOPAUSE.on);say(null,AUTOPAUSE.on?'Autopaus på: spelet pausar när någon annan enhet än den du kör upptäcker en ny fiende.':'Autopaus av.');});
+setAutoPause(AUTOPAUSE.on);
 function toggleFull(){
   try{if(document.fullscreenElement){document.exitFullscreen();return;}const r=document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.'));}catch(_){say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.');}
 }
@@ -3347,7 +3361,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyN'){audInit();setMusic(!MUS.on);}
   if(e.code==='KeyG'&&G.ctrl){setFollowMe(!G.followMe);uiTick(true);}
   if(e.code==='KeyE'||e.code==='KeyT'){if(G.ctrl)setCtrl(null);else if(selKrok())setCtrl(G.selK);else if(G.sel)setCtrl(G.sel);uiTick(true);}
-  if(e.key===' '){e.preventDefault();if(G.running)G.paused=!G.paused;uiTick(true);}
+  if(e.key===' '){e.preventDefault();if(G.running)setPaused(!G.paused);uiTick(true);}
 });
 let olSig='';
 function renderOrders(v){
@@ -3645,7 +3659,7 @@ function showTitle(){
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
-  $('intro').hidden=true;G.running=true;G.paused=false;uiTick(true);
+  $('intro').hidden=true;G.running=true;G.paused=false;G.resumedAt=G.time;uiTick(true);
 }
 
 /* ---------- loop ---------- */

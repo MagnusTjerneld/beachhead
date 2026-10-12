@@ -48,4 +48,11 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  ok(h.orders[0]&&h.orders[0].spotFor===t,'the escorting HÖK goes to spot the bunker');
  for(let i=0;i<120&&!t.dead;i++)run(1);ok(t.dead,'bunker killed');run(3);
  ok(h.orders[0]&&h.orders[0]===h.mission&&h.mission.type==='follow','HÖK back to escorting afterwards');}
+// optional autopause: a new contact found by another unit pauses, one found by the unit you drive does not
+{B.newGame(7341);const G=B.G;G.running=true;run(2);const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(e=>!e.seen&&e.kind==='turret');ok(!!t,'an unseen bunker to find');
+ B.AUTOPAUSE.on=false;h.orders=[];h.x=t.x+120;h.y=t.y;h.orbit={x:h.x,y:h.y};B.step(.05);ok(t.seen&&!G.paused,'option off: no pause');
+ const t2=G.enemies.find(e=>!e.seen&&e.kind==='turret'&&Math.hypot(e.x-t.x,e.y-t.y)>400);B.AUTOPAUSE.on=true;G.ctrl=h.id;h.x=t2.x+120;h.y=t2.y;B.step(.05);ok(t2.seen&&!G.paused,'found by the unit you drive: no pause');G.ctrl=null;
+ const t3=G.enemies.find(e=>!e.seen&&Math.hypot(e.x-t2.x,e.y-t2.y)>400);h.x=t3.x+100;h.y=t3.y;B.step(.05);ok(t3.seen&&G.paused,'found by another unit: paused');
+ B.setPaused(false);const t4=G.enemies.find(e=>!e.seen&&Math.hypot(e.x-t3.x,e.y-t3.y)>400);h.x=t4.x+100;h.y=t4.y;B.step(.05);ok(t4.seen&&!G.paused,'no new pause within 3 s of resuming');
+ B.AUTOPAUSE.on=false;}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
