@@ -1,6 +1,6 @@
 global.performance={now:()=>0};
 require('./g2.js');
-const B=globalThis.__BH;
+const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];/* the old start, so results compare */
 const V=process.argv[2]||'base';
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
