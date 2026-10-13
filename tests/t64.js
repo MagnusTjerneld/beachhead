@@ -1,4 +1,4 @@
-// harbour and docking: the planned path is open water, the harbour is secured by an own ground unit at the quay with no enemy near,
+// harbour and docking: the planned path is open water, the harbour is point H with its own guards and is taken by BÄVER like the others,
 // Birka sails in at about 10 knots with acceleration and braking, docks aligned, and carries the deck BÄVER and the KROK pad along
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
@@ -12,16 +12,16 @@ for(const[f,seed]of[['as',1000],['hastsko',1037],['udde',1111]]){
   ok(wet,f+': the path ('+Math.round(P.L)+' m) runs in water all the way');
   const shoal=((W.decor&&W.decor.shoals)||[]).find(s=>W.nearPath(s.x,s.y,0));ok(!shoal,f+': no shoal on the path');
   const c0={...B.CARRIER},q=W.harborQ,eng=G.units.find(u=>u.kind==='eng'),k=G.kroks[0],e0=loc(eng),p0=loc(k.pad);
-  // a unit at the quay with an enemy close by: warning, not secured
-  const v=B.makeUnit('tank',q.x,q.y);G.units.push(v);v.orders=[];v.hold=true;
-  let foe=G.enemies.find(e=>!e.dead&&Math.hypot(e.x-q.x,e.y-q.y)<260),moved=null;
-  if(!foe){foe=G.enemies.find(e=>!e.dead&&e.kind==='turret');moved={x:foe.x,y:foe.y};foe.x=q.x-W.harbor.nx*200;foe.y=q.y-W.harbor.ny*200;}
-  for(let i=0;i<40;i++)B.step(.05);ok(!G.harbor.secured&&G.harbor.warned,f+': an enemy within 260 m keeps the harbour unsecured and warns');
-  if(moved)Object.assign(foe,moved);
-  for(const e of G.enemies)if(Math.hypot(e.x-q.x,e.y-q.y)<300)e.dead=true;
+  // the harbour is a point of its own: it has guards, and a BÄVER at the quay cannot take it while they stand
+  const hr=G.relays.find(r=>r.type==='hamn');ok(!!hr&&hr.id==='H'&&Math.hypot(hr.x-q.x,hr.y-q.y)<1,f+': the harbour is point H at the quay');
+  ok(hr&&hr.guards.length>0,f+': the harbour has guards ('+(hr?hr.guards.join(', '):'')+')');
+  const v=B.makeUnit('eng',q.x+6,q.y);G.units.push(v);v.orders=[{type:'capture',relay:hr,post:'def'}];
+  for(let i=0;i<20;i++)B.step(.05);ok(!hr.captured&&!G.harbor.secured,f+': not taken while its guards stand'+(hr.lockMsg?' (locked)':' (BÄVER waits under fire)'));
+  for(const e of G.enemies)if(hr.guards.includes(e.id)||Math.hypot(e.x-q.x,e.y-q.y)<300)e.dead=true;
+  {const v2=B.makeUnit('eng',q.x+6,q.y);G.units.push(v2);v2.orders=[{type:'capture',relay:hr,post:'def'}];}/* the first one is usually shot by the guards */
   let t=0,sec=null,vmax=0,dvmax=0,lastV=0;
   for(let i=0;i<20*900&&!G.harbor.docked;i++){B.step(.05);t+=.05;if(G.harbor.secured&&sec==null)sec=t;const hv=G.harbor.v;vmax=Math.max(vmax,hv);dvmax=Math.max(dvmax,(hv-lastV)/.05);lastV=hv;}
-  ok(sec!=null&&sec<3,f+': secured within '+(sec||0).toFixed(1)+' s once the enemies near the quay are gone');
+  ok(hr.captured&&sec!=null&&sec<12,f+': BÄVER takes the harbour in '+(sec||0).toFixed(1)+' s once the guards are out, and that secures it');
   ok(G.harbor.docked,f+': Birka docked after '+(t-(sec||0)).toFixed(0)+' s');
   ok(vmax>4.5&&vmax<=5.15,f+': top speed '+(vmax/0.5144).toFixed(1)+' knots');
   ok(dvmax<=B.BIRKA_MOVE.acc+1e-6,f+': acceleration capped ('+dvmax.toFixed(3)+' m/s2)');

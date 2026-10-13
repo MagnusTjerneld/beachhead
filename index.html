@@ -297,7 +297,7 @@ button:disabled{opacity:.45;cursor:default}
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
       <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
-      <li><span class="em">Hamnen och Birka:</span> ställ ett markfordon på kajen i hamnen när ingen fiende finns inom 260 m, så är hamnen säkrad. Då går HMS Birka själv in i cirka 10 knop längs en väg som alltid är fri (streckad på sjökortet) och förtöjer. Fordon på däck och KROK följer med, och varvet, servicen och KROK arbetar sedan från hamnen, mycket närmare ön.</li>
+      <li><span class="em">Hamnen och Birka:</span> hamnen är punkten H vid kajen. Den är låst tills dess vakter (bunkrar och luftvärn nära kajen) är utslagna, och tas sedan av BÄVER med Ta, som de andra punkterna. Den krävs inte för seger, men det är bara genom hamnen ni får tillgång till det som dockningen låser upp. När den är tagen går HMS Birka själv in i cirka 10 knop längs en väg som alltid är fri (streckad på sjökortet) och förtöjer. Fordon på däck och KROK följer med, och varvet, servicen och KROK arbetar sedan från hamnen, mycket närmare ön.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Du börjar med BÄVER, KROK och 500 material och väljer själv vad varvet ska bygga först. Det som byggs skrivs ut i byggbädden på däck, och den nya enheten startar där. En enhet vid Birka kan återvinnas för 80 % av byggkostnaden (knappen Återvinn, två klick, eller i hjulet på enheten), med MUS ombord; KROK återvinns inte. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Vill du välja ställe: högerklicka på Birka eller en tagen verkstad eller ett fältvarv och välj Service här. HÖK laddar sina robotar där, och en HÖK som cirklar över en verkstad laddar också. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Infanteri och pansarvärn i skog eller bebyggelse syns även från luften först på 40 m. Den som skjuter syns av alla inom synhåll så länge mynningsflamman lyser. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
@@ -422,7 +422,7 @@ function astar(sx,sy,tx,ty,pass,cost){
 
 /* ---------- world ---------- */
 /* strategic points: the command centre is the objective, the rest change what you can do once taken */
-const PTYPE={central:{label:'Ledningscentral',code:'LC'},verkstad:{label:'Verkstad',code:'V'},radar:{label:'Radarstation',code:'RD'},varv:{label:'Fältvarv',code:'F'}};
+const PTYPE={central:{label:'Ledningscentral',code:'LC'},verkstad:{label:'Verkstad',code:'V'},radar:{label:'Radarstation',code:'RD'},varv:{label:'Fältvarv',code:'F'},hamn:{label:'Hamn',code:'H'}};
 const pname=r=>PTYPE[r.type].label+' '+r.id;
 const VARV_KINDS=['scout','drone','tank'],VARV_SLOW=1.5,VARV_CONTEST=150,RADAR_SEE=220,RADAR_MAP=320;
 const ENEMY={
@@ -609,7 +609,7 @@ function validWorld(W){
   // the new shapes and every rough coast: every point reachable over land from the beach once the barriers are open (BÄVER cannot cross water)
   if(W.V.shape.type!=='rund'||W.V.shape.rough){const r=new Uint8Array(g.length),s0=cellIdx(W.landing.x,W.landing.y),st=[s0];r[s0]=1;
     while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||none[n])continue;const t=g[n];if(t!==LAND&&t!==BEACH)continue;r[n]=1;st.push(n);}}
-    if(!W.relays.every(p=>r[at(p)])){W.why='punkt onåbar över land';return false;}}
+    if(!W.relays.concat(W.harbor&&W.harborQ?[W.harborQ]:[]).every(p=>r[at(p)])){W.why='punkt onåbar över land';return false;}}
   W.why=!W.relays.every(r=>open[at(r)])?'punkt onåbar':!shut[at(W.relays[0])]?'R1 stängd':shut[at(W.relays[1])]?'R2 öppen från havet':shut[at(W.relays[2])]?'LC öppen från havet':!(W.gateCells||[]).length?'inga grindar':'bunkrar vid LC';
   return W.relays.every(r=>open[at(r)])&&shut[at(W.relays[0])]&&!shut[at(W.relays[1])]&&!shut[at(W.relays[2])]&&(W.gateCells||[]).length>0&&W.enemies.filter(e=>e.kind==='turret'&&Math.hypot(e.x-W.relays[2].x,e.y-W.relays[2].y)<200).length>=2;
 }
@@ -914,6 +914,10 @@ function buildWorldTry(seed,tryK){
   {const role=p=>lineBar.some(x=>x.p===p)?'barrier':minedP.includes(p)?'mine':deliberate.includes(p)?'open':cracks.includes(p)?'crack':'';const mid=p=>{const st=sites.get(p);if(st)return{x:st.x,y:st.y};const a2=zc[p.a],b2=zc[p.b];return{x:(a2.x+b2.x)/2,y:(a2.y+b2.y)/2};};
     W.planDbg={entries:entries.map(e=>({z:e.z,x:e.pt.x,y:e.pt.y,w:e.w,kind:e.kind})),pass:pass.map(p=>({a:p.a,b:p.b,...mid(p),t:+traffic.get(p).toFixed(2),line:inner.includes(p)?'inner':outer.includes(p)?'outer':'',role:role(p),crackRank:cracks.indexOf(p)})),
       Dz:[...Dz],outerZ:[...outerZ],dw,pockets,pocketsClosed,nPass:pass.length,nZ:lz.length,obj:{r1:r1z,r2:r2z,r3:r3z,land},zc:zc.map(c=>c&&{x:c.x,y:c.y})};}
+  /* the standard harbour is a point of its own (decided 14 okt): bunkers and air defence within 170 m of the quay that guard nothing
+     else become its guards, and if there are none it gets one bunker, so it is locked by defenders you can find, not by a radius */
+  if(V.harbor&&V.harbor.std&&harborPt){const hg=E.filter(e=>e.guard==null&&(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-harborPt.x,e.y-harborPt.y)<170);
+    for(const e of hg)e.guard=3;if(!hg.length){take('turret');add('turret','T',snapZ({x:harborPt.x+V.harbor.nx*0-V.harbor.ny*55,y:harborPt.y+V.harbor.nx*55},null,TIER.beach),{guard:3});}}
   W.enemies=E;
   /* salvage: building clusters per zone, loose materiel, old hulks on the landing beach. The material is in the flanks: zones on
      a shortest route from the beach to LC are lean, zones off it are rich and have more buildings, so a sector is worth taking for
@@ -949,7 +953,7 @@ function buildWorldTry(seed,tryK){
   for(let k=0;k<3;k++){const p=findSpot(landing,12,110,null,true,true);if(p)DEB.push({x:p.x,y:p.y,kind:'hulk',value:35});}
   // labels
   const lab=(p,t,off)=>W.labels.push({x:p.x,y:p.y,t,off:off?1:0});
-  lab(landing,'Strand',1);if(harborPt)lab(harborPt,'Hamn',1);
+  lab(landing,'Strand',1);if(harborPt&&!(V.harbor&&V.harbor.std))lab(harborPt,'Hamn',1);/* the standard harbour is point H and carries its own label */
   if(covePt)lab(covePt,'Vik',1);
   for(const p of pass)if(!W.barriers.some(b=>pairKey(b.za,b.zb)===pairKey(p.a,p.b)))lab(p,'Pass');
   // trees
@@ -1167,6 +1171,7 @@ function newGame(seed){
     if(best!=null){const c=cellCenter(best);e.x=e.hx=e.lx=c.x;e.y=e.hy=e.ly=c.y;}}
   G.mines=[];G.reachAll=null;mkMines(WORLD.mineSites||[]);computeLock();
   G.harbor=WORLD.harbor&&WORLD.birkaPath&&WORLD.harborQ?{secured:false,docked:false,s:0,v:0,chk:0}:null;
+  if(G.harbor){const q=WORLD.harborQ;G.relays.push({id:'H',type:'hamn',x:q.x,y:q.y,prog:0,captured:false,lockMsg:null,guards:WORLD.enemies.filter(e=>e.guard===3).map(e=>e.id)});}
   {let nt=0;for(const k of START.units)G.units.push(k==='drone'?makeUnit('drone',...shipPos(0,60)):k==='tank'?makeUnit('tank',...shipPos(nt++?32:-32,0)):k==='scout'?makeUnit('scout',...shipPos(0,-60)):makeUnit('eng',...deckSpot(0)));}
   {const e=G.units.find(u=>u.kind==='eng');if(e)setSel([e.id]);G.cam=(G.units.find(u=>u.kind==='tank')||e||G.units[0]).id;}
   G.kroks.push(makeKrok());
@@ -1254,10 +1259,7 @@ function setPaused(p){if(!G.running&&p)return;if(G.paused&&!p)G.resumedAt=G.time
    up to 10 knots, speeding up and braking gently and turning at most a few degrees a second, until it lies docked in the basin.
    Everything standing on its deck goes with it, and KROK's pads move with the ship. */
 function harborTick(dt){const H=G.harbor;if(!H||H.docked)return;
-  if(!H.secured){H.chk-=dt;if(H.chk>0)return;H.chk=1;const q=WORLD.harborQ;
-    const own=G.units.some(u=>!u.dead&&!u.air&&!u.carried&&u.kind!=='mus'&&!onDeck(u.x,u.y)&&Math.hypot(u.x-q.x,u.y-q.y)<70);if(!own)return;
-    if(G.enemies.some(e=>!e.dead&&Math.hypot(e.x-q.x,e.y-q.y)<260)){if(!H.warned){H.warned=true;say(null,'Vi står i hamnen, men fienden finns kvar inom 260 m. Rensa runt hamnen så kan Birka gå in.');}return;}
-    H.secured=true;H.secT=G.time;say(null,'Hamnen är säkrad. HMS Birka lättar ankar och går in i hamnen.');return;}
+  if(!H.secured){const hr=G.relays.find(r=>r.type==='hamn');if(!hr||!hr.captured)return;H.secured=true;H.secT=G.time;return;}
   const P=WORLD.birkaPath,M=BIRKA_MOVE,at=s=>{s=clamp(s,0,P.L);let i=0;while(i<P.pts.length-2&&P.len[i+1]<s)i++;const a=P.pts[i],b=P.pts[i+1],f=(s-P.len[i])/((P.len[i+1]-P.len[i])||1);return{x:lerp(a.x,b.x,f),y:lerp(a.y,b.y,f)};};
   const rem=P.L-H.s,p0=at(H.s),p1=at(H.s+20),tgt=rem>20?Math.atan2(p1.y-p0.y,p1.x-p0.x):WORLD.harbor.dock.a,err=angWrap(tgt-CARRIER.a);
   let vt=M.vmax*clamp(1-Math.abs(err)/(PI/3),.15,1);vt=Math.min(vt,Math.sqrt(2*M.dec*Math.max(0,rem)));
@@ -1273,7 +1275,7 @@ function moveCarrier(x,y,a){
   for(const o of ks){const q=wp(o.pad);o.k.pad=q;if(o.home){o.k.x=q.x;o.k.y=q.y;o.k.heading+=da;}}}
 function step(dt){
   G.time+=dt;G.tod=(G.tod+dt/240)%24;harborTick(dt);
-  const cap=G.relays.filter(r=>r.captured).length;
+  const cap=G.relays.filter(r=>r.captured&&r.type!=='hamn').length;
   G.res+=dt*(INCOME.base+INCOME.relay*cap);
   for(const e of G.enemies){
     if(e.dead){e.visibleNow=false;continue;}
@@ -1937,7 +1939,7 @@ function noContact(us){const off=us.filter(u=>!heard(u));if(off.length)say(null,
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
   const t=r.type;
-  say(u,t==='central'?'Ledningscentralen '+r.id+' tagen.':t==='verkstad'?'Verkstad '+r.id+' tagen. Flygande enheter laddar och fordon repareras här.':t==='radar'?'Radarstation '+r.id+' tagen. Området runt den är spanat och kamouflerade mål syns.':'Fältvarv '+r.id+' taget. SPARV, HÖK och VARG kan byggas här.');
+  say(u,t==='central'?'Ledningscentralen '+r.id+' tagen.':t==='verkstad'?'Verkstad '+r.id+' tagen. Flygande enheter laddar och fordon repareras här.':t==='radar'?'Radarstation '+r.id+' tagen. Området runt den är spanat och kamouflerade mål syns.':t==='hamn'?'Hamnen tagen. HMS Birka lättar ankar och går in i hamnen.':'Fältvarv '+r.id+' taget. SPARV, HÖK och VARG kan byggas här.');
   if(t==='varv'){G.buildAt=r.id;counterattack(r);}
   markKnown();checkWin();
 }
@@ -2729,6 +2731,10 @@ function mkPointMesh(r){
   else if(r.type==='radar'){g.add(mesh(box(6,3.5,6),mat(C),-3,2,2));g.add(mesh(cyl(1,1.3,9,8),mat(0x9aa0a4),2,5,-2));
     const dish=new THREE.Group();const d=mesh(cyl(3.6,.6,1.2,14,1,true),mat(0xd8dcd6));d.rotation.z=PI/2.6;dish.add(d);dish.add(mesh(box(.3,.3,2.4),mat(0x5d625f),0,0,0));dish.position.set(2,10.6,-2);g.add(dish);g.userData.dish=dish;
     const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(-3,4.6,2);g.add(top);g.userData.top=top;}
+  else if(r.type==='hamn'){// harbour office: a low white house with a flagless signal mast
+    g.add(mesh(box(8,3.4,5.5),mat(0xe4e1d8),-2,2.1,0));g.add(mesh(box(8.6,.4,6.1),mat(ROOF),-2,4,0));for(const z of[-1.6,0,1.6])g.add(mesh(box(.2,.9,1),R3.winMat,2.05,2.4,z));
+    g.add(mesh(cyl(.18,.26,12,6),mat(0x9aa0a4),4.5,6,-4));g.add(mesh(box(3.2,.14,.14),mat(0x9aa0a4),4.5,10,-4));
+    const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(4.5,12.6,-4);g.add(top);g.userData.top=top;}
   else{ // forward yard: open gantry over a slab with a crane
     for(const[x,z]of[[-6,-5],[6,-5],[-6,5],[6,5]])g.add(mesh(box(.6,8,.6),mat(0xd0a640),x,4.2,z));
     g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,-5));g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,5));g.add(mesh(box(.6,.6,10.6),mat(0xd0a640),0,8.2,0));
@@ -3287,7 +3293,7 @@ function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group()
     h.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),L2/2+.02,1.1,0));for(const[x,z]of[[-L2/2,-2],[L2/2,-2],[-L2/2,2],[L2/2,2]])h.add(mesh(box(.22,3.1,.22),TR,x,1.55,z));
     place(h,li,lt,-fs*PI/2);}
   {// the store shed behind the inner end
-    const off=(Rv()-.5)*30,lt=[off,0,-off].find(t=>solid(HARB.L+dw+9,t,4.6,8.2));if(lt!==undefined){
+    const sd2=Rv()<.5?-1:1,lt=[sd2*32,-sd2*32,sd2*44,-sd2*44].find(t=>solid(HARB.L+dw+9,t,4.6,8.2));/* clear of the harbour point at the inner end */if(lt!==undefined){
     const m=new THREE.Group(),c=mat(0x8f969a);m.add(mesh(box(9,5,16),c,0,2.5,0));const r=new THREE.Group();roofOn(r,16.8,9,5.6,0x5a3a30);r.rotation.y=PI/2;m.add(r);
     m.add(mesh(box(.15,3.6,4.2),mat(0x5e6468),-4.52,1.8,0));for(const z of[-5.5,5.5])m.add(mesh(box(.15,1,1.6),winMatFor(H.x+1,H.y),-4.52,3.4,z));
     place(m,HARB.L+dw+9,lt,0);}}
@@ -4263,7 +4269,7 @@ let lastUi=0;
 function uiTick(force){
   const now=performance.now();if(!force&&now-lastUi<120)return;lastUi=now;
   const net=Math.max(0,G.lostValue-G.salvagedOwn);
-  $('sRel').textContent=G.relays.filter(r=>r.captured).length+'/3';
+  $('sRel').textContent=G.relays.filter(r=>r.captured&&r.type!=='hamn').length+'/3';
   $('sRes').textContent=Math.floor(G.res);
   $('sLoss').textContent=net;$('lossBox').classList.toggle('warn',net>0);
   $('sTime').textContent=fmt(G.time);{const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('sClock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
