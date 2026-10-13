@@ -3479,6 +3479,7 @@ function sync3D(dtr){
       if(m.lat){const lx=-Math.sin(hd)*m.lat,lz=Math.cos(hd)*m.lat;p0.x+=lx;p0.z+=lz;}
       const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.9:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
       const sx=p0.x-Math.cos(hd)*m.half,sz=p0.z-Math.sin(hd)*m.half;
+      if(m.trail.length&&Math.hypot(sx-m.trail[0].x,sz-m.trail[0].z)>Math.max(30,m.speed*2)){m.trail.length=0;m.tt=-1;}/* a mover that was placed anew (the film's VARG patrol) starts a fresh wake instead of drawing one from where it was */
       if(m.tt<0||T-m.tt>.25){m.tt=T;m.trail.unshift({x:sx,z:sz,t:T});if(m.trail.length>m.wake.N)m.trail.pop();}
       updWake(m,{x:sx,z:sz,t:T},T);
       const nv=m.g.userData.nav;if(nv){const L=R3.lit||0;if(!m.g.userData.navH)m.g.userData.navH=nv.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(2.4);n.m.add(h);return h;});
@@ -4526,7 +4527,7 @@ function titleVargSync(){let mv=null;try{mv=R3&&R3.movers;}catch(_){}if(!mv||!mv
   const sB=RT.len[near(RT,{x:CARRIER.x,z:CARRIER.y})],fwd=((sB-RT.off)%RT.L+RT.L)%RT.L,sH=RT.off+fwd/2;
   const at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0;while(lo<RT.N-1&&RT.len[lo+1]<=d)lo++;return RT.pts[lo];},pH=at(sH);
   for(const m of mv){if(!m.varg)continue;const VR=m.RT,sAt=VR.len[near(VR,pH)]+(m.dir<0?-1:1)*(m.back||0);/* the wingmen trail the leader */
-    m.ph=((((sAt-m.dir*T*m.speed)/VR.L)%1)+1)%1;}
+    m.ph=((((sAt-m.dir*T*m.speed)/VR.L)%1)+1)%1;m.trail.length=0;m.tt=-1;}
   return true;}
 /* KROK lifts BÄVER off Birka's deck and sets it down on the beach, timed so that BÄVER touches down as the HÖK passes closest
    to the beach (decided 12 okt). Film only: the real KROK and BÄVER are moved by a fixed script and the game takes them back
