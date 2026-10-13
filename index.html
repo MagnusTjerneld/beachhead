@@ -294,6 +294,7 @@ button:disabled{opacity:.45;cursor:default}
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
       <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
+      <li><span class="em">Hamnen och Birka:</span> ställ ett markfordon på kajen i hamnen när ingen fiende finns inom 260 m, så är hamnen säkrad. Då går HMS Birka själv in i cirka 10 knop längs en väg som alltid är fri (streckad på sjökortet) och förtöjer. Fordon på däck och KROK följer med, och varvet, servicen och KROK arbetar sedan från hamnen, mycket närmare ön.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Du börjar med BÄVER, KROK och 500 material och väljer själv vad varvet ska bygga först. Det som byggs skrivs ut i byggbädden på däck, och den nya enheten startar där. En enhet vid Birka kan återvinnas för 80 % av byggkostnaden (knappen Återvinn, två klick, eller i hjulet på enheten), med MUS ombord; KROK återvinns inte. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger SPARV, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Vill du välja ställe: högerklicka på Birka eller en tagen verkstad eller ett fältvarv och välj Service här. HÖK laddar sina robotar där, och en HÖK som cirklar över en verkstad laddar också. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Infanteri och pansarvärn i skog eller bebyggelse syns även från luften först på 40 m. Den som skjuter syns av alla inom synhåll så länge mynningsflamman lyser. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. På Defensiv, Dold och Observera flyger HÖK och SPARV runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
@@ -475,6 +476,10 @@ function zoneAt(x,y,V){const w=warp(x,y,V.seed);let i1=-1,d1=1e9,i2=-1,d2=1e9;fo
    nearest, so the old round island (one lobe at the centre) gives exactly the old d. The shapes (decided 12 okt, Halva ön är
    död mark): rund (the old island), ås (a long bent ridge), hästsko (a horseshoe round a lagoon open to the sea), näs (two or
    three islands joined by narrow necks) and udde (a main island with a long peninsula). */
+/* the standard harbour: basin half-width and depth, wooden deck width, where Birka lies when docked (metres in from the mouth) */
+const HARB={hw:30,L:125,deck:7,dockLi:75};
+/* Birka under way: top speed (m/s, 10 knots), acceleration and braking (m/s²), turn rate (degrees a second) */
+const BIRKA_MOVE={vmax:5.1,acc:.12,dec:.15,turn:4};
 const SHAPES={rund:'rund ö',as:'ås',hastsko:'hästsko',nas:'näs',udde:'udde'};
 const SHAPE_CFG={force:null,mix:{rund:1,as:1,hastsko:1,nas:1,udde:1},rough:1};
 /* the intro director's pace (see titleDirector): pan and acceleration in degrees, the spring, the fastest sweep a locked or held
@@ -540,8 +545,11 @@ function elevAt(x,y,s,V){
   if(x<24||y<24||x>WW-24||y>WH-24||nearShip(x,y))return -6;
   const d=islandD(x,y,V).d;
   /* beach, cove and harbor are coast points with an outward normal (n): li is the distance inland from the point, lt to the side */
-  const H=V.harbor,old=V.shape.type==='rund',a=old?angDeg((x-CX)/V.RX,(y-CY)/V.RY):0,dh=old&&H?angDiff(a,H.a):999;let hi=0,hl=1e9;if(H&&!old){const px=x-H.x,py=y-H.y;hi=-(px*H.nx+py*H.ny);hl=Math.abs(px*H.ny-py*H.nx);}
-  if(d>1||(H&&(old?dh<H.w&&d>H.depth:hl<45&&hi>-60&&hi<120)))return -1.2-clamp((d-1)*45,0,9);
+  const H=V.harbor,old=V.shape.type==='rund',hOld=old&&!(H&&H.std),a=old?angDeg((x-CX)/V.RX,(y-CY)/V.RY):0,dh=hOld&&H?angDiff(a,H.a):999;let hi=0,hl=1e9;if(H&&!hOld){const px=x-H.x,py=y-H.y;hi=-(px*H.nx+py*H.ny);hl=Math.abs(px*H.ny-py*H.nx);}
+  /* the standard harbour (decided 13 okt, every harbour looks the same): a straight basin HARB.hw either side of the axis and HARB.L
+     deep, open to the sea, with low quay ground round it for the wooden deck; the old inlet only on the smooth round test island */
+  const hw=H&&H.std?HARB.hw:45,hL=H&&H.std?HARB.L:120;
+  if(d>1||(H&&(hOld?dh<H.w&&d>H.depth:hl<hw&&hi>-80&&hi<hL)))return -1.2-clamp((d-1)*45,0,9);
   const Z=zoneAt(x,y,V),z1=V.zones[Z.i1],z2=V.zones[Z.i2];
   if(z1.water){return -1.2-clamp(Z.s/12,0,4);}
   const n=fbm(x,y,s);
@@ -556,8 +564,9 @@ function elevAt(x,y,s,V){
   }else e+=0;
   const lowCoast=old?B=>{const db=angDiff(a,B.a);if(db<B.w+4){const t=sm((1-d)/.15),side=sm((B.w+4-db)/4);e=lerp(e,lerp(.4,e,t),side);}}:B=>{const px=x-B.x,py=y-B.y,li=-(px*B.nx+py*B.ny),lt=Math.abs(px*B.ny-py*B.nx);if(li<-15||lt>B.w+40)return;const t=sm(li/90),side=sm((B.w+40-lt)/40);e=lerp(e,lerp(.4,e,t),side);};
   if(V.beach)lowCoast(V.beach);if(V.cove)lowCoast(V.cove);
-  if(old&&H&&dh<H.w+6&&d>H.depth-.14){const t=sm((H.depth-d)/.12),side=sm((H.w+6-dh)/3);e=lerp(e,lerp(1.1,e,t),side);}
-  if(!old&&H&&hl<110&&hi>-20&&hi<200){const t=sm((hi-120)/70),side=sm((110-hl)/31);e=lerp(e,lerp(1.1,e,t),side);}
+  if(hOld&&H&&dh<H.w+6&&d>H.depth-.14){const t=sm((H.depth-d)/.12),side=sm((H.w+6-dh)/3);e=lerp(e,lerp(1.1,e,t),side);}
+  if(!hOld&&H&&!H.std&&hl<110&&hi>-20&&hi<200){const t=sm((hi-120)/70),side=sm((110-hl)/31);e=lerp(e,lerp(1.1,e,t),side);}
+  if(H&&H.std&&hl<HARB.hw+80&&hi>-30&&hi<HARB.L+110){const t=sm((hi-HARB.L-20)/70),side=sm((HARB.hw+80-hl)/30);e=lerp(e,lerp(1.1,e,t),side);}
   return e;
 }
 function levelFor(seed,base){
@@ -593,8 +602,9 @@ function validWorld(W){
       while(st.length){const c=st.pop();n++;const x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(!seen[m]&&mass[m]&&W.zid[m]===z){seen[m]=1;st.push(m);}}}
       if(n>=12)big.set(z,(big.get(z)||0)+1);}
     for(const[,k]of big)if(k>1){W.why='zon i flera delar';return false;}}
-  // the new shapes: every point reachable over land from the beach once the barriers are open (BÄVER cannot cross water)
-  if(W.V.shape.type!=='rund'){const r=new Uint8Array(g.length),s0=cellIdx(W.landing.x,W.landing.y),st=[s0];r[s0]=1;
+  if(W.V.shape.rough&&W.harbor&&!W.birkaPath){W.why='Birka når inte hamnen';return false;}
+  // the new shapes and every rough coast: every point reachable over land from the beach once the barriers are open (BÄVER cannot cross water)
+  if(W.V.shape.type!=='rund'||W.V.shape.rough){const r=new Uint8Array(g.length),s0=cellIdx(W.landing.x,W.landing.y),st=[s0];r[s0]=1;
     while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||none[n])continue;const t=g[n];if(t!==LAND&&t!==BEACH)continue;r[n]=1;st.push(n);}}
     if(!W.relays.every(p=>r[at(p)])){W.why='punkt onåbar över land';return false;}}
   W.why=!W.relays.every(r=>open[at(r)])?'punkt onåbar':!shut[at(W.relays[0])]?'R1 stängd':shut[at(W.relays[1])]?'R2 öppen från havet':shut[at(W.relays[2])]?'LC öppen från havet':!(W.gateCells||[]).length?'inga grindar':'bunkrar vid LC';
@@ -685,6 +695,7 @@ function buildWorldTry(seed,tryK){
   if(isRound)V.beach={...cpt(land,0),w:9+R()*5,a:Z[land].a};else{const w=90+R()*50;V.beach=cptClear(land,w,w+120,true)||cpt(land,w)||{x:Z[land].x,y:Z[land].y,nx:0,ny:1,w:100};}
   const hc=coastal.filter(i=>!Z[i].water&&i!==land&&pd[i]>=2&&safe.has(i));const hz=hc.length?hc[Math.floor(R()*hc.length)]:coastal.find(i=>!Z[i].water&&i!==land&&safe.has(i));
   if(hz!==undefined)V.harbor=isRound?{...cpt(hz,4.5),a:Z[hz].a,depth:.8}:cptClear(hz,45,240,false)||cpt(hz,45);
+  if(V.harbor)V.harbor.std=!!(V.shape.rough||!isRound);
   const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cptClear(ci,55,170,false)||cpt(ci,55);}
   let sp=null;
   if(isRound){const ba=V.beach.a*PI/180;for(let f=1;f<2.2&&!sp;f+=.01){const x=CX+Math.cos(ba)*f*V.RX,y=CY+Math.sin(ba)*f*V.RY;if(clear(x,y))sp={x:x+Math.cos(ba)*20,y:y+Math.sin(ba)*20};}if(!sp)sp=polar(V.beach.a,1.4);}
@@ -704,11 +715,28 @@ function buildWorldTry(seed,tryK){
   WORLD=W;
   const flood=()=>{const reach=new Uint8Array(GW*GH);const st=[cellIdx(CARRIER.x,CARRIER.y)];reach[st[0]]=1;while(st.length){const c=st.pop(),cx=c%GW,cy=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(reach[n]||!isGround(grid[n]))continue;reach[n]=1;st.push(n);}}return reach;};
   let reach=flood();W.reach=reach;
+  /* Birka's way into the harbour, planned now and kept clear of holms, shoals and decor (decided 13 okt): a water path that keeps
+     40 m from land, out to a point off the harbour mouth, then straight in along the basin's axis to where Birka lies docked */
+  W.harbor=null;W.birkaPath=null;
+  if(V.harbor&&V.harbor.std){const H=V.harbor,dock={x:H.x-H.nx*HARB.dockLi,y:H.y-H.ny*HARB.dockLi,a:Math.atan2(-H.ny,-H.nx)};W.harbor={x:H.x,y:H.y,nx:H.nx,ny:H.ny,dock};
+    const wetC=i=>grid[i]===DEEP||grid[i]===SHAL,Dc=new Uint8Array(GW*GH).fill(255),qd=[];for(let i=0;i<GW*GH;i++)if(!wetC(i)){Dc[i]=0;qd.push(i);}
+    for(let h=0;h<qd.length;h++){const c=qd[h],x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(Dc[n]>Dc[c]+1){Dc[n]=Dc[c]+1;qd.push(n);}}}
+    let A=null;for(let f=140;f<=420&&!A;f+=10){const q={x:H.x+H.nx*f,y:H.y+H.ny*f};if(q.x<60||q.y<60||q.x>WW-60||q.y>WH-60)break;if(Dc[cellIdx(q.x,q.y)]>=4)A=q;}
+    const lineWet=(a,b)=>{const n=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/4);for(let k=0;k<=n;k++){if(!wetC(cellIdx(a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n)))return false;}return true;};
+    if(A&&lineWet(A,dock)){const ok=i=>Dc[i]>=4,cells=astarCells(cellIdx(CARRIER.x,CARRIER.y),cellIdx(A.x,A.y),ok,i=>1+(Dc[i]<8?(8-Dc[i])*.5:0));
+      if(cells){let pts=[{x:CARRIER.x,y:CARRIER.y},...cells.map(cellCenter)];pts[pts.length-1]=A;
+        // straighten (longest clear runs), then round the corners
+        const clr=(a,b)=>{const n=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/5);for(let k=0;k<=n;k++)if(!ok(cellIdx(a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n)))return false;return true;};
+        const sp=[pts[0]];let i=0;while(i<pts.length-1){let j=pts.length-1;while(j>i+1&&!clr(pts[i],pts[j]))j--;sp.push(pts[j]);i=j;}
+        const mouth={x:H.x+H.nx*40,y:H.y+H.ny*40};pts=chaikin(chaikin(chaikin([...sp,mouth])));pts.push(dock);
+        const len=[0];for(let k=1;k<pts.length;k++)len.push(len[k-1]+Math.hypot(pts[k].x-pts[k-1].x,pts[k].y-pts[k-1].y));W.birkaPath={pts,len,L:len[len.length-1]};}}}
+  const nearPath=(x,y,r)=>{const P=W.birkaPath;if(P)for(const q of P.pts)if(Math.hypot(q.x-x,q.y-y)<r)return true;return W.harbor?Math.hypot(W.harbor.x-x,W.harbor.y-y)<r+120:false;};W.nearPath=nearPath;
   const snapZ=(p,zi,tr)=>{tr=tr||TIER.any;let best=null,bd=1e9;for(let i=0;i<grid.length;i++){const t=grid[i];if((t!==LAND&&t!==BEACH)||!reach[i])continue;if(zi!=null&&zid[i]!==zi)continue;const e=eg[i];if(e<tr[0]||e>tr[1])continue;const c=cellCenter(i);const d=Math.hypot(c.x-p.x,c.y-p.y);if(d<bd){bd=d;best=c;}}return best||p;};
   const zc=Z.map((z,i)=>z.water?null:snapZ(z,i));
   const inl=(B,m,f)=>isRound?polar(B.a,f):{x:B.x-B.nx*m,y:B.y-B.ny*m};
   const landing=snapZ(inl(V.beach,15,.97),null,TIER.beach);
-  const harborPt=V.harbor?snapZ(inl(V.harbor,130,.77),null,TIER.beach):null;
+  const harborPt=V.harbor?snapZ(V.harbor.std?{x:V.harbor.x-V.harbor.nx*(HARB.L+12),y:V.harbor.y-V.harbor.ny*(HARB.L+12)}:inl(V.harbor,130,.77),null,TIER.beach):null;
+  W.harborQ=harborPt;W.carrier0={x:CARRIER.x,y:CARRIER.y,a:CARRIER.a};
   // objectives by pass-graph distance (chosen above)
   const relays=[zc[r1z],zc[r2z],zc[r3z]].map(p=>({x:p.x,y:p.y}));
   if(r2z===r1z)relays[1]=snapZ({x:relays[0].x+80,y:relays[0].y+60},r1z);
@@ -941,7 +969,7 @@ function buildWorldTry(seed,tryK){
     const KIND=['hall','kobbe','kobbe','stenar','grynna','grynna','skar'];
     for(let t=0;t<1500&&isl.length<N;t++){const x=70+Rk()*(WW-140),y=70+Rk()*(WH-140);{const dd=islandD(x,y,V).d;if(dd<1.06||dd>1.55)continue;}
       const kind=KIND[Math.floor(Rk()*KIND.length)],base=kind==='hall'?14+Rk()*16:kind==='kobbe'?9+Rk()*14:kind==='skar'?6+Rk()*6:kind==='grynna'?5+Rk()*9:8+Rk()*8;
-      if(Math.hypot(x-CARRIER.x,y-CARRIER.y)<340||Math.hypot(x-landing.x,y-landing.y)<230||(harbor&&Math.hypot(x-harbor.x,y-harbor.y)<180))continue;
+      if(Math.hypot(x-CARRIER.x,y-CARRIER.y)<340||Math.hypot(x-landing.x,y-landing.y)<230||(harbor&&Math.hypot(x-harbor.x,y-harbor.y)<180)||nearPath(x,y,base+70))continue;
       let ok=true;for(let k=0;k<16&&ok;k++){const q=cellIdx(x+Math.cos(k/16*TAU)*(base+30),y+Math.sin(k/16*TAU)*(base+30));if(!wetK(q))ok=false;}if(!ok||!wetK(cellIdx(x,y)))continue;
       if(isl.some(o=>Math.hypot(o.x-x,o.y-y)<o.r+base+170))continue;
       const parts=[],rot=Rk()*PI;
@@ -959,7 +987,7 @@ function buildWorldTry(seed,tryK){
     for(let gy=2;gy<GH-2;gy++)for(let gx=2;gx<GW-2;gx++){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;let nx=0,ny=0,nw=0;
       for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++){if(wet((gy+oy)*GW+gx+ox)){nx+=ox;ny+=oy;nw++;}}
       if(nw<5||nw>17)continue;const nl=Math.hypot(nx,ny);if(nl<1)continue;const c=cellCenter(i),n={x:nx/nl,y:ny/nl};
-      const top=elevAt(c.x-n.x*10,c.y-n.y*10,s,V);if(top>7||top<.5)continue;if(!away(c.x,c.y,260))continue;cand.push({x:c.x,y:c.y,n,top});}
+      const top=elevAt(c.x-n.x*10,c.y-n.y*10,s,V);if(top>7||top<.5)continue;if(!away(c.x,c.y,260))continue;if(W.harbor&&Math.hypot(c.x-W.harbor.x,c.y-W.harbor.y)<HARB.L+110)continue;cand.push({x:c.x,y:c.y,n,top});}
     for(let k=cand.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[cand[k],cand[j]]=[cand[j],cand[k]];}
     const clearRun=(p,n,L)=>{for(let t=6;t<=L+4;t+=3)if(!wet(cellIdx(p.x+n.x*t,p.y+n.y*t)))return false;return true;};
     for(const c of cand){if(D.jetties.length>=16)break;if(D.jetties.some(j=>Math.hypot(j.x-c.x,j.y-c.y)<110))continue;const L=14+Rd()*10;if(!clearRun(c,c.n,L))continue;
@@ -977,7 +1005,7 @@ function buildWorldTry(seed,tryK){
         D.light={x:bx,y:by,h:bh};W.trees=W.trees.filter(t=>Math.hypot(t.x-bx,t.y-by)>7);}}
     const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const q=cellIdx(x+Math.cos(a/12*TAU)*r,y+Math.sin(a/12*TAU)*r);if(!wet(q))return true;}return false;};
     for(let t=0;t<400&&D.boats.length<D.jetties.length*.75+7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r=45+Rd()*90,x=c.x+c.n.x*r+(Rd()-.5)*60,y=c.y+c.n.y*r+(Rd()-.5)*60;
-      if(!wet(cellIdx(x,y))||coastNear(x,y,25)||!away(x,y,280)||D.boats.some(b=>Math.hypot(b.x-x,b.y-y)<45))continue;D.boats.push({x,y,a:Rd()*TAU,kind:Rd()<.5?'sail':'motor',anchored:true});}
+      if(!wet(cellIdx(x,y))||coastNear(x,y,25)||!away(x,y,280)||D.boats.some(b=>Math.hypot(b.x-x,b.y-y)<45)||nearPath(x,y,60))continue;D.boats.push({x,y,a:Rd()*TAU,kind:Rd()<.5?'sail':'motor',anchored:true});}
     // archipelago villas, classic and modern, looking out over the water
     D.villas=[];{const STY=['klassisk','klassisk','rod','modern','svart'];const nV=5+Math.floor(Rd()*4);
       for(const c of cand){if(D.villas.length>=nV)break;const dd=20+Rd()*10,x=c.x-c.n.x*dd,y=c.y-c.n.y*dd,ci=cellIdx(x,y);if(G0[ci]!==LAND||W.road[ci])continue;
@@ -999,7 +1027,7 @@ function buildWorldTry(seed,tryK){
     D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7)D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
     // hidden shoals (grund under ytan) out in open water, each marked by a cardinal mark on its safe-water side
     D.shoals=[];for(let t=0;t<600&&D.shoals.length<7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r0=8+Rd()*16,dd=60+Rd()*230,x=c.x+c.n.x*dd+(Rd()-.5)*80,y=c.y+c.n.y*dd+(Rd()-.5)*80;
-      if(!wet(cellIdx(x,y))||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60))continue;
+      if(!wet(cellIdx(x,y))||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
       const sh={x,y,r:r0,rot:Rd()*PI,el:.5+Rd()*.5};D.shoals.push(sh);
       const dirs=[['N',0,-1],['S',0,1],['E',1,0],['W',-1,0]];const sea={x:x-CX,y:y-CY};dirs.sort((a2,b2)=>(b2[1]*sea.x+b2[2]*sea.y)-(a2[1]*sea.x+a2[2]*sea.y));const pick=dirs[Rd()<.7?0:1];
       const mx=x+pick[1]*(r0+12),my=y+pick[2]*(r0+12);if(wet(cellIdx(mx,my)))D.marks.push({x:mx,y:my,type:pick[0]});}
@@ -1010,9 +1038,9 @@ function buildWorldTry(seed,tryK){
       for(let k=0;k<n;k++){const a=Rs()*TAU,f=Math.sqrt(Rs())*.7,u=Math.cos(a)*sh.r*f,v=Math.sin(a)*sh.r*sh.el*f,c=Math.cos(sh.rot),sn=Math.sin(sh.rot),big=Rs();
         sh.stones.push({x:sh.x+u*c-v*sn,y:sh.y+u*sn+v*c,r:.35+big*big*2.2,h:.08+Rs()*(.25+big*.7),rot:Rs()*PI,el:.6+Rs()*.4});}});
     // lateral marks only at the harbour mouth: entering, red to port and green to starboard
-    if(harborPt){const out={x:V.harbor.nx,y:V.harbor.ny};
-      for(const dd of[70,110]){const m={x:harborPt.x+out.x*dd,y:harborPt.y+out.y*dd},h={x:-out.x,y:-out.y},left={x:h.y,y:-h.x};
-        const r={x:m.x+left.x*24,y:m.y+left.y*24},g={x:m.x-left.x*24,y:m.y-left.y*24};if(wet(cellIdx(r.x,r.y))&&wet(cellIdx(g.x,g.y))){D.marks.push({...r,type:'red'},{...g,type:'green'});}}}
+    if(harborPt){const out={x:V.harbor.nx,y:V.harbor.ny},std=V.harbor.std;
+      for(const dd of std?[30,80]:[70,110]){const base0=std?{x:V.harbor.x,y:V.harbor.y}:harborPt,m={x:base0.x+out.x*dd,y:base0.y+out.y*dd},h={x:-out.x,y:-out.y},left={x:h.y,y:-h.x},wd=std?HARB.hw+14:24;/* outside the mouth and wider than Birka */
+        const r={x:m.x+left.x*wd,y:m.y+left.y*wd},g={x:m.x-left.x*wd,y:m.y-left.y*wd};if(wet(cellIdx(r.x,r.y))&&wet(cellIdx(g.x,g.y))){D.marks.push({...r,type:'red'},{...g,type:'green'});}}}
   }
   if(typeof document==='undefined')return W;
   const eT=new Float32Array(TW*TH);
@@ -1121,6 +1149,7 @@ function deckDrive(u,dt){if(u.orders.length||u.carried||G.ctrl===u.id||!onDeck(u
   const a=Math.atan2(t.y-u.y,t.x-u.x),st=Math.min(d,u.speed*.6*dt);u.x+=Math.cos(a)*st;u.y+=Math.sin(a)*st;u.heading=a;u.state='Kör till en ledig helikopterplatta';return true;}
 function newGame(seed){
   const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed);WORLD.cfgKey=cfgKey;}
+  if(WORLD.carrier0)Object.assign(CARRIER,WORLD.carrier0);/* Birka starts outside the beach again, even on the same island after a docking */
   G={seed,time:0,res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
     relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
@@ -1134,6 +1163,7 @@ function newGame(seed){
     for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const X=gx0+dx,Y=gy0+dy;if(X<0||Y<0||X>=GW||Y>=GH)continue;const i=Y*GW+X;if(!coverA[i]||!passLand(i))continue;const d=Math.hypot(dx,dy)*CELL;if(d<bd){bd=d;best=i;}}
     if(best!=null){const c=cellCenter(best);e.x=e.hx=e.lx=c.x;e.y=e.hy=e.ly=c.y;}}
   G.mines=[];G.reachAll=null;mkMines(WORLD.mineSites||[]);computeLock();
+  G.harbor=WORLD.harbor&&WORLD.birkaPath&&WORLD.harborQ?{secured:false,docked:false,s:0,v:0,chk:0}:null;
   {let nt=0;for(const k of START.units)G.units.push(k==='drone'?makeUnit('drone',...shipPos(0,60)):k==='tank'?makeUnit('tank',...shipPos(nt++?32:-32,0)):k==='scout'?makeUnit('scout',...shipPos(0,-60)):makeUnit('eng',...deckSpot(0)));}
   {const e=G.units.find(u=>u.kind==='eng');if(e)setSel([e.id]);G.cam=(G.units.find(u=>u.kind==='tank')||e||G.units[0]).id;}
   G.kroks.push(makeKrok());
@@ -1190,8 +1220,31 @@ function autoPause(L){
   G.paused=true;const e=L[0].e,by=L[0].by;ping(e.x,e.y);
   say(null,'Autopaus: '+(L.length>1?L.length+' nya kontakter, bland annat ':'ny kontakt: ')+ename(e)+' i ruta '+sq(e.x,e.y)+(by?', upptäckt av '+by.name:'')+'. Mellanslag fortsätter.',[{l:'Visa',f:()=>{if(by&&!by.dead)setCam(by.id);}},{l:'Fortsätt',f:()=>{setPaused(false);uiTick(true);}}]);}
 function setPaused(p){if(!G.running&&p)return;if(G.paused&&!p)G.resumedAt=G.time;G.paused=p;}
+/* ---------- the harbour and Birka's docking (decided 13 okt) ----------
+   The harbour counts as secured when an own ground vehicle stands on the quay (within 70 m of it) and no enemy is left within
+   260 m. Then the small boats leave, and Birka weighs anchor by itself and follows the path planned when the island was made, at
+   up to 10 knots, speeding up and braking gently and turning at most a few degrees a second, until it lies docked in the basin.
+   Everything standing on its deck goes with it, and KROK's pads move with the ship. */
+function harborTick(dt){const H=G.harbor;if(!H||H.docked)return;
+  if(!H.secured){H.chk-=dt;if(H.chk>0)return;H.chk=1;const q=WORLD.harborQ;
+    const own=G.units.some(u=>!u.dead&&!u.air&&!u.carried&&u.kind!=='mus'&&!onDeck(u.x,u.y)&&Math.hypot(u.x-q.x,u.y-q.y)<70);if(!own)return;
+    if(G.enemies.some(e=>!e.dead&&Math.hypot(e.x-q.x,e.y-q.y)<260)){if(!H.warned){H.warned=true;say(null,'Vi står i hamnen, men fienden finns kvar inom 260 m. Rensa runt hamnen så kan Birka gå in.');}return;}
+    H.secured=true;H.secT=G.time;say(null,'Hamnen är säkrad. HMS Birka lättar ankar och går in i hamnen.');return;}
+  const P=WORLD.birkaPath,M=BIRKA_MOVE,at=s=>{s=clamp(s,0,P.L);let i=0;while(i<P.pts.length-2&&P.len[i+1]<s)i++;const a=P.pts[i],b=P.pts[i+1],f=(s-P.len[i])/((P.len[i+1]-P.len[i])||1);return{x:lerp(a.x,b.x,f),y:lerp(a.y,b.y,f)};};
+  const rem=P.L-H.s,p0=at(H.s),p1=at(H.s+20),tgt=rem>20?Math.atan2(p1.y-p0.y,p1.x-p0.x):WORLD.harbor.dock.a,err=angWrap(tgt-CARRIER.a);
+  let vt=M.vmax*clamp(1-Math.abs(err)/(PI/3),.15,1);vt=Math.min(vt,Math.sqrt(2*M.dec*Math.max(0,rem)));
+  H.v=H.v<vt?Math.min(vt,H.v+M.acc*dt):Math.max(vt,H.v-M.dec*2*dt);H.s=Math.min(P.L,H.s+H.v*dt);
+  const p=at(H.s),na=CARRIER.a+clamp(err,-M.turn*PI/180*dt,M.turn*PI/180*dt);moveCarrier(p.x,p.y,na);
+  if(P.L-H.s<.3&&H.v<.25&&Math.abs(angWrap(WORLD.harbor.dock.a-CARRIER.a))<.03){const d=WORLD.harbor.dock;moveCarrier(d.x,d.y,d.a);H.docked=true;H.v=0;H.dockT=G.time;
+    say(null,'HMS Birka har förtöjt i hamnen. Varvet, servicen och KROK arbetar nu härifrån.');}}
+function moveCarrier(x,y,a){
+  const carry=G.units.filter(u=>!u.dead&&!u.carried&&!u.air&&onDeck(u.x,u.y)).map(u=>({u,l:shipLocal(u.x,u.y),to:u.deckTo?shipLocal(u.deckTo.x,u.deckTo.y):null,path:u.deckPath?u.deckPath.map(q=>shipLocal(q.x,q.y)):null}));
+  const ks=G.kroks.map(k=>({k,pad:shipLocal(k.pad.x,k.pad.y),home:!k.dead&&!k.cargo&&!k.orders.length&&Math.hypot(k.x-k.pad.x,k.y-k.pad.y)<3}));
+  const da=angWrap(a-CARRIER.a);CARRIER.x=x;CARRIER.y=y;CARRIER.a=a;const wp=l=>{const q=shipPos(l.lat,l.fwd);return{x:q[0],y:q[1]};};
+  for(const o of carry){const q=wp(o.l);o.u.x=q.x;o.u.y=q.y;o.u.heading+=da;if(o.to)o.u.deckTo=wp(o.to);if(o.path)o.u.deckPath=o.path.map(wp);}
+  for(const o of ks){const q=wp(o.pad);o.k.pad=q;if(o.home){o.k.x=q.x;o.k.y=q.y;o.k.heading+=da;}}}
 function step(dt){
-  G.time+=dt;G.tod=(G.tod+dt/240)%24;
+  G.time+=dt;G.tod=(G.tod+dt/240)%24;harborTick(dt);
   const cap=G.relays.filter(r=>r.captured).length;
   G.res+=dt*(INCOME.base+INCOME.relay*cap);
   for(const e of G.enemies){
@@ -2325,7 +2378,7 @@ function callIn(kind,pk,asMission,who){
 
 /* expose for headless tests */
 globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return l;};
-if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,HARB,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -2459,6 +2512,12 @@ function drawMap(ctx,w,h,small){
   for(const u of G.units){if(u.dead||u.carried)continue;ctx.beginPath();ctx.arc(u.x,u.y,u.vision,0,TAU);ctx.stroke();}
   ctx.setLineDash([]);
   // carrier
+  // the harbour deck, and Birka's way in as a dashed line until it has docked
+  if(WORLD.harbor){const H=WORLD.harbor,ux=-H.nx,uy=-H.ny,P=(li,lt)=>[H.x+ux*li-uy*lt,H.y+uy*li+ux*lt],hw=HARB.hw,L=HARB.L,dw=HARB.deck;
+    ctx.fillStyle='rgba(138,115,86,.95)';ctx.strokeStyle='rgba(60,46,32,.9)';ctx.lineWidth=.8*k;
+    const poly=pts=>{ctx.beginPath();pts.forEach((q,i)=>{const[x,y]=P(q[0],q[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.fill();ctx.stroke();};
+    poly([[-2,hw-1],[L+dw-1,hw-1],[L+dw-1,hw+dw-1],[-2,hw+dw-1]]);poly([[-2,-hw+1],[L+dw-1,-hw+1],[L+dw-1,-hw-dw+1],[-2,-hw-dw+1]]);poly([[L-1,-hw-dw+1],[L+dw-1,-hw-dw+1],[L+dw-1,hw+dw-1],[L-1,hw+dw-1]]);
+    const Hs=G.harbor,BP=WORLD.birkaPath;if(BP&&Hs&&!Hs.docked){let i0=0;if(Hs.s>0)while(i0<BP.pts.length-1&&BP.len[i0]<Hs.s)i0++;ctx.save();ctx.setLineDash([5*k,4*k]);ctx.strokeStyle=Hs.secured?'rgba(31,46,74,.85)':'rgba(31,46,74,.35)';ctx.lineWidth=1.4*k;ctx.beginPath();ctx.moveTo(CARRIER.x,CARRIER.y);for(let i=i0;i<BP.pts.length;i++)ctx.lineTo(BP.pts[i].x,BP.pts[i].y);ctx.stroke();ctx.restore();}}
   ctx.save();ctx.translate(CARRIER.x,CARRIER.y);ctx.rotate(CARRIER.a+PI/2);ctx.fillStyle=NAVY;ctx.beginPath();ctx.moveTo(0,-38);ctx.lineTo(11,-20);ctx.lineTo(11,32);ctx.lineTo(-11,32);ctx.lineTo(-11,-20);ctx.closePath();ctx.fill();ctx.fillStyle=PAPER;ctx.fillRect(4,-6,4,16);ctx.restore();
   // relays
   for(const r of G.relays){
@@ -3047,7 +3106,7 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
   const spots=[[-17,-40],[-17,-12],[-17,10],[-17,40],[17,-40],[17,-12],[17,10],[17,40],[0,-46.5]];
   for(const[x,z]of spots){const out=x?Math.sign(x):0,oz=x?0:-1;const lamp=mesh(box(.9,.6,.9),lampMat,x*1.0,DY+1.2,z);g.add(lamp);
     const cn=new THREE.Mesh(coneG,coneM);cn.position.set(x*1.0,DY+1,z);cn.rotation.set(oz*-.55,0,out*.55);cn.userData.noShadow=true;g.add(cn);
-    const pl=new THREE.Mesh(new THREE.PlaneGeometry(12,12),poolM);pl.rotation.x=-PI/2;pl.position.set(x+out*5.5,.12,z+oz*5.5);pl.userData.noShadow=true;pl.renderOrder=4;g.add(pl);}
+    const pl=new THREE.Mesh(new THREE.PlaneGeometry(12,12),poolM);pl.rotation.x=-PI/2;pl.position.set(x+out*5.5,.12,z+oz*5.5);pl.userData.noShadow=true;pl.renderOrder=4;g.add(pl);if(!x)g.userData.bowPool=pl;}
   // navigation lights: red to port, green to starboard on the bridge wings, white masthead, stern and crane tip
   const nav=[];for(const[c,x,y,z]of[[0xff3a2a,4.4,DY+15.4,18.6],[0x3aff6a,17.6,DY+15.4,18.6],[0xffffff,11,DY+30,23],[0xffffff,0,DY+1.4,46.3]]){const m2=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:c}),x,y,z);m2.userData.noShadow=true;g.add(m2);nav.push({m:m2,c});}
   {const tl=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:0xff3a2a}),tip[0],tip[1]+.9,tip[2]);tl.userData.noShadow=true;cr.add(tl);nav.push({m:tl,c:0xff3a2a});}
@@ -3147,6 +3206,30 @@ function mkSurround(W,st){
   if(D.wins.length){R3.sWin=pts(D.wins,7);const cc=R3.sWin.geometry.attributes.color;D.wins.forEach((q,i)=>{const k=.7+hash2(i,3,W.seed)*.3;cc.setXYZ(i,1*k,.78*k,.45*k);});R3.sWin.visible=false;}
   if(D.navs.length){R3.sNav=pts(D.navs,11);R3.sNav.visible=false;}
   return m;}
+/* the standard harbour (decided 13 okt): a wooden deck all round the basin on piles, bollards along the edge, lamp posts that are
+   lit once the harbour is ours (it turns military and industrial), and a few small boats moored inside that leave when it is
+   secured. Built in the harbour's own frame: x inward along the basin, z across it. */
+function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group();g.position.set(H.x,0,H.y);g.rotation.y=Math.atan2(-u.y,u.x);
+  if(!R3.plankTex){const c=mkCanvas(64,64),x=c.getContext('2d');for(let i=0;i<8;i++){x.fillStyle=['#8a7356','#7f6a4f','#937b5c','#86704f'][i%4];x.fillRect(0,i*8,64,8);x.fillStyle='rgba(40,30,20,.45)';x.fillRect(0,i*8+7,64,1);}
+    R3.plankTex=new THREE.CanvasTexture(c);R3.plankTex.wrapS=R3.plankTex.wrapT=THREE.RepeatWrapping;}
+  const deckMat=(w,l)=>{const t=R3.plankTex.clone();t.needsUpdate=true;t.repeat.set(l/8,w/8);return new THREE.MeshLambertMaterial({map:t});};
+  const hw=HARB.hw,L=HARB.L,dw=HARB.deck,top=1.75,DARK=mat(0x3a332b),POST=mat(0x4e4234);
+  for(const sd of[-1,1]){const len=L+dw;const m=mesh(box(len,.3,dw),deckMat(dw,len),len/2-2,top-.15,sd*(hw+dw/2-1));m.material.map.rotation=0;g.add(m);
+    g.add(mesh(box(len,.35,.35),DARK,len/2-2,top-.2,sd*(hw-1)));
+    for(let x=0;x<=L;x+=6)g.add(mesh(cyl(.22,.26,3.4,6),POST,x,top-1.9,sd*(hw-.8)));
+    for(let x=8;x<L;x+=18)g.add(mesh(cyl(.22,.28,.6,8),DARK,x,top+.3,sd*(hw-.2)));}
+  {const w2=2*(hw+dw);g.add(mesh(box(dw,.3,w2),deckMat(w2,dw),L+dw/2-1,top-.15,0));g.add(mesh(box(.35,.35,2*hw),DARK,L-1,top-.2,0));for(let z=-hw;z<=hw;z+=6)g.add(mesh(cyl(.22,.26,3.4,6),POST,L-.8,top-1.9,z));}
+  // lamp posts: dark until the harbour is ours
+  const lamps=[],poolT=(()=>{const c=mkCanvas(64,64),x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,236,200,1)');gr.addColorStop(.55,'rgba(255,226,180,.4)');gr.addColorStop(1,'rgba(255,226,180,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
+  const poolM=new THREE.MeshBasicMaterial({map:poolT,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}),headM=new THREE.MeshBasicMaterial({color:0x3a3a36});
+  for(const sd of[-1,1])for(let x=10;x<=L;x+=30){const z=sd*(hw+dw-1.2);g.add(mesh(cyl(.13,.16,7,6),mat(0x5a6066),x,top+3.5,z));g.add(mesh(box(.2,.2,1.6),mat(0x5a6066),x,top+7,z-sd*.8));
+    const hd=new THREE.Mesh(new THREE.BoxGeometry(.7,.3,.5),headM);hd.position.set(x,top+6.85,z-sd*1.5);g.add(hd);
+    const pl=new THREE.Mesh(new THREE.PlaneGeometry(14,14),poolM);pl.rotation.x=-PI/2;pl.position.set(x,top+.04,z-sd*3);pl.renderOrder=4;pl.userData.noShadow=true;g.add(pl);lamps.push(hd);}
+  st.add(g);
+  // small boats moored inside, along both quays, clear of where Birka will lie
+  const boats=[],P=(li,lt)=>({x:H.x+u.x*li-u.y*lt,y:H.y+u.y*li+u.x*lt}),ang=Math.atan2(u.y,u.x),Rb=rng(W.seed*59+7);
+  for(const[li,sd]of[[14,1],[30,-1],[52,1],[78,-1],[104,1]]){if(Rb()<.25)continue;const q=P(li,sd*(hw-4.5)),b=mkBoat({kind:['motor','sail','eka'][Math.floor(Rb()*3)],x:q.x,y:q.y,a:ang+(Rb()<.5?0:PI)});b.userData.y0=.15;st.add(b);R3.bobs.push(b);boats.push(b);}
+  return{g,lamps,poolM,headM,boats};}
 function buildStatic(){
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
   for(const m of[R3.units,R3.enemies,R3.wrecks,R3.relays,R3.fx,R3.kroks,R3.structs])m.clear();R3.parts.length=0;
@@ -3215,6 +3298,8 @@ function buildStatic(){
   R3.bars.clear();
   for(const b of W.barriers){const im=new THREE.InstancedMesh(new THREE.BoxGeometry(5,1.1,1.1),mat(0x4a3a2c),b.cells.length*2);let n=0;for(const c of b.cells){const q=cellCenter(c);for(const rot of[PI/4,-PI/4]){dummy.position.set(q.x,groundY(q.x,q.y)+.9,q.y);dummy.rotation.set(0,rot,.35);dummy.scale.set(1,1,1);dummy.updateMatrix();im.setMatrixAt(n++,dummy.matrix);}}st.add(im);R3.bars.set(b.id,im);}
   R3.ship.position.set(CARRIER.x,0,CARRIER.y);R3.ship.rotation.y=-(CARRIER.a+PI/2);
+  R3.harborM=W.harbor?mkHarbor(W,st):null;
+  if(!R3.birkaWake){R3.birkaWake={wake:mkWake(),trail:[],tt:-1,beam:16};}st.add(R3.birkaWake.wake.mesh);R3.birkaWake.trail.length=0;
   R3.surround=mkSurround(W,st);
   st.traverse(o=>{if(o.isMesh&&!o.userData.surround){o.castShadow=true;o.receiveShadow=true;}});
   // light itself casts no shadow (a transparent beam still lands in the shadow map)
@@ -3409,6 +3494,14 @@ function sync3D(dtr){
     if(R3.sNav){R3.sNav.visible=lit>0;if(lit>0){const D=WORLD.surround,cc=R3.sNav.geometry.attributes.color;D.navs.forEach((q,i)=>{const on=lightOn(LIGHT_CH[q.ch],RTs+q.ph);const v=on?1:0;if(q.col==='red')cc.setXYZ(i,v,.18*v,.12*v);else cc.setXYZ(i,.2*v,v,.4*v);});cc.needsUpdate=true;R3.sNav.material.opacity=lit;}}
     for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180,on=lit>0&&inSec&&lightOn(q.ch,RTs+z.ph);
       q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
+  R3.ship.position.x=CARRIER.x;R3.ship.position.z=CARRIER.y;R3.ship.rotation.y=-(CARRIER.a+PI/2);
+  {const Hs=G.harbor,HM=R3.harborM,L=R3.lit||0;
+    if(HM){const own=!!(Hs&&Hs.secured);for(const b of HM.boats)b.visible=!own;HM.poolM.opacity=own?.7*L:0;HM.headM.color.setHex(own&&L>0?0xfff1c8:0x3a3a36);}
+    if(R3.ship.userData.bowPool)R3.ship.userData.bowPool.visible=!(Hs&&Hs.docked);
+    // a wake behind Birka while it is under way
+    const bw=R3.birkaWake;if(bw){const T=R3.decoT||0,mov=Hs&&Hs.secured&&!Hs.docked&&Hs.v>.2;bw.wake.mesh.visible=mov||bw.trail.length>0;
+      if(mov){const sx=CARRIER.x-Math.cos(CARRIER.a)*44,sz=CARRIER.y-Math.sin(CARRIER.a)*44;if(bw.tt<0||T-bw.tt>.25){bw.tt=T;bw.trail.unshift({x:sx,z:sz,t:T});if(bw.trail.length>bw.wake.N)bw.trail.pop();}updWake(bw,{x:sx,z:sz,t:T},T);}
+      else if(bw.trail.length&&T-bw.trail[0].t>8)bw.trail.length=0;}}
   {const sh=R3.ship.userData,L=R3.lit||0,now2=performance.now()/1000;if(sh.radar)sh.radar.rotation.y=now2*1.3;printTick(sh,now2);if(sh.crane)sh.crane.rotation.y=-.18+Math.sin(now2*.031)*.22;
     if(sh.flood){sh.flood.coneM.opacity=.16*L;sh.flood.poolM.opacity=.75*L;}
     if(sh.nav){if(!sh.navH){sh.navH=sh.nav.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(3.2);n.m.add(h);return h;});}sh.navH.forEach(h=>{h.visible=L>0;h.material.opacity=.85*L;});}}
