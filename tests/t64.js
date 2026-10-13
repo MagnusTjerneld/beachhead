@@ -34,4 +34,9 @@ for(const[f,seed]of[['as',1000],['hastsko',1037],['udde',1111]]){
   // a new game puts Birka back at sea
   B.newGame(seed);ok(Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y)<.01&&!B.G.harbor.secured,f+': a new game resets Birka and the harbour');
 }
+// Birka's way in over many islands: the hull line keeps 20 m of water to the harbour mouth, and never crosses the real coastline
+// (elevation, not the 10 m grid) outside the basin; a straightened leg once ran over a holm and a rounded corner over a headland
+{let n=0,clear=0,dry=0;for(const f of['as','hastsko','nas','udde','rund'])for(let sd=3000;sd<3002;sd++){B.SHAPE_CFG.force=f;B.SHAPE_CFG.rough=1;B.newGame(sd);const W=B.W,P=W.birkaPath,H=W.harbor;if(!P)continue;n++;if(B.birkaClear(W))clear++;
+  let land=0;for(let s=0;s<P.L;s+=2){let i=0;while(i<P.pts.length-2&&P.len[i+1]<s)i++;const a=P.pts[i],b=P.pts[i+1],t=(s-P.len[i])/((P.len[i+1]-P.len[i])||1),x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t,dx=x-H.x,dy=y-H.y,li=-(dx*H.nx+dy*H.ny),lt=Math.abs(-dx*H.ny+dy*H.nx);if(li>-20&&lt<32)continue;if(B.elevAt(x,y,W.seed,W.V)>0)land++;}if(!land)dry++;}
+  ok(n>=8&&clear===n,'Birka keeps 20 m clear of land on '+clear+'/'+n+' islands');ok(dry===n,'Birka never crosses the coastline: '+dry+'/'+n+' islands');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

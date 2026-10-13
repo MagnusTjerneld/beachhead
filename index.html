@@ -593,6 +593,10 @@ function buildWorld(seed){
   for(let k=0;k<(SHAPE_CFG.rough?12:8);k++){W=buildWorldTry(seed,k);W.tries=k+1;W.valid=validWorld(W);{const lg=buildWorld.log=buildWorld.log||[];lg.push(W.valid?"ok":W.why);if(lg.length>200)lg.shift();}if(W.valid)break;}
   W.seed=seed;WORLD=W;return W;
 }
+function birkaClear(W){const P=W.birkaPath,g=W.baseGrid,wet=(x,y)=>{if(x<0||y<0||x>=WW||y>=WH)return true;const t=g[cellIdx(x,y)];return t===DEEP||t===SHAL;},end=P.L-(HARB.dockLi+60);
+  for(let s=0;s<end;s+=5){let i=0;while(i<P.pts.length-2&&P.len[i+1]<s)i++;const a=P.pts[i],b=P.pts[i+1],t=(s-P.len[i])/((P.len[i+1]-P.len[i])||1),x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
+    if(!wet(x,y))return false;for(let k=0;k<8;k++){const an=k*PI/4;if(!wet(x+Math.cos(an)*20,y+Math.sin(an)*20))return false;}}
+  return true;}
 function validWorld(W){
   const g=W.grid,flood=bar=>{const r=new Uint8Array(g.length),s0=cellIdx(CARRIER.x,CARRIER.y),st=[s0];r[s0]=1;while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!isGround(g[n])||bar[n])continue;r[n]=1;st.push(n);}}return r;};
   const none=new Uint8Array(g.length),bar=new Uint8Array(g.length);for(const c of W.gateCells||[])bar[c]=1;
@@ -606,6 +610,8 @@ function validWorld(W){
       if(n>=12)big.set(z,(big.get(z)||0)+1);}
     for(const[,k]of big)if(k>1){W.why='zon i flera delar';return false;}}
   if(W.V.shape.rough&&W.harbor&&!W.birkaPath){W.why='Birka når inte hamnen';return false;}
+  // the finished way in, holms and all, keeps 20 m of water on both sides of the hull line until the harbour mouth
+  if(W.birkaPath&&!birkaClear(W)){W.why='Birkas väg över land';return false;}
   // the new shapes and every rough coast: every point reachable over land from the beach once the barriers are open (BÄVER cannot cross water)
   if(W.V.shape.type!=='rund'||W.V.shape.rough){const r=new Uint8Array(g.length),s0=cellIdx(W.landing.x,W.landing.y),st=[s0];r[s0]=1;
     while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||none[n])continue;const t=g[n];if(t!==LAND&&t!==BEACH)continue;r[n]=1;st.push(n);}}
@@ -731,9 +737,15 @@ function buildWorldTry(seed,tryK){
         // straighten (longest clear runs), then round the corners
         const clr=(a,b)=>{const n=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/5);for(let k=0;k<=n;k++)if(!ok(cellIdx(a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n)))return false;return true;};
         const sp=[pts[0]];let i=0;while(i<pts.length-1){let j=pts.length-1;while(j>i+1&&!clr(pts[i],pts[j]))j--;sp.push(pts[j]);i=j;}
-        const mouth={x:H.x+H.nx*40,y:H.y+H.ny*40};pts=chaikin(chaikin(chaikin([...sp,mouth])));pts.push(dock);
+        // cut the long legs into 40 m pieces before rounding: rounding a corner between two 400 m legs cuts up to 100 m off it,
+        // straight across the headland the corner went round (fixed 14 okt)
+        const mouth={x:H.x+H.nx*40,y:H.y+H.ny*40},sub=[];for(const q of[...sp,mouth]){const l=sub[sub.length-1];if(l){const d=Math.hypot(q.x-l.x,q.y-l.y),n=Math.ceil(d/40);for(let k=1;k<n;k++)sub.push({x:l.x+(q.x-l.x)*k/n,y:l.y+(q.y-l.y)*k/n});}sub.push(q);}
+        pts=chaikin(chaikin(chaikin(sub)));pts.push(dock);
         const len=[0];for(let k=1;k<pts.length;k++)len.push(len[k-1]+Math.hypot(pts[k].x-pts[k-1].x,pts[k].y-pts[k-1].y));W.birkaPath={pts,len,L:len[len.length-1]};}}}
-  const nearPath=(x,y,r)=>{const P=W.birkaPath;if(P)for(const q of P.pts)if(Math.hypot(q.x-x,q.y-y)<r)return true;return W.harbor?Math.hypot(W.harbor.x-x,W.harbor.y-y)<r+120:false;};W.nearPath=nearPath;
+  // distance to the path's segments, not just its corner points: a straightened leg can be 800 m long with nothing in between,
+  // and a holm placed in the middle of one put Birka's way over land (fixed 14 okt)
+  const segD=(px,py,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy||1;let t=((px-a.x)*dx+(py-a.y)*dy)/l2;t=t<0?0:t>1?1:t;return Math.hypot(a.x+dx*t-px,a.y+dy*t-py);};
+  const nearPath=(x,y,r)=>{const P=W.birkaPath;if(P)for(let k=0;k<P.pts.length-1;k++)if(segD(x,y,P.pts[k],P.pts[k+1])<r)return true;return W.harbor?Math.hypot(W.harbor.x-x,W.harbor.y-y)<r+120:false;};W.nearPath=nearPath;
   const snapZ=(p,zi,tr)=>{tr=tr||TIER.any;let best=null,bd=1e9;for(let i=0;i<grid.length;i++){const t=grid[i];if((t!==LAND&&t!==BEACH)||!reach[i])continue;if(zi!=null&&zid[i]!==zi)continue;const e=eg[i];if(e<tr[0]||e>tr[1])continue;const c=cellCenter(i);const d=Math.hypot(c.x-p.x,c.y-p.y);if(d<bd){bd=d;best=c;}}return best||p;};
   const zc=Z.map((z,i)=>z.water?null:snapZ(z,i));
   const inl=(B,m,f)=>isRound?polar(B.a,f):{x:B.x-B.nx*m,y:B.y-B.ny*m};
@@ -2408,7 +2420,7 @@ function callIn(kind,pk,asMission,who){
 
 /* expose for headless tests */
 globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return l;};
-if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,HARB,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={SHAPE_CFG,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
