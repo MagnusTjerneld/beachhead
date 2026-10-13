@@ -217,6 +217,8 @@ button:disabled{opacity:.45;cursor:default}
         <button class="btn" id="bMusic" type="button" aria-pressed="true" title="Musik (N)">Musik på</button>
         <button class="btn" id="bSound" type="button" aria-pressed="true" title="Ljud (M)">Ljud på</button>
         <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
+        <button class="btn" id="bDynRes" type="button" aria-pressed="true" title="Sänker 3D-bildens upplösning när datorn inte hinner med 60 bilder per sekund">Dynamisk upplösning på</button>
+        <button class="btn" id="bSikt" type="button" title="Hur långt bort dimman tätnar. Kortare sikt ritar färre träd">Siktavstånd: lång</button>
         <div class="mh">Spel</div>
         <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
         <button class="btn" id="bRestart" type="button" title="Börja om på samma ö">Starta om ön</button>
@@ -310,7 +312,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon.</li>
-      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK flyger HÖK luftstöd åt fordonen i stället för att flyga i förväg till punkten, och spanar åt dem när de anfaller något kamouflerat. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
@@ -1214,6 +1216,31 @@ function say(u,text,acts){
 /* ---------- simulation ---------- */
 /* optional autopause: a new enemy found by any unit other than the one you drive (or by a captured point) stops the clock.
    Not within 3 s of resuming, so a burst of contacts gives one pause, not one per contact. */
+/* dynamic resolution (decided 13 okt): when frames take too long the 3D view is drawn at a lower resolution and stretched to
+   the pane, never below half the size; it creeps back up when there is room. The cost is almost all pixels (an Intel GPU at
+   1440p ran 40 ms a frame with 12 ms of CPU), so this is the lever that matters. Chart, panels and live views are untouched.
+   Target 60 Hz: down when a second averages over 20 ms, up 6 % after three seconds under 17.5 ms; a step up that turns out too
+   costly blocks the next try for longer each time (8 s doubling to a minute), so it does not flicker at the edge */
+const DYNRES={on:true,scale:1,acc:0,n:0,good:0,block:0,back:8000,upT:-1e9,min:.5,lo:20,hi:17.5};try{DYNRES.on=localStorage.getItem('bh.dynres')!=='0';}catch(_){}
+const resBase=()=>Math.min(1.5,(typeof window!=='undefined'&&window.devicePixelRatio)||1);
+function applyRes(){if(!R3)return;R3.renderer.setPixelRatio(resBase()*(DYNRES.on?DYNRES.scale:1));R3.renderer.setSize(size.cam.w,size.cam.h,false);}
+function resTick(now,ms){const D=DYNRES;if(!R3||!D.on||document.hidden||!(ms>0&&ms<1000))return;D.acc+=Math.min(ms,250);D.n++;if(D.acc<1000)return;
+  const avg=D.acc/D.n,s0=D.scale;D.acc=0;D.n=0;
+  if(avg>D.lo){D.scale=Math.max(D.min,D.scale*Math.max(.8,Math.sqrt(16.7/avg)));D.good=0;if(now-D.upT<5000)D.back=Math.min(60000,D.back*2);D.block=now+D.back;}
+  else if(avg<D.hi&&D.scale<1){if(++D.good>=3&&now>D.block){D.scale=Math.min(1,D.scale*1.06);D.good=0;D.upT=now;}}
+  else D.good=0;
+  if(Math.abs(D.scale-s0)>.004)applyRes();}
+/* draw distance (decided 13 okt): Lång is the old look; Medel and Kort pull the fog in to 75 and 55 %. Tree tiles past the fog,
+   outside the view or far from the shadow box are not drawn, so a shorter distance saves geometry; the archipelago backdrop and
+   the sky stay */
+const SIKT={k:'lang'},SIKT_K={lang:1,medel:.75,kort:.55},SIKT_N={lang:'lång',medel:'medel',kort:'kort'};try{const v=localStorage.getItem('bh.sikt');if(SIKT_K[v])SIKT.k=v;}catch(_){}
+let TC=null;
+function treeCull(cam,main){const T=R3&&R3.treeTiles;if(!T)return;if(!TC)TC={fr:new THREE.Frustum(),pm:new THREE.Matrix4(),sp:new THREE.Sphere()};
+  cam.updateMatrixWorld();TC.pm.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);TC.fr.setFromProjectionMatrix(TC.pm);
+  const far=R3.scene.fog.far+40,p=cam.position,f=R3.sun.target.position;let n=0;
+  for(const t of T){const d=Math.hypot(t.x-p.x,t.z-p.z)-t.r;TC.sp.center.set(t.x,t.y,t.z);TC.sp.radius=t.r+25;t.g.visible=d<far&&TC.fr.intersectsSphere(TC.sp);if(t.g.visible)n++;
+    if(main){const sh=t.g.visible&&Math.hypot(t.x-f.x,t.z-f.z)-t.r<300;if(t.sh!==sh){t.sh=sh;t.g.traverse(o=>{if(o.isInstancedMesh)o.castShadow=sh;});}}}
+  if(main)R3.treeVis=n;}
 const AUTOPAUSE={on:false};try{AUTOPAUSE.on=localStorage.getItem('bh.autopause')==='1';}catch(_){}
 function autoPause(L){
   if(!AUTOPAUSE.on||G.paused||G.time<1||G.time-(G.resumedAt??-99)<3)return;
@@ -3118,7 +3145,7 @@ function init3D(){
   renderer.localClippingEnabled=true;
   glC.addEventListener('webglcontextlost',()=>{G.paused=true;diagShow('Webbläsaren tappade 3D-grafiken (WebGL-kontexten). Spelet är pausat. Ladda om sidan om bilden inte kommer tillbaka.');});
   glC.addEventListener('webglcontextrestored',()=>{try{buildStatic();}catch(err){diagErr('återställning',err);}diagShow('3D-grafiken är tillbaka. Tryck mellanslag för att fortsätta.');});
-  renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));
+  renderer.setPixelRatio(resBase()*(DYNRES.on?DYNRES.scale:1));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   const scene=new THREE.Scene();scene.background=new THREE.Color(0xa9bbc4);scene.fog=new THREE.Fog(0xa9bbc4,240,1000);
   const cam=new THREE.PerspectiveCamera(58,1,.5,2600);
@@ -3299,20 +3326,27 @@ function buildStatic(){
     // spruce: dark cone; pine (tall, more common in the open and towards the shore): orange-brown trunk, a loose crown of three tufts
     // birch (about 15 %): white trunk with dark bands, a larger and lighter crown that starts lower; its leaves have their own
     // material (R3.birchLeaf) so seasons can recolour them or take them away
-    const isBirch=t=>hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=W.trees.filter(isBirch),rest=W.trees.filter(t=>!isBirch(t));
-    const isPine=t=>hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
-    if(birches.length){const leaf=new THREE.MeshLambertMaterial({color:0x7fa548});R3.birchLeaf=leaf;
-      const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.17,.26,1,6),mat(0xe9e6dc),birches.length),bd=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.2,1,6),mat(0x2b2a28),birches.length*3),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),leaf,birches.length*4);
-      birches.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=8.6*s2,lean=(hash2(i,1,48)-.5)*.08;dummy.rotation.set(lean,0,lean*.7);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
-        for(let k=0;k<3;k++){const yy=g0+H*(.12+k*.17+hash2(i,k,49)*.06);dummy.rotation.set(0,0,0);dummy.position.set(t.x,yy,t.y);dummy.scale.set(s2*(1.05-yy/(g0+H)*.25),.22*s2,s2*(1.05-yy/(g0+H)*.25));dummy.updateMatrix();bd.setMatrixAt(i*3+k,dummy.matrix);}
-        for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=g0+H*(k?.52+k*.1:.92);dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?2.1:1.8)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);}});
-      st.add(tr);st.add(bd);st.add(cr);}
-    if(spr.length){const tm=new THREE.InstancedMesh(new THREE.ConeGeometry(2.7,11.5,7),mat(0x34512d),spr.length),tk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.32,1,5),mat(0x5a4636),spr.length);
-      spr.forEach((t,i)=>{const s2=t.s*1.12,g0=groundY(t.x,t.y);dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+1.4*s2+5.75*s2,t.y);dummy.scale.set(s2,s2,s2);dummy.updateMatrix();tm.setMatrixAt(i,dummy.matrix);dummy.position.set(t.x,g0+1.1*s2,t.y);dummy.scale.set(s2,2.2*s2,s2);dummy.updateMatrix();tk.setMatrixAt(i,dummy.matrix);});st.add(tm);st.add(tk);}
-    if(pines.length){const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.34,1,5),mat(0xa0603a),pines.length),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),mat(0x4a6a3a),pines.length*3);
-      pines.forEach((t,i)=>{const s2=t.s*1.15,g0=groundY(t.x,t.y),H=9.5*s2;dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
-        for(let k=0;k<3;k++){const a=hash2(i,k,43)*TAU,d=(k?1.1:0)*s2,yy=g0+H-(k?1.2:-.6)*s2;dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,44)*3,hash2(i,k,45)*3,0);dummy.scale.set(2.3*s2,1.1*s2,2*s2);dummy.updateMatrix();cr.setMatrixAt(i*3+k,dummy.matrix);}});
-      st.add(tr);st.add(cr);}}
+    // trees are built per 500 m tile (decided 13 okt) so that a tile out of view, past the fog or far from the shadow box costs
+    // nothing: the whole forest was about 640 000 triangles drawn in full every frame, in the shadow map too, and in each live view
+    const plant=(T,tg)=>{
+    const isBirch=t=>hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t));
+      const isPine=t=>hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
+      if(birches.length){const leaf=R3.birchLeaf;
+        const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.17,.26,1,6),mat(0xe9e6dc),birches.length),bd=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.2,1,6),mat(0x2b2a28),birches.length*3),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),leaf,birches.length*4);
+        birches.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=8.6*s2,lean=(hash2(i,1,48)-.5)*.08;dummy.rotation.set(lean,0,lean*.7);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
+          for(let k=0;k<3;k++){const yy=g0+H*(.12+k*.17+hash2(i,k,49)*.06);dummy.rotation.set(0,0,0);dummy.position.set(t.x,yy,t.y);dummy.scale.set(s2*(1.05-yy/(g0+H)*.25),.22*s2,s2*(1.05-yy/(g0+H)*.25));dummy.updateMatrix();bd.setMatrixAt(i*3+k,dummy.matrix);}
+          for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=g0+H*(k?.52+k*.1:.92);dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?2.1:1.8)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);}});
+        tg.add(tr);tg.add(bd);tg.add(cr);}
+      if(spr.length){const tm=new THREE.InstancedMesh(new THREE.ConeGeometry(2.7,11.5,7),mat(0x34512d),spr.length),tk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.32,1,5),mat(0x5a4636),spr.length);
+        spr.forEach((t,i)=>{const s2=t.s*1.12,g0=groundY(t.x,t.y);dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+1.4*s2+5.75*s2,t.y);dummy.scale.set(s2,s2,s2);dummy.updateMatrix();tm.setMatrixAt(i,dummy.matrix);dummy.position.set(t.x,g0+1.1*s2,t.y);dummy.scale.set(s2,2.2*s2,s2);dummy.updateMatrix();tk.setMatrixAt(i,dummy.matrix);});tg.add(tm);tg.add(tk);}
+      if(pines.length){const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.34,1,5),mat(0xa0603a),pines.length),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),mat(0x4a6a3a),pines.length*3);
+        pines.forEach((t,i)=>{const s2=t.s*1.15,g0=groundY(t.x,t.y),H=9.5*s2;dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
+          for(let k=0;k<3;k++){const a=hash2(i,k,43)*TAU,d=(k?1.1:0)*s2,yy=g0+H-(k?1.2:-.6)*s2;dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,44)*3,hash2(i,k,45)*3,0);dummy.scale.set(2.3*s2,1.1*s2,2*s2);dummy.updateMatrix();cr.setMatrixAt(i*3+k,dummy.matrix);}});
+        tg.add(tr);tg.add(cr);}};
+    R3.birchLeaf=new THREE.MeshLambertMaterial({color:0x7fa548});
+    R3.treeTiles=[];const TS=500,tiles=new Map();for(const t of W.trees){const k=Math.floor(t.x/TS)+','+Math.floor(t.y/TS);if(!tiles.has(k))tiles.set(k,[]);tiles.get(k).push(t);}
+    for(const T of tiles.values()){const tg=new THREE.Group();plant(T,tg);let cx=0,cz=0;for(const t of T){cx+=t.x;cz+=t.y;}cx/=T.length;cz/=T.length;let r=0;for(const t of T)r=Math.max(r,Math.hypot(t.x-cx,t.y-cz));
+      tg.traverse(o=>{if(o.isInstancedMesh)o.frustumCulled=false;});st.add(tg);R3.treeTiles.push({g:tg,x:cx,z:cz,y:groundY(cx,cz)+8,r:r+12});}}
   R3.bobs=[];if(W.decor)mkDecor(W.decor,st);
   {R3.movers=[];const mv2=(g,RT,speed,ph,beam,half,dir,sail)=>{g.rotation.order='YXZ';st.add(g);const wk=mkWake();st.add(wk.mesh);R3.movers.push({g,RT,speed,ph,beam,half,dir,sail:!!sail,wake:wk,trail:[],tt:-1});};
     R3.steamRoute=titleRoute(320);R3.steamer=mkSteamer();mv2(R3.steamer,R3.steamRoute,4.5,.37,5.6,12.5,1);
@@ -3421,7 +3455,7 @@ function updateSky(){
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
   // navigation lights come on at dusk (after sunset, about 18:20) and go out at dawn (about 06:15)
-  R3.lit=clamp((n-.3)/.25,0,1);sc.fog.near=lerp(240,150,n);sc.fog.far=lerp(1000,720,n);
+  R3.lit=clamp((n-.3)/.25,0,1);{const kf=SIKT_K[SIKT.k]||1;sc.fog.near=lerp(240,150,n)*kf;sc.fog.far=lerp(1000,720,n)*kf;}
   if(n<.6){const tt=(h-6)/12,az=tt*PI,el=clamp(Math.sin(tt*PI),.13,1)*1.05;vDir.set(Math.cos(az)*Math.cos(el),Math.sin(el),.55*Math.cos(el)).normalize();}
   else vDir.set(-.45,.78,-.42).normalize();
   // sky dome and water: horizon is the fog colour, zenith deepens towards blue by day and ink at night
@@ -3601,7 +3635,7 @@ function renderPip(){
   const R=R3.renderer,sz=R.getSize(new THREE.Vector2()),W=sz.x,H=sz.y,r=pipRect(W,H);
   if(!R3.pipCam)R3.pipCam=new THREE.PerspectiveCamera(PIP_FOV,1,.5,900);const km=R3.kroks.get(k.id),c=R3.pipCam,y=(km?km.position.y:hOf(k))-1;
   R3.pipAlt=Math.max(4,y-groundY(k.x,k.y));c.position.set(k.x,y,k.y);c.up.set(Math.cos(k.heading),0,Math.sin(k.heading));c.lookAt(k.x,y-50,k.y);c.updateMatrixWorld();
-  if(km)km.visible=false;R.setScissorTest(true);R.setScissor(r.x,H-r.y-r.s,r.s,r.s);R.setViewport(r.x,H-r.y-r.s,r.s,r.s);R.render(R3.scene,c);if(km)km.visible=true;
+  treeCull(c,false);if(km)km.visible=false;R.setScissorTest(true);R.setScissor(r.x,H-r.y-r.s,r.s,r.s);R.setViewport(r.x,H-r.y-r.s,r.s,r.s);R.render(R3.scene,c);if(km)km.visible=true;
   R.setScissorTest(false);R.setViewport(0,0,W,H);
 }
 function drawHud(ctx,w,h){
@@ -4006,6 +4040,12 @@ $('bPause').addEventListener('click',()=>{setPaused(!G.paused);uiTick(true);});
 function setAutoPause(on){AUTOPAUSE.on=on;try{localStorage.setItem('bh.autopause',on?'1':'0');}catch(_){}const b=$('bAutoPause');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Autopaus på':'Autopaus av';}
 $('bAutoPause').addEventListener('click',()=>{setAutoPause(!AUTOPAUSE.on);say(null,AUTOPAUSE.on?'Autopaus på: spelet pausar när någon annan enhet än den du kör upptäcker en ny fiende.':'Autopaus av.');});
 setAutoPause(AUTOPAUSE.on);
+function setDynRes(on){DYNRES.on=on;DYNRES.scale=1;DYNRES.acc=0;DYNRES.n=0;DYNRES.good=0;DYNRES.back=8000;try{localStorage.setItem('bh.dynres',on?'1':'0');}catch(_){}const b=$('bDynRes');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Dynamisk upplösning på':'Dynamisk upplösning av';applyRes();}
+$('bDynRes').addEventListener('click',()=>{setDynRes(!DYNRES.on);say(null,DYNRES.on?'Dynamisk upplösning på: 3D-bilden ritas i lägre upplösning när datorn inte hinner med.':'Dynamisk upplösning av: 3D-bilden ritas alltid i full upplösning.');});
+setDynRes(DYNRES.on);
+function setSikt(k){SIKT.k=k;try{localStorage.setItem('bh.sikt',k);}catch(_){}$('bSikt').textContent='Siktavstånd: '+SIKT_N[k];}
+$('bSikt').addEventListener('click',()=>{const o=['lang','medel','kort'],k=o[(o.indexOf(SIKT.k)+1)%3];setSikt(k);say(null,'Siktavstånd '+SIKT_N[k]+'.');});
+setSikt(SIKT.k);
 function toggleFull(){
   try{if(document.fullscreenElement){document.exitFullscreen();return;}const r=document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.'));}catch(_){say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.');}
 }
@@ -4160,13 +4200,13 @@ function feedTick(now){if(!FEED.on||TITLE.on||!FEED.list.length)return;
   FEED.n=(FEED.n+1)%4;if(FEED.n%2)return;const F=FEED.list[FEED.n/2];if(!F)return;
   if(F.uid==='bay'){const b=G.build[0];F.el.classList.toggle('empty',!F.r);F.lbl.textContent='BYGGBÄDDEN';const st=b?'Bygger '+(b.kind==='krok'?'KROK':TYPES[b.kind].label)+' '+Math.round(clamp(1-b.t/(b.total||1),0,1)*100)+' %'+(G.build.length>1?' · '+(G.build.length-1)+' i kö':''):'Ledig';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width='0';F.el.classList.remove('hit');
     if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
-    const c=shipPos(BAY.lat+15,BAY.fwd-13),t=shipPos(BAY.lat,BAY.fwd);F.cam.position.set(c[0],DECK_Y+10,c[1]);F.cam.lookAt(t[0],DECK_Y+2.5,t[1]);F.r.render(R3.scene,F.cam);return;}
+    const c=shipPos(BAY.lat+15,BAY.fwd-13),t=shipPos(BAY.lat,BAY.fwd);F.cam.position.set(c[0],DECK_Y+10,c[1]);F.cam.lookAt(t[0],DECK_Y+2.5,t[1]);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);return;}
   const u=unitById(F.uid);F.el.classList.toggle('empty',!u||u.dead||!F.r);
   if(!u||u.dead){F.lbl.textContent='';F.st.textContent='';F.hp.style.width='0';return;}
   F.lbl.textContent=u.name;const st=(u.kind==='krok'?u.status:u.state)||'';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width=(u.hp/u.maxhp*100)+'%';F.el.classList.toggle('hit',G.time-u.lastHit<1.5);
   if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;
   if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
-  feedCam(u,F.cam);F.r.render(R3.scene,F.cam);}
+  feedCam(u,F.cam);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);}
 $('bFeeds').addEventListener('click',()=>setFeeds(!FEED.on));
 $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
@@ -4675,7 +4715,7 @@ function diagTick(now,P){
   const L=[],f=n=>n.toFixed(1).padStart(5);
   L.push('fps '+Math.round(1000/Math.max(1,DIAG.gap))+'  bild '+f(DIAG.gap)+' ms  värst '+Math.round(DIAG.worstShow)+' ms');
   L.push('cpu  '+f(DIAG.cpu)+' ms\n     '+DIAG_PH.map((n,i)=>n+' '+DIAG.ph[i].toFixed(1)).join('  '));
-  if(R3){const i=R3.renderer.info;L.push('3D   anrop '+i.render.calls+'  tri '+Math.round(i.render.triangles/1000)+'k  geo '+i.memory.geometries+'  tex '+i.memory.textures+'  prog '+(i.programs?i.programs.length:0));
+  if(R3){const i=R3.renderer.info;L.push('3D   anrop '+i.render.calls+'  tri '+Math.round(i.render.triangles/1000)+'k  geo '+i.memory.geometries+'  tex '+i.memory.textures+'  prog '+(i.programs?i.programs.length:0));L.push('     träd '+(R3.treeVis??'?')+' av '+((R3.treeTiles||[]).length)+' rutor  sikt '+SIKT_N[SIKT.k]);L.push('     upplösning '+(DYNRES.on?Math.round(DYNRES.scale*100)+' %':'full (dynamisk av)')+'  '+R3.renderer.domElement.width+'x'+R3.renderer.domElement.height+' px');
     L.push('     effekter '+R3.fx.size+'  partiklar '+R3.parts.length+'  dyn '+R3.dyn.children.length+(R3.renderer.getContext().isContextLost()?'  KONTEXT FÖRLORAD':''));}
   else L.push('3D  av (ingen WebGL)');
   const pm=performance.memory;L.push('minne '+(pm?Math.round(pm.usedJSHeapSize/1048576)+' / '+Math.round(pm.jsHeapSizeLimit/1048576)+' MB':'okänt i denna webbläsare')+'  DOM '+document.getElementsByTagName('*').length);
@@ -4691,7 +4731,7 @@ function frame(now){
   try{diagTick(now,P);}catch(err){console.error(err);}
 }
 function frameBody(now,P){
-  const dtr=Math.min(.05,(now-last)/1000);last=now;
+  try{resTick(now,now-last);}catch(_){}const dtr=Math.min(.05,(now-last)/1000);last=now;
   if(G.ctrl){CTRL.thr=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0);CTRL.steer=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);}
   else{CTRL.thr=0;CTRL.steer=0;}
   if(G.running&&!G.paused&&!G.over){let t=dtr*G.speed;while(t>1e-6){const st=Math.min(t,.033);step(st);t-=st;}}
@@ -4700,7 +4740,7 @@ function frameBody(now,P){
   const cu=unitById(G.cam);
   if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
   mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,G.mainMode!=='map');P.push(performance.now());
-  if(R3){sync3D(dtr);if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();R3.renderer.render(R3.scene,R3.cam);renderPip();feedTick(now);}
+  if(R3){sync3D(dtr);if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);renderPip();feedTick(now);}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
   hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
