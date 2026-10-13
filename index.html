@@ -3229,6 +3229,40 @@ function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group()
   // small boats moored inside, along both quays, clear of where Birka will lie
   const boats=[],P=(li,lt)=>({x:H.x+u.x*li-u.y*lt,y:H.y+u.y*li+u.x*lt}),ang=Math.atan2(u.y,u.x),Rb=rng(W.seed*59+7);
   for(const[li,sd]of[[14,1],[30,-1],[52,1],[78,-1],[104,1]]){if(Rb()<.25)continue;const q=P(li,sd*(hw-4.5)),b=mkBoat({kind:['motor','sail','eka'][Math.floor(Rb()*3)],x:q.x,y:q.y,a:ang+(Rb()<.5?0:PI)});b.userData.y0=.15;st.add(b);R3.bobs.push(b);boats.push(b);}
+  // life ashore (decided 13 okt): a fuel stop at the outer end of one quay with boats laid up on trestles beyond it, a row of
+  // boathouses along the other quay and a store shed behind the inner end. Scenery only; it stays when the harbour is taken
+  // everything ashore checks the ground first: on a crooked coast one quay can run out like a pier with sea behind it
+  const land=(li,lt)=>{const q=P(li,lt);return heightAt(q.x,q.y)>.6;},solid=(li,lt,hl,hw2,rl)=>{const c=Math.cos(rl||0),s2=Math.sin(rl||0);for(const[a,b]of[[-hl,-hw2],[hl,-hw2],[-hl,hw2],[hl,hw2],[0,0]])if(!land(li+a*c+b*s2,lt-a*s2+b*c))return false;return true;};
+  const Rv=rng(W.seed*61+3),edge=hw+dw,sideLand=sd=>{let n=0;for(let li=6;li<HARB.L;li+=8)if(land(li,sd*(edge+9)))n++;return n;},fs=sideLand(1)===sideLand(-1)?(Rv()<.5?-1:1):sideLand(1)>sideLand(-1)?1:-1;
+  const TR=mat(TRIM),place=(o,li,lt,rl)=>{const q=P(li,lt);o.position.set(q.x,groundY(q.x,q.y),q.y);o.rotation.y=g.rotation.y+(rl||0);st.add(o);return o;};
+  let boatFrom=24;
+  {// the fuel stop at the outermost stretch of quay with land behind it: two pumps on the deck, kiosk and tank ashore, a sign by the water
+    let kli=-1;for(let li=7;li<46;li+=3)if(solid(li,fs*(edge+4),3,2.6)&&solid(li+9,fs*(edge+5),2.6,1.4)){kli=li;break;}
+    if(kli>=0){const RED=mat(0xc8402e),WH=mat(0xf1efe8);
+      const pump=new THREE.Group();pump.add(mesh(box(.6,1.5,.45),RED,0,.75,0));pump.add(mesh(box(.64,.35,.5),WH,0,1.35,0));pump.add(mesh(cyl(.05,.05,1.2,5),DARK,.35,.9,0));
+      pump.position.set(kli-4.5,top,fs*(hw+2.6));g.add(pump);const pump2=pump.clone();pump2.position.x=kli-1;g.add(pump2);
+      const sc=mkCanvas(128,32),sx=sc.getContext('2d');sx.fillStyle='#f1efe8';sx.fillRect(0,0,128,32);sx.fillStyle='#c8402e';sx.fillRect(0,24,128,8);sx.fillStyle='#22303c';sx.font='bold 17px sans-serif';sx.textAlign='center';sx.fillText('BENSIN  DIESEL',64,19);
+      const signM=new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(sc)}),k=new THREE.Group();
+      k.add(mesh(box(4.5,2.8,3.6),WH,0,1.4,0));k.add(mesh(box(5.4,.25,4.6),DARK,.3,2.95,0));k.add(mesh(box(.12,1.2,2.6),winMatFor(H.x,H.y),2.28,1.7,.2));k.add(mesh(box(.14,2,.9),RED,2.28,1,-1.3));
+      k.add(mesh(box(.12,.9,3.6),signM,2.42,3.6,0));place(k,kli,fs*(edge+4),fs*PI/2);
+      const tank=new THREE.Group(),tb=mesh(cyl(1.1,1.1,4.4,12),WH,0,1.6,0);tb.rotation.z=PI/2;tank.add(tb);for(const x of[-1.4,1.4])tank.add(mesh(box(.3,1,1.6),DARK,x,.5,0));place(tank,kli+9,fs*(edge+5));
+      const pole=new THREE.Group();pole.add(mesh(cyl(.1,.12,6,6),mat(0x5a6066),0,3,0));const bd=new THREE.Mesh(new THREE.BoxGeometry(.15,1.1,4.4),signM);bd.position.set(-.1,5.4,0);pole.add(bd);
+      if(land(kli-5,fs*(edge+1.5)))place(pole,kli-5,fs*(edge+1.5),0);boatFrom=kli+20;}}
+  // boats laid up on trestles beyond the fuel stop, some under a cover
+  for(let li=boatFrom,i=0;li<HARB.L-6&&i<4;li+=12+Rv()*6){const lt=fs*(edge+9+Rv()*3),rl=(Rv()-.5)*.25,kind=['motor','sail','eka','motor'][Math.floor(Rv()*4)],cov=Rv()<.45,cc=Math.floor(Rv()*3);if(!solid(li,lt,4.5,1.6,rl))continue;i++;
+    const b=mkBoat({kind,x:0,y:0,a:0}),o=new THREE.Group();b.position.set(0,1.2,0);b.rotation.set(0,0,0);o.add(b);
+    for(const x of[-1.8,1.8])o.add(mesh(box(.35,1.15,1.4),mat(0x6a5a46),x,.57,0));
+    if(kind!=='eka'&&cov)o.add(mesh(box(kind==='sail'?7.6:5.4,1.1,2.5),mat([0x2f5f8a,0x3c6e4a,0x8a8478][cc]),0,2.1,0));place(o,li,lt,rl);}
+  // boathouses along the other quay, doors to the quay
+  for(let li=12+Rv()*8,i=0;li<HARB.L&&i<4;li+=16+Rv()*10){const L2=4.5+Rv()*2,lt=-fs*(edge+4.5+Rv()*2),red=Rv()<.8;if(!solid(li,lt,2.2,L2/2,0))continue;i++;
+    const h=new THREE.Group();h.add(mesh(box(L2,3.1,4),mat(red?FALU:0xd8cfa6),0,1.55,0));roofOn(h,L2+.6,4,3.7,0x34343a);
+    h.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),L2/2+.02,1.1,0));for(const[x,z]of[[-L2/2,-2],[L2/2,-2],[-L2/2,2],[L2/2,2]])h.add(mesh(box(.22,3.1,.22),TR,x,1.55,z));
+    place(h,li,lt,-fs*PI/2);}
+  {// the store shed behind the inner end
+    const off=(Rv()-.5)*30,lt=[off,0,-off].find(t=>solid(HARB.L+dw+9,t,4.6,8.2));if(lt!==undefined){
+    const m=new THREE.Group(),c=mat(0x8f969a);m.add(mesh(box(9,5,16),c,0,2.5,0));const r=new THREE.Group();roofOn(r,16.8,9,5.6,0x5a3a30);r.rotation.y=PI/2;m.add(r);
+    m.add(mesh(box(.15,3.6,4.2),mat(0x5e6468),-4.52,1.8,0));for(const z of[-5.5,5.5])m.add(mesh(box(.15,1,1.6),winMatFor(H.x+1,H.y),-4.52,3.4,z));
+    place(m,HARB.L+dw+9,lt,0);}}
   return{g,lamps,poolM,headM,boats};}
 function buildStatic(){
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
