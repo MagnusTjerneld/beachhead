@@ -316,7 +316,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon.</li>
       <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
-      <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, och varje ny order når den; på Defensiv stannar den i skyddsrollen. En förflyttning du själv ger wingen, till exempel en reträtt, följs även om en kamrat beskjuts; stödet i wingen drar inte tillbaka fordonen in i striden. Välj HÖK ensam för att skicka den på egen hand.</li>
+      <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, och varje ny order når den; på Defensiv stannar den i skyddsrollen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
@@ -1556,15 +1556,28 @@ const SUPPORT={on:true,mate:300,quiet:12,hit:4};
 function mates(u){const w=wingOf(u.id);const L=w?G.wings[w].filter(id=>id!==u.id).map(id=>G.units.find(v=>v.id===id)):G.units.filter(v=>v!==u&&dist(u,v)<120);return L.filter(v=>v&&!v.dead&&!v.carried&&!v.air);}
 const mateHit=(u,e)=>SUPPORT.on&&mates(u).some(m=>m.hitBy[e.id]&&G.time-m.hitBy[e.id]<SUPPORT.hit+1);
 function supportTarget(u){let best=null,bd=1e9,who=null;for(const m of mates(u)){if(dist(u,m)>SUPPORT.mate)continue;
-  for(const id in m.hitBy){if(G.time-m.hitBy[id]>SUPPORT.hit)continue;const e=G.enemies.find(x=>x.id===id);if(!e||e.dead||!e.seen||!canHit(u,e))continue;const d=Math.hypot(e.lx-u.x,e.ly-u.y);if(d<bd){bd=d;best=e;who=m;}}}
+  for(const id in m.hitBy){if(G.time-m.hitBy[id]>SUPPORT.hit)continue;const e=G.enemies.find(x=>x.id===id);if(!e||e.dead||!e.seen||!canHit(u,e))continue;const d=Math.hypot(e.lx-u.x,e.ly-u.y);if(d<bd&&supportReach(u,m,e)){bd=d;best=e;who=m;}}}
   return best?{e:best,m:who}:null;}
+/* a move is a retreat when it is given while the unit or its wing is under fire, to a place outside the reach of every enemy that
+   has fired on them in the last 6 s (decided 14 okt): then everyone pulls back and wing support stays off until it is done. Any
+   other move, an advance included, keeps wing support */
+function retreatFrom(u,dest){const now=G.time,ids=new Set();for(const v of[u,...mates(u)])for(const id in v.hitBy)if(now-v.hitBy[id]<6)ids.add(id);
+  const es=G.enemies.filter(e=>ids.has(e.id)&&!e.dead);if(!es.length)return null;
+  for(const e of es){const r=Math.max(e.range||0,e.airRange||0)+10;if(Math.hypot(dest.x-e.x,dest.y-e.y)<=r)return null;}return es.map(e=>e.id);}
+const markRetreat=(u,o)=>{if(o&&o.type==='move'&&!u.air){const r=retreatFrom(u,o);if(r)o.retreat=r;}return o;};
+/* wing support never sends a unit on a long trip: the shooter must be in the supporter's or the hit mate's zone, or close, and the
+   way there at most 1.5 times the straight line plus 40 m (decided 14 okt) */
+function supportReach(u,m,e){const z=(x,y)=>WORLD.zid[cellIdx(x,y)],ze=z(e.lx,e.ly),d=Math.hypot(e.lx-u.x,e.ly-u.y);
+  if(ze!==z(u.x,u.y)&&ze!==z(m.x,m.y)&&d>effRange(u)+30)return false;
+  const p=astar(u.x,u.y,e.lx,e.ly,passAmph,()=>1);if(!p)return false;let L=0,q={x:u.x,y:u.y};for(const r of p){L+=Math.hypot(r.x-q.x,r.y-q.y);q=r;}
+  return L<=d*1.5+40;}
 function supportTick(u){
   if(!SUPPORT.on)return;const o=u.orders[0];
   if(o&&o.support){const e=o.enemy;let last=u.hitBy[e.id]||-99;for(const m of mates(u))last=Math.max(last,m.hitBy[e.id]||-99);
     if(!e.dead&&G.time-Math.max(last,o.t)>SUPPORT.quiet){u.orders.shift();u.path=null;say(u,ename(e)+' tyst. Återgår till '+(u.orders[0]?'min order':'att vänta på order')+'.');}return;}
   if(u.kind!=='tank'||u.rtb||u.override||u.hold||u.awaitRep||curPost(u)==='dold'||u.hp<u.maxhp*.3||G.time<(u.supScan||0))return;u.supScan=G.time+.5;
   if(o&&(o.type==='attack'||o.type==='raze'||o.toRep))return;
-  if(o&&o.type==='move'&&o.player)return;   // a move the player gave (a retreat, say) is not turned back into the fight (decided 14 okt)
+  if(o&&o.type==='move'&&o.retreat)return;   // a retreat the player gave is not turned back into the fight (decided 14 okt)
   const s=supportTarget(u);if(!s)return;const e=s.e;
   if(e.visibleNow&&dist(u,e)<=effRange(u))return;   // already in reach: tankCombat takes it
   u.orders.unshift({type:'attack',enemy:e,post:'def',support:true,t:G.time});u.path=null;say(u,'Stöttar '+s.m.name+' mot '+ename(e)+'.');}
@@ -2286,7 +2299,7 @@ function giveOrder(u,o,append,mode){
 function formation(n,ang){const out=[],fx=Math.cos(ang),fy=Math.sin(ang),px=-fy,py=fx,s=16;for(let i=0;i<n;i++){const col=(i%3)-1,row=Math.floor(i/3);out.push({x:px*col*s-fx*row*s,y:py*col*s-fy*row*s});}return out;}
 function groupOrder(pk,append,postOverride){
   const us=noContact(selUnits());if(!us.length)return;
-  if(us.length===1){const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;giveOrder(u,o,append);return;}
+  if(us.length===1){const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;giveOrder(u,markRetreat(u,o),append);return;}
   let tp=pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:pk.struct?{x:pk.struct.x,y:pk.struct.y}:pk.world;
   if(pk.barrier&&!pk.barrier.cleared){const sd=barrierSide(pk.barrier,us[0]);tp={x:sd.x,y:sd.y};}
   if(pk.mine&&!pk.mine.cleared){const sd=mineSide(pk.mine,us[0]);tp={x:sd.x,y:sd.y};}
@@ -2315,7 +2328,7 @@ function groupOrder(pk,append,postOverride){
       else{const st=pk.struct,dd=Math.hypot(u.x-st.x,u.y-st.y)||1,r=Math.min(60,dd);o={type:'move',x:st.x+(u.x-st.x)/dd*r+offs[i].x,y:st.y+(u.y-st.y)/dd*r+offs[i].y,post};}}
     else if(pk.enemy){const e=pk.enemy,d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=Math.min(u.vision*.8,d);o={type:'obs',x:e.lx+(u.x-e.lx)/d*r,y:e.ly+(u.y-e.ly)/d*r,post};}
     else o={type:'move',x:clamp(tp.x+offs[i].x,10,WW-10),y:clamp(tp.y+offs[i].y,10,WH-10),post,player:true};
-    giveOrder(u,o,append);
+    giveOrder(u,markRetreat(u,o),append);
   });
 }
 function groupObs(pt){const us=noContact(selUnits()),offs=formation(us.length,-PI/2);us.forEach((u,i)=>giveOrder(u,{type:'obs',x:clamp(pt.x+offs[i].x,10,WW-10),y:clamp(pt.y+offs[i].y,10,WH-10),post:'obs'},false));}

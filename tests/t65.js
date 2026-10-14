@@ -1,5 +1,5 @@
 // a wing of VARG and HÖK (decided 14 okt): HÖK guards the wing as a whole with its own stance, an Offensiv HÖK also strikes the
-// wing's target and is retargeted by every new order, a move the player gives is not turned back into the fight by wing support,
+// wing's target and is retargeted by every new order, a retreat is not turned back into the fight by wing support,
 // and in manual control the target the driver shoots at becomes the target of the group that follows him
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
@@ -25,13 +25,22 @@ const foe=(G,x,y)=>{const e=G.enemies.find(q=>q.dead&&(q.kind==='inf'||q.kind===
   ok(/Skyddar wingen/.test(h2.state),'the HÖK says it guards the wing ('+h2.state+')');
   ok(d1<110&&d2<110,'both HÖK stay with the wing\'s centre ('+Math.round(d1)+' and '+Math.round(d2)+' m)');
   ok(Math.hypot(h1.x-h2.x,h1.y-h2.y)>8,'and do not stack on the same spot ('+Math.round(Math.hypot(h1.x-h2.x,h1.y-h2.y))+' m apart)');}
-// 4. a retreat the player orders is not turned back by wing support; an automatic move still is
-{const{G,L,v1,v2}=setup();const e=foe(G,L.x+300,L.y);
-  G.selIds=[v1.id,v2.id];B.groupOrder({world:{x:L.x-200,y:L.y}},false);ok(v1.orders[0].player,'the order is marked as the player\'s');
-  v2.hitBy[e.id]=G.time;v2.lastHit=G.time;run(1);v2.hitBy[e.id]=G.time;run(.6);
-  ok(v1.orders[0]&&v1.orders[0].type==='move','VARG-1 keeps retreating while VARG-2 is shot at ('+(v1.orders[0]?v1.orders[0].type:'none')+')');
-  v1.orders=[{type:'move',x:L.x-200,y:L.y,post:'def'}];v2.hitBy[e.id]=G.time;run(1);
-  ok(v1.orders[0]&&v1.orders[0].support,'a move the player did not give still yields to wing support');}
+// 4. a move given under fire to a place out of the shooters' reach is a retreat: everyone pulls back and wing support waits; an
+//    advance keeps wing support; and support never sends a unit on a long trip into another zone
+{const{G,L,v1,v2}=setup();const e=foe(G,L.x+200,L.y);G.selIds=[v1.id,v2.id];
+  v2.hitBy[e.id]=G.time;v2.lastHit=G.time;B.groupOrder({world:{x:L.x-200,y:L.y}},false);
+  ok(v1.orders[0].retreat&&v2.orders[0].retreat,'a move out of reach while under fire is a retreat for both');
+  run(1);v2.hitBy[e.id]=G.time;run(.6);
+  ok(v1.orders[0]&&v1.orders[0].type==='move','VARG-1 keeps retreating while VARG-2 is shot at ('+(v1.orders[0]?v1.orders[0].type:'none')+')');}
+{const{G,L,v1,v2}=setup();const e=foe(G,L.x+200,L.y);G.selIds=[v1.id,v2.id];
+  v2.hitBy[e.id]=G.time;B.groupOrder({world:{x:L.x+120,y:L.y+30}},false);
+  ok(!v1.orders[0].retreat,'a move towards the shooter, inside its reach, is no retreat');
+  v2.hitBy[e.id]=G.time;run(1);ok(v1.orders[0]&&v1.orders[0].support,'and VARG-1 supports VARG-2 against '+e.id);}
+{const{G,L,v1,v2}=setup();const z=(x,y)=>B.W.zid[Math.floor(y/10)*220+Math.floor(x/10)],zu=z(v1.x,v1.y);
+  let far=null;for(let a=0;a<6.28&&!far;a+=.2)for(const r of[220,260,290]){const x=v1.x+Math.cos(a)*r,y=v1.y+Math.sin(a)*r,q=z(x,y);if(q>=0&&q!==zu&&q!==z(v2.x,v2.y)){far={x,y};break;}}
+  if(far){const e=foe(G,far.x,far.y);v1.orders=[{type:'move',x:v1.x,y:v1.y,post:'def'}];v2.hitBy[e.id]=G.time;run(1);
+    ok(!(v1.orders[0]&&v1.orders[0].support),'no support trip to a shooter '+Math.round(Math.hypot(far.x-v1.x,far.y-v1.y))+' m away in another zone');}
+  else ok(true,'(no other zone within 300 m on this island)');}
 // 5. manual control: what the driver shoots at becomes the group's target
 {const{G,L,v1,v2,h1}=setup();G.ctrl=v1.id;B.setFollowMe(true);const e=foe(G,L.x+130,L.y+10);
   G.ctrlMark={e,t:G.time};run(.5);e.visibleNow=true;
