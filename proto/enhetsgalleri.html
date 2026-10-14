@@ -462,13 +462,13 @@ table('tThem',THEM,['Skrov','Klass','Mot mark','Mot flyg','Skada per sekund','Sl
 function showCard(u){const st=u.them?themStats(u):usStats(u);
   card.innerHTML='<div class="top"><b style="color:'+(u.them?'#e07a6a':'var(--us)')+'">'+u.name+'</b><span>'+(u.them?'Fienden':'Våra')+' · '+u.move+' · '+dims(u)+'</span></div><p>'+u.note+'</p><dl class="stats">'+st.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+v+'</dd></div>').join('')+'</dl>';}
 
-let mode='spin',ang=.8;
+let mode='spin',ang=.8,fr=null;/* the frame is measured once per selection: spinning rotors and turning turrets change the box every frame and would shake the camera */
 function frame(k){const o=placed[k],bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),r=Math.max(8,bb.getSize(new THREE.Vector3()).length());return{c,r};}
 function focus(k,keepMode){sel=k;const u=ALL.find(q=>q.key===k);for(const q of ALL){document.getElementById('b-'+q.key).setAttribute('aria-pressed',q.key===k);document.getElementById('r-'+q.key).className=q.key===k?'sel':'';}
   hud.textContent=u.name;showCard(u);setView(keepMode&&mode!=='free'?mode:'spin');}
 function setView(m){mode=m;for(const[k,id]of[['spin','vSpin'],['front','vFront'],['side','vSide'],['top','vTop'],['rear','vRear']])document.getElementById(id).setAttribute('aria-pressed',k===m);
   for(const k in placed)placed[k].visible=m==='spin'||m==='free'||k===sel;
-  const{c,r}=frame(sel);controls.target.copy(c);const d=r*1.55;
+  fr=frame(sel);const{c,r}=fr;controls.target.copy(c);const d=r*1.55;
   /* every unit faces +z on this stage: front from +z, its left side from +x, the back from -z */
   if(m==='front')cam.position.set(c.x+.01,c.y+d*.18,c.z+d);else if(m==='side')cam.position.set(c.x+d,c.y+d*.12,c.z+.01);else if(m==='top')cam.position.set(c.x,c.y+d*1.15,c.z+.01);else if(m==='rear')cam.position.set(c.x+.01,c.y+d*.35,c.z-d);else cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);
   controls.update();}
@@ -479,7 +479,7 @@ function size(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(
 new ResizeObserver(size).observe(stage);size();focus('u-tank');
 const still=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;let last=performance.now();
 (function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(mode==='spin'&&!still){ang+=dt*.25;const{c,r}=frame(sel);const d=r*1.55;cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);controls.target.copy(c);}
+  if(mode==='spin'&&!still){ang+=dt*.25;const{c,r}=fr;const d=r*1.55;cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);controls.target.copy(c);}
   if(!still){const t=placed['u-bjorn'].userData.tur;if(t)t.rotation.y=Math.sin(now/2600)*.35;const vt=placed['u-tank'].userData.tur;if(vt)vt.rotation.y=Math.sin(now/3100+1)*.4;
     for(const k in placed){const sp=placed[k].userData.spin;if(sp)for(const p of sp)p[0].rotation[p[1]]+=p[2]*dt;}
     for(const[k,y0,ph]of[['u-drone',2.5,0],['u-scout',1.2,2]])placed[k].position.y=y0+Math.sin(now/900+ph)*.15;}
