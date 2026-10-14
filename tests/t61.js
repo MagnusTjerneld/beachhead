@@ -90,7 +90,8 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const e=G.enemies.find(x=>!x.dead&&!x.seen&&!x.camo&&!B.inNet(x.x+40,x.y));if(e){v.x=e.x+40;v.y=e.y;B.step(.05);ok(!e.seen,'what it sees outside the net is not reported');}
  B.capturePoint(R2,v);ok(G.netAll&&B.inNet(50,50),'radio mast taken: the net covers the whole island');}
 // wing support: when the lead VARG is hit, the rest of the wing closes in and fires on the shooter; off = the old behaviour
-{const trial=on=>{B.SUPPORT.on=on;B.newGame(1234);const G=B.G;G.running=true;G.netAll=true;G.known.fill(1);G.knownV++;G.mines=[];
+{const rnd=Math.random,seeded=k=>{let x=k;return()=>{x=(x*1103515245+12345)%2147483648;return x/2147483648;};};/* both trials meet the same dice */
+ const trial=on=>{B.SUPPORT.on=on;Math.random=seeded(4242);B.newGame(1234);const G=B.G;G.running=true;G.netAll=true;G.known.fill(1);G.knownV++;G.mines=[];
   const W=B.W,land=(x,y)=>{const gx=Math.floor(x/10),gy=Math.floor(y/10),t=W.grid[gy*220+gx];return t===2||t===3;};
   const L=G.relays[0],e=G.enemies.find(x=>x.kind==='tank');for(const x of G.enemies)if(x!==e)x.dead=true;
   let a=null;for(let k=0;k<72&&a==null;k++){const b=k*Math.PI/36;let okL=true;for(let r=80;r<=270;r+=5)if(!land(L.x+Math.cos(b)*r,L.y+Math.sin(b)*r)){okL=false;break;}if(okL)a=b;}
@@ -101,7 +102,7 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
   let sc=G.units.find(u=>u.kind==='scout');if(!sc){sc=B.makeUnit('scout',L.x,L.y);G.units.push(sc);}sc.x=L.x+Math.cos(a)*90;sc.y=L.y+Math.sin(a)*90;sc.orders=[{type:'obs',x:sc.x,y:sc.y}];
   G.wings={'1':vs.map(v=>v.id)};let t=0;while(t<40&&!e.dead){run(.5);t+=.5;}
   return{dead:e.dead,t,said:G.log.some(l=>/Stöttar/.test(l.text))};};
- const off=trial(false),on=trial(true);B.SUPPORT.on=true;
+ const off=trial(false),on=trial(true);B.SUPPORT.on=true;Math.random=rnd;
  ok(off&&on,'found open ground for the wing');
  if(off&&on){ok(on.dead&&on.said,'with support the wing closes in and kills it ('+on.t+' s)');ok(!off.dead||on.t<off.t*.75,'support is decisive (alone: '+(off.dead?off.t+' s':'not killed in 40 s')+')');}}
 // service at a chosen place: HÖK rearms at a taken workshop or at Birka, whichever the captain names, and one circling a workshop rearms too

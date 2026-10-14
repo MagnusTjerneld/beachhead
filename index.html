@@ -2959,8 +2959,8 @@ function mkUnitMesh(u){
     g.add(mesh(new THREE.SphereGeometry(.26,10,8),mat(0x22282e),.45,1.18,0));g.add(mesh(cyl(.025,.025,1.6,4),mat(0x2a2a2a),-.6,1.8,.35));
     g.add(mesh(box(.12,.1,.5),R3.lampMat,.86,.7,0));return g;}
   if(u.kind==='tank'){
-    // VARG: a hovercraft. Skirt with a rubbing strip, a deck with rails, hatches and grilles, two ducted lift fans with guards and
-    // rudders aft, lamps in a sloped bow plate, and a light turret with mantlet, muzzle brake, sight, hatch and smoke dischargers
+    // VARG: a hovercraft. Skirt with a rubbing strip, a deck with rails and hatches, two ducted lift fans with rudders aft, lamps in a
+    // sloped bow plate, and a light turret with mantlet, muzzle brake, sight and hatch (kept a step plainer, to sit in the lo-fi look)
     if(!R3.skirtGeo){const sh=new THREE.Shape(),w=4.1,h=2.75,r=1.6;sh.moveTo(-w+r,-h);sh.lineTo(w-r,-h);sh.quadraticCurveTo(w,-h,w,-h+r);sh.lineTo(w,h-r);sh.quadraticCurveTo(w,h,w-r,h);sh.lineTo(-w+r,h);sh.quadraticCurveTo(-w,h,-w,h-r);sh.lineTo(-w,-h+r);sh.quadraticCurveTo(-w,-h,-w+r,-h);
       R3.skirtGeo=new THREE.ExtrudeGeometry(sh,{depth:.5,bevelEnabled:true,bevelThickness:.35,bevelSize:.4,bevelSegments:3,curveSegments:6});R3.skirtGeo.rotateX(-PI/2);R3.skirtGeo.translate(0,.35,0);}
     const HULL=mat(0xaab4b8),HULL2=mat(0x96a0a5),DK=mat(0x1b1c1e),GR=mat(0x3a3f44),T=mat(u.color),TUR=mat(0x8f999e),GUN=mat(0x4a5256);
@@ -2968,22 +2968,17 @@ function mkUnitMesh(u){
     g.add(mesh(box(7,1.5,4.4),HULL,0,1.65,0));g.add(mesh(box(7.06,.42,4.46),T,0,2.2,0));
     const bow=mesh(box(1.2,.16,4.3),HULL2,3.62,2.1,0);bow.rotation.z=-.55;g.add(bow);
     for(const z of[-1.5,1.5]){g.add(mesh(box(.2,.36,.6),R3.lampMat,3.56,1.65,z));g.add(mesh(box(.12,.5,.8),DK,3.53,1.65,z));}
-    for(const z of[-2.05,2.05]){g.add(mesh(box(5.2,.08,.08),GR,-.1,2.62,z));for(const x of[-2.4,-.1,2.2])g.add(mesh(box(.08,.32,.08),GR,x,2.47,z));}
+    for(const z of[-2.05,2.05])g.add(mesh(box(5.2,.08,.08),GR,-.1,2.62,z));
     g.add(mesh(box(.9,.1,.9),HULL2,1.8,2.46,1.2));g.add(mesh(box(.9,.1,.9),HULL2,1.8,2.46,-1.2));
-    for(let i=0;i<4;i++)g.add(mesh(box(.12,.06,1.6),DK,-1.4+i*.3,2.44,0));
     for(const z of[-1.3,1.3]){
       const f=mesh(cyl(1.05,1.05,.7,14),GR,-3.1,2.9,z);f.rotation.z=PI/2;g.add(f);const hub=mesh(cyl(.3,.3,.72,8),DK,-3.1,2.9,z);hub.rotation.z=PI/2;g.add(hub);
       const ring=mesh(new THREE.TorusGeometry(1.1,.14,6,18),HULL2,-3.1,2.9,z);ring.rotation.y=PI/2;g.add(ring);
-      for(const a of[0,PI/2]){const gd=mesh(box(.06,2.1,.1),DK,-3.47,2.9,z);gd.rotation.x=a;g.add(gd);}
-      g.add(mesh(box(.5,.8,.08),HULL2,-2.55,1.95,z));
       for(const dz of[-.45,.45])g.add(mesh(box(.6,1.4,.08),GR,-3.85,2.75,z+dz));}
     g.add(mesh(cyl(.03,.03,2.4,4),DK,-1.9,3.6,-1.7));g.add(mesh(box(1.2,.5,.6),GR,-1.5,2.65,1.75));
     const tur=new THREE.Group();tur.position.set(.2,3.05,0);
     tur.add(mesh(box(3.2,1.3,2.8),TUR));tur.add(mesh(box(.7,1.1,2.2),TUR,-1.85,-.05,0));const ch=mesh(box(.9,.9,2.6),TUR,1.7,-.1,0);ch.rotation.z=-.35;tur.add(ch);
     tur.add(mesh(box(1,.3,1),T,-.8,.8,.6));tur.add(mesh(cyl(.38,.42,.3,10),HULL2,-.6,.78,-.65));tur.add(mesh(box(.5,.35,.45),DK,.6,.82,-.75));
     tur.add(mesh(box(.6,.7,.9),GUN,1.75,.1,0));const b=mesh(cyl(.2,.22,4.4,8),GUN,3.6,.1,0);b.rotation.z=PI/2;tur.add(b);tur.add(mesh(box(.5,.34,.42),GUN,5.75,.1,0));
-    const mg=mesh(cyl(.05,.05,1.1,5),DK,2.5,.1,.45);mg.rotation.z=PI/2;tur.add(mg);
-    for(const sz of[-1,1])for(let i=0;i<3;i++){const sm=mesh(cyl(.08,.08,.36,6),DK,.9-i*.24,.55,sz*1.45);sm.rotation.x=sz*.8;tur.add(sm);}
     tur.add(mesh(cyl(.025,.025,1.8,4),DK,-1.3,1.5,.9));g.add(tur);g.userData.tur=tur;}
   else if(u.kind==='eng'){
     // BÄVER: the engineer vehicle. Six wheels with fenders, a dozer blade in front, a cab with windows and a roof beacon,
