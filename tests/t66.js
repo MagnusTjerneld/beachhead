@@ -24,6 +24,14 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
   run(25);const p0={x:v1.x,y:v1.y};run(5);const moved=Math.hypot(v1.x-p0.x,v1.y-p0.y);
   ok(moved>3,'VARG-1 keeps moving while it fights ('+moved.toFixed(1)+' m in 5 s, '+v1.state+')');
   ok(t.hp<5000,'and the bunker is being hit');}
+// 2b. a coordinated attack: the VARG that arrives first waits at its staging point outside the bunker's reach until the other is
+//     in place, then both go in together
+{const G=setup();const L=G.relays[0],[v1,v2]=G.units.filter(u=>u.kind==='tank');const t=live(G,'turret',L.x+200,L.y);t.hp=t.maxhp=5000;t.camo=false;
+  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-520;v2.y=t.y+20;for(const v of[v1,v2]){v.hp=v.maxhp=1e5;v.orders=[{type:'attack',enemy:t,post:'off'}];}
+  run(2);const st=v1.orders[0].arc&&v1.orders[0].arc.st;ok(!!st&&Math.hypot(st.x-t.x,st.y-t.y)>t.range+20,'VARG-1 has a staging point outside the bunker\'s reach');
+  let waited=false,minD=1e9;for(let i=0;i<120&&!v1.orders[0].go;i++){run(.5);minD=Math.min(minD,Math.hypot(v1.x-t.x,v1.y-t.y));if(/väntar på resten/.test(v1.state))waited=true;}
+  ok(waited,'VARG-1 waits in position for VARG-2');ok(minD>t.range,'and stays out of the bunker\'s reach meanwhile (closest '+Math.round(minD)+' m)');
+  ok(v1.orders[0].go&&v2.orders[0].go,'they go in together');ok(G.log.some(l=>/Alla i position/.test(l.text)),'the log says all are in position');}
 // 3. a lone attacker still uses the ordinary firing logic
 {const G=setup();const L=G.relays[0],[v1]=G.units.filter(u=>u.kind==='tank');const t=live(G,'turret',L.x+200,L.y);v1.x=t.x-260;v1.y=t.y;v1.orders=[{type:'attack',enemy:t,post:'off'}];run(1);
   ok(!v1.orders[0].arc,'one VARG alone does not take an arc position');}

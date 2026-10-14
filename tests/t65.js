@@ -41,6 +41,16 @@ const foe=(G,x,y)=>{const e=G.enemies.find(q=>q.dead&&(q.kind==='inf'||q.kind===
   if(far){const e=foe(G,far.x,far.y);v1.orders=[{type:'move',x:v1.x,y:v1.y,post:'def'}];v2.hitBy[e.id]=G.time;run(1);
     ok(!(v1.orders[0]&&v1.orders[0].support),'no support trip to a shooter '+Math.round(Math.hypot(far.x-v1.x,far.y-v1.y))+' m away in another zone');}
   else ok(true,'(no other zone within 300 m on this island)');}
+// 6. chained targets: Shift adds the next target like a waypoint, for the VARG and the Offensiv HÖK alike; when the last one falls
+//    the group stays in the fight and takes what is in reach; the Defensiv HÖK takes chances close to the wing when nobody fires on it
+{const{G,L,v1,v2,h1,h2}=setup();const e1=foe(G,L.x+260,L.y+40),e2=foe(G,L.x+250,L.y-60);
+  B.groupOrder({enemy:e1},false);B.groupOrder({enemy:e2},true);
+  ok(v1.orders.length===2&&v1.orders[0].enemy===e1&&v1.orders[1].enemy===e2,'VARG-1 has both targets in order');
+  ok(h1.orders.length===2&&h1.orders[0].enemy===e1&&h1.orders[1].enemy===e2&&h1.mission&&h1.mission.cover,'the Offensiv HÖK chains the same targets and keeps guarding as its mission');
+  e1.dead=true;run(.5);ok(v1.orders[0]&&v1.orders[0].enemy===e2,'when the first falls VARG-1 goes for the next');
+  e2.dead=true;run(.5);ok(!v1.orders.length&&v1.engageT>G.time,'after the last the group stays in the fight for a while ('+(v1.engageT-G.time).toFixed(0)+' s)');}
+{const{G,L,v1,v2,h1,h2}=setup();B.groupOrder({world:{x:L.x+40,y:L.y+10}},false);run(8);const cx=(v1.x+v2.x)/2,cy=(v1.y+v2.y)/2;const e=G.enemies.find(q=>q.dead&&!q.canAir&&B.canHit(h2,q));e.dead=false;e.hp=e.maxhp;e.x=cx+70;e.y=cy+30;e.hx=e.x;e.hy=e.y;e.lx=e.x;e.ly=e.y;e.seen=true;e.mobile=false;e.route=null;run(1);
+  ok(h2.escTgt===e,'the Defensiv HÖK takes a chance on '+e.id+' close to the wing ('+(h2.escTgt?h2.escTgt.id:'none')+')');}
 // 5. manual control: what the driver shoots at becomes the group's target
 {const{G,L,v1,v2,h1}=setup();G.ctrl=v1.id;B.setFollowMe(true);const e=foe(G,L.x+130,L.y+10);
   G.ctrlMark={e,t:G.time};run(.5);e.visibleNow=true;
