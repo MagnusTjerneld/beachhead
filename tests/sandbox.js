@@ -28,6 +28,8 @@ const SC={
     own:{tank:4},def:[['turret',0,0],['at',-30,50],['at',-30,-50],['tank',50,0]],plan:'advance'},
   slutstrid:{txt:'2 VARG på 40 % mot två stridsvagnar på 20 %: rätt att stanna',own:{tank:2,hp:.4},def:[['tank',0,-25,.2],['tank',0,25,.2]],plan:'chain',order:[0,1],dist:300},
   overmakt:{txt:'1 VARG mot två hela stridsvagnar: rätt att dra sig ur i tid',own:{tank:1},def:[['tank',0,-25],['tank',0,25]],plan:'chain',order:[0,1]},
+  hokaa:{txt:'2 offensiva HÖK mot ett ensamt luftvärn',own:{hok:['off','off']},def:[['aa',0,0]],plan:'chain',order:[0]},
+  hokaarb:{txt:'2 offensiva HÖK mot luftvärn med en robotskytt bredvid',own:{hok:['off','off']},def:[['aa',0,0],['rb',-20,50]],plan:'chain',order:[0,1]},
   motanfall:{txt:'3 VARG står kvar och tar emot två stridsvagnar och ett lätt pansarfordon som rycker ut mot dem',
     own:{tank:3},def:[['tank',0,-30],['tank',0,30],['light',20,0]],plan:'hold',dist:330}
 };
