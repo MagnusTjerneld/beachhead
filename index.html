@@ -5008,6 +5008,57 @@ function startGame(){
   $('intro').hidden=true;G.running=true;G.paused=false;G.resumedAt=G.time;uiTick(true);
 }
 
+/* ---------- trailer (?trailer): an action film for the game, apart from the intro (decided 14 okt) ----------
+   The intro is a calm mood film; the trailer may go close and low, with shots the game never shows. It is a script of shots, each a
+   function of the film's own clock, so a frame-by-frame render with a fixed time step gives the same film every time. The light goes
+   from sunset into dusk. First comes the test shot: three VARG in formation over the water at sunset, with a low camera. */
+const FILM={on:false,t:0,i:-1,tod:18,sunEl:.085,key:1.45,fov:38,hd:null,pre:2};
+const FILM_SHOTS=[{id:'vargar',dur:8,start:filmVargStart,cam:filmVargCam}];
+/* the film starts with a pre-roll of FILM.pre seconds in its first shot, so wakes and spray are under way when the picture starts */
+function filmStart(){globalThis.__FILM={FILM,R3:()=>R3};FILM.on=true;FILM.t=-FILM.pre;FILM.i=-1;$('title').classList.add('clean');$('tPress').hidden=true;DYNRES.on=false;DYNRES.scale=1;applyRes();G.tod=FILM.tod;
+  if(R3){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}}
+function filmCam(dtr){FILM.t+=dtr;let t=Math.max(0,FILM.t),i=0;while(i<FILM_SHOTS.length-1&&t>=FILM_SHOTS[i].dur){t-=FILM_SHOTS[i].dur;i++;}
+  const S=FILM_SHOTS[i];if(i!==FILM.i){FILM.i=i;FILM.hd=null;S.start();}S.cam(Math.min(t,S.dur),S.dur,dtr,FILM.t<0);}
+/* the light of the film: the colours of the hour (FILM.tod), but the sun kept a few degrees above the horizon (the game lowers it
+   below the horizon at sunset and lights from a clamped angle) and the key light stronger, for long grazing shadows; runs after
+   updateSky every frame */
+function filmLight(){const hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,c=Math.cos(FILM.sunEl);vDir.set(hx/hl*c,Math.sin(FILM.sunEl),hz/hl*c);
+  R3.sun.intensity*=FILM.key;R3.hemi.intensity*=.8;const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);
+  if(R3.sky){const U=R3.sky.material.uniforms;U.uSunDir.value.copy(vDir);U.uSunVis.value=1;}}
+const filmVargs=()=>(R3&&R3.movers||[]).filter(m=>m.varg).sort((a,b)=>a.varg-b.varg);
+/* film spray: soft white sprites with their own velocity and gravity, tinted by the sun so that spray lit from behind glows */
+function filmSprayTex(){if(FILM.tex)return FILM.tex;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.35,'rgba(255,255,255,.6)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return FILM.tex=new THREE.CanvasTexture(c);}
+function filmPart(x,y,z,vx,vy,vz,g,s0,s1,o,ttl){const P=FILM.parts||(FILM.parts=[]);if(P.length>700)return;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:filmSprayTex(),color:FILM.sprayCol||0xffffff,transparent:true,depthWrite:false,opacity:o}));sp.position.set(x,y,z);sp.scale.setScalar(s0);R3.scene.add(sp);
+  P.push({sp,vx,vy,vz,g,s0,s1,o,ttl,t:0});}
+function filmPartsTick(dtr){const P=FILM.parts;if(!P)return;for(let i=P.length-1;i>=0;i--){const q=P[i];q.t+=dtr;const k=q.t/q.ttl;
+  if(k>=1||q.sp.position.y<-.5){R3.scene.remove(q.sp);q.sp.material.dispose();P.splice(i,1);continue;}
+  q.vy-=q.g*dtr;q.sp.position.x+=q.vx*dtr;q.sp.position.y+=q.vy*dtr;q.sp.position.z+=q.vz*dtr;q.sp.scale.setScalar(lerp(q.s0,q.s1,Math.sqrt(k)));q.sp.material.opacity=q.o*(1-k)*(1-k*.3);}}
+/* VARG at speed on the water: bow up, a little pitch and roll, sheets of spray thrown out and up from both bow corners and a
+   lower wash along the sides, all left behind in the water as the hull runs on (film only) */
+function filmVargSpray(dtr){FILM.sprayCol=cA.setHex(0xf2f4f2).lerp(R3.sun.color,.5).getHex();
+  for(const m of filmVargs()){const g=m.g,hd=-g.rotation.y,fx=Math.cos(hd),fz=Math.sin(hd),px=-fz,pz=fx,T=R3.decoT||0;
+  g.rotation.z=.045+Math.sin(T*2.1+m.varg)*.012;g.rotation.x=Math.sin(T*1.7+m.varg*2)*.025;g.position.y=.75+Math.sin(T*2.4+m.varg)*.1;
+  m.sp=(m.sp||0)+dtr*150;while(m.sp>1){m.sp--;const r=Math.random,sd=r()<.5?-1:1,bow=r()<.65,along=bow?2.4+r()*1:-1-r()*3.4,o=1.75,out=bow?2.5+r()*3.5:.8+r();
+    filmPart(g.position.x+fx*along+px*sd*o,.4+r()*.2,g.position.z+fz*along+pz*sd*o,px*sd*out,bow?2+r()*3.5:.4+r()*.6,pz*sd*out,9,bow?.5:.7,bow?2.6:3.2,bow?.95:.6,bow?.75:1);}}
+  filmPartsTick(dtr);}
+/* the patrol is put where it heads straight away from the low sun (160 degrees off the bow), and halfway through the shot it
+   passes the camera: it comes out of the sun as silhouettes with spray lit from behind, roars past, and drives away lit by it */
+function filmVargStart(){const V=filmVargs();if(!V.length)return;const RT=V[0].RT,T=R3.decoT||0,sp=13,dur=FILM_SHOTS[FILM.i].dur;updateSky();filmLight();
+  const sa=Math.atan2(vDir.z,vDir.x);let best=0,bs=1e9;
+  for(let i=0;i<RT.N;i++){const a=RT.pts[i],b=RT.pts[(i+V[0].dir+RT.N)%RT.N],h=Math.atan2(b.z-a.z,b.x-a.x),sc=Math.abs(Math.abs(angWrap(sa-h))-160*PI/180);
+    if(Math.hypot(a.x-CARRIER.x,a.z-CARRIER.y)<260)continue;if(sc<bs){bs=sc;best=i;}}
+  const s0=RT.len[best]-V[0].dir*sp*(dur*.6+FILM.pre);
+  for(const m of V){m.speed=sp;const sAt=s0+(m.dir<0?-1:1)*(m.back||0);m.ph=((((sAt-m.dir*T*m.speed)/RT.L)%1)+1)%1;m.trail.length=0;m.tt=-1;}}
+function filmVargCam(tau,dur,dtr){const V=filmVargs();if(!V.length)return;filmVargSpray(dtr);const L=V[0].g.position,raw=-V[0].g.rotation.y;
+  FILM.hd=FILM.hd==null?raw:FILM.hd+angWrap(raw-FILM.hd)*(1-Math.exp(-2*Math.min(dtr,.1)));const hd=FILM.hd,fx=Math.cos(hd),fz=Math.sin(hd),px=-fz,pz=fx;
+  if(FILM.side==null)FILM.side=-(Math.sign(vDir.x*px+vDir.z*pz)||1);/* the camera on the far side from the sun's offset, so the sun is in the picture behind them */const u=tau/dur;
+  // a camera almost anchored on the water beside their track, creeping forward; they come at it, pass at 8 o'clock and pull away
+  const fw=lerp(70,-40,u),lat=FILM.side*38,h=lerp(1.3,2.6,sm(u));
+  let cx=0,cz=0;for(const m of V){cx+=m.g.position.x;cz+=m.g.position.z;}cx/=V.length;cz/=V.length;
+  R3.cam.position.set(L.x+fx*fw+px*lat,h,L.z+fz*fw+pz*lat);const la=tmpV2.set(cx+fx*6,1.6,cz+fz*6);R3.cam.lookAt(la);R3.lookAt.copy(la);}
+
 /* ---------- loop ---------- */
 let last=performance.now();
 /* stats and fault panel (F3 or §): frame rate, time per frame phase, 3D load, memory, sound and an error log.
@@ -5065,8 +5116,8 @@ function frameBody(now,P){
   for(const u of[...G.units,...G.kroks]){const aimCam=G.ctrl===u.id&&u.kind==='tank',fast=G.ctrl===u.id&&G.mlook;u.camH+=angWrap((aimCam?u.turret:u.heading)-u.camH)*Math.min(1,(fast?20:3.5)*dtr);}
   const cu=unitById(G.cam);
   if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
-  mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,G.mainMode!=='map');P.push(performance.now());
-  if(R3){sync3D(dtr);if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);renderPip();feedTick(now);}
+  if(!FILM.on||FILM.map){mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,G.mainMode!=='map');}P.push(performance.now());/* the trailer draws the chart only in its chart shots */
+  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();if(FILM.on)filmLight();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);if(!FILM.on){renderPip();feedTick(now);}}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
   hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
@@ -5076,11 +5127,12 @@ globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,pl
 try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget'),dk=q.get('doktrin');if(bu>0)ENEMY_CFG.budget=bu;if(dk&&DOCTRINE[dk])ENEMY_CFG.doctrine=dk;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
-newGame(1000+Math.floor(Math.random()*9000));if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
+const BOOTQ=(()=>{try{return new URLSearchParams(location.search);}catch(_){return new Map();}})();
+newGame(+BOOTQ.get('seed')||1000+Math.floor(Math.random()*9000));if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
 init3D();
 if(R3)buildStatic();
 mkFeeds();
-placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();
+placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();if(BOOTQ.has('trailer'))filmStart();
 requestAnimationFrame(frame);
 })();
 </script>
