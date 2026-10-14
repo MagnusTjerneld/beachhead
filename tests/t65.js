@@ -16,6 +16,8 @@ const foe=(G,x,y)=>{const e=G.enemies.find(q=>q.dead&&(q.kind==='inf'||q.kind===
   ok(h1.orders[0]&&h1.orders[0].type==='attack'&&h1.orders[0].enemy===e,'the Offensiv HÖK strikes the wing\'s target');
   ok(h1.mission&&h1.mission.type==='follow'&&h1.mission.cover&&h1.mission.post==='off','and keeps guarding the wing as its mission, with its own stance');
   ok(h2.orders[0]&&h2.orders[0]===h2.mission&&h2.mission.post==='def','the Defensiv HÖK stays in the guarding role');
+  {let held=false,near=1e9;for(let i=0;i<10;i++){B.step(.25*4);if(/Väntar på VARG/.test(h1.state))held=true;if(!(v1.orders[0]&&v1.orders[0].go))near=Math.min(near,Math.hypot(h1.x-e.x,h1.y-e.y));}
+   ok(held&&near>Math.max(e.range,e.airRange||0),'the HÖK waits outside the target\'s reach until the VARG go in (closest '+Math.round(near)+' m, '+h1.state+')');}
   // 2. a new target for the wing reaches the HÖK too
   const e2=foe(G,L.x+240,L.y-60);B.groupOrder({enemy:e2},false);
   ok(h1.orders[0]&&h1.orders[0].enemy===e2,'a new attack order retargets the HÖK');}
