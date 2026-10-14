@@ -7,7 +7,7 @@ def grab(start,end_marker='\n}\n'):
     i=g.index(start);j=g.index(end_marker,i)+len(end_marker);return g[i:j]
 def stmt(start):
     i=g.index(start);j=g.index(';\n',i)+2;return g[i:j]
-models=[grab('function mat(c){','\n'),grab('function box(w,h,d){','\n'),grab('function cyl(a,b,h,n){','\n'),grab('function mesh(geo,m,x,y,z){','\n'),grab('function sh(g){','\n'),
+models=[grab('function mat(c){','\n'),grab('function box(w,h,d){','\n'),grab('function cyl(a,b,h,n){','\n'),grab('function mesh(geo,m,x,y,z){','\n'),grab('function rotor(n,len,w,tip){','return r;}\n'),grab('function sh(g){','\n'),
         grab('const _bm=new THREE.Matrix4();','\nconst drawCalls'),grab('function mkUnitMesh(u){'),grab('function mkEnemyMesh(e){')]
 code='const MATS=new Map(),GEOS=new Map(),TAU=Math.PI*2;\n'+''.join(models).replace('\nconst drawCalls','\n')
 code+='const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x3a3826})};\n'

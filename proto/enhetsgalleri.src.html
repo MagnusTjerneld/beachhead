@@ -194,7 +194,7 @@ const controls=new THREE.OrbitControls(cam,renderer.domElement);controls.enableD
 
 // our units in the front row, the enemy's behind them; each measured as it stands
 const ALL=[...US.map(u=>Object.assign(u,{key:'u-'+u.id})),...THEM.map(u=>Object.assign(u,{key:'e-'+u.id}))],placed={};
-function row(list,z){const gap=4.5,objs=list.map(u=>{const o=u.mk();o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.rotation.y=-PI/2;
+function row(list,z){const gap=7,objs=list.map(u=>{const o=u.mk();o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.rotation.y=-PI/2;
     const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3());u.dim={l:sz.z,w:sz.x,h:sz.y};if(u.id==='krok'&&!u.them)u.lift=-bb.min.y;return{u,o,bb,sz};});
   let x=-(objs.reduce((s,q)=>s+q.sz.x,0)+gap*(objs.length-1))/2;
   for(const q of objs){q.o.position.set(x+q.sz.x/2-(q.bb.min.x+q.bb.max.x)/2,q.u.lift||0,z-(q.bb.min.z+q.bb.max.z)/2);x+=q.sz.x+gap;scene.add(q.o);placed[q.u.key]=q.o;}}
@@ -214,7 +214,7 @@ function showCard(u){const st=u.them?themStats(u):usStats(u);
   card.innerHTML='<div class="top"><b style="color:'+(u.them?'#e07a6a':'var(--us)')+'">'+u.name+'</b><span>'+(u.them?'Fienden':'Våra')+' · '+u.move+' · '+dims(u)+'</span></div><p>'+u.note+'</p><dl class="stats">'+st.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+v+'</dd></div>').join('')+'</dl>';}
 
 let mode='spin',ang=.8;
-function frame(k){const o=placed[k],bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),r=Math.max(6,bb.getSize(new THREE.Vector3()).length());return{c,r};}
+function frame(k){const o=placed[k],bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),r=Math.max(8,bb.getSize(new THREE.Vector3()).length());return{c,r};}
 function focus(k,keepMode){sel=k;const u=ALL.find(q=>q.key===k);for(const q of ALL){document.getElementById('b-'+q.key).setAttribute('aria-pressed',q.key===k);document.getElementById('r-'+q.key).className=q.key===k?'sel':'';}
   hud.textContent=u.name;showCard(u);setView(keepMode&&mode!=='free'?mode:'spin');}
 function setView(m){mode=m;for(const[k,id]of[['spin','vSpin'],['front','vFront'],['side','vSide'],['top','vTop'],['rear','vRear']])document.getElementById(id).setAttribute('aria-pressed',k===m);
