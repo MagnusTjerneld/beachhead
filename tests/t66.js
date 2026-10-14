@@ -63,4 +63,10 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
   const a=live(G,'tank',v1.x+125,v1.y-20),b=live(G,'tank',v1.x+125,v1.y+25);for(const e of[a,b]){e.mobile=false;e.speed=0;}
   v1.hp=v1.maxhp*.5;v1.hitBy[a.id]=G.time;v1.hitBy[b.id]=G.time;v1.lastHit=G.time;run(.3);
   ok(v1.rtb,'at 50 % alone against two whole tanks it pulls out before 30 % ('+v1.state+')');ok(G.log.some(l=>/Förlorar mot/.test(l.text)),'and says it is losing');}
+// 8. nobody fires from where its target cannot see it: an anti-tank team at 165 m shows to the VARG it fires on
+{const G=setup();const L=G.relays[0],[v1,v2]=G.units.filter(u=>u.kind==='tank');v1.x=L.x+150;v1.y=L.y;v2.x=L.x-500;v2.y=L.y;v1.orders=[];v2.orders=[];v1.hold=true;v2.hold=true;
+  for(const u of G.units)if(u.kind!=='tank'){u.x=L.x-600;u.y=L.y;}
+  const e=live(G,'at',v1.x+165,v1.y);e.mobile=false;e.speed=0;e.aim=Math.PI;e.cd=0;e.seen=false;let seenAt=null;
+  for(let i=0;i<120&&seenAt==null;i++){B.step(.05);if(e.visibleNow)seenAt=G.time;}
+  ok(v1.hitBy[e.id]!=null,'the anti-tank team fires on VARG-1 from 165 m');ok(seenAt!=null,'and VARG-1 sees it when it fires');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

@@ -8,6 +8,7 @@
 //   node tests/sandbox.js all 10 ENEMY.at.range=150 TYPES.tank.hp=180      with changed values
 //   node tests/sandbox.js linje 1 --log         one game with the radio log, for watching group behaviour
 //   node tests/sandbox.js bunker 10 --unseen    the defenders are not known beforehand, so the wing advances instead of pointing them out
+//   node tests/sandbox.js pansar 30 --hok         a Defensiv HÖK in wings that have none
 //   node tests/sandbox.js --list                the scenarios
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;
@@ -32,7 +33,7 @@ const SC={
 };
 const args=process.argv.slice(2),flags=new Set(args.filter(a=>a.startsWith('--'))),pos=args.filter(a=>!a.startsWith('--')&&!a.includes('=')),sets=args.filter(a=>a.includes('='));
 if(flags.has('--list')){for(const[k,s]of Object.entries(SC))console.log(k.padEnd(10)+s.txt);process.exit(0);}
-const which=!pos[0]||pos[0]==='all'?Object.keys(SC):pos[0].split(','),REPS=+(pos[1]||10),LOG=flags.has('--log'),UNSEEN=flags.has('--unseen');
+const which=!pos[0]||pos[0]==='all'?Object.keys(SC):pos[0].split(','),REPS=+(pos[1]||10),LOG=flags.has('--log'),UNSEEN=flags.has('--unseen'),HOK=flags.has('--hok');
 for(const w of which)if(!SC[w]){console.log('okänt scenario: '+w);process.exit(1);}
 for(const s of sets){const[p,v]=s.split('='),k=p.split('.');let o=B;for(const q of k.slice(0,-1))o=o[q];if(!o||!(k[k.length-1]in o)){console.log('okänt värde: '+p);process.exit(1);}o[k[k.length-1]]=isNaN(+v)?v:+v;}
 const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
@@ -54,7 +55,7 @@ function play(name,rep){
   const{D,f,n}=arena(),at=(fw,la)=>({x:D.x+f.x*fw+n.x*la,y:D.y+f.y*fw+n.y*la});
   G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(!UNSEEN)e.seen=true;return e;});
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
-  G.units=[];const own=[],nt=S.own.tank||0,hk=S.own.hok||[],back=-(S.dist||420);
+  G.units=[];const own=[],nt=S.own.tank||0,hk=(S.own.hok&&S.own.hok.length)?S.own.hok:HOK?['def']:[],back=-(S.dist||420);
   for(let i=0;i<nt;i++){const p=at(back,(i-(nt-1)/2)*26),u=B.makeUnit('tank',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);if(S.own.hp)u.hp=Math.round(u.maxhp*S.own.hp);G.units.push(u);own.push(u);}
   hk.forEach((post,i)=>{const p=at(back-30,(i-(hk.length-1)/2)*30),u=B.makeUnit('drone',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
   G.wings={'1':own.map(u=>u.id)};G.selIds=own.map(u=>u.id);G.sel=own[0].id;
@@ -62,12 +63,13 @@ function play(name,rep){
   if(plan==='chain')(S.order||S.def.map((_,i)=>i)).forEach((k,j)=>B.groupOrder({enemy:G.enemies[k]},j>0));
   else if(plan==='advance')B.groupOrder({world:at(0,0)},false,'off');
   else if(plan==='hold'){const c=at(back,0);B.counterattack({id:'sandlådan',x:c.x,y:c.y});G.log=G.log.filter(l=>!/fältvarvet/.test(l.text));}
-  const hp0=own.reduce((s,u)=>s+u.hp,0),dmg0=G.enemies.reduce((s,e)=>s+e.hp,0),deaths=[],seenDead=new Set(),rtbOnce=new Set(),rtbT={};let t=0,res='tid';
+  const hp0=own.reduce((s,u)=>s+u.hp,0),dmg0=G.enemies.reduce((s,e)=>s+e.hp,0),deaths=[],seenDead=new Set(),rtbOnce=new Set(),rtbT={};let t=0,res='tid',outT=null;
   for(;t<TMAX;t+=DT){B.step(DT);
     for(const u of own){if(u.rtb&&!u.dead){rtbOnce.add(u.id);if(rtbT[u.id]==null)rtbT[u.id]=t;}else if(!u.dead)rtbT[u.id]=null;if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);const h=Object.entries(u.hitBy).sort((a,b)=>b[1]-a[1])[0],k=h&&G.enemies.find(e=>e.id===h[0]);
       deaths.push({kind:u.kind,rtb:rtbT[u.id]!=null,rtbS:rtbT[u.id]!=null?t-rtbT[u.id]:null,killer:k?k.kind:'?',d:k?Math.round(Math.hypot(k.x-u.x,k.y-u.y)):0});}}
     if(G.enemies.every(e=>e.dead)){res='vinst';break;}
-    if(own.every(u=>u.dead||u.rtb||(u.air&&u.orders[0]&&u.orders[0].type==='rtb'))){res='ute';break;}}
+    // everyone out (the VARG, when there are any): play on for 25 s so that deaths on the way back count, then stop
+    if(own.filter(u=>!u.air||!own.some(v=>!v.air)).every(u=>u.dead||u.rtb||(u.air&&u.orders[0]&&u.orders[0].type==='rtb'))){/* HÖK in a wing with VARG follows them out */if(outT==null)outT=t;else if(t-outT>25){res='ute';break;}}else outT=null;}
   if(LOG)for(const l of [...G.log].reverse())console.log(('     '+(l.t!=null?l.t.toFixed(0):'')).slice(-5)+'  '+l.text);
   for(const d of deaths){KILLER[d.killer]=(KILLER[d.killer]||0)+1;if(d.rtbS!=null)RTBS.push(d.rtbS);}
   return{res,t,tankLost:deaths.filter(d=>d.kind==='tank').length,hokLost:deaths.filter(d=>d.kind==='drone').length,rtbDeaths:deaths.filter(d=>d.rtb).length,
@@ -76,7 +78,7 @@ function play(name,rep){
 }
 const RTBS=[];const avg=(a,k)=>a.reduce((s,r)=>s+r[k],0)/a.length,med=a=>{const b=[...a].sort((x,y)=>x-y);return b.length?b[b.length>>1]:NaN;};
 const t0=Date.now();
-console.log((sets.length?'ändrat: '+sets.join(' ')+'\n':'')+(UNSEEN?'försvararna okända från start\n':'')+'scenario      vinst   tid(med)  VARG förl  HÖK förl  dog i reträtt  reträtter  fiender tagna');
+console.log((sets.length?'ändrat: '+sets.join(' ')+'\n':'')+(UNSEEN?'försvararna okända från start\n':'')+(HOK?'en defensiv HÖK i wingar som saknar HÖK\n':'')+'scenario      vinst   tid(med)  VARG förl  HÖK förl  dog i reträtt  reträtter  fiender tagna');
 for(const name of which){const R=[];for(let r=0;r<REPS;r++)R.push(play(name,r));const W=R.filter(r=>r.res==='vinst'),dead=R.reduce((s,r)=>s+r.tankLost+r.hokLost,0),rd=R.reduce((s,r)=>s+r.rtbDeaths,0);
   console.log(name.padEnd(12)+(Math.round(W.length/REPS*100)+' %').padStart(7)+(W.length?Math.round(med(W.map(r=>r.t)))+' s':'-').padStart(10)+
     avg(R,'tankLost').toFixed(2).padStart(11)+avg(R,'hokLost').toFixed(2).padStart(10)+((dead?Math.round(rd/dead*100):0)+' %').padStart(15)+avg(R,'retreats').toFixed(2).padStart(11)+
