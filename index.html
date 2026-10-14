@@ -3008,22 +3008,23 @@ function mkUnitMesh(u){
       g.add(mesh(box(.04,.36,.04),D,ax*.45,-.32,az*.45));}
     g.add(mesh(new THREE.SphereGeometry(.14,6,4),mat(0x111418),.45,-.12,0));g.add(mesh(box(.16,.08,.16),R3.lampMat,0,-.2,0));}
   else if(u.kind==='drone'){
-    // HÖK: delta body, nose cone, sensor ball, two ducted fans on the wings, fins, antennas, skids and the rocket under the belly
-    const dark=0x2c3640,mid=0x3a4753,D=mat(dark),M=mat(mid);g.userData.spin=[];
-    g.add(mesh(box(3.2,.5,.8),D,0,0,0));g.add(mesh(box(2,.22,.6),M,-.2,.32,0));
-    const nose=mesh(new THREE.ConeGeometry(.4,1.3,6),D,2.2,0,0);nose.rotation.z=-PI/2;g.add(nose);
-    g.add(mesh(new THREE.SphereGeometry(.3,8,6),mat(0x111418),1.5,-.35,0));g.add(mesh(box(.3,.12,.3),R3.lampMat,.9,-.3,0));
-    g.add(mesh(box(1.7,.06,.84),mat(u.color),0,.28,0));
+    // HÖK: delta body, nose cone, sensor ball and a machine gun under the nose, two ducted fans on the wings, fins, antenna, skids,
+    // and four robots on pylons under the wings that go one by one as they are fired. Built 1.3 times larger (decided 14 okt) so it
+    // reads as the thing that carries four robots and a gun
+    const dark=0x2c3640,mid=0x3a4753,D=mat(dark),M=mat(mid),RK=mat(0xd8dde0),b=new THREE.Group();b.scale.setScalar(1.3);g.add(b);g.userData.spin=[];g.userData.rockets=[];
+    b.add(mesh(box(3.2,.5,.8),D,0,0,0));b.add(mesh(box(2,.22,.6),M,-.2,.32,0));
+    const nose=mesh(new THREE.ConeGeometry(.4,1.3,6),D,2.2,0,0);nose.rotation.z=-PI/2;b.add(nose);
+    b.add(mesh(new THREE.SphereGeometry(.3,8,6),mat(0x111418),1.5,-.35,0));b.add(mesh(box(.3,.12,.3),R3.lampMat,.9,-.3,0));
+    const mg=mesh(cyl(.05,.05,.9,5),mat(0x111418),2.05,-.32,.22);mg.rotation.z=PI/2;b.add(mg);
+    b.add(mesh(box(1.7,.06,.84),mat(u.color),0,.28,0));
     for(const sz of[-1,1]){
-      const w=mesh(box(1.5,.08,2.5),M,-.4,0,sz*1.25);w.rotation.y=sz*.45;g.add(w);
-      const ring=mesh(new THREE.TorusGeometry(.6,.12,6,16),D,-.9,.05,sz*2.55);ring.rotation.x=PI/2;g.add(ring);
-      const fan=mesh(cyl(.52,.52,.04,10),mat(0x5b6670),-.9,.05,sz*2.55);g.add(fan);g.userData.spin.push([fan,'y',30]);
-      g.add(mesh(cyl(.12,.12,.2,6),D,-.9,.05,sz*2.55));
-      const fin=mesh(box(.8,.06,.6),M,-1.6,.3,sz*.3);fin.rotation.x=sz*.7;g.add(fin);
-      g.add(mesh(box(2.2,.06,.06),D,.1,-.55,sz*.32));for(const x of[-.6,.7]){const st=mesh(box(.05,.3,.05),D,x,-.4,sz*.3);g.add(st);}
-      g.add(mesh(box(.12,.06,.12),sz<0?mat(0xd03a2a):mat(0x3ad06a),-1.2,.05,sz*3.18));}
-    g.add(mesh(cyl(.02,.02,.7,4),D,-.8,.6,0));g.add(mesh(box(.5,.08,.3),M,-1.55,.3,0));
-    const rk=mesh(cyl(.12,.12,1.2,6),mat(0xd8dde0),.2,-.38,0);rk.rotation.z=PI/2;g.add(rk);g.userData.rocket=rk;
+      const w=mesh(box(1.5,.08,2.5),M,-.4,0,sz*1.25);w.rotation.y=sz*.45;b.add(w);
+      const ring=mesh(new THREE.TorusGeometry(.6,.12,6,16),D,-.9,.05,sz*2.55);ring.rotation.x=PI/2;b.add(ring);
+      const fan=mesh(cyl(.52,.52,.04,10),mat(0x5b6670),-.9,.05,sz*2.55);b.add(fan);g.userData.spin.push([fan,'y',30]);
+      const fin=mesh(box(.8,.06,.6),M,-1.6,.3,sz*.3);fin.rotation.x=sz*.7;b.add(fin);
+      b.add(mesh(box(2.2,.06,.06),D,.1,-.55,sz*.32));
+      for(const dz of[.85,1.5]){b.add(mesh(box(.5,.14,.08),D,-.15,-.1,sz*dz));const rk=mesh(cyl(.1,.1,1.1,6),RK,0,-.24,sz*dz);rk.rotation.z=PI/2;b.add(rk);g.userData.rockets.push(rk);}}
+    b.add(mesh(cyl(.02,.02,.7,4),D,-.8,.6,0));b.add(mesh(box(.5,.08,.3),M,-1.55,.3,0));
   }
   else{
     // KROK, a skycrane: short cab up front, a high spine over an open cargo bay, twin engines on top, a six-blade rotor,
@@ -3815,7 +3816,7 @@ function sync3D(dtr){
     if(u.carried){const kk=G.kroks.find(x=>x.id===u.carried);if(kk){m.position.set(kk.x,unitY(kk,0)-8,kk.y);m.rotation.y=-kk.heading;continue;}}
     m.position.set(u.x,unitY(u,dtr),u.y);m.rotation.y=-u.heading;
     if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
-    if(m.userData.rocket)m.userData.rocket.visible=u.ammo>=1;
+    if(m.userData.rockets)m.userData.rockets.forEach((r,i)=>r.visible=i<u.ammo);
     if(m.userData.tur)m.userData.tur.rotation.y=-angWrap(u.turret-u.heading);
   }
   for(const[id,m]of R3.units)if(!seen.has(id)){D.remove(m);R3.units.delete(id);}
@@ -4952,7 +4953,7 @@ function titleCam(dtr){
   if(!TITLE.sp){TITLE.sp={x:p.x,z:p.z};TITLE.hd=hdRaw;}
   TITLE.sp.x+=(p.x-TITLE.sp.x)*ks;TITLE.sp.z+=(p.z-TITLE.sp.z)*ks;TITLE.hd+=angWrap(hdRaw-TITLE.hd)*(1-Math.exp(-.9*dtr));
   const hd=TITLE.hd,bank=clamp(angWrap(hdRaw-TITLE.hd)*1.4,-.35,.35);p.x=TITLE.sp.x;p.z=TITLE.sp.z;
-  if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:1});R3.scene.add(TITLE.drone);}
+  if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:4});R3.scene.add(TITLE.drone);}
   const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.05+bank);
   if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
   // the director picks the view angle (see titleDirector); the camera stands behind the HÖK on that line, a little to the side

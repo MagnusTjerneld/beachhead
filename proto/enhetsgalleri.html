@@ -1,24 +1,26 @@
-<title>BJÖRN i verkstaden</title>
+<title>Enhetsgalleri</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
 <style>
-/* Layout: the game's own night palette; a single workshop stage, the vehicle list beside it, measurements under it. One dark look on purpose, like the game's panels. */
+/* Layout: the game's own night palette. The stage and the selected unit's card on the left, the unit list on the right, both
+   comparison tables under them. One dark look on purpose, like the game's panels. */
 :root{
-  --natt:#0e1720; --panel:#172330; --linje:#2a3946; --dim:#8d9caa; --ink:#ebe6d6; --signal:#f0c45a; --hot:#d6458a;
+  --natt:#0e1720; --panel:#172330; --linje:#2a3946; --dim:#8d9caa; --ink:#ebe6d6; --signal:#f0c45a; --hot:#d6458a; --us:#5fb6cc;
   --display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
   --mono:"Share Tech Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
   color-scheme:dark;
 }
 html,body{background:var(--natt);color:var(--ink)}
 body{font-family:var(--display);font-size:16px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
-.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+.wrap{max-width:1220px;margin:0 auto;display:grid;gap:18px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
-h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0;text-wrap:balance}
-h1 span{color:var(--signal)}
-.lede{color:var(--dim);margin:0;max-width:62ch}
-.main{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:18px;align-items:start}
-@media (max-width:820px){.main{grid-template-columns:minmax(0,1fr)}}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--signal)}
+h2{font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0;font-weight:600}
+.lede{color:var(--dim);margin:0;max-width:66ch}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.left{display:grid;gap:14px;min-width:0}
 .stage{position:relative;background:var(--panel);border:1px solid var(--linje);border-radius:6px;overflow:hidden;aspect-ratio:16/10;max-width:100%}
 .stage canvas{display:block;width:100%;height:100%;touch-action:none}
 .hud{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:12px;color:var(--dim);pointer-events:none}
@@ -27,55 +29,64 @@ button{font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercas
 button:hover{border-color:var(--dim)}
 button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 button[aria-pressed="true"]{background:var(--signal);color:var(--natt);border-color:var(--signal)}
-aside{display:grid;gap:8px}
-.unit{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;text-align:left;text-transform:none;letter-spacing:0;font-weight:500;padding:9px 11px;background:var(--panel)}
-.unit b{font-size:17px;letter-spacing:.08em;text-transform:uppercase;grid-column:1/-1}
-.unit small{color:var(--dim);font-size:13px;grid-column:1/-1}
-.unit.new b::after{content:"ny";margin-left:8px;font:12px var(--mono);color:var(--signal);letter-spacing:0;vertical-align:2px}
+aside{display:grid;gap:6px}
+aside h2{margin-top:6px}
+.unit{display:grid;gap:1px;text-align:left;text-transform:none;letter-spacing:0;font-weight:500;padding:7px 10px;background:var(--panel)}
+.unit b{font-size:16px;letter-spacing:.08em;text-transform:uppercase}
+.unit small{color:var(--dim);font-size:13px}
+.unit.us b{color:var(--us)}.unit.them b{color:#e07a6a}
+.unit.plan b::after{content:"ej i spelet";margin-left:8px;font:12px var(--mono);color:var(--signal);letter-spacing:0;vertical-align:2px}
 .unit[aria-pressed="true"]{background:var(--panel);color:var(--ink);border-color:var(--signal)}
-.unit[aria-pressed="true"] b{color:var(--signal)}
-.dims{overflow-x:auto;border:1px solid var(--linje);border-radius:6px;background:var(--panel)}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:460px}
-th,td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--linje)}
+.card{background:var(--panel);border:1px solid var(--linje);border-radius:6px;padding:14px 16px;display:grid;gap:10px}
+.card .top{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+.card .top b{font-size:24px;letter-spacing:.08em;text-transform:uppercase}
+.card .top span{color:var(--dim)}
+.card p{margin:0;max-width:70ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 18px;margin:0}
+.stats div{display:grid;gap:0;border-top:1px solid var(--linje);padding-top:4px}
+.stats dt{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.stats dd{margin:0;font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;border:1px solid var(--linje);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:860px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--linje)}
 th:first-child,td:first-child{text-align:left}
-th{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:600}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600;vertical-align:bottom}
 td{font-family:var(--mono);font-size:14px;white-space:nowrap}
 tr:last-child td{border-bottom:0}
-tr.hl td{color:var(--signal)}
-.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.notes div{border-top:2px solid var(--linje);padding-top:8px}
-.notes h2{font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--signal);margin:0 0 4px}
-.notes p{margin:0;color:var(--ink);font-size:15px}
+tr.sel td{color:var(--signal)}
+tbody tr{cursor:pointer}
+.foot{color:var(--dim);font-size:14px;margin:0;max-width:90ch}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
   <header>
-    <h1>BJÖRN <span>i verkstaden</span></h1>
-    <p class="lede">Den tunga stridsvagnen bredvid spelets övriga fordon och flyg, som de ser ut i spelet. Dra för att vrida, skrolla eller nyp för att zooma. Rutnätet är 1 m. Fram, Sida, Bak och Ovan visar det valda fordonet ensamt.</p>
+    <h1>Enhetsgalleri</h1>
+    <p class="lede">Alla enheter i Uppdrag Arkipelag, våra och fiendens, som de ser ut i spelet och med spelets egna värden. Dra för att vrida, skrolla eller nyp för att zooma; rutnätet är 1 m. Fram, Sida, Bak och Ovan visar den valda enheten ensam.</p>
   </header>
 
   <div class="main">
-    <div class="stage" id="stage">
-      <div class="views" role="group" aria-label="Vy">
-        <button id="vSpin" aria-pressed="true">Vrid</button>
-        <button id="vFront">Fram</button>
-        <button id="vSide">Sida</button>
-        <button id="vRear">Bak</button>
-        <button id="vTop">Ovan</button>
+    <div class="left">
+      <div class="stage" id="stage">
+        <div class="views" role="group" aria-label="Vy">
+          <button id="vSpin" aria-pressed="true">Vrid</button>
+          <button id="vFront">Fram</button>
+          <button id="vSide">Sida</button>
+          <button id="vRear">Bak</button>
+          <button id="vTop">Ovan</button>
+        </div>
+        <div class="hud" id="hud"></div>
       </div>
-      <div class="hud" id="hud">BJÖRN</div>
+      <section class="card" id="card" aria-live="polite"></section>
     </div>
-    <aside id="list" aria-label="Fordon"></aside>
+    <aside id="list" aria-label="Enheter"></aside>
   </div>
 
-  <div class="dims"><table id="dims"><thead><tr><th>Fordon</th><th>Längd med rör</th><th>Bredd</th><th>Höjd</th><th>Rörelse</th></tr></thead><tbody></tbody></table></div>
-
-  <div class="notes">
-    <div><h2>Band, inte svävare</h2><p>VARG svävar och tar sig över vatten. BJÖRN går på band, så formen säger varför den måste lyftas i land med kranen.</p></div>
-    <div><h2>Bak syns på håll</h2><p>Motordäcket med galler och avgasrör sitter bak och är ljusare än resten. Då går det att se var den är sårbar, om riktat pansar blir av.</p></div>
-    <div><h2>Bredden styr passen</h2><p>Med band och sidoskärmar blir den bredare än VARG. Måttet avgör vilka pass och spärrar den inte kommer förbi, och hur stor uppställningsplatsen vid kajen måste vara.</p></div>
-  </div>
+  <h2>Våra enheter</h2>
+  <div class="tbl"><table id="tUs"></table></div>
+  <h2>Fiendens enheter</h2>
+  <div class="tbl"><table id="tThem"></table></div>
+  <p class="foot">Skada per sekund är skada gånger eldtakt gånger träffchans, mot ett mål som tar full skada. Fienden betalar sitt försvar med planerarens poäng (130 i grundbudget och 30 för marktrupp), inte med material; bärgningsvärdet är vad vraket ger oss. Robotskyttens eldtakt gäller inom magasinet, sedan laddar den om. HÖK:s robot når längre (utpekat) när en annan enhet har ögon på målet. Mått är modellernas yttermått i spelet, med rör och rotorer.</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -84,7 +95,7 @@ tr.hl td{color:var(--signal)}
 (function(){
 const PI=Math.PI,TEAM=0x5fb6cc;
 
-/* the game's own models, copied in by mkbjorn.py */
+/* the game's own models and values, copied in by mkgalleri.py */
 const MATS=new Map(),GEOS=new Map(),TAU=Math.PI*2;
 function mat(c){const key=typeof c==='string'?c:'#'+c.toString(16).padStart(6,'0');if(!MATS.has(key))MATS.set(key,new THREE.MeshLambertMaterial({color:new THREE.Color(key)}));return MATS.get(key);}
 function box(w,h,d){const k='b'+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
@@ -161,22 +172,23 @@ function mkUnitMesh(u){
       g.add(mesh(box(.04,.36,.04),D,ax*.45,-.32,az*.45));}
     g.add(mesh(new THREE.SphereGeometry(.14,6,4),mat(0x111418),.45,-.12,0));g.add(mesh(box(.16,.08,.16),R3.lampMat,0,-.2,0));}
   else if(u.kind==='drone'){
-    // HÖK: delta body, nose cone, sensor ball, two ducted fans on the wings, fins, antennas, skids and the rocket under the belly
-    const dark=0x2c3640,mid=0x3a4753,D=mat(dark),M=mat(mid);g.userData.spin=[];
-    g.add(mesh(box(3.2,.5,.8),D,0,0,0));g.add(mesh(box(2,.22,.6),M,-.2,.32,0));
-    const nose=mesh(new THREE.ConeGeometry(.4,1.3,6),D,2.2,0,0);nose.rotation.z=-PI/2;g.add(nose);
-    g.add(mesh(new THREE.SphereGeometry(.3,8,6),mat(0x111418),1.5,-.35,0));g.add(mesh(box(.3,.12,.3),R3.lampMat,.9,-.3,0));
-    g.add(mesh(box(1.7,.06,.84),mat(u.color),0,.28,0));
+    // HÖK: delta body, nose cone, sensor ball and a machine gun under the nose, two ducted fans on the wings, fins, antenna, skids,
+    // and four robots on pylons under the wings that go one by one as they are fired. Built 1.3 times larger (decided 14 okt) so it
+    // reads as the thing that carries four robots and a gun
+    const dark=0x2c3640,mid=0x3a4753,D=mat(dark),M=mat(mid),RK=mat(0xd8dde0),b=new THREE.Group();b.scale.setScalar(1.3);g.add(b);g.userData.spin=[];g.userData.rockets=[];
+    b.add(mesh(box(3.2,.5,.8),D,0,0,0));b.add(mesh(box(2,.22,.6),M,-.2,.32,0));
+    const nose=mesh(new THREE.ConeGeometry(.4,1.3,6),D,2.2,0,0);nose.rotation.z=-PI/2;b.add(nose);
+    b.add(mesh(new THREE.SphereGeometry(.3,8,6),mat(0x111418),1.5,-.35,0));b.add(mesh(box(.3,.12,.3),R3.lampMat,.9,-.3,0));
+    const mg=mesh(cyl(.05,.05,.9,5),mat(0x111418),2.05,-.32,.22);mg.rotation.z=PI/2;b.add(mg);
+    b.add(mesh(box(1.7,.06,.84),mat(u.color),0,.28,0));
     for(const sz of[-1,1]){
-      const w=mesh(box(1.5,.08,2.5),M,-.4,0,sz*1.25);w.rotation.y=sz*.45;g.add(w);
-      const ring=mesh(new THREE.TorusGeometry(.6,.12,6,16),D,-.9,.05,sz*2.55);ring.rotation.x=PI/2;g.add(ring);
-      const fan=mesh(cyl(.52,.52,.04,10),mat(0x5b6670),-.9,.05,sz*2.55);g.add(fan);g.userData.spin.push([fan,'y',30]);
-      g.add(mesh(cyl(.12,.12,.2,6),D,-.9,.05,sz*2.55));
-      const fin=mesh(box(.8,.06,.6),M,-1.6,.3,sz*.3);fin.rotation.x=sz*.7;g.add(fin);
-      g.add(mesh(box(2.2,.06,.06),D,.1,-.55,sz*.32));for(const x of[-.6,.7]){const st=mesh(box(.05,.3,.05),D,x,-.4,sz*.3);g.add(st);}
-      g.add(mesh(box(.12,.06,.12),sz<0?mat(0xd03a2a):mat(0x3ad06a),-1.2,.05,sz*3.18));}
-    g.add(mesh(cyl(.02,.02,.7,4),D,-.8,.6,0));g.add(mesh(box(.5,.08,.3),M,-1.55,.3,0));
-    const rk=mesh(cyl(.12,.12,1.2,6),mat(0xd8dde0),.2,-.38,0);rk.rotation.z=PI/2;g.add(rk);g.userData.rocket=rk;
+      const w=mesh(box(1.5,.08,2.5),M,-.4,0,sz*1.25);w.rotation.y=sz*.45;b.add(w);
+      const ring=mesh(new THREE.TorusGeometry(.6,.12,6,16),D,-.9,.05,sz*2.55);ring.rotation.x=PI/2;b.add(ring);
+      const fan=mesh(cyl(.52,.52,.04,10),mat(0x5b6670),-.9,.05,sz*2.55);b.add(fan);g.userData.spin.push([fan,'y',30]);
+      const fin=mesh(box(.8,.06,.6),M,-1.6,.3,sz*.3);fin.rotation.x=sz*.7;b.add(fin);
+      b.add(mesh(box(2.2,.06,.06),D,.1,-.55,sz*.32));
+      for(const dz of[.85,1.5]){b.add(mesh(box(.5,.14,.08),D,-.15,-.1,sz*dz));const rk=mesh(cyl(.1,.1,1.1,6),RK,0,-.24,sz*dz);rk.rotation.z=PI/2;b.add(rk);g.userData.rockets.push(rk);}}
+    b.add(mesh(cyl(.02,.02,.7,4),D,-.8,.6,0));b.add(mesh(box(.5,.08,.3),M,-1.55,.3,0));
   }
   else{
     // KROK, a skycrane: short cab up front, a high spine over an open cargo bay, twin engines on top, a six-blade rotor,
@@ -293,12 +305,37 @@ function mkEnemyMesh(e){
 }
 const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x3a3826})};
 
-const varg=()=>mkUnitMesh({kind:'tank',color:'#5fb6cc'}),baver=()=>mkUnitMesh({kind:'eng',color:'#5fb6cc'}),aa=()=>mkEnemyMesh({kind:'aa'}),fiendeSv=()=>mkEnemyMesh({kind:'tank'}),latt=()=>mkEnemyMesh({kind:'light'}),hok=()=>mkUnitMesh({kind:'drone',color:'#5fb6cc',ammo:1}),sparv=()=>mkUnitMesh({kind:'scout',color:'#5fb6cc'}),krok=()=>mkUnitMesh({kind:'krok',color:'#5fb6cc'});
+const ENEMY={
+  turret:{hp:120,range:140,airRange:130,vision:150,dmg:9,rate:1/1.2,acc:.8,value:100,label:'Bunker',cls:'armor',camo:true,canAir:true,canGround:true},
+  rb:{hp:30,range:140,airRange:120,vision:150,dmg:35,rate:.4,acc:.75,mag:2,reload:20,speed:3.5,value:0,label:'Robotskytt',cls:'inf',camo:true,canAir:true,canGround:true,tag:'RB'},
+  aa:{hp:90,range:200,kRange:275,vision:220,radar:110,dmg:10,rate:1.5,acc:.85,speed:8,value:90,label:'Luftvärn',cls:'light',camo:true,canAir:true,canGround:false},
+  inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,mobile:true,leash:220,tag:'I'},
+  at:{hp:35,range:170,vision:170,dmg:22,rate:.25,acc:.7,speed:4,value:0,label:'Pansarvärn',cls:'inf',camo:true,canAir:false,canGround:true,mobile:true,leash:220,tag:'PV'},
+  light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,mobile:true,leash:500,tag:'LP'},
+  tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'}
+};
 
-/* BJÖRN, the proposal: a heavy tracked tank. Forward is +x like every vehicle in the game.
-   Low, wide and long; a sloped glacis and a wedge turret face the front, the engine deck with grilles and exhausts is at the back
-   and lighter, so the weak side reads from far away. Side skirts over the upper run of the tracks. Kept a step plainer than the
-   first sketch (14 okt) so it sits in the lo-fi look with the rest */
+const TYPES={
+  scout:{label:'SPARV',tag:'S',role:'spaning',cost:40,build:8,hp:5,speed:19,vision:120,fuel:600,air:true,sig:45},
+  drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
+  tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85},
+  eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
+  mus:{label:'MUS',tag:'M',role:'spaning',cost:30,build:15,hp:10,speed:14,vision:70}
+};
+
+const MG={range:80,dmg:3,rate:2,acc:.6};
+
+const ROCKET_EXT=50;
+
+const SCOOT={aa:{pack:6,setup:8,min:60,max:120,quiet:5,flee:150,fleeGap:20},rb:{pack:3,setup:4,min:40,max:90}};
+
+const SIZE_ACC={krok:1.1,drone:1,scout:.5};
+
+const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
+
+const COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
+const KROK_SRC="kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};";
+
 function bjorn(){const g=new THREE.Group();
   const steel=mat(0x6f7b80),steel2=mat(0x5c676c),dark=mat(0x1b1c1e),track=mat(0x2a2c2e),deck=mat(0x9aa2a0),grill=mat(0x262a2c),gun=mat(0x4a5256);
   const L=9.6,TW=1.05,TZ=2.05;
@@ -333,67 +370,107 @@ function bjorn(){const g=new THREE.Group();
   barrel.add(mesh(box(.8,.9,1.3),steel2,.2,0,0));
   barrel.userData.gun=1;t.add(barrel);g.add(t);g.userData.tur=t;return bake(g);}
 
-const UNITS=[
-  {id:'bjorn',name:'BJÖRN',note:'Tung stridsvagn på band. Kommer i land med kranen när Birka har dockat.',mk:bjorn,isNew:true,move:'Band',hl:true},
-  {id:'varg',name:'VARG',note:'Svävare, dagens stridsfordon.',mk:varg,move:'Svävare'},
-  {id:'baver',name:'BÄVER',note:'Ingenjörsfordon med lyftarm.',mk:baver,move:'Hjul'},
-  {id:'hok',name:'HÖK',note:'Attackdrönare med robotar, flyger lågt.',mk:hok,move:'Flyger',lift:2.5},
-  {id:'sparv',name:'SPARV',note:'Liten spaningsdrönare.',mk:sparv,move:'Flyger',lift:1.2},
-  {id:'krok',name:'KROK',note:'Lyfthelikopter som bär fordon och bärgar materiel.',mk:krok,move:'Flyger',lift:0},
-  {id:'sv',name:'Fiendens stridsvagn',note:'Dagens fientliga stridsvagn, för skala.',mk:fiendeSv,move:'Band'},
-  {id:'aa',name:'Luftvärn',note:'Fiendens lätta lastbil med automatkanon.',mk:aa,move:'Hjul'},
-  {id:'latt',name:'Lätt pansar',note:'Fiendens sexhjuliga pansarbil.',mk:latt,move:'Hjul'}
+
+const C='#5fb6cc';
+const US=[
+  {id:'tank',name:'VARG',mk:()=>mkUnitMesh({kind:'tank',color:C}),move:'Svävare',note:'Stridsfordonet. En svävare som tar sig över vatten och land, når 140 m och skjuter på allt som någon ser.'},
+  {id:'drone',name:'HÖK',mk:()=>mkUnitMesh({kind:'drone',color:C,ammo:4}),move:'Flyger',lift:2.5,note:'Attackdrönare med fyra robotar och en kulspruta. Spanar åt VARG och slår mot trupp; pansar bara på order.'},
+  {id:'scout',name:'SPARV',mk:()=>mkUnitMesh({kind:'scout',color:C}),move:'Flyger',lift:1.2,note:'Billig spaningsdrönare. Flyger lågt, ser långt och tål nästan ingenting.'},
+  {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
+  {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
+  {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
+  {id:'bjorn',name:'BJÖRN',mk:bjorn,move:'Band',plan:true,note:'Tung stridsvagn på band, beslutad form. Kommer i land med kranen när Birka har dockat. Värdena är inte bestämda.'}
 ];
+const THEM=[
+  {id:'turret',name:'Bunker',move:'Fast',note:'Kamouflerad kanon i en betonggrop. Skjuter mot mark och flyg.'},
+  {id:'tank',name:'Stridsvagn',move:'Band',note:'Rörlig reserv. Lika räckvidd som VARG mot mark.'},
+  {id:'light',name:'Lätt pansar',move:'Hjul',note:'Snabb sexhjulig pansarbil med automatkanon.'},
+  {id:'aa',name:'Luftvärn',move:'Hjul',note:'Lätt lastbil med automatkanon, bara mot flyg. Flyttar efter strid och när VARG kommer nära.'},
+  {id:'rb',name:'Robotskytt',move:'Till fots',note:'Lag med bärbart luftvärn. Två robotar i följd, sedan omladdning medan laget byter plats.'},
+  {id:'inf',name:'Infanteri',move:'Till fots',note:'Lag med granatgevär. Hör VARG på långt håll och skjuter ofta först.'},
+  {id:'at',name:'Pansarvärn',move:'Till fots',note:'Dolt lag med robot som når längre än VARG. Skyddar luftvärnet.'}
+].map(u=>Object.assign(u,{mk:()=>mkEnemyMesh({kind:u.id}),them:true}));
+
+// values, straight from the game's tables
+const nf=(v,d)=>v==null?'':(+v).toFixed(d==null?0:d).replace('.',',');
+const pct=v=>Math.round(v*100)+' %';
+const KR=(()=>{const m={};for(const k of['hp','speed','vision'])m[k]=+(KROK_SRC.match(new RegExp(k+':(\\d+)'))||[])[1];return m;})();
+function usStats(u){const T=TYPES[u.id];if(u.id==='bjorn')return[['Status','ej i spelet']];
+  if(u.id==='krok')return[['Kostnad',KROK_COST+' material'],['Byggtid',KROK_BUILD+' s'],['Skrov',KR.hp],['Fart',KR.speed+' m/s'],['Syn',KR.vision+' m'],['Antal',KROK_MAX+' högst'],['Träffas av luftvärn',pct(SIZE_ACC.krok)+' av grundvärdet']];
+  const r=[['Kostnad',T.cost+' material'],['Byggtid',T.build+' s'],['Skrov',T.hp],['Fart',T.speed+' m/s'],['Syn',T.vision+' m']];
+  if(T.range)r.push(['Räckvidd',T.range+(u.id==='drone'?' m ('+(T.range+ROCKET_EXT)+' m utpekat)':' m')]);
+  if(T.dmg)r.push(['Skada per skott',T.dmg],['Eldtakt',nf(T.rate,1)+' skott/s'],['Träffchans',pct(T.acc)],['Skada per sekund',nf(T.dmg*T.rate*T.acc,1)]);
+  if(T.ammo)r.push(['Robotar',T.ammo+' st'],['Kulspruta',MG.range+' m, '+MG.dmg+' skada, '+MG.rate+' skott/s']);
+  if(T.fuel)r.push(['Batteri',Math.round(T.fuel/60)+' min']);
+  if(SIZE_ACC[u.id])r.push(['Träffas av luftvärn',pct(SIZE_ACC[u.id])+' av grundvärdet']);
+  if(u.id==='tank'){const d=T.dmg*T.rate*T.acc;r.push(['Slår ut en stridsvagn',nf(ENEMY.tank.hp/d)+' s ensam']);}
+  return r;}
+const CLS={armor:'Pansar',light:'Lätt pansar',inf:'Trupp'},VS={rb:.5,light:.6};
+function effRate(E){return E.mag?E.mag/((E.mag-1)/E.rate+E.reload):E.rate;}
+function themStats(u){const E=ENEMY[u.id],dps=E.dmg*E.rate*E.acc,r=[['Skrov',E.hp],['Klass',CLS[E.cls]],['Syn',E.vision+' m']];
+  r.push(['Mot mark',E.canGround?E.range+' m':'nej'],['Mot flyg',E.canAir?(E.airRange||E.range)+' m':'nej']);
+  r.push(['Skada per skott',E.dmg],['Eldtakt',nf(E.rate,2)+' skott/s'],['Träffchans',pct(E.acc)],['Skada per sekund',nf(dps,1)]);
+  if(E.mag)r.push(['Magasin',E.mag+' robotar, '+E.reload+' s omladdning']);
+  if(E.canGround){const v=E.dmg*(VS[u.id]||1)*E.acc*effRate(E);r.push(['Slår ut en VARG',nf(TYPES.tank.hp/v)+' s ensam']);}
+  r.push(['Kamouflerad',E.camo?'ja':'nej'],['Rörlig',E.speed?E.speed+' m/s':'nej'],['Planerarens kostnad',nf(COST[u.id],1)+' poäng'],['Bärgningsvärde',E.value?E.value+' material':'inget']);
+  if(SCOOT[u.id])r.push(['Skjut och flytta','ja']);
+  return r;}
 
 // scene
 const stage=document.getElementById('stage'),hud=document.getElementById('hud');
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 stage.prepend(renderer.domElement);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x172330);scene.fog=new THREE.Fog(0x172330,70,160);
-const cam=new THREE.PerspectiveCamera(32,16/10,.5,400);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x172330);scene.fog=new THREE.Fog(0x172330,80,190);
+const cam=new THREE.PerspectiveCamera(32,16/10,.5,500);
 scene.add(new THREE.HemisphereLight(0xdfe8ee,0x2a3238,.75));
-const sun=new THREE.DirectionalLight(0xfff4e0,.85);sun.position.set(18,30,14);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-40,right:40,top:40,bottom:-40,near:1,far:90});scene.add(sun);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(400,400),new THREE.MeshLambertMaterial({color:0x5f6a5c}));ground.rotation.x=-PI/2;ground.receiveShadow=true;scene.add(ground);
-const grid=new THREE.GridHelper(120,120,0x3e4a40,0x4f5a4e);grid.position.y=.01;scene.add(grid);
-const controls=new THREE.OrbitControls(cam,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=PI/2-.03;controls.minDistance=6;controls.maxDistance=120;
+const sun=new THREE.DirectionalLight(0xfff4e0,.85);sun.position.set(20,34,16);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-60,right:60,top:60,bottom:-60,near:1,far:120});scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshLambertMaterial({color:0x5f6a5c}));ground.rotation.x=-PI/2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(160,160,0x3e4a40,0x4f5a4e);grid.position.y=.01;scene.add(grid);
+const controls=new THREE.OrbitControls(cam,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=PI/2-.03;controls.minDistance=5;controls.maxDistance=150;
 
-// place all vehicles in a row, BJÖRN in the middle-front, and measure them
-const row=new THREE.Group();scene.add(row);const placed={};
-const order=['krok','hok','sparv','latt','aa','varg','bjorn','baver','sv'];let x=0;const gap=4.5,objs=order.map(id=>{const u=UNITS.find(q=>q.id===id),o=u.mk();o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.rotation.y=-PI/2;
-  const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3());
-  u.dim={l:sz.z,w:sz.x,h:sz.y};return{u,o,bb,sz};});
-function hidden(c){for(let p=c;p;p=p.parent)if(p.visible===false)return true;return false;}
-/* KROK stands on its wheels: lift it so the lowest point touches the ground; the drones hover */
-for(const q of objs){if(q.u.id==='krok')q.u.lift=-q.bb.min.y;}
-const total=objs.reduce((s,q)=>s+q.sz.x,0)+gap*(objs.length-1);x=-total/2;
-for(const q of objs){q.o.position.y=q.u.lift||0;q.o.position.x=x+q.sz.x/2-(q.bb.min.x+q.bb.max.x)/2;q.o.position.z=-(q.bb.min.z+q.bb.max.z)/2;x+=q.sz.x+gap;row.add(q.o);placed[q.u.id]=q.o;}
+// our units in the front row, the enemy's behind them; each measured as it stands
+const ALL=[...US.map(u=>Object.assign(u,{key:'u-'+u.id})),...THEM.map(u=>Object.assign(u,{key:'e-'+u.id}))],placed={};
+function row(list,z){const gap=4.5,objs=list.map(u=>{const o=u.mk();o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.rotation.y=-PI/2;
+    const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3());u.dim={l:sz.z,w:sz.x,h:sz.y};if(u.id==='krok'&&!u.them)u.lift=-bb.min.y;return{u,o,bb,sz};});
+  let x=-(objs.reduce((s,q)=>s+q.sz.x,0)+gap*(objs.length-1))/2;
+  for(const q of objs){q.o.position.set(x+q.sz.x/2-(q.bb.min.x+q.bb.max.x)/2,q.u.lift||0,z-(q.bb.min.z+q.bb.max.z)/2);x+=q.sz.x+gap;scene.add(q.o);placed[q.u.key]=q.o;}}
+row(US,0);row(THEM,-24);
 
-// list and table
-const list=document.getElementById('list'),tb=document.querySelector('#dims tbody');let sel='bjorn';
-const f=v=>v.toFixed(1).replace('.',',')+' m';
-for(const u of UNITS){const b=document.createElement('button');b.className='unit'+(u.isNew?' new':'');b.id='u-'+u.id;b.innerHTML='<b>'+u.name+'</b><small>'+u.note+'</small>';b.setAttribute('aria-pressed',u.id===sel);b.onclick=()=>focus(u.id,true);list.appendChild(b);
-  const tr=document.createElement('tr');if(u.hl)tr.className='hl';tr.innerHTML='<td>'+u.name+'</td><td>'+f(u.dim.l)+'</td><td>'+f(u.dim.w)+'</td><td>'+f(u.dim.h)+'</td><td>'+u.move+'</td>';tb.appendChild(tr);}
+// list, card and tables
+const list=document.getElementById('list'),card=document.getElementById('card');let sel='u-bjorn';
+const f=v=>nf(v,1)+' m',dims=u=>f(u.dim.l)+' × '+f(u.dim.w)+' × '+f(u.dim.h);
+for(const[h,L]of[['Våra',US],['Fienden',THEM]]){const t=document.createElement('h2');t.textContent=h;list.appendChild(t);
+  for(const u of L){const b=document.createElement('button');b.className='unit '+(u.them?'them':'us')+(u.plan?' plan':'');b.id='b-'+u.key;b.innerHTML='<b>'+u.name+'</b><small>'+u.move+'</small>';b.onclick=()=>focus(u.key,true);list.appendChild(b);}}
+function table(id,L,cols){const t=document.getElementById(id);t.innerHTML='<thead><tr><th>Enhet</th>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead>';const tb=document.createElement('tbody');
+  for(const u of L){const st=Object.fromEntries((u.them?themStats(u):usStats(u)));const tr=document.createElement('tr');tr.id='r-'+u.key;tr.onclick=()=>focus(u.key,true);
+    tr.innerHTML='<td>'+u.name+'</td>'+cols.map(c=>'<td>'+(c==='Mått L × B × H'?dims(u):(st[c]==null?'':st[c]))+'</td>').join('');tb.appendChild(tr);}t.appendChild(tb);}
+table('tUs',US,['Kostnad','Byggtid','Skrov','Fart','Syn','Räckvidd','Skada per sekund','Robotar','Batteri','Mått L × B × H']);
+table('tThem',THEM,['Skrov','Klass','Mot mark','Mot flyg','Skada per sekund','Slår ut en VARG','Kamouflerad','Rörlig','Planerarens kostnad','Bärgningsvärde','Mått L × B × H']);
+function showCard(u){const st=u.them?themStats(u):usStats(u);
+  card.innerHTML='<div class="top"><b style="color:'+(u.them?'#e07a6a':'var(--us)')+'">'+u.name+'</b><span>'+(u.them?'Fienden':'Våra')+' · '+u.move+' · '+dims(u)+'</span></div><p>'+u.note+'</p><dl class="stats">'+st.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+v+'</dd></div>').join('')+'</dl>';}
 
-let mode='spin',ang=.8,target=new THREE.Vector3();
-function frame(id){const o=placed[id],bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),r=bb.getSize(new THREE.Vector3()).length();return{c,r};}
-function focus(id,keepMode){sel=id;for(const u of UNITS)document.getElementById('u-'+u.id).setAttribute('aria-pressed',u.id===id);hud.textContent=UNITS.find(u=>u.id===id).name;setView(keepMode?mode:'spin');}
+let mode='spin',ang=.8;
+function frame(k){const o=placed[k],bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),r=Math.max(6,bb.getSize(new THREE.Vector3()).length());return{c,r};}
+function focus(k,keepMode){sel=k;const u=ALL.find(q=>q.key===k);for(const q of ALL){document.getElementById('b-'+q.key).setAttribute('aria-pressed',q.key===k);document.getElementById('r-'+q.key).className=q.key===k?'sel':'';}
+  hud.textContent=u.name;showCard(u);setView(keepMode&&mode!=='free'?mode:'spin');}
 function setView(m){mode=m;for(const[k,id]of[['spin','vSpin'],['front','vFront'],['side','vSide'],['top','vTop'],['rear','vRear']])document.getElementById(id).setAttribute('aria-pressed',k===m);
   for(const k in placed)placed[k].visible=m==='spin'||m==='free'||k===sel;
-  const{c,r}=frame(sel);target.copy(c);controls.target.copy(c);const d=r*1.55;
-  /* every vehicle faces +z on this stage: front from +z, its left side from +x, the back from -z */
+  const{c,r}=frame(sel);controls.target.copy(c);const d=r*1.55;
+  /* every unit faces +z on this stage: front from +z, its left side from +x, the back from -z */
   if(m==='front')cam.position.set(c.x+.01,c.y+d*.18,c.z+d);else if(m==='side')cam.position.set(c.x+d,c.y+d*.12,c.z+.01);else if(m==='top')cam.position.set(c.x,c.y+d*1.15,c.z+.01);else if(m==='rear')cam.position.set(c.x+.01,c.y+d*.35,c.z-d);else cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);
   controls.update();}
-document.getElementById('vSpin').onclick=()=>setView('spin');document.getElementById('vFront').onclick=()=>setView('front');document.getElementById('vSide').onclick=()=>setView('side');document.getElementById('vTop').onclick=()=>setView('top');document.getElementById('vRear').onclick=()=>setView('rear');
+for(const[k,id]of[['spin','vSpin'],['front','vFront'],['side','vSide'],['top','vTop'],['rear','vRear']])document.getElementById(id).onclick=()=>setView(k);
 controls.addEventListener('start',()=>{if(mode==='spin'){mode='free';document.getElementById('vSpin').setAttribute('aria-pressed','false');}});
 
 function size(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
-new ResizeObserver(size).observe(stage);size();focus('bjorn');
+new ResizeObserver(size).observe(stage);size();focus('u-tank');
 const still=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;let last=performance.now();
 (function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
   if(mode==='spin'&&!still){ang+=dt*.25;const{c,r}=frame(sel);const d=r*1.55;cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);controls.target.copy(c);}
-  const t=placed.bjorn.userData.tur;if(t)t.rotation.y=Math.sin(now/2600)*.35;
-  if(!still)for(const k in placed){const sp=placed[k].userData.spin;if(sp)for(const p of sp)p[0].rotation[p[1]]+=p[2]*dt;const y0=UNITS.find(u=>u.id===k).lift;if(k==='hok'||k==='sparv')placed[k].position.y=y0+Math.sin(now/900+(k==='hok'?0:2))*.15;}
+  if(!still){const t=placed['u-bjorn'].userData.tur;if(t)t.rotation.y=Math.sin(now/2600)*.35;const vt=placed['u-tank'].userData.tur;if(vt)vt.rotation.y=Math.sin(now/3100+1)*.4;
+    for(const k in placed){const sp=placed[k].userData.spin;if(sp)for(const p of sp)p[0].rotation[p[1]]+=p[2]*dt;}
+    for(const[k,y0,ph]of[['u-drone',2.5,0],['u-scout',1.2,2]])placed[k].position.y=y0+Math.sin(now/900+ph)*.15;}
   controls.update();renderer.render(scene,cam);requestAnimationFrame(loop);})(last);
 })();
 </script>

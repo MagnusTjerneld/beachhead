@@ -1,0 +1,239 @@
+<title>Enhetsgalleri</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: the game's own night palette. The stage and the selected unit's card on the left, the unit list on the right, both
+   comparison tables under them. One dark look on purpose, like the game's panels. */
+:root{
+  --natt:#0e1720; --panel:#172330; --linje:#2a3946; --dim:#8d9caa; --ink:#ebe6d6; --signal:#f0c45a; --hot:#d6458a; --us:#5fb6cc;
+  --display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"Share Tech Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--natt);color:var(--ink)}
+body{font-family:var(--display);font-size:16px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:1220px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--signal)}
+h2{font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0;font-weight:600}
+.lede{color:var(--dim);margin:0;max-width:66ch}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.left{display:grid;gap:14px;min-width:0}
+.stage{position:relative;background:var(--panel);border:1px solid var(--linje);border-radius:6px;overflow:hidden;aspect-ratio:16/10;max-width:100%}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:12px;color:var(--dim);pointer-events:none}
+.views{position:absolute;right:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+button{font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:rgba(14,23,32,.82);border:1px solid var(--linje);border-radius:4px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--dim)}
+button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--signal);color:var(--natt);border-color:var(--signal)}
+aside{display:grid;gap:6px}
+aside h2{margin-top:6px}
+.unit{display:grid;gap:1px;text-align:left;text-transform:none;letter-spacing:0;font-weight:500;padding:7px 10px;background:var(--panel)}
+.unit b{font-size:16px;letter-spacing:.08em;text-transform:uppercase}
+.unit small{color:var(--dim);font-size:13px}
+.unit.us b{color:var(--us)}.unit.them b{color:#e07a6a}
+.unit.plan b::after{content:"ej i spelet";margin-left:8px;font:12px var(--mono);color:var(--signal);letter-spacing:0;vertical-align:2px}
+.unit[aria-pressed="true"]{background:var(--panel);color:var(--ink);border-color:var(--signal)}
+.card{background:var(--panel);border:1px solid var(--linje);border-radius:6px;padding:14px 16px;display:grid;gap:10px}
+.card .top{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+.card .top b{font-size:24px;letter-spacing:.08em;text-transform:uppercase}
+.card .top span{color:var(--dim)}
+.card p{margin:0;max-width:70ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 18px;margin:0}
+.stats div{display:grid;gap:0;border-top:1px solid var(--linje);padding-top:4px}
+.stats dt{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.stats dd{margin:0;font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;border:1px solid var(--linje);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:860px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--linje)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600;vertical-align:bottom}
+td{font-family:var(--mono);font-size:14px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.sel td{color:var(--signal)}
+tbody tr{cursor:pointer}
+.foot{color:var(--dim);font-size:14px;margin:0;max-width:90ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Enhetsgalleri</h1>
+    <p class="lede">Alla enheter i Uppdrag Arkipelag, våra och fiendens, som de ser ut i spelet och med spelets egna värden. Dra för att vrida, skrolla eller nyp för att zooma; rutnätet är 1 m. Fram, Sida, Bak och Ovan visar den valda enheten ensam.</p>
+  </header>
+
+  <div class="main">
+    <div class="left">
+      <div class="stage" id="stage">
+        <div class="views" role="group" aria-label="Vy">
+          <button id="vSpin" aria-pressed="true">Vrid</button>
+          <button id="vFront">Fram</button>
+          <button id="vSide">Sida</button>
+          <button id="vRear">Bak</button>
+          <button id="vTop">Ovan</button>
+        </div>
+        <div class="hud" id="hud"></div>
+      </div>
+      <section class="card" id="card" aria-live="polite"></section>
+    </div>
+    <aside id="list" aria-label="Enheter"></aside>
+  </div>
+
+  <h2>Våra enheter</h2>
+  <div class="tbl"><table id="tUs"></table></div>
+  <h2>Fiendens enheter</h2>
+  <div class="tbl"><table id="tThem"></table></div>
+  <p class="foot">Skada per sekund är skada gånger eldtakt gånger träffchans, mot ett mål som tar full skada. Fienden betalar sitt försvar med planerarens poäng (130 i grundbudget och 30 för marktrupp), inte med material; bärgningsvärdet är vad vraket ger oss. Robotskyttens eldtakt gäller inom magasinet, sedan laddar den om. HÖK:s robot når längre (utpekat) när en annan enhet har ögon på målet. Mått är modellernas yttermått i spelet, med rör och rotorer.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const PI=Math.PI,TEAM=0x5fb6cc;
+
+/* the game's own models and values, copied in by mkgalleri.py */
+/*GAME-MODELS*/
+/*GAME-STATS*/
+
+function bjorn(){const g=new THREE.Group();
+  const steel=mat(0x6f7b80),steel2=mat(0x5c676c),dark=mat(0x1b1c1e),track=mat(0x2a2c2e),deck=mat(0x9aa2a0),grill=mat(0x262a2c),gun=mat(0x4a5256);
+  const L=9.6,TW=1.05,TZ=2.05;
+  // tracks: belt, road wheels, drive sprocket at the rear, idler at the front
+  for(const sz of[-1,1]){const z=sz*TZ;
+    g.add(mesh(box(L-.6,.32,TW),track,0,.16,z));g.add(mesh(box(L-1.2,.32,TW),track,.1,1.38,z));
+    const fr=mesh(box(1.2,.32,TW),track,L/2-.55,.78,z);fr.rotation.z=-1.05;g.add(fr);const bk=mesh(box(1.1,.32,TW),track,-L/2+.6,.78,z);bk.rotation.z=1.05;g.add(bk);
+    for(let i=0;i<5;i++){const w=mesh(cyl(.5,.5,TW*.8,12),dark,-3.3+i*1.65,.62,z);w.rotation.x=PI/2;g.add(w);}
+    const sp=mesh(cyl(.55,.55,TW*.9,10),steel2,-L/2+.55,1.05,z);sp.rotation.x=PI/2;g.add(sp);const id=mesh(cyl(.45,.45,TW*.9,10),steel2,L/2-.5,1.05,z);id.rotation.x=PI/2;g.add(id);
+    // skirts with a team stripe
+    g.add(mesh(box(L-1.4,.75,.12),steel,.15,1.25,sz*(TZ+TW/2+.06)));}
+  // hull: lower tub, upper deck, sloped glacis at the front
+  g.add(mesh(box(L-1.4,1.1,2.9),steel2,0,1.15,0));
+  g.add(mesh(box(L-2.4,.7,5.1),steel,-.4,2.0,0));
+  const gl=mesh(box(2.2,.18,5.1),steel,L/2-1.45,1.86,0);gl.rotation.z=-.38;g.add(gl);
+  const nose=mesh(box(.5,.9,4.6),steel2,L/2-.5,1.25,0);nose.rotation.z=.5;g.add(nose);
+  for(const z of[-1.9,1.9])g.add(mesh(box(.2,.3,.5),R3.lampMat,L/2-.3,1.75,z));
+  // engine deck at the back: lighter plate, grilles, two exhausts
+  g.add(mesh(box(3.0,.12,4.7),deck,-L/2+2.3,2.41,0));
+  for(let i=0;i<3;i++)g.add(mesh(box(.2,.06,3.6),grill,-L/2+1.3+i*.7,2.5,0));
+  for(const z of[-1.6,1.6]){const ex=mesh(box(.5,.5,.9),dark,-L/2+.85,2.15,z);g.add(ex);}
+  // turret: wide wedge, team band, commander cupola, remote gun, smoke dischargers, long gun with fume extractor and muzzle brake
+  const t=new THREE.Group();t.position.set(.7,2.35,0);
+  t.add(mesh(box(4.2,1.15,3.7),steel,-.3,.6,0));
+  for(const sz of[-1,1]){const ch=mesh(box(1.9,1.1,1.5),steel,1.55,.58,sz*1.05);ch.rotation.y=sz*.42;t.add(ch);}
+  t.add(mesh(box(2.2,.5,3.9),steel2,-2.0,.55,0));
+  t.add(mesh(box(4.24,.2,3.74),mat(TEAM),-.3,1.08,0));
+  const cup=mesh(cyl(.45,.5,.45,10),steel2,-.9,1.42,-.9);t.add(cup);
+  const barrel=new THREE.Group();barrel.position.set(2.2,.62,0);
+  const b=mesh(cyl(.21,.25,6.4,10),gun,3.2,0,0);b.rotation.z=PI/2;barrel.add(b);
+  barrel.add(mesh(box(.7,.42,.5),gun,6.5,0,0));
+  barrel.add(mesh(box(.8,.9,1.3),steel2,.2,0,0));
+  barrel.userData.gun=1;t.add(barrel);g.add(t);g.userData.tur=t;return bake(g);}
+
+
+const C='#5fb6cc';
+const US=[
+  {id:'tank',name:'VARG',mk:()=>mkUnitMesh({kind:'tank',color:C}),move:'Svävare',note:'Stridsfordonet. En svävare som tar sig över vatten och land, når 140 m och skjuter på allt som någon ser.'},
+  {id:'drone',name:'HÖK',mk:()=>mkUnitMesh({kind:'drone',color:C,ammo:4}),move:'Flyger',lift:2.5,note:'Attackdrönare med fyra robotar och en kulspruta. Spanar åt VARG och slår mot trupp; pansar bara på order.'},
+  {id:'scout',name:'SPARV',mk:()=>mkUnitMesh({kind:'scout',color:C}),move:'Flyger',lift:1.2,note:'Billig spaningsdrönare. Flyger lågt, ser långt och tål nästan ingenting.'},
+  {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
+  {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
+  {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
+  {id:'bjorn',name:'BJÖRN',mk:bjorn,move:'Band',plan:true,note:'Tung stridsvagn på band, beslutad form. Kommer i land med kranen när Birka har dockat. Värdena är inte bestämda.'}
+];
+const THEM=[
+  {id:'turret',name:'Bunker',move:'Fast',note:'Kamouflerad kanon i en betonggrop. Skjuter mot mark och flyg.'},
+  {id:'tank',name:'Stridsvagn',move:'Band',note:'Rörlig reserv. Lika räckvidd som VARG mot mark.'},
+  {id:'light',name:'Lätt pansar',move:'Hjul',note:'Snabb sexhjulig pansarbil med automatkanon.'},
+  {id:'aa',name:'Luftvärn',move:'Hjul',note:'Lätt lastbil med automatkanon, bara mot flyg. Flyttar efter strid och när VARG kommer nära.'},
+  {id:'rb',name:'Robotskytt',move:'Till fots',note:'Lag med bärbart luftvärn. Två robotar i följd, sedan omladdning medan laget byter plats.'},
+  {id:'inf',name:'Infanteri',move:'Till fots',note:'Lag med granatgevär. Hör VARG på långt håll och skjuter ofta först.'},
+  {id:'at',name:'Pansarvärn',move:'Till fots',note:'Dolt lag med robot som når längre än VARG. Skyddar luftvärnet.'}
+].map(u=>Object.assign(u,{mk:()=>mkEnemyMesh({kind:u.id}),them:true}));
+
+// values, straight from the game's tables
+const nf=(v,d)=>v==null?'':(+v).toFixed(d==null?0:d).replace('.',',');
+const pct=v=>Math.round(v*100)+' %';
+const KR=(()=>{const m={};for(const k of['hp','speed','vision'])m[k]=+(KROK_SRC.match(new RegExp(k+':(\\d+)'))||[])[1];return m;})();
+function usStats(u){const T=TYPES[u.id];if(u.id==='bjorn')return[['Status','ej i spelet']];
+  if(u.id==='krok')return[['Kostnad',KROK_COST+' material'],['Byggtid',KROK_BUILD+' s'],['Skrov',KR.hp],['Fart',KR.speed+' m/s'],['Syn',KR.vision+' m'],['Antal',KROK_MAX+' högst'],['Träffas av luftvärn',pct(SIZE_ACC.krok)+' av grundvärdet']];
+  const r=[['Kostnad',T.cost+' material'],['Byggtid',T.build+' s'],['Skrov',T.hp],['Fart',T.speed+' m/s'],['Syn',T.vision+' m']];
+  if(T.range)r.push(['Räckvidd',T.range+(u.id==='drone'?' m ('+(T.range+ROCKET_EXT)+' m utpekat)':' m')]);
+  if(T.dmg)r.push(['Skada per skott',T.dmg],['Eldtakt',nf(T.rate,1)+' skott/s'],['Träffchans',pct(T.acc)],['Skada per sekund',nf(T.dmg*T.rate*T.acc,1)]);
+  if(T.ammo)r.push(['Robotar',T.ammo+' st'],['Kulspruta',MG.range+' m, '+MG.dmg+' skada, '+MG.rate+' skott/s']);
+  if(T.fuel)r.push(['Batteri',Math.round(T.fuel/60)+' min']);
+  if(SIZE_ACC[u.id])r.push(['Träffas av luftvärn',pct(SIZE_ACC[u.id])+' av grundvärdet']);
+  if(u.id==='tank'){const d=T.dmg*T.rate*T.acc;r.push(['Slår ut en stridsvagn',nf(ENEMY.tank.hp/d)+' s ensam']);}
+  return r;}
+const CLS={armor:'Pansar',light:'Lätt pansar',inf:'Trupp'},VS={rb:.5,light:.6};
+function effRate(E){return E.mag?E.mag/((E.mag-1)/E.rate+E.reload):E.rate;}
+function themStats(u){const E=ENEMY[u.id],dps=E.dmg*E.rate*E.acc,r=[['Skrov',E.hp],['Klass',CLS[E.cls]],['Syn',E.vision+' m']];
+  r.push(['Mot mark',E.canGround?E.range+' m':'nej'],['Mot flyg',E.canAir?(E.airRange||E.range)+' m':'nej']);
+  r.push(['Skada per skott',E.dmg],['Eldtakt',nf(E.rate,2)+' skott/s'],['Träffchans',pct(E.acc)],['Skada per sekund',nf(dps,1)]);
+  if(E.mag)r.push(['Magasin',E.mag+' robotar, '+E.reload+' s omladdning']);
+  if(E.canGround){const v=E.dmg*(VS[u.id]||1)*E.acc*effRate(E);r.push(['Slår ut en VARG',nf(TYPES.tank.hp/v)+' s ensam']);}
+  r.push(['Kamouflerad',E.camo?'ja':'nej'],['Rörlig',E.speed?E.speed+' m/s':'nej'],['Planerarens kostnad',nf(COST[u.id],1)+' poäng'],['Bärgningsvärde',E.value?E.value+' material':'inget']);
+  if(SCOOT[u.id])r.push(['Skjut och flytta','ja']);
+  return r;}
+
+// scene
+const stage=document.getElementById('stage'),hud=document.getElementById('hud');
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x172330);scene.fog=new THREE.Fog(0x172330,80,190);
+const cam=new THREE.PerspectiveCamera(32,16/10,.5,500);
+scene.add(new THREE.HemisphereLight(0xdfe8ee,0x2a3238,.75));
+const sun=new THREE.DirectionalLight(0xfff4e0,.85);sun.position.set(20,34,16);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-60,right:60,top:60,bottom:-60,near:1,far:120});scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshLambertMaterial({color:0x5f6a5c}));ground.rotation.x=-PI/2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(160,160,0x3e4a40,0x4f5a4e);grid.position.y=.01;scene.add(grid);
+const controls=new THREE.OrbitControls(cam,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=PI/2-.03;controls.minDistance=5;controls.maxDistance=150;
+
+// our units in the front row, the enemy's behind them; each measured as it stands
+const ALL=[...US.map(u=>Object.assign(u,{key:'u-'+u.id})),...THEM.map(u=>Object.assign(u,{key:'e-'+u.id}))],placed={};
+function row(list,z){const gap=4.5,objs=list.map(u=>{const o=u.mk();o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.rotation.y=-PI/2;
+    const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3());u.dim={l:sz.z,w:sz.x,h:sz.y};if(u.id==='krok'&&!u.them)u.lift=-bb.min.y;return{u,o,bb,sz};});
+  let x=-(objs.reduce((s,q)=>s+q.sz.x,0)+gap*(objs.length-1))/2;
+  for(const q of objs){q.o.position.set(x+q.sz.x/2-(q.bb.min.x+q.bb.max.x)/2,q.u.lift||0,z-(q.bb.min.z+q.bb.max.z)/2);x+=q.sz.x+gap;scene.add(q.o);placed[q.u.key]=q.o;}}
+row(US,0);row(THEM,-24);
+
+// list, card and tables
+const list=document.getElementById('list'),card=document.getElementById('card');let sel='u-bjorn';
+const f=v=>nf(v,1)+' m',dims=u=>f(u.dim.l)+' × '+f(u.dim.w)+' × '+f(u.dim.h);
+for(const[h,L]of[['Våra',US],['Fienden',THEM]]){const t=document.createElement('h2');t.textContent=h;list.appendChild(t);
+  for(const u of L){const b=document.createElement('button');b.className='unit '+(u.them?'them':'us')+(u.plan?' plan':'');b.id='b-'+u.key;b.innerHTML='<b>'+u.name+'</b><small>'+u.move+'</small>';b.onclick=()=>focus(u.key,true);list.appendChild(b);}}
+function table(id,L,cols){const t=document.getElementById(id);t.innerHTML='<thead><tr><th>Enhet</th>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead>';const tb=document.createElement('tbody');
+  for(const u of L){const st=Object.fromEntries((u.them?themStats(u):usStats(u)));const tr=document.createElement('tr');tr.id='r-'+u.key;tr.onclick=()=>focus(u.key,true);
+    tr.innerHTML='<td>'+u.name+'</td>'+cols.map(c=>'<td>'+(c==='Mått L × B × H'?dims(u):(st[c]==null?'':st[c]))+'</td>').join('');tb.appendChild(tr);}t.appendChild(tb);}
+table('tUs',US,['Kostnad','Byggtid','Skrov','Fart','Syn','Räckvidd','Skada per sekund','Robotar','Batteri','Mått L × B × H']);
+table('tThem',THEM,['Skrov','Klass','Mot mark','Mot flyg','Skada per sekund','Slår ut en VARG','Kamouflerad','Rörlig','Planerarens kostnad','Bärgningsvärde','Mått L × B × H']);
+function showCard(u){const st=u.them?themStats(u):usStats(u);
+  card.innerHTML='<div class="top"><b style="color:'+(u.them?'#e07a6a':'var(--us)')+'">'+u.name+'</b><span>'+(u.them?'Fienden':'Våra')+' · '+u.move+' · '+dims(u)+'</span></div><p>'+u.note+'</p><dl class="stats">'+st.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+v+'</dd></div>').join('')+'</dl>';}
+
+let mode='spin',ang=.8;
+function frame(k){const o=placed[k],bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),r=Math.max(6,bb.getSize(new THREE.Vector3()).length());return{c,r};}
+function focus(k,keepMode){sel=k;const u=ALL.find(q=>q.key===k);for(const q of ALL){document.getElementById('b-'+q.key).setAttribute('aria-pressed',q.key===k);document.getElementById('r-'+q.key).className=q.key===k?'sel':'';}
+  hud.textContent=u.name;showCard(u);setView(keepMode&&mode!=='free'?mode:'spin');}
+function setView(m){mode=m;for(const[k,id]of[['spin','vSpin'],['front','vFront'],['side','vSide'],['top','vTop'],['rear','vRear']])document.getElementById(id).setAttribute('aria-pressed',k===m);
+  for(const k in placed)placed[k].visible=m==='spin'||m==='free'||k===sel;
+  const{c,r}=frame(sel);controls.target.copy(c);const d=r*1.55;
+  /* every unit faces +z on this stage: front from +z, its left side from +x, the back from -z */
+  if(m==='front')cam.position.set(c.x+.01,c.y+d*.18,c.z+d);else if(m==='side')cam.position.set(c.x+d,c.y+d*.12,c.z+.01);else if(m==='top')cam.position.set(c.x,c.y+d*1.15,c.z+.01);else if(m==='rear')cam.position.set(c.x+.01,c.y+d*.35,c.z-d);else cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);
+  controls.update();}
+for(const[k,id]of[['spin','vSpin'],['front','vFront'],['side','vSide'],['top','vTop'],['rear','vRear']])document.getElementById(id).onclick=()=>setView(k);
+controls.addEventListener('start',()=>{if(mode==='spin'){mode='free';document.getElementById('vSpin').setAttribute('aria-pressed','false');}});
+
+function size(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+new ResizeObserver(size).observe(stage);size();focus('u-tank');
+const still=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;let last=performance.now();
+(function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(mode==='spin'&&!still){ang+=dt*.25;const{c,r}=frame(sel);const d=r*1.55;cam.position.set(c.x+Math.cos(ang)*d,c.y+d*.42,c.z+Math.sin(ang)*d);controls.target.copy(c);}
+  if(!still){const t=placed['u-bjorn'].userData.tur;if(t)t.rotation.y=Math.sin(now/2600)*.35;const vt=placed['u-tank'].userData.tur;if(vt)vt.rotation.y=Math.sin(now/3100+1)*.4;
+    for(const k in placed){const sp=placed[k].userData.spin;if(sp)for(const p of sp)p[0].rotation[p[1]]+=p[2]*dt;}
+    for(const[k,y0,ph]of[['u-drone',2.5,0],['u-scout',1.2,2]])placed[k].position.y=y0+Math.sin(now/900+ph)*.15;}
+  controls.update();renderer.render(scene,cam);requestAnimationFrame(loop);})(last);
+})();
+</script>
