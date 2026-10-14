@@ -5028,7 +5028,7 @@ function filmTodAt(t){const T=FILM_TOD;let i=0;while(i<T.length-2&&T[i+1][0]<=t)
 function filmSeed(s){let a=s>>>0;Math.random=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 
 function filmStart(){
-  const q=BOOTQ;FILM.on=true;FILM.clock=q.has('render')?'frame':'audio';globalThis.__FILM={FILM,R3:()=>R3,seek:filmSeek};
+  const q=BOOTQ;FILM.on=true;FILM.clock=q.has('render')?'frame':'audio';globalThis.__FILM={FILM,R3:()=>R3,seek:filmSeek,EXP:FILM_EXP,exp:filmExport};
   $('title').classList.add('clean');$('tPress').hidden=true;DYNRES.on=false;DYNRES.scale=1;applyRes();
   FILM.b0={x:CARRIER.x,y:CARRIER.y,a:CARRIER.a};G.known.fill(1);G.knownV=(G.knownV||0)+1;document.querySelector('.tfoot').style.display='none';filmClearings(FILM_CLEAR);
   // a black veil for fades, and the play button
@@ -5036,7 +5036,7 @@ function filmStart(){
   if(R3){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
   if(FILM.clock==='frame'){const t0=+q.get('t')||0;filmSeed(FILM.seed);FILM.t=t0-FILM.pre;FILM.state='play';return;}
   const b=$('tPress');b.textContent='SPELA TRAILERN';b.hidden=false;$('title').classList.remove('clean');for(const id of['tMenu','logoWrap'])$(id).hidden=true;
-  FILM.t=fk(2);FILM.state='idle';FILM.fade.style.opacity=.35;}
+  FILM.t=fk(2);FILM.state='idle';FILM.fade.style.opacity=.35;filmSaveBtn(true);}
 /* set dressing: the trees are taken out of the meadow where the battle is staged, so a low camera sees the action and not
    a trunk; the forest round it stays */
 const FILM_BF={x:1365,z:712},FILM_CLEAR=[[1365,712,76],[1462,716,34],[1462,748,36]];
@@ -5046,7 +5046,7 @@ function filmClearings(C){if(!R3||!R3.treeTiles)return;const m=new THREE.Matrix4
 /* the click (or Enter or space): load the score, warm every shot up behind the veil so no shader compiles mid-film, then play */
 function filmClick(){if(FILM.state!=='idle'&&FILM.state!=='done')return;audInit();const c=AUD.ctx;if(!c)return;FILM.state='load';$('tPress').textContent='LADDAR';
   const go=()=>{filmWarm();filmSeed(FILM.seed);for(const k in FILM.act)FILM.act[k].visible=false;filmClear();FILM.i=-1;
-    $('tPress').hidden=true;$('logoWrap').hidden=true;$('title').classList.add('clean');if(AUD.master)AUD.master.gain.value=0;/* the film has only its score */const t0=c.currentTime+.25;FILM.t0=t0;
+    filmSaveBtn(false);$('tPress').hidden=true;$('logoWrap').hidden=true;$('title').classList.add('clean');if(AUD.master)AUD.master.gain.value=0;/* the film has only its score */const t0=c.currentTime+.25;FILM.t0=t0;
     const g=c.createGain();g.gain.value=.9;g.connect(c.destination);FILM.gain=g;FILM.src=[];
     FILM_MUS.forEach((m,i)=>{const s=c.createBufferSource();s.buffer=MUS.buf;const gg=c.createGain();s.connect(gg);gg.connect(g);const a=t0+m.at;
       gg.gain.setValueAtTime(i?0:1,a);if(i)gg.gain.linearRampToValueAtTime(1,a+.012);gg.gain.setValueAtTime(1,a+m.len-.012);if(i<FILM_MUS.length-1)gg.gain.linearRampToValueAtTime(0,a+m.len+.004);
@@ -5063,11 +5063,11 @@ const filmShotT=i=>FILM_SHOTS[i].k!=null?fk(FILM_SHOTS[i].k):0;
 function filmCam(dtr){
   if(FILM.state==='play'){if(FILM.clock==='audio'&&FILM.t0!=null){FILM.t=AUD.ctx.currentTime-FILM.t0;}else FILM.t+=dtr;}
   const t=Math.max(0,FILM.t);G.tod=filmTodAt(t);
-  if(FILM.state==='play'&&t>=FILM_END+1.5){FILM.state='done';$('tPress').textContent='SPELA IGEN';$('tPress').hidden=false;$('title').classList.remove('clean');}
+  if(FILM.state==='play'&&t>=FILM_END+1.5){FILM.state='done';$('tPress').textContent='SPELA IGEN';$('tPress').hidden=false;$('title').classList.remove('clean');filmSaveBtn(true);}
   let i=0;while(i<FILM_SHOTS.length-1&&t>=filmShotT(i+1))i++;const S=FILM_SHOTS[i],t0=filmShotT(i),dur=(i<FILM_SHOTS.length-1?filmShotT(i+1):FILM_END)-t0;
   if(i!==FILM.i){FILM.i=i;filmClear();FILM.S={first:true};FILM.useMovers=false;filmMapShow(false);if(S.birka!==false)filmBirka(null);G.harbor.secured=S.birka===false;
     if(S.id!=='logga'){$('logoWrap').hidden=true;if(FILM.state==='play')$('title').classList.add('clean');}}
-  for(const k in FILM.act)FILM.act[k].visible=false;FILM.useMovers=false;FILM.fov=40;FILM.fadeA=0;FILM.hideBeaver=i>=2&&i<24;
+  for(const k in FILM.act)FILM.act[k].visible=false;FILM.useMovers=false;FILM.fov=40;FILM.sunEl=null;FILM.fadeA=0;FILM.hideBeaver=i>=2&&i<24;
   S.f(Math.min(t-t0,dur),dur,dtr,FILM.S);FILM.S.first=false;
   if(S.k>=20&&S.k<31&&FILM.state!=='idle')filmBattle(dtr);
   if(R3.cam.fov!==FILM.fov){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
@@ -5077,14 +5077,80 @@ function filmCam(dtr){
   filmFx(dtr);
   if(FILM.state==='idle')FILM.fadeA=Math.max(FILM.fadeA,.35);
   FILM.fade.style.opacity=FILM.fadeA.toFixed(3);}
-/* the light: the colours of the hour, but the sun kept low over the horizon while it is up (the game drops it below and lights
-   from a clamped angle) and the key light stronger, for long grazing shadows; at dusk the game's own light takes over */
+/* the light: the colours of the hour, but the sun's own height (radians) from FILM_SUN: 11 degrees at the start of the golden
+   hour, so the ground is lit and the units throw shadows five or six times their height (decided 14 okt: at 3 to 5 degrees the
+   sun hardly lit level ground and no shadow could be seen), sinking to the horizon at sunset and below it for the firefight.
+   A shot with the sun in the picture may set FILM.sunEl lower. The key light is stronger while the sun is up; at dusk the game's
+   own light takes over. */
+const FILM_SUN=[[17.72,.2],[18,.16],[18.15,.11],[18.3,.05],[18.5,-.03],[18.8,-.1]];
+function filmSunEl(h){const T=FILM_SUN;let i=0;while(i<T.length-2&&T[i+1][0]<=h)i++;const a=T[i],b=T[i+1];return lerp(a[1],b[1],clamp((h-a[0])/(b[0]-a[0]),0,1));}
 function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);if(R3.night>=.6)return;
-  const el=.085-(h-17.72)*.2,hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,le=Math.max(el,.055),c=Math.cos(le);
-  vDir.set(hx/hl*c,Math.sin(le),hz/hl*c);R3.sun.intensity*=lerp(1,1.45,up);R3.hemi.intensity*=lerp(1,.8,up);
+  const el=FILM.sunEl??filmSunEl(h),hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,le=Math.max(el,.055),c=Math.cos(le);
+  vDir.set(hx/hl*c,Math.sin(le),hz/hl*c);/* (shading: never below 3 degrees) */R3.sun.intensity*=lerp(1,1.45,up);R3.hemi.intensity*=lerp(1,.8,up);
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);
   if(R3.sky){const U=R3.sky.material.uniforms,ce=Math.cos(el);U.uSunDir.value.set(hx/hl*ce,Math.sin(el),hz/hl*ce);U.uSunVis.value=clamp((el+.03)/.06,0,1);}}
 
+/* ---- Spara video: the film rendered frame by frame on the viewer's own machine, 1920x1080 at 60 frames a second, with the
+   score, encoded in the browser (WebCodecs, mp4-muxer) to an mp4 that is downloaded. Each frame waits until it is drawn, so the
+   file is smooth however slow the machine; the clocks the game reads (performance.now) are held to the film's own time while it
+   runs. The chart, the logo with its line and the fades, which live as page elements in the live film, are painted into each
+   frame. ---- */
+const FILM_EXP={W:1920,H:1080,fps:60,vbr:16e6,len:null,from:0};/* len and from: a stretch to render, for testing; the whole film by default */
+function filmLoadMuxer(){return window.Mp4Muxer?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc);});}
+/* the score as one buffer: the same edit as the live film, mixed down offline */
+async function filmScore(sr){const len=Math.ceil((FILM_END+1.5)*sr),oc=new OfflineAudioContext(2,len,sr);
+  FILM_MUS.forEach((m,i)=>{const s=oc.createBufferSource();s.buffer=MUS.buf;const g=oc.createGain();s.connect(g);g.connect(oc.destination);
+    g.gain.setValueAtTime(i?0:.9,m.at);if(i)g.gain.linearRampToValueAtTime(.9,m.at+.012);g.gain.setValueAtTime(.9,m.at+m.len-.012);if(i<FILM_MUS.length-1)g.gain.linearRampToValueAtTime(0,m.at+m.len+.004);s.start(m.at,m.src,m.len+.02);});
+  return oc.startRendering();}
+function filmCompose(ctx,W,H){ctx.drawImage(R3.renderer.domElement,0,0,W,H);
+  if(FILM.map){const oc=FILM.mapCv||(FILM.mapCv=document.createElement('canvas'));oc.width=W;oc.height=H;const mc=oc.getContext('2d'),k=W/1280;mc.setTransform(k,0,0,k,0,0);drawMap(mc,1280,720,false);ctx.drawImage(oc,0,0);}
+  if(!$('logoWrap').hidden){const lg=$('logo'),lw=Math.min(.78*W,940*W/1920*1.25),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.12;
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0(W);ctx.shadowOffsetY=10*k0(W);ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
+    const fs=Math.round(26*k0(W)),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px ui-monospace,Menlo,Consolas,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
+    let cx=(W-tw)/2;const ty=y+lh+H*.025;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
+  if(FILM.fadeA>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,FILM.fadeA)+')';ctx.fillRect(0,0,W,H);}}
+const k0=W=>W/1920;
+async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
+  const say=t=>{const b=$('tPress');b.textContent=t;b.hidden=false;};
+  if(!window.VideoEncoder||!window.AudioEncoder){say('VIDEO KRÄVER CHROME, EDGE ELLER NYARE SAFARI');return;}
+  FILM.state='load';filmSaveBtn(false);say('FÖRBEREDER VIDEO');audInit();
+  try{await filmLoadMuxer();}catch(_){say('KUNDE INTE LADDA VIDEOKODAREN');FILM.state='done';filmSaveBtn(true);return;}
+  while(!MUS.buf)await new Promise(r=>setTimeout(r,100));
+  const E=FILM_EXP,W=E.W,H=E.H,sr=48000,dt=1/E.fps;
+  // codecs: H.264 for the picture, AAC for the sound if the browser can, otherwise Opus
+  /* H.264 plays everywhere; a browser without an H.264 encoder (Chromium without the licensed codecs) gets VP9 or AV1 in the same mp4,
+     which Chrome, Firefox and VLC play but QuickTime does not */
+  let vc=null;for(const [c,m] of[['avc1.64002A','avc'],['avc1.4D002A','avc'],['avc1.42002A','avc'],['vp09.00.40.08','vp9'],['av01.0.08M.08','av1']]){try{const r=await VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:E.vbr,framerate:E.fps});if(r.supported){vc=[c,m];break;}}catch(_){}}
+  let ac=null;for(const [c,m] of[['mp4a.40.2','aac'],['opus','opus']]){try{const r=await AudioEncoder.isConfigSupported({codec:c,sampleRate:sr,numberOfChannels:2,bitrate:192000});if(r.supported){ac=[c,m];break;}}catch(_){}}
+  if(!vc){say('WEBBLÄSAREN KAN INTE KODA VIDEO');FILM.state='done';filmSaveBtn(true);return;}
+  const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:vc[1],width:W,height:H,frameRate:E.fps},audio:ac?{codec:ac[1],numberOfChannels:2,sampleRate:sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
+  let err=null;const venc=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>err=e});venc.configure(Object.assign({codec:vc[0],width:W,height:H,bitrate:E.vbr,framerate:E.fps},vc[1]==='avc'?{avc:{format:'avc'}}:{}));
+  // the sound first: the score mixed offline, fed to the encoder in 1024-sample blocks
+  if(ac){say('KODAR LJUDET');const buf=await filmScore(sr),aenc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>err=e});aenc.configure({codec:ac[0],sampleRate:sr,numberOfChannels:2,bitrate:192000});
+    const L=buf.getChannelData(0),R=buf.getChannelData(1),N=1024;for(let i=0;i<buf.length;i+=N){const n=Math.min(N,buf.length-i),d=new Float32Array(n*2);d.set(L.subarray(i,i+n),0);d.set(R.subarray(i,i+n),n);
+      const a=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(i/sr*1e6),data:d});aenc.encode(a);a.close();}
+    await aenc.flush();aenc.close();}
+  // the picture: the renderer at 1920x1080, the clocks held to the film's time, one frame after another
+  say('RENDERAR 0 %');const pn=performance.now.bind(performance);let vnow=pn();performance.now=()=>vnow;
+  const r=R3.renderer,pr=r.getPixelRatio();r.setPixelRatio(1);r.setSize(W,H,false);R3.cam.aspect=W/H;R3.cam.updateProjectionMatrix();
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  filmWarm();filmSeed(FILM.seed);for(const k in FILM.act)FILM.act[k].visible=false;filmClear();FILM.i=-1;$('logoWrap').hidden=true;FILM.state='export';FILM.t=E.from-FILM.pre;
+  const total=Math.ceil((E.len??FILM_END+1.5)*E.fps);let f=0,lastUi=0;
+  try{while(FILM.t<E.from){vnow+=dt*1000;FILM.t+=dt;filmFrame(dt);}
+    for(f=0;f<total;f++){vnow+=dt*1000;FILM.t=E.from+f*dt;filmFrame(dt);filmCompose(ctx,W,H);
+      const vf=new VideoFrame(cv,{timestamp:Math.round(f*1e6/E.fps),duration:Math.round(1e6/E.fps)});venc.encode(vf,{keyFrame:f%120===0});vf.close();
+      if(err)throw err;while(venc.encodeQueueSize>6)await new Promise(q=>setTimeout(q,1));
+      if(pn()-lastUi>250){lastUi=pn();say('RENDERAR '+Math.floor(f/total*100)+' %');await new Promise(q=>setTimeout(q,0));}}
+    await venc.flush();venc.close();mux.finalize();
+    const blob=new Blob([mux.target.buffer],{type:'video/mp4'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='uppdrag-arkipelag-trailer.mp4';document.body.appendChild(a);a.click();a.remove();
+    say('VIDEON ÄR SPARAD · SPELA IGEN');}
+  catch(e){say('VIDEON MISSLYCKADES: '+(e&&e.message||e));}
+  finally{performance.now=pn;r.setPixelRatio(pr);fitPanes();applyRes();FILM.state='done';$('logoWrap').hidden=true;$('title').classList.remove('clean');filmSaveBtn(true);}}
+/* one frame of the film off the screen loop: the same steps the loop takes */
+function filmFrame(dt){sync3D(dt);filmCam(dt);updateSky();filmLight();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);}
+function filmSaveBtn(on){let b=$('filmSave');if(!b){b=document.createElement('button');b.id='filmSave';b.type='button';b.className='btn';b.textContent='Spara video (1080p)';
+    b.style.cssText='position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:4';b.addEventListener('click',ev=>{ev.stopPropagation();filmExport();});$('title').appendChild(b);}
+  b.hidden=!on;}
 /* ---- helpers: actors, placing, paths, the camera ---- */
 function fA(key,make){let m=FILM.act[key];if(!m){m=make();m.rotation.order='YXZ';R3.scene.add(m);FILM.act[key]=m;}m.visible=true;return m;}
 const fVarg=i=>fA('v'+i,()=>mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1}));
@@ -5185,7 +5251,7 @@ const FILM_SHOTS=[
   if(S.first){const RT=V[0].RT,T=R3.decoT||0,sp=13;updateSky();filmLight();const sa=Math.atan2(vDir.z,vDir.x);let best=0,bs=1e9;
     for(let i=0;i<RT.N;i++){const a=RT.pts[i],b=RT.pts[(i+V[0].dir+RT.N)%RT.N],h=Math.atan2(b.z-a.z,b.x-a.x),sc=Math.abs(Math.abs(angWrap(sa-h))-160*PI/180);if(Math.hypot(a.x-CARRIER.x,a.z-CARRIER.y)<260)continue;if(sc<bs){bs=sc;best=i;}}
     const s0=RT.len[best]-V[0].dir*sp*(D*.6+.8);for(const m of V){m.speed=sp;const sAt=s0+(m.dir<0?-1:1)*(m.back||0);m.ph=((((sAt-m.dir*T*m.speed)/RT.L)%1)+1)%1;m.trail.length=0;m.tt=-1;}S.hd=null;S.side=null;}
-  const T=R3.decoT||0;V.forEach((m,i)=>fVargWater(m.g,dtr,T,i));
+  FILM.sunEl=.075;/* the sun in the picture behind them */const T=R3.decoT||0;V.forEach((m,i)=>fVargWater(m.g,dtr,T,i));
   const L=V[0].g.position,raw=-V[0].g.rotation.y;S.hd=S.hd==null?raw:S.hd+angWrap(raw-S.hd)*(1-Math.exp(-2*Math.min(dtr,.1)));const hd=S.hd,fx=Math.cos(hd),fz=Math.sin(hd),px=-fz,pz=fx;
   if(S.side==null)S.side=-(Math.sign(vDir.x*px+vDir.z*pz)||1);const u=(tau+.8)/D,fw=lerp(70,-40,u),lat=S.side*38,h=lerp(1.3,2.6,sm(u));
   let cx=0,cz=0;for(const m of V){cx+=m.g.position.x;cz+=m.g.position.z;}cx/=V.length;cz/=V.length;fCam(L.x+fx*fw+px*lat,h,L.z+fz*fw+pz*lat,cx+fx*6,1.6,cz+fz*6,0);FILM.fov=38;}},
@@ -5350,6 +5416,7 @@ function frame(now){
   try{diagTick(now,P);}catch(err){console.error(err);}
 }
 function frameBody(now,P){
+  if(FILM.state==='export'){last=now;return;}/* the trailer's video export draws its own frames */
   try{resTick(now,now-last);}catch(_){}const dtr=Math.min(.05,(now-last)/1000);last=now;
   if(G.ctrl){CTRL.thr=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0);CTRL.steer=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);}
   else{CTRL.thr=0;CTRL.steer=0;}
