@@ -27,7 +27,7 @@ Designdokumentet "Uppdrag Arkipelag: designdokument" (https://claude.ai/artifact
 ## Spelet
 
 - Spelet är en enda fil, `index.html` (Three.js r128 från cdnjs, sjökortet på 2D-canvas).
-- Kör de snabba testerna innan commit: `node tests/run.js` (bygger g2.js och kör t23, t51, t58, t60, t61, t62, t63, t64, t65 och t66, cirka en och en halv minut).
+- Kör de snabba testerna innan commit: `node tests/run.js` (bygger g2.js och kör t23, t51, t58, t60, t61, t62, t63, t64, t65, t66 och t67, cirka en och en halv minut).
 - `tests/t45.js` är testboten: `node tests/t45.js base quick` (fyra öar, cirka en minut) eller `node tests/t45.js` (tio öar, två till tre minuter). Den hör till faktiska ändringar av fiendens försvar eller enheternas beteende, inte till resonemang, och körs bara efter att Magnus sagt ja.
 - `tests/sandbox.js` är sandlådan: anfallsscenarier med en wing mot bestämda försvarare, utan att ta en hel ö (`node tests/sandbox.js --list`). Tio omgångar av alla scenarier tar cirka tio sekunder. Den ger statistik, inte godkänt eller underkänt, och är verktyget för balans och gruppbeteende.
 - Varje ny version committas och pushas till GitHub (MagnusTjerneld/beachhead) och publiceras till spelets artefakt ("Uppdrag Arkipelag", tidigare "Brohuvud 2") (https://claude.ai/artifact/FW4tJouRfh7tvCG1j6wCEc).
