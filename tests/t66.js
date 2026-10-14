@@ -52,4 +52,15 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
   for(let r=50;r<900&&!p;r+=10)for(let a=0;a<6.28&&!p;a+=.2){const x=L.x+Math.cos(a)*r,y=L.y+Math.sin(a)*r;if(B.coverAt(x,y))p={x,y};}
   if(p){const e=live(G,'at',p.x,p.y),q=B.spotPoint(h,e,{x:L.x,y:L.y});const d=q?Math.hypot(q.x-e.lx,q.y-e.ly):-1;ok(q&&d<40,'the spotting point for pansarvärn under trees is '+Math.round(d)+' m from it');}
   else ok(true,'(no trees on this island)');}
+// 7. staying or leaving: a VARG below 30 % fights on when the guns on it are nearly out, and pulls out early when it is clearly losing
+{const G=setup();const L=G.relays[0],[v1,v2]=G.units.filter(u=>u.kind==='tank');v1.x=L.x+150;v1.y=L.y;v2.x=L.x+150;v2.y=L.y+25;v1.orders=[];v2.orders=[];
+  const a=live(G,'tank',v1.x+100,v1.y-20),b=live(G,'tank',v1.x+100,v1.y+30);for(const e of[a,b]){e.mobile=false;e.speed=0;e.hp=12;e.visibleNow=true;}
+  v1.hp=v1.maxhp*.28;v1.hitBy[a.id]=G.time;v1.hitBy[b.id]=G.time;v1.lastHit=G.time;run(.3);
+  ok(!v1.rtb,'below 30 % with two nearly beaten tanks on it, VARG-1 stays ('+v1.state+')');
+  ok(G.log.some(l=>/Stannar kvar/.test(l.text)),'and says why');
+  B.ENGAGE.calc=false;v1.engT=0;v1.hitBy[a.id]=G.time;v1.lastHit=G.time;a.hp=b.hp=12;run(.3);ok(v1.rtb||v1.orders.some(o=>o.toRep),'with the calculation off it pulls back at 30 % as before');B.ENGAGE.calc=true;}
+{const G=setup();const L=G.relays[0],[v1,v2]=G.units.filter(u=>u.kind==='tank');v1.x=L.x+150;v1.y=L.y;v2.x=L.x-400;v2.y=L.y;v1.orders=[];v2.orders=[];v2.hold=true;
+  const a=live(G,'tank',v1.x+125,v1.y-20),b=live(G,'tank',v1.x+125,v1.y+25);for(const e of[a,b]){e.mobile=false;e.speed=0;}
+  v1.hp=v1.maxhp*.5;v1.hitBy[a.id]=G.time;v1.hitBy[b.id]=G.time;v1.lastHit=G.time;run(.3);
+  ok(v1.rtb,'at 50 % alone against two whole tanks it pulls out before 30 % ('+v1.state+')');ok(G.log.some(l=>/Förlorar mot/.test(l.text)),'and says it is losing');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

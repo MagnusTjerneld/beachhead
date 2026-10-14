@@ -12,7 +12,8 @@
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;
 const DT=.05,TMAX=300,SEED=7341;
-// defenders: [kind, forward, lateral] in metres from the defence centre, forward pointing away from the attackers
+// defenders: [kind, forward, lateral, hull share at start] in metres from the defence centre, forward pointing away from the attackers;
+// own.hp is the attackers' hull share at start
 // plan: chain = attack the targets in this order (Shift), advance = move the wing onto the centre, hold = stand and receive
 const SC={
   bunker:{txt:'3 VARG och en offensiv HÖK mot en bunker med två pansarvärnslag',
@@ -24,6 +25,8 @@ const SC={
     own:{tank:4,hok:['off','def']},def:[['turret',0,-60],['turret',0,60],['at',-30,0],['at',-25,110],['tank',60,0],['aa',90,30]],plan:'chain',order:[2,0,3,1,4,5]},
   stormning:{txt:'4 VARG rakt fram mot bunker, pansarvärn och stridsvagn, utan utpekade mål',
     own:{tank:4},def:[['turret',0,0],['at',-30,50],['at',-30,-50],['tank',50,0]],plan:'advance'},
+  slutstrid:{txt:'2 VARG på 40 % mot två stridsvagnar på 20 %: rätt att stanna',own:{tank:2,hp:.4},def:[['tank',0,-25,.2],['tank',0,25,.2]],plan:'chain',order:[0,1],dist:300},
+  overmakt:{txt:'1 VARG mot två hela stridsvagnar: rätt att dra sig ur i tid',own:{tank:1},def:[['tank',0,-25],['tank',0,25]],plan:'chain',order:[0,1]},
   motanfall:{txt:'3 VARG står kvar och tar emot två stridsvagnar och ett lätt pansarfordon som rycker ut mot dem',
     own:{tank:3},def:[['tank',0,-30],['tank',0,30],['light',20,0]],plan:'hold',dist:330}
 };
@@ -49,17 +52,17 @@ function play(name,rep){
   {const{D,f,n}=arena();for(let s=-480;s<=160;s+=5)for(let l=-150;l<=150;l+=5){const i=Math.floor((D.y+f.y*s+n.y*l)/10)*220+Math.floor((D.x+f.x*s+n.x*l)/10);if(B.W.grid[i]>=4)B.W.grid[i]=B.W.baseGrid[i]=3;}}
   G.reachAll=null;B.computeLock();
   const{D,f,n}=arena(),at=(fw,la)=>({x:D.x+f.x*fw+n.x*la,y:D.y+f.y*fw+n.y*la});
-  G.enemies=S.def.map(([kind,fw,la],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(!UNSEEN)e.seen=true;return e;});
+  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(!UNSEEN)e.seen=true;return e;});
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
   G.units=[];const own=[],nt=S.own.tank||0,hk=S.own.hok||[],back=-(S.dist||420);
-  for(let i=0;i<nt;i++){const p=at(back,(i-(nt-1)/2)*26),u=B.makeUnit('tank',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);}
+  for(let i=0;i<nt;i++){const p=at(back,(i-(nt-1)/2)*26),u=B.makeUnit('tank',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);if(S.own.hp)u.hp=Math.round(u.maxhp*S.own.hp);G.units.push(u);own.push(u);}
   hk.forEach((post,i)=>{const p=at(back-30,(i-(hk.length-1)/2)*30),u=B.makeUnit('drone',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
   G.wings={'1':own.map(u=>u.id)};G.selIds=own.map(u=>u.id);G.sel=own[0].id;
   const plan=UNSEEN&&S.plan==='chain'?'advance':S.plan;/* unknown defenders cannot be pointed out: the wing advances on the centre */
   if(plan==='chain')(S.order||S.def.map((_,i)=>i)).forEach((k,j)=>B.groupOrder({enemy:G.enemies[k]},j>0));
   else if(plan==='advance')B.groupOrder({world:at(0,0)},false,'off');
   else if(plan==='hold'){const c=at(back,0);B.counterattack({id:'sandlådan',x:c.x,y:c.y});G.log=G.log.filter(l=>!/fältvarvet/.test(l.text));}
-  const dmg0=G.enemies.reduce((s,e)=>s+e.hp,0),deaths=[],seenDead=new Set(),rtbOnce=new Set(),rtbT={};let t=0,res='tid';
+  const hp0=own.reduce((s,u)=>s+u.hp,0),dmg0=G.enemies.reduce((s,e)=>s+e.hp,0),deaths=[],seenDead=new Set(),rtbOnce=new Set(),rtbT={};let t=0,res='tid';
   for(;t<TMAX;t+=DT){B.step(DT);
     for(const u of own){if(u.rtb&&!u.dead){rtbOnce.add(u.id);if(rtbT[u.id]==null)rtbT[u.id]=t;}else if(!u.dead)rtbT[u.id]=null;if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);const h=Object.entries(u.hitBy).sort((a,b)=>b[1]-a[1])[0],k=h&&G.enemies.find(e=>e.id===h[0]);
       deaths.push({kind:u.kind,rtb:rtbT[u.id]!=null,rtbS:rtbT[u.id]!=null?t-rtbT[u.id]:null,killer:k?k.kind:'?',d:k?Math.round(Math.hypot(k.x-u.x,k.y-u.y)):0});}}
@@ -69,7 +72,7 @@ function play(name,rep){
   for(const d of deaths){KILLER[d.killer]=(KILLER[d.killer]||0)+1;if(d.rtbS!=null)RTBS.push(d.rtbS);}
   return{res,t,tankLost:deaths.filter(d=>d.kind==='tank').length,hokLost:deaths.filter(d=>d.kind==='drone').length,rtbDeaths:deaths.filter(d=>d.rtb).length,
     retreats:rtbOnce.size,kills:G.enemies.filter(e=>e.dead).length,nDef:G.enemies.length,dealt:dmg0-G.enemies.reduce((s,e)=>s+(e.dead?0:Math.max(0,e.hp)),0),
-    taken:own.reduce((s,u)=>s+(u.maxhp-Math.max(0,u.dead?0:u.hp)),0),deaths};
+    taken:hp0-own.reduce((s,u)=>s+(u.dead?0:Math.max(0,u.hp)),0),deaths};
 }
 const RTBS=[];const avg=(a,k)=>a.reduce((s,r)=>s+r[k],0)/a.length,med=a=>{const b=[...a].sort((x,y)=>x-y);return b.length?b[b.length>>1]:NaN;};
 const t0=Date.now();
