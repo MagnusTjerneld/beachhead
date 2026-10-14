@@ -48,8 +48,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Bygg sidan (bara spelet och musiken)
-        run: mkdir -p _site/music && cp index.html _site/ && cp music/theme.mp3 _site/music/
+      - name: Bygg enhetsgalleriet ur spelets modeller och värden
+        run: python3 proto/mkgalleri.py
+      - name: Bygg sidan (spelet, musiken och enhetsgalleriet)
+        run: mkdir -p _site/music _site/proto && cp index.html _site/ && cp music/theme.mp3 _site/music/ && cp proto/index.html proto/enhetsgalleri.html _site/proto/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
