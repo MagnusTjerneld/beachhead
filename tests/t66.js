@@ -35,4 +35,21 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
 // 3. a lone attacker still uses the ordinary firing logic
 {const G=setup();const L=G.relays[0],[v1]=G.units.filter(u=>u.kind==='tank');const t=live(G,'turret',L.x+200,L.y);v1.x=t.x-260;v1.y=t.y;v1.orders=[{type:'attack',enemy:t,post:'off'}];run(1);
   ok(!v1.orders[0].arc,'one VARG alone does not take an arc position');}
+// 4. a VARG pulling back with heavy damage keeps firing on what it sees and reaches, without stopping
+{const G=setup();const L=G.relays[0],[v1]=G.units.filter(u=>u.kind==='tank');v1.x=L.x+150;v1.y=L.y;v1.orders=[];v1.hp=v1.maxhp*.25;v1.lastHit=G.time;
+  const e=live(G,'light',v1.x+110,v1.y);e.mobile=false;e.speed=0;e.hp=e.maxhp=1e4;const p0={x:v1.x,y:v1.y};run(3);
+  ok(v1.rtb,'the damaged VARG pulls back ('+v1.state+')');ok(v1.target===e,'and fires on '+e.id+' meanwhile ('+(v1.target?v1.target.id:'none')+')');
+  const d3=Math.hypot(v1.x-p0.x,v1.y-p0.y);ok(d3>15,'and keeps driving ('+Math.round(d3)+' m in 3 s)');
+  for(let i=0;i<16&&e.hp>=1e4&&v1.target===e;i++)run(.5);ok(e.hp<1e4,'it hits');}
+// 5. two tanks that cover each other: every VARG still gets a planned spot and a staging point, so nobody charges in alone
+{const G=setup();const L=G.relays[0],vs=G.units.filter(u=>u.kind==='tank');vs.push(B.makeUnit('tank',0,0));G.units.push(vs[2]);
+  const t1=live(G,'tank',L.x+200,L.y-30),t2=live(G,'tank',L.x+210,L.y+30);for(const t of[t1,t2]){t.mobile=false;t.speed=0;}
+  vs.forEach((v,i)=>{v.x=L.x-220;v.y=L.y+(i-1)*26;v.orders=[{type:'attack',enemy:t1,post:'off'}];});run(1.5);
+  ok(vs.every(v=>v.orders[0].arc&&v.orders[0].arc.st),'all three VARG get an arc spot and a staging point ('+vs.map(v=>v.orders[0].arc?(v.orders[0].arc.st?'st':'arc'):'-').join(', ')+')');
+  ok(vs.every(v=>!v.orders[0].go),'and wait for each other');}
+// 6. troops under trees only show from the air within 40 m, so a HÖK sent to spot them goes that close
+{const G=setup();const L=G.relays[0],h=G.units.find(u=>u.kind==='drone');let p=null;
+  for(let r=50;r<900&&!p;r+=10)for(let a=0;a<6.28&&!p;a+=.2){const x=L.x+Math.cos(a)*r,y=L.y+Math.sin(a)*r;if(B.coverAt(x,y))p={x,y};}
+  if(p){const e=live(G,'at',p.x,p.y),q=B.spotPoint(h,e,{x:L.x,y:L.y});const d=q?Math.hypot(q.x-e.lx,q.y-e.ly):-1;ok(q&&d<40,'the spotting point for pansarvärn under trees is '+Math.round(d)+' m from it');}
+  else ok(true,'(no trees on this island)');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);
