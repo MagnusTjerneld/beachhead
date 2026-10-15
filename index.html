@@ -1770,7 +1770,10 @@ function move(u,dt){
   const o=u.orders[0];
   // a SPARV that has lost its link turns back towards the nearest relay until it has it again
   if(u.kind==='scout'&&G.ctrl!==u.id&&!(o&&o.type==='rtb')){const lk=linkAt(u.x,u.y);
-    if(!lk.ok){const p=linkClamp(u.x,u.y);if(!u.linkLost){u.linkLost=true;say(u,'Tappat radiolänken. Vänder tillbaka mot närmaste relä.');}u.path=null;
+    if(!lk.ok){let p=linkClamp(u.x,u.y);if(!u.linkLost){u.linkLost=true;u.lostT=-1;say(u,'Tappat radiolänken. Vänder tillbaka mot närmaste relä.');}u.path=null;
+      // back into the net round known air defence, not straight over it: the same route as an order on Defensiv, renewed every second
+      if(G.time-(u.lostT??-9)>1){u.lostT=G.time;if(airDanger(u,p.x,p.y)){const q=safePoint(u,p.x,p.y);if(q)p=q;}u.lostP=airPath(u,p.x,p.y,{type:'move',post:'def'});}
+      if(u.lostP&&u.lostP.length){if(u.lostP.length>1&&Math.hypot(u.lostP[0].x-u.x,u.lostP[0].y-u.y)<8)u.lostP.shift();p=u.lostP[0];}
       const a=Math.atan2(p.y-u.y,p.x-u.x),st=u.speed*dt;u.x+=Math.cos(a)*st;u.y+=Math.sin(a)*st;u.heading=turnTo(u.heading,a,3*dt);u.state='Utan radiolänk · vänder tillbaka';return;}
     if(u.linkLost){u.linkLost=false;}}
   if(!o&&u.mission&&!u.rtb){
@@ -1785,7 +1788,7 @@ function move(u,dt){
     return;
   }
   let tx,ty,arr;
-  if(u.kind==='scout'&&(o.type==='move'||o.type==='obs')&&!o.linkChk){o.linkChk=1;const p=linkClamp(o.x,o.y);if(p.moved){o.x=p.x;o.y=p.y;say(u,'Punkten ligger utanför radioräckvidd. Stannar vid gränsen.');}}
+  if(u.kind==='scout'&&(o.type==='move'||o.type==='obs')&&!o.linkChk){o.linkChk=1;let p=linkClamp(o.x,o.y);if(p.moved){if(o.post!=='off'&&airDanger(u,p.x,p.y)){const q=safePoint(u,p.x,p.y);if(q&&linkAt(q.x,q.y).ok)p=q;}/* the edge of the net may fall on known air defence */o.x=p.x;o.y=p.y;say(u,'Punkten ligger utanför radioräckvidd. Stannar vid gränsen.');}}
   if(o.type==='move'){tx=o.x;ty=o.y;arr=u.air?14:10;u.state=(u.fighting&&u.target&&!u.target.isStruct?'Bekämpar '+ename(u.target)+' under förflyttning mot ':'På väg till ')+sq(tx,ty)+' · '+POST[o.post].toLowerCase();}
   else if(o.type==='explore'){o.ux=u.x;o.uy=u.y;
     if(o.tgt&&(G.known[cellIdx(o.tgt.x,o.tgt.y)]||airDanger(u,o.tgt.x,o.tgt.y)||G.time>o.tgtT)){if(G.time>o.tgtT&&!G.known[cellIdx(o.tgt.x,o.tgt.y)])(o.bad||(o.bad=[])).push(o.tgt);o.tgt=null;u.path=null;}
