@@ -5463,10 +5463,12 @@ function diagTick(now,P){
 const GPUT={ext:null,gl:null,tried:false,cur:null,pend:[],ms:0,last:-1,ok:false};
 function gpuBegin(){if(!(DIAG.on||BENCH.on)||!R3)return;
   if(!GPUT.tried){GPUT.tried=true;const gl=R3.renderer.getContext();if(typeof WebGL2RenderingContext!=='undefined'&&gl instanceof WebGL2RenderingContext){GPUT.gl=gl;GPUT.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');GPUT.ok=!!GPUT.ext;}}
-  if(!GPUT.ok||GPUT.cur||GPUT.pend.length>6)return;const gl=GPUT.gl,q=gl.createQuery();gl.beginQuery(GPUT.ext.TIME_ELAPSED_EXT,q);GPUT.cur=q;}
-function gpuEnd(){if(!GPUT.cur)return;const gl=GPUT.gl;gl.endQuery(GPUT.ext.TIME_ELAPSED_EXT);GPUT.pend.push(GPUT.cur);GPUT.cur=null;
-  const dis=gl.getParameter(GPUT.ext.GPU_DISJOINT_EXT);
-  while(GPUT.pend.length){const q=GPUT.pend[0];if(!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))break;GPUT.pend.shift();
+  if(!GPUT.ok||GPUT.cur||GPUT.pend.length>=16)return;const gl=GPUT.gl,q=gl.createQuery();gl.beginQuery(GPUT.ext.TIME_ELAPSED_EXT,q);GPUT.cur=q;}
+/* ends this frame's query and collects every finished one; the collecting runs whether or not a query was started this frame, so a
+   full queue always drains (it used to wait for a new query, which a full queue never started) */
+function gpuEnd(){if(!GPUT.ok)return;const gl=GPUT.gl;if(GPUT.cur){gl.endQuery(GPUT.ext.TIME_ELAPSED_EXT);GPUT.pend.push(GPUT.cur);GPUT.cur=null;}
+  if(!GPUT.pend.length)return;const dis=gl.getParameter(GPUT.ext.GPU_DISJOINT_EXT);
+  while(GPUT.pend.length){const q=GPUT.pend[0];if(!dis&&!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))break;GPUT.pend.shift();
     if(!dis){const ms=gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6;GPUT.last=ms;GPUT.ms+=(ms-GPUT.ms)*.05;if(BENCH.on&&BENCH.phase==='run')BENCH.gpus.push(ms);}gl.deleteQuery(q);}}
 /* ---------- benchmark (?bench): the same walk through islands, hours, views and a staged fight every time, so the statistics box (F3)
    can be compared before and after a change. Real frames in the real browser. Each scenario starts the island afresh with the same
@@ -5505,7 +5507,7 @@ function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!s
     G.fx.push({k:'boom',x,y,t:0,ttl:1.1,big:R()<.3});G.fx.push({k:'puff',x,y,h:groundY(x,y)+1,t:0,ttl:1.2,c:0x6a665e,s:2.4,hit:false,ws:'cannon'});}
   if(BENCH.phase==='warm'){if(t>=BENCH.warm){BENCH.phase='run';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];}return;}
   if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
-  if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),gpu:BENCH.gpus.length?benchPct(BENCH.gpus,.5):null,gpu95:BENCH.gpus.length?benchPct(BENCH.gpus,.95):null,
+  if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),gpu:BENCH.gpus.length?benchPct(BENCH.gpus,.25):null,gpu50:BENCH.gpus.length?benchPct(BENCH.gpus,.5):null,gpu95:BENCH.gpus.length?benchPct(BENCH.gpus,.95):null,
     calls:Math.round(benchPct(BENCH.calls,.5)),tri:Math.round(benchPct(BENCH.tris,.5)),n:BENCH.gaps.length});benchNext();}}
 /* the clipboard API needs https and a permitted frame; the fallback selects the text in a box and copies from there, and if even that fails the box stays for a manual copy */
 async function benchCopy(el,btn){const txt=el._csv;let ok=false;
@@ -5521,15 +5523,15 @@ function benchDone(){BENCH.on=false;BENCH.label='';BENCH.v=null;Math.random=BENC
   const f=(n,d)=>n.toFixed(d),pad=(x,n)=>String(x).padStart(n),dl=(a,b)=>(a-b>=0?'+':'')+f(a-b,1);
   let gpu='okänt';try{const gl=R3&&R3.renderer.getContext(),x=gl&&gl.getExtension('WEBGL_debug_renderer_info');if(x)gpu=gl.getParameter(x.UNMASKED_RENDERER_WEBGL);}catch(_){}
   const run={label:BENCH.run||'',date:new Date().toISOString().slice(0,16),gpu,screen:innerWidth+'x'+innerHeight+' dpr '+(window.devicePixelRatio||1),
-    rows:BENCH.res.map(r=>({name:r.name,gap:+f(r.gap,2),p95:+f(r.p95,2),worst:Math.round(r.worst),cpu:+f(r.cpu,2),gpu:r.gpu==null?null:+f(r.gpu,2),gpu95:r.gpu95==null?null:+f(r.gpu95,2),calls:r.calls,tri:r.tri}))};
+    rows:BENCH.res.map(r=>({name:r.name,gap:+f(r.gap,2),p95:+f(r.p95,2),worst:Math.round(r.worst),cpu:+f(r.cpu,2),gpu:r.gpu==null?null:+f(r.gpu,2),gpu50:r.gpu50==null?null:+f(r.gpu50,2),gpu95:r.gpu95==null?null:+f(r.gpu95,2),calls:r.calls,tri:r.tri}))};
   // the baseline is locked: the first run, or a run marked &label=bas, or one made the baseline with its button
   let base=benchLoad();if(!base||run.label==='bas'){benchSave(run);base=null;}
   const draw=()=>{const bm=base&&Object.fromEntries(base.rows.map(r=>[r.name,r]));
-    const head='scenario                   bild ms  (Δ bas)   p95  värst  gpu ms  (Δ bas)  cpu ms  anrop  tri k';
-    const lines=run.rows.map(r=>{const o=bm&&bm[r.name];return r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',9)+pad(f(r.p95,1),7)+pad(r.worst,6)+pad(r.gpu==null?'-':f(r.gpu,2),8)+pad(o&&r.gpu!=null&&o.gpu!=null?dl(r.gpu,o.gpu):'',9)+pad(f(r.cpu,1),8)+pad(r.calls,7)+pad(r.tri,7);});
+    const head='scenario                   bild ms  (Δ bas)   p95  värst  gpu p25  (Δ bas)  cpu ms  anrop  tri k';
+    const lines=run.rows.map(r=>{const o=bm&&bm[r.name];return r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',9)+pad(f(r.p95,1),7)+pad(r.worst,6)+pad(r.gpu==null?'-':f(r.gpu,2),9)+pad(o&&r.gpu!=null&&o.gpu!=null?dl(r.gpu,o.gpu):'',9)+pad(f(r.cpu,1),8)+pad(r.calls,7)+pad(r.tri,7);});
     const avg=(a,k='gap')=>a.reduce((s,r)=>s+(r[k]||0),0)/a.length,same=base&&base.rows.length===run.rows.length,hasG=run.rows.every(r=>r.gpu!=null),baseG=same&&base.rows.every(r=>r.gpu!=null);
-    const sum='\nsnitt bild '+f(avg(run.rows),1)+' ms'+(same?' ('+dl(avg(run.rows),avg(base.rows))+' mot baslinjen'+(base.label?' '+base.label:'')+' '+base.date+')':'')+'  fps ca '+Math.round(1000/avg(run.rows))+(hasG?'\nsnitt gpu '+f(avg(run.rows,'gpu'),2)+' ms'+(baseG?' ('+dl(avg(run.rows,'gpu'),avg(base.rows,'gpu'))+' mot baslinjen)':''):'\ngpu-tid saknas i denna webbläsare');
-    const tab=r=>'scenario;bild_ms;p95_ms;varst_ms;gpu_ms;gpu_p95_ms;cpu_ms;anrop;tri_k\n'+r.rows.map(x=>[x.name,x.gap,x.p95,x.worst,x.gpu??'',x.gpu95??'',x.cpu,x.calls,x.tri].join(';')).join('\n');
+    const sum='\nsnitt bild '+f(avg(run.rows),1)+' ms'+(same?' ('+dl(avg(run.rows),avg(base.rows))+' mot baslinjen'+(base.label?' '+base.label:'')+' '+base.date+')':'')+'  fps ca '+Math.round(1000/avg(run.rows))+(hasG?'\nsnitt gpu (25:e percentilen) '+f(avg(run.rows,'gpu'),2)+' ms'+(baseG?' ('+dl(avg(run.rows,'gpu'),avg(base.rows,'gpu'))+' mot baslinjen)':''):'\ngpu-tid saknas'+(GPUT.ok?' (tidsfrågan gav inga svar under körningen)':' i denna webbläsare'));
+    const tab=r=>'scenario;bild_ms;p95_ms;varst_ms;gpu_p25_ms;gpu_med_ms;gpu_p95_ms;cpu_ms;anrop;tri_k\n'+r.rows.map(x=>[x.name,x.gap,x.p95,x.worst,x.gpu??'',x.gpu50??'',x.gpu95??'',x.cpu,x.calls,x.tri].join(';')).join('\n');
     const meta=r=>(r.label?'etikett '+r.label+'  ':'')+r.date+'\ngrafik '+r.gpu+'\nskärm '+r.screen;
     BENCH.el._csv='BENCHMARK Uppdrag Arkipelag\nsiktavstånd '+SIKT_N[SIKT.k]+'  skuggor '+(R3&&R3.renderer.shadowMap.enabled?'på':'av')+'\nwebbläsare '+navigator.userAgent+
       '\n\nDENNA KÖRNING  '+meta(run)+'\n'+tab(run)+'\n\nBASLINJE  '+(base?meta(base)+'\n'+tab(base):'(den här körningen är baslinjen)');
