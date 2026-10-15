@@ -3837,7 +3837,16 @@ function updateSky(){
   for(const c of cand)c.push((c[1]-fx)*(c[1]-fx)+(c[3]-fz)*(c[3]-fz));
   const near=cand.filter(c=>c[8]<400*400).sort((a,b)=>a[0]-b[0]||a[8]-b[8]);
   R3.points.forEach((P,k)=>{const c=near[k];if(!c){P.intensity=0;return;}P.position.set(c[1],c[2],c[3]);P.color.setHex(c[4]);P.intensity=c[5];P.distance=c[6];});
+  lightsShow(R3.spots,veh.length>0);lightsShow(R3.points,near.length>0);
 }
+/* a light at intensity 0 is still counted by every shader (three r128 counts lights, not their strength), so the 6 headlights and the
+   8 point lights are switched off as groups when none of them is needed: the headlights by day, the point lights when nothing burns,
+   blasts or shines nearby. The picture is the same; the shaders loop over fewer lights. Each group has two states, so the shaders exist
+   in four variants, all compiled at start (lightsWarm) so that dusk or the first blast does not stall a frame. */
+function lightsShow(arr,on){if(arr._on===on)return;arr._on=on;for(const L of arr)L.visible=on;}
+function lightsWarm(){if(!R3)return;const rs=[R3.renderer,...(FEED.list||[]).map(F=>F.r).filter(Boolean)];
+  for(const a of[false,true])for(const b of[false,true]){lightsShow(R3.spots,a);lightsShow(R3.points,b);for(const r of rs){try{r.compile(R3.scene,R3.cam);}catch(_){}}}
+  R3.spots._on=R3.points._on=undefined;}
 function unitY(u,dtr){
   const g=groundY(u.x,u.y);
   if(u.air||u.kind==='krok'){const want=u.kind==='krok'?flyAlt(u.x,u.y,u.low?15:30,u.low?3:6):flyAlt(u.x,u.y,u.kind==='scout'?12:24,u.kind==='scout'?4:6);u.alt=u.alt==null?want:lerp(u.alt,want,Math.min(1,1.5*(dtr||0)));return u.alt;}
@@ -5576,6 +5585,7 @@ newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.
 init3D();
 if(R3)buildStatic();
 mkFeeds();
+lightsWarm();
 placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();if(BOOTQ.has('trailer'))filmStart();
 requestAnimationFrame(frame);
 if(BOOTQ.has('bench'))setTimeout(benchStart,1500);
