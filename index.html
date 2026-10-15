@@ -1243,7 +1243,8 @@ function say(u,text,acts){
    costly blocks the next try for longer each time (8 s doubling to a minute), so it does not flicker at the edge */
 const DYNRES={on:true,scale:1,acc:0,n:0,good:0,block:0,back:8000,upT:-1e9,min:.5,lo:20,hi:17.5};try{DYNRES.on=localStorage.getItem('bh.dynres')!=='0';}catch(_){}
 const resBase=()=>Math.min(1.5,(typeof window!=='undefined'&&window.devicePixelRatio)||1);
-function applyRes(){if(!R3)return;R3.renderer.setPixelRatio(resBase()*(DYNRES.on?DYNRES.scale:1));R3.renderer.setSize(size.cam.w,size.cam.h,false);}
+let EXPORT_LOCK=false;/* the trailer's video export owns the renderer's size while it runs */
+function applyRes(){if(!R3||EXPORT_LOCK)return;R3.renderer.setPixelRatio(resBase()*(DYNRES.on?DYNRES.scale:1));R3.renderer.setSize(size.cam.w,size.cam.h,false);}
 function resTick(now,ms){const D=DYNRES;if(!R3||!D.on||document.hidden||!(ms>0&&ms<1000))return;D.acc+=Math.min(ms,250);D.n++;if(D.acc<1000)return;
   const avg=D.acc/D.n,s0=D.scale;D.acc=0;D.n=0;
   if(avg>D.lo){D.scale=Math.max(D.min,D.scale*Math.max(.8,Math.sqrt(16.7/avg)));D.good=0;if(now-D.upT<5000)D.back=Math.min(60000,D.back*2);D.block=now+D.back;}
@@ -2624,7 +2625,7 @@ function fitPanes(){
   size.map={w:Math.max(1,rm.width),h:Math.max(1,rm.height)};size.cam={w:Math.max(1,rc.width),h:Math.max(1,rc.height)};
   mapC.width=Math.round(size.map.w*dpr);mapC.height=Math.round(size.map.h*dpr);
   hudC.width=Math.round(size.cam.w*dpr);hudC.height=Math.round(size.cam.h*dpr);
-  if(R3){R3.renderer.setSize(size.cam.w,size.cam.h,false);R3.cam.aspect=size.cam.w/size.cam.h;R3.cam.updateProjectionMatrix();}
+  if(R3&&!EXPORT_LOCK){R3.renderer.setSize(size.cam.w,size.cam.h,false);R3.cam.aspect=size.cam.w/size.cam.h;R3.cam.updateProjectionMatrix();}
 }
 new ResizeObserver(fitPanes).observe(mainSlot);
 new ResizeObserver(fitPanes).observe(subSlot);
@@ -4371,6 +4372,7 @@ function setSikt(k){SIKT.k=k;try{localStorage.setItem('bh.sikt',k);}catch(_){}$(
 $('bSikt').addEventListener('click',()=>{const o=['lang','medel','kort'],k=o[(o.indexOf(SIKT.k)+1)%3];setSikt(k);say(null,'Siktavstånd '+SIKT_N[k]+'.');});
 setSikt(SIKT.k);
 function toggleFull(){
+  if(EXPORT_LOCK)return;
   try{if(document.fullscreenElement){document.exitFullscreen();return;}const r=document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.'));}catch(_){say(null,'Webbläsaren tillåter inte helskärm här. Prova F11.');}
 }
 document.addEventListener('fullscreenchange',()=>{const t=document.fullscreenElement?'Lämna helskärm':'Helskärm';$('bFull').textContent=t;$('tFull').textContent=t;fitPanes();});
@@ -4536,7 +4538,7 @@ function feedTick(now){if(!FEED.on||TITLE.on||!FEED.list.length)return;
 $('bFeeds').addEventListener('click',()=>setFeeds(!FEED.on));
 $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
-  if(FILM.on){if(e.key==='Enter'||e.key===' '){e.preventDefault();filmClick();}else if(e.code==='KeyF')toggleFull();return;}
+  if(FILM.on){if(e.target&&e.target.id==='filmSave')return;/* the save button takes Enter and space itself */if(e.key==='Enter'||e.key===' '){e.preventDefault();filmClick();}else if(e.code==='KeyF')toggleFull();return;}
   if(TITLE.on){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();if(!$('intro').hidden&&e.key==='Escape'){$('intro').hidden=true;return;}titleWake(true);}return;}
   if(e.key==='Escape'){closeWheel();if(G.ctrl){setCtrl(null);uiTick(true);}else if(G.selK){G.selK=null;uiTick(true);}return;}
   if(CALLKEY[e.code]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.running){e.preventDefault();doCall(CALLKEY[e.code],e.key,e.shiftKey);uiTick(true);return;}
@@ -5096,61 +5098,73 @@ function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);if(R3.night>=.6)r
    runs. The chart, the logo with its line and the fades, which live as page elements in the live film, are painted into each
    frame. ---- */
 const FILM_EXP={W:1920,H:1080,fps:60,vbr:16e6,len:null,from:0};/* len and from: a stretch to render, for testing; the whole film by default */
-function filmLoadMuxer(){return window.Mp4Muxer?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc);});}
+const FILM_BASE_W=1920,FILM_MAP_W=1280;/* the film's overlays are drawn for a 1920 wide frame; the chart's own logical width is 1280 */
+const MUXER_URL='https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js',MUXER_SRI='sha384-wr0AQH9RBAKio/g7bHM5245MBCU5B/b0Y9u42cTxRYQQJXKEijZvWEJKL9JG26hs';
+function filmLoadMuxer(){return window.Mp4Muxer&&Mp4Muxer.Muxer?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=MUXER_URL;sc.integrity=MUXER_SRI;sc.crossOrigin='anonymous';
+  sc.onload=()=>window.Mp4Muxer&&Mp4Muxer.Muxer?ok():no(new Error('videokodaren saknar Muxer'));sc.onerror=()=>no(new Error('kunde inte hämtas'));document.head.appendChild(sc);});}
 /* the score as one buffer: the same edit as the live film, mixed down offline */
 async function filmScore(sr){const len=Math.ceil((FILM_END+1.5)*sr),oc=new OfflineAudioContext(2,len,sr);
   FILM_MUS.forEach((m,i)=>{const s=oc.createBufferSource();s.buffer=MUS.buf;const g=oc.createGain();s.connect(g);g.connect(oc.destination);
     g.gain.setValueAtTime(i?0:.9,m.at);if(i)g.gain.linearRampToValueAtTime(.9,m.at+.012);g.gain.setValueAtTime(.9,m.at+m.len-.012);if(i<FILM_MUS.length-1)g.gain.linearRampToValueAtTime(0,m.at+m.len+.004);s.start(m.at,m.src,m.len+.02);});
   return oc.startRendering();}
 function filmCompose(ctx,W,H){ctx.drawImage(R3.renderer.domElement,0,0,W,H);
-  if(FILM.map){const oc=FILM.mapCv||(FILM.mapCv=document.createElement('canvas'));oc.width=W;oc.height=H;const mc=oc.getContext('2d'),k=W/1280;mc.setTransform(k,0,0,k,0,0);drawMap(mc,1280,720,false);ctx.drawImage(oc,0,0);}
-  if(!$('logoWrap').hidden){const lg=$('logo'),lw=Math.min(.78*W,940*W/1920*1.25),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.12;
-    ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0(W);ctx.shadowOffsetY=10*k0(W);ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
-    const fs=Math.round(26*k0(W)),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px ui-monospace,Menlo,Consolas,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
+  if(FILM.map){let oc=FILM.mapCv;if(!oc||oc.width!==W||oc.height!==H){oc=FILM.mapCv=document.createElement('canvas');oc.width=W;oc.height=H;FILM.mapCx=oc.getContext('2d');}
+    const mc=FILM.mapCx,k=W/FILM_MAP_W;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,W,H);mc.setTransform(k,0,0,k,0,0);drawMap(mc,FILM_MAP_W,720,false);ctx.drawImage(oc,0,0);}
+  if(!$('logoWrap').hidden){const k0=W/FILM_BASE_W,lg=$('logo'),lw=Math.min(.78*W,940*k0*1.25),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.12;
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0;ctx.shadowOffsetY=10*k0;ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
+    const fs=Math.round(26*k0),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px ui-monospace,Menlo,Consolas,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
     let cx=(W-tw)/2;const ty=y+lh+H*.025;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
   if(FILM.fadeA>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,FILM.fadeA)+')';ctx.fillRect(0,0,W,H);}}
-const k0=W=>W/1920;
 async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
   const say=t=>{const b=$('tPress');b.textContent=t;b.hidden=false;};
-  if(!window.VideoEncoder||!window.AudioEncoder){say('VIDEO KRÄVER CHROME, EDGE ELLER NYARE SAFARI');return;}
-  FILM.state='load';filmSaveBtn(false);say('FÖRBEREDER VIDEO');audInit();
-  try{await filmLoadMuxer();}catch(_){say('KUNDE INTE LADDA VIDEOKODAREN');FILM.state='done';filmSaveBtn(true);return;}
-  while(!MUS.buf)await new Promise(r=>setTimeout(r,100));
-  const E=FILM_EXP,W=E.W,H=E.H,sr=48000,dt=1/E.fps;
-  // codecs: H.264 for the picture, AAC for the sound if the browser can, otherwise Opus
-  /* H.264 plays everywhere; a browser without an H.264 encoder (Chromium without the licensed codecs) gets VP9 or AV1 in the same mp4,
-     which Chrome, Firefox and VLC play but QuickTime does not */
-  let vc=null;for(const [c,m] of[['avc1.64002A','avc'],['avc1.4D002A','avc'],['avc1.42002A','avc'],['vp09.00.40.08','vp9'],['av01.0.08M.08','av1']]){try{const r=await VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:E.vbr,framerate:E.fps});if(r.supported){vc=[c,m];break;}}catch(_){}}
-  let ac=null;for(const [c,m] of[['mp4a.40.2','aac'],['opus','opus']]){try{const r=await AudioEncoder.isConfigSupported({codec:c,sampleRate:sr,numberOfChannels:2,bitrate:192000});if(r.supported){ac=[c,m];break;}}catch(_){}}
-  if(!vc){say('WEBBLÄSAREN KAN INTE KODA VIDEO');FILM.state='done';filmSaveBtn(true);return;}
-  const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:vc[1],width:W,height:H,frameRate:E.fps},audio:ac?{codec:ac[1],numberOfChannels:2,sampleRate:sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
-  let err=null;const venc=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>err=e});venc.configure(Object.assign({codec:vc[0],width:W,height:H,bitrate:E.vbr,framerate:E.fps},vc[1]==='avc'?{avc:{format:'avc'}}:{}));
-  // the sound first: the score mixed offline, fed to the encoder in 1024-sample blocks
-  if(ac){say('KODAR LJUDET');const buf=await filmScore(sr),aenc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>err=e});aenc.configure({codec:ac[0],sampleRate:sr,numberOfChannels:2,bitrate:192000});
-    const L=buf.getChannelData(0),R=buf.getChannelData(1),N=1024;for(let i=0;i<buf.length;i+=N){const n=Math.min(N,buf.length-i),d=new Float32Array(n*2);d.set(L.subarray(i,i+n),0);d.set(R.subarray(i,i+n),n);
-      const a=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(i/sr*1e6),data:d});aenc.encode(a);a.close();}
-    await aenc.flush();aenc.close();}
-  // the picture: the renderer at 1920x1080, the clocks held to the film's time, one frame after another
-  say('RENDERAR 0 %');const pn=performance.now.bind(performance);let vnow=pn();performance.now=()=>vnow;
-  const r=R3.renderer,pr=r.getPixelRatio();r.setPixelRatio(1);r.setSize(W,H,false);R3.cam.aspect=W/H;R3.cam.updateProjectionMatrix();
-  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
-  filmWarm();filmSeed(FILM.seed);for(const k in FILM.act)FILM.act[k].visible=false;filmClear();FILM.i=-1;$('logoWrap').hidden=true;FILM.state='export';FILM.t=E.from-FILM.pre;
-  const total=Math.ceil((E.len??FILM_END+1.5)*E.fps);let f=0,lastUi=0;
-  try{while(FILM.t<E.from){vnow+=dt*1000;FILM.t+=dt;filmFrame(dt);}
-    for(f=0;f<total;f++){vnow+=dt*1000;FILM.t=E.from+f*dt;filmFrame(dt);filmCompose(ctx,W,H);
+  if(!window.VideoEncoder){say('VIDEO KRÄVER CHROME, EDGE ELLER NYARE SAFARI');return;}
+  FILM.state='load';filmSaveBtn(false);say('FÖRBEREDER VIDEO');
+  const E=FILM_EXP,W=E.W,H=E.H,sr=48000,dt=1/E.fps,r=R3&&R3.renderer;
+  let venc=null,aenc=null,pn=null,pr=null,rendering=false,noSound=false;
+  try{
+    audInit();
+    try{await filmLoadMuxer();}catch(e){throw Object.assign(new Error('KUNDE INTE LADDA VIDEOKODAREN ('+(e&&e.message||'okänt fel')+')'),{user:true});}
+    while(!MUS.buf)await new Promise(q=>setTimeout(q,100));
+    /* H.264 plays everywhere; a browser without an H.264 encoder (Chromium without the licensed codecs) gets VP9 or AV1 in the same mp4,
+       which Chrome, Firefox and VLC play but QuickTime does not. Level 4.1 is the lowest that holds 1080p60 in both. */
+    let vc=null;for(const [c,m] of[['avc1.64002A','avc'],['avc1.4D002A','avc'],['avc1.42002A','avc'],['vp09.00.41.08','vp9'],['av01.0.05M.08','av1']]){try{const q=await VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:E.vbr,framerate:E.fps});if(q.supported){vc=[c,m];break;}}catch(_){}}
+    if(!vc)throw Object.assign(new Error('WEBBLÄSAREN KAN INTE KODA VIDEO'),{user:true});
+    /* AAC for the sound if the browser can, otherwise Opus; with neither the film is saved without its score, and says so */
+    let ac=null;if(window.AudioEncoder&&window.OfflineAudioContext)for(const [c,m] of[['mp4a.40.2','aac'],['opus','opus']]){try{const q=await AudioEncoder.isConfigSupported({codec:c,sampleRate:sr,numberOfChannels:2,bitrate:192000});if(q.supported){ac=[c,m];break;}}catch(_){}}
+    noSound=!ac;
+    const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:vc[1],width:W,height:H,frameRate:E.fps},audio:ac?{codec:ac[1],numberOfChannels:2,sampleRate:sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
+    let err=null;venc=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>err=e});venc.configure(Object.assign({codec:vc[0],width:W,height:H,bitrate:E.vbr,framerate:E.fps},vc[1]==='avc'?{avc:{format:'avc'}}:{}));
+    // the score mixed offline now, fed to the encoder in 1024-sample blocks in step with the picture so the file's chunks interleave
+    let buf=null,L=null,R=null,ai=0;const N=1024;
+    if(ac){say('KODAR LJUDET');buf=await filmScore(sr);L=buf.getChannelData(0);R=buf.getChannelData(1);
+      aenc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>err=e});aenc.configure({codec:ac[0],sampleRate:sr,numberOfChannels:2,bitrate:192000});}
+    const feedAudio=upTo=>{while(buf&&ai<buf.length&&ai/sr<=upTo){const n=Math.min(N,buf.length-ai),d=new Float32Array(n*2);d.set(L.subarray(ai,ai+n),0);d.set(R.subarray(ai,ai+n),n);
+      const a=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(ai/sr*1e6),data:d});aenc.encode(a);a.close();ai+=n;}};
+    // the picture: the renderer at 1920x1080, the clocks held to the film's time, one frame after another
+    say('RENDERAR 0 %');pn=performance.now.bind(performance);let vnow=pn();performance.now=()=>vnow;
+    rendering=true;EXPORT_LOCK=true;pr=r.getPixelRatio();r.setPixelRatio(1);r.setSize(W,H,false);R3.cam.aspect=W/H;R3.cam.updateProjectionMatrix();
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+    filmWarm();filmSeed(FILM.seed);for(const k in FILM.act)FILM.act[k].visible=false;filmClear();FILM.i=-1;$('logoWrap').hidden=true;FILM.state='export';FILM.t=E.from-FILM.pre;
+    const total=Math.ceil((E.len??FILM_END+1.5)*E.fps);let lastUi=0;
+    while(FILM.t<E.from){vnow+=dt*1000;FILM.t+=dt;filmFrame(dt);}
+    for(let f=0;f<total;f++){vnow+=dt*1000;FILM.t=E.from+f*dt;filmFrame(dt);filmCompose(ctx,W,H);
       const vf=new VideoFrame(cv,{timestamp:Math.round(f*1e6/E.fps),duration:Math.round(1e6/E.fps)});venc.encode(vf,{keyFrame:f%120===0});vf.close();
-      if(err)throw err;while(venc.encodeQueueSize>6)await new Promise(q=>setTimeout(q,1));
+      feedAudio(f*dt+.5);
+      if(err)throw err;while(venc.encodeQueueSize>6||(aenc&&aenc.encodeQueueSize>64))await new Promise(q=>setTimeout(q,1));
       if(pn()-lastUi>250){lastUi=pn();say('RENDERAR '+Math.floor(f/total*100)+' %');await new Promise(q=>setTimeout(q,0));}}
-    await venc.flush();venc.close();mux.finalize();
+    feedAudio(Infinity);
+    await venc.flush();if(err)throw err;if(aenc){await aenc.flush();if(err)throw err;}
+    mux.finalize();
     const blob=new Blob([mux.target.buffer],{type:'video/mp4'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='uppdrag-arkipelag-trailer.mp4';document.body.appendChild(a);a.click();a.remove();
-    say('VIDEON ÄR SPARAD · SPELA IGEN');}
-  catch(e){say('VIDEON MISSLYCKADES: '+(e&&e.message||e));}
-  finally{performance.now=pn;r.setPixelRatio(pr);fitPanes();applyRes();FILM.state='done';$('logoWrap').hidden=true;$('title').classList.remove('clean');filmSaveBtn(true);}}
+    say(noSound?'VIDEON ÄR SPARAD UTAN LJUD (INGEN LJUDKODARE I WEBBLÄSAREN) · SPELA IGEN':'VIDEON ÄR SPARAD · SPELA IGEN');}
+  catch(e){say(e&&e.user?e.message:'VIDEON MISSLYCKADES: '+(e&&e.message||e));}
+  finally{for(const c of[venc,aenc]){try{if(c&&c.state!=='closed')c.close();}catch(_){}}
+    if(pn)performance.now=pn;EXPORT_LOCK=false;if(rendering){r.setPixelRatio(pr);}fitPanes();applyRes();FILM.state='done';$('logoWrap').hidden=true;$('title').classList.remove('clean');filmSaveBtn(true);}}
 /* one frame of the film off the screen loop: the same steps the loop takes */
 function filmFrame(dt){sync3D(dt);filmCam(dt);updateSky();filmLight();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);}
 function filmSaveBtn(on){let b=$('filmSave');if(!b){b=document.createElement('button');b.id='filmSave';b.type='button';b.className='btn';b.textContent='Spara video (1080p)';
     b.style.cssText='position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:4';b.addEventListener('click',ev=>{ev.stopPropagation();filmExport();});$('title').appendChild(b);}
-  b.hidden=!on;}
+  b.hidden=!on||!window.VideoEncoder;}
 /* ---- helpers: actors, placing, paths, the camera ---- */
 function fA(key,make){let m=FILM.act[key];if(!m){m=make();m.rotation.order='YXZ';R3.scene.add(m);FILM.act[key]=m;}m.visible=true;return m;}
 const fVarg=i=>fA('v'+i,()=>mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1}));
@@ -5248,10 +5262,11 @@ const FILM_SHOTS=[
   const cx=u0.x-iv.x*16+pv.x*13,cz=u0.y-iv.z*16+pv.z*13;fCam(cx+iv.x*tau*.8,DECK_Y+1.7,cz+iv.z*tau*.8,u0.x,by+3.5+lift*.25,u0.y,.04);FILM.fov=46;}},
 /* 3. three VARG out of the sun, spray lit from behind, past a camera low on the water (the test shot) */
 {k:5,id:'vargar',f(tau,dur,dtr,S){const V=filmVargs();if(!V.length)return;FILM.useMovers=true;const D=8;
+  FILM.sunEl=.075;/* the sun in the picture behind them */
   if(S.first){const RT=V[0].RT,T=R3.decoT||0,sp=13;updateSky();filmLight();const sa=Math.atan2(vDir.z,vDir.x);let best=0,bs=1e9;
     for(let i=0;i<RT.N;i++){const a=RT.pts[i],b=RT.pts[(i+V[0].dir+RT.N)%RT.N],h=Math.atan2(b.z-a.z,b.x-a.x),sc=Math.abs(Math.abs(angWrap(sa-h))-160*PI/180);if(Math.hypot(a.x-CARRIER.x,a.z-CARRIER.y)<260)continue;if(sc<bs){bs=sc;best=i;}}
     const s0=RT.len[best]-V[0].dir*sp*(D*.6+.8);for(const m of V){m.speed=sp;const sAt=s0+(m.dir<0?-1:1)*(m.back||0);m.ph=((((sAt-m.dir*T*m.speed)/RT.L)%1)+1)%1;m.trail.length=0;m.tt=-1;}S.hd=null;S.side=null;}
-  FILM.sunEl=.075;/* the sun in the picture behind them */const T=R3.decoT||0;V.forEach((m,i)=>fVargWater(m.g,dtr,T,i));
+  const T=R3.decoT||0;V.forEach((m,i)=>fVargWater(m.g,dtr,T,i));
   const L=V[0].g.position,raw=-V[0].g.rotation.y;S.hd=S.hd==null?raw:S.hd+angWrap(raw-S.hd)*(1-Math.exp(-2*Math.min(dtr,.1)));const hd=S.hd,fx=Math.cos(hd),fz=Math.sin(hd),px=-fz,pz=fx;
   if(S.side==null)S.side=-(Math.sign(vDir.x*px+vDir.z*pz)||1);const u=(tau+.8)/D,fw=lerp(70,-40,u),lat=S.side*38,h=lerp(1.3,2.6,sm(u));
   let cx=0,cz=0;for(const m of V){cx+=m.g.position.x;cz+=m.g.position.z;}cx/=V.length;cz/=V.length;fCam(L.x+fx*fw+px*lat,h,L.z+fz*fw+pz*lat,cx+fx*6,1.6,cz+fz*6,0);FILM.fov=38;}},
