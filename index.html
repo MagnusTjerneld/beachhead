@@ -220,6 +220,7 @@ button:disabled{opacity:.45;cursor:default}
         <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
         <button class="btn" id="bDynRes" type="button" aria-pressed="true" title="Sänker 3D-bildens upplösning när datorn inte hinner med 60 bilder per sekund">Dynamisk upplösning på</button>
         <button class="btn" id="bSikt" type="button" title="Hur långt bort dimman tätnar. Kortare sikt ritar färre träd">Siktavstånd: lång</button>
+        <button class="btn" id="bBench" type="button" title="Mäter bildtiden på tre öar i dag, skymning, natt och strid (cirka tre minuter). Spelet du har på gång avbryts">Kör benchmark</button>
         <div class="mh">Spel</div>
         <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
         <button class="btn" id="bRestart" type="button" title="Börja om på samma ö">Starta om ön</button>
@@ -4343,6 +4344,7 @@ document.addEventListener('click',()=>{if(!$('settings').hidden)setMenu(false);}
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hidden){setMenu(false);ev.stopPropagation();}},true);
 const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
 confirmBtn('bRestart',()=>restart(G.seed));
+confirmBtn('bBench',()=>{setMenu(false);benchStart();});
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
 const niSeed=$('niSeed'),niTime=$('niTime'),niName=$('niName');
 const niVal=()=>{const n=Math.round(+niSeed.value);return niSeed.value!==''&&n>=1000&&n<=9999?n:null;};
@@ -5432,25 +5434,43 @@ function diagTick(now,P){
   L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units.filter(u=>!(u.kind==='mus'&&u.carried)))+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
   DIAG.body.textContent=L.join('\n');
 }
-/* ---------- benchmark (?bench): the same walk through islands, hours and views every time, so the statistics box (F3) can be compared
-   before and after a change. Real frames in the real browser; the simulation runs at normal speed, the hour is held, dynamic
-   resolution is off. A tab in the background does not render, so keep it in front. The result is a table with the change against
-   the previous run, and can be copied as CSV. ---------- */
-const BENCH={on:false,i:-1,seed:0,phase:'',t0:0,gaps:[],cpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',dyn0:null,
-  seeds:[1234,2024,4711],hours:[12,17.8,23.5],warm:2500,len:8000};
-BENCH.list=[];for(const sd of BENCH.seeds){for(const h of BENCH.hours)BENCH.list.push({seed:sd,tod:h,main:'cam'});BENCH.list.push({seed:sd,tod:12,main:'map'});}
-const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':'3D');
-function benchStart(){if(BENCH.on)return;try{const q=new URLSearchParams(location.search);BENCH.warm=+q.get('benchwarm')||2500;BENCH.len=+q.get('benchlen')||8000;if(+q.get('benchmax')>0)BENCH.list=BENCH.list.slice(0,+q.get('benchmax'));}catch(_){}BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
+/* ---------- benchmark (?bench): the same walk through islands, hours, views and a staged fight every time, so the statistics box (F3)
+   can be compared before and after a change. Real frames in the real browser. Each scenario starts the island afresh with the same
+   random seed and a fixed camera: over the island from the landing beach, or close on a staged fight (fires and blasts in front of the
+   camera; the only scenario where the simulation runs). The hour is held and dynamic resolution is off. A tab in the background does not
+   render, so keep it in front. The result is a table against a locked baseline (the first run, or one marked &label=bas or with its
+   button), and one block to copy and paste back. ---------- */
+const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',run:'',dyn0:null,rnd0:null,boomT:0,R:null,
+  seeds:[1234,2024,4711],warm:2500,len:8000};
+BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
+  BENCH.all.push({seed:sd,tod:12,main:'map',view:'ö'});BENCH.all.push({seed:sd,tod:23.5,main:'cam',view:'strid'});}
+const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':sc.view==='strid'?'strid':'3D');
+/* the fixed views, from the island itself: out at sea off the landing beach looking in over the island, or close on a point inland */
+function benchView(sc){const L=WORLD.landing,dx=CX-L.x,dy=CY-L.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;
+  if(sc.view==='strid'){const tx=L.x+ux*130,ty=L.y+uy*130;return{px:tx-ux*75,py:groundY(tx-ux*75,ty-uy*75)+22,pz:ty-uy*75,ax:tx,ay:groundY(tx,ty)+4,az:ty,tx,ty};}
+  return{px:L.x-ux*90,py:38,pz:L.y-uy*90,ax:CX,ay:groundY(CX,CY)+6,az:CY};}
+function benchCam(){const v=BENCH.v;if(!v)return;R3.cam.position.set(v.px,v.py,v.pz);R3.lookAt.set(v.ax,v.ay,v.az);R3.cam.lookAt(R3.lookAt);R3.snap=false;}
+function benchStart(){if(BENCH.on)return;let q=null;try{q=new URLSearchParams(location.search);}catch(_){}
+  BENCH.warm=+(q&&q.get('benchwarm'))||2500;BENCH.len=+(q&&q.get('benchlen'))||8000;BENCH.run=(q&&q.get('label'))||'';
+  BENCH.list=+(q&&q.get('benchmax'))>0?BENCH.all.slice(0,+q.get('benchmax')):BENCH.all;
+  BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();BENCH.rnd0=Math.random;
+  diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
 function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();const sc=BENCH.list[BENCH.i];
-  if(G.seed!==sc.seed||BENCH.i===0)restart(sc.seed);
-  startGame();G.paused=false;G.speed=1;G.tod=sc.tod;if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}uiTick(true);
-  BENCH.label=(BENCH.i+1)+'/'+BENCH.list.length+'  '+benchName(sc);BENCH.phase='warm';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
+  // the same random numbers and the same fresh island every time, so two runs see the same frames
+  BENCH.R=rng(9001+BENCH.i);Math.random=BENCH.R;restart(sc.seed);startGame();G.speed=1;G.tod=sc.tod;
+  if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}BENCH.v=benchView(sc);G.paused=sc.view!=='strid';
+  if(sc.view==='strid'){const v=BENCH.v;for(let k=0;k<4;k++){const a=k*TAU/4;startFire(v.tx+Math.cos(a)*18,v.ty+Math.sin(a)*18,60,1,0);}}
+  uiTick(true);BENCH.label=(BENCH.i+1)+'/'+BENCH.list.length+'  '+benchName(sc);BENCH.phase='warm';BENCH.t0=performance.now();BENCH.boomT=0;
+  BENCH.gaps=[];BENCH.cpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
 const benchPct=(a,q)=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(q*b.length))];};
 function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!sc)return;G.tod=sc.tod;const t=performance.now()-BENCH.t0,gap=BENCH.last?now-BENCH.last:0;BENCH.last=now;
+  // the staged fight: a blast and a puff of smoke near the fires every 0.3 s of game time
+  if(sc.view==='strid'&&G.time-BENCH.boomT>=.3){BENCH.boomT=G.time;const v=BENCH.v,R=BENCH.R,x=v.tx+(R()-.5)*60,y=v.ty+(R()-.5)*60;
+    G.fx.push({k:'boom',x,y,t:0,ttl:1.1,big:R()<.3});G.fx.push({k:'puff',x,y,h:groundY(x,y)+1,t:0,ttl:1.2,c:0x6a665e,s:2.4,hit:false,ws:'cannon'});}
   if(BENCH.phase==='warm'){if(t>=BENCH.warm){BENCH.phase='run';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.calls=[];BENCH.tris=[];}return;}
   if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
   if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),
-    calls:Math.round(benchPct(BENCH.calls,.5)),tri:Math.round(benchPct(BENCH.tris,.5)),n:BENCH.gaps.length,ph:DIAG.ph.slice()});benchNext();}}
+    calls:Math.round(benchPct(BENCH.calls,.5)),tri:Math.round(benchPct(BENCH.tris,.5)),n:BENCH.gaps.length});benchNext();}}
 /* the clipboard API needs https and a permitted frame; the fallback selects the text in a box and copies from there, and if even that fails the box stays for a manual copy */
 async function benchCopy(el,btn){const txt=el._csv;let ok=false;
   try{await Promise.race([navigator.clipboard.writeText(txt),new Promise((_,no)=>setTimeout(no,1500))]);ok=true;}catch(_){}/* a pending permission prompt never answers */
@@ -5459,25 +5479,33 @@ async function benchCopy(el,btn){const txt=el._csv;let ok=false;
     ta.value=txt;ta.focus();ta.select();try{ok=document.execCommand('copy');}catch(_){}}
   btn.textContent=ok?'Kopierat, klistra in till Claude':'Markera rutan och kopiera (Ctrl+C)';
   if(ok&&ta)ta.remove();}
-function benchDone(){BENCH.on=false;BENCH.label='';DYNRES.on=BENCH.dyn0.on;DYNRES.scale=1;applyRes();
-  let prev=null;try{prev=JSON.parse(localStorage.getItem('bh.bench.last')||'null');}catch(_){}try{localStorage.setItem('bh.bench.last',JSON.stringify(BENCH.res.map(r=>({name:r.name,gap:r.gap,p95:r.p95,cpu:r.cpu,calls:r.calls,tri:r.tri}))));}catch(_){}
-  const pm=prev&&Object.fromEntries(prev.map(r=>[r.name,r])),f=(n,d)=>n.toFixed(d),pad=(x,n)=>String(x).padStart(n),dl=(a,b)=>b==null?'':(a-b>=0?'+':'')+f(a-b,1);
-  const rows=BENCH.res.map(r=>{const o=pm&&pm[r.name];return{r,o};});
-  const head='scenario                   bild ms  (Δ)    p95  värst  cpu ms  anrop  tri k';
-  const lines=rows.map(({r,o})=>r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',7)+pad(f(r.p95,1),7)+pad(Math.round(r.worst),6)+pad(f(r.cpu,1),8)+pad(r.calls,7)+pad(r.tri,7));
-  const avg=k=>BENCH.res.reduce((a,r)=>a+r[k],0)/BENCH.res.length,avgP=prev&&prev.length?prev.reduce((a,r)=>a+r.gap,0)/prev.length:null;
-  const sum='\nsnitt bild '+f(avg('gap'),1)+' ms'+(avgP!=null?' ('+dl(avg('gap'),avgP)+' mot förra körningen)':'')+'  fps ca '+Math.round(1000/avg('gap'))+'  p95 '+f(avg('p95'),1)+' ms';
-  /* one block to paste back: the machine, the settings and the numbers, this run and the previous one */
+const benchLoad=()=>{try{return JSON.parse(localStorage.getItem('bh.bench.base')||'null');}catch(_){return null;}};
+const benchSave=run=>{try{localStorage.setItem('bh.bench.base',JSON.stringify(run));}catch(_){}};
+function benchDone(){BENCH.on=false;BENCH.label='';BENCH.v=null;Math.random=BENCH.rnd0;DYNRES.on=BENCH.dyn0.on;DYNRES.scale=1;applyRes();G.paused=true;uiTick(true);
+  const f=(n,d)=>n.toFixed(d),pad=(x,n)=>String(x).padStart(n),dl=(a,b)=>(a-b>=0?'+':'')+f(a-b,1);
   let gpu='okänt';try{const gl=R3&&R3.renderer.getContext(),x=gl&&gl.getExtension('WEBGL_debug_renderer_info');if(x)gpu=gl.getParameter(x.UNMASKED_RENDERER_WEBGL);}catch(_){}
-  let lab='';try{lab=new URLSearchParams(location.search).get('label')||'';}catch(_){}
-  const tab=a=>'scenario;bild_ms;p95_ms;varst_ms;cpu_ms;anrop;tri_k\n'+a.map(r=>[r.name,f(r.gap,2),f(r.p95,2),r.worst==null?'':Math.round(r.worst),f(r.cpu,2),r.calls,r.tri].join(';')).join('\n');
-  const csv='BENCHMARK Uppdrag Arkipelag'+(lab?'  etikett '+lab:'')+'  '+new Date().toISOString().slice(0,16)+'\ngrafik '+gpu+'\nskärm '+innerWidth+'x'+innerHeight+' dpr '+(window.devicePixelRatio||1)+'  siktavstånd '+SIKT_N[SIKT.k]+'  skuggor '+(R3&&R3.renderer.shadowMap.enabled?'på':'av')+'\nwebbläsare '+navigator.userAgent+'\n\nDENNA KÖRNING\n'+tab(BENCH.res)+'\n\nFÖRRA KÖRNINGEN\n'+(prev?tab(prev.map(r=>({...r,worst:null}))):'(ingen)');
-  console.log(head+'\n'+lines.join('\n')+sum);
-  if(!BENCH.el){const el=document.createElement('div');el.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;background:rgba(14,20,26,.96);color:#d8e2e6;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:12px 14px;border:1px solid rgba(160,190,200,.45);border-radius:8px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;';
-    el.innerHTML='<b style="color:#e8eef0">Benchmark klart</b><pre style="margin:8px 0;font:inherit;white-space:pre"></pre><div style="display:flex;gap:8px"><button type="button" class="btn" data-a="copy">Kopiera resultat</button><button type="button" class="btn" data-a="again">Kör igen</button><button type="button" class="btn" data-a="close">Stäng</button></div>';
-    el.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset&&e.target.dataset.a;if(a==='close')el.hidden=true;else if(a==='again'){el.hidden=true;benchStart();}else if(a==='copy'){benchCopy(el,e.target);}});
+  const run={label:BENCH.run||'',date:new Date().toISOString().slice(0,16),gpu,screen:innerWidth+'x'+innerHeight+' dpr '+(window.devicePixelRatio||1),
+    rows:BENCH.res.map(r=>({name:r.name,gap:+f(r.gap,2),p95:+f(r.p95,2),worst:Math.round(r.worst),cpu:+f(r.cpu,2),calls:r.calls,tri:r.tri}))};
+  // the baseline is locked: the first run, or a run marked &label=bas, or one made the baseline with its button
+  let base=benchLoad();if(!base||run.label==='bas'){benchSave(run);base=null;}
+  const draw=()=>{const bm=base&&Object.fromEntries(base.rows.map(r=>[r.name,r]));
+    const head='scenario                   bild ms  (Δ bas)   p95  värst  cpu ms  anrop  tri k';
+    const lines=run.rows.map(r=>{const o=bm&&bm[r.name];return r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',9)+pad(f(r.p95,1),7)+pad(r.worst,6)+pad(f(r.cpu,1),8)+pad(r.calls,7)+pad(r.tri,7);});
+    const avg=a=>a.reduce((s,r)=>s+r.gap,0)/a.length,same=base&&base.rows.length===run.rows.length;
+    const sum='\nsnitt bild '+f(avg(run.rows),1)+' ms'+(same?' ('+dl(avg(run.rows),avg(base.rows))+' mot baslinjen'+(base.label?' '+base.label:'')+' '+base.date+')':'')+'  fps ca '+Math.round(1000/avg(run.rows));
+    const tab=r=>'scenario;bild_ms;p95_ms;varst_ms;cpu_ms;anrop;tri_k\n'+r.rows.map(x=>[x.name,x.gap,x.p95,x.worst,x.cpu,x.calls,x.tri].join(';')).join('\n');
+    const meta=r=>(r.label?'etikett '+r.label+'  ':'')+r.date+'\ngrafik '+r.gpu+'\nskärm '+r.screen;
+    BENCH.el._csv='BENCHMARK Uppdrag Arkipelag\nsiktavstånd '+SIKT_N[SIKT.k]+'  skuggor '+(R3&&R3.renderer.shadowMap.enabled?'på':'av')+'\nwebbläsare '+navigator.userAgent+
+      '\n\nDENNA KÖRNING  '+meta(run)+'\n'+tab(run)+'\n\nBASLINJE  '+(base?meta(base)+'\n'+tab(base):'(den här körningen är baslinjen)');
+    BENCH.el.children[1].textContent=head+'\n'+lines.join('\n')+sum+(base?'':'\n(den här körningen är nu baslinjen)');console.log(head+'\n'+lines.join('\n')+sum);};
+  if(!BENCH.el){const el=document.createElement('div');el.id='benchOut';el.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;background:rgba(14,20,26,.96);color:#d8e2e6;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:12px 14px;border:1px solid rgba(160,190,200,.45);border-radius:8px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;';
+    el.innerHTML='<b style="color:#e8eef0">Benchmark klart</b><pre style="margin:8px 0;font:inherit;white-space:pre"></pre><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-a="copy">Kopiera resultat</button><button type="button" class="btn" data-a="base">Gör till baslinje</button><button type="button" class="btn" data-a="again">Kör igen</button><button type="button" class="btn" data-a="close">Stäng</button></div>';
+    el.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset&&e.target.dataset.a;if(a==='close')el.hidden=true;else if(a==='again'){el.hidden=true;benchStart();}else if(a==='copy')benchCopy(el,e.target);
+      else if(a==='base'){el._mkBase();e.target.textContent='Baslinje sparad';}});
     el.addEventListener('keydown',e=>e.stopPropagation());document.body.appendChild(el);BENCH.el=el;}
-  BENCH.el._csv=csv;BENCH.el.children[1].textContent=head+'\n'+lines.join('\n')+sum+(prev?'':'\n(första körningen: ingen jämförelse än)');BENCH.el.hidden=false;}
+  BENCH.el._mkBase=()=>{benchSave(run);base=null;draw();};
+  for(const b of BENCH.el.querySelectorAll('button'))b.textContent={copy:'Kopiera resultat',base:'Gör till baslinje',again:'Kör igen',close:'Stäng'}[b.dataset.a];
+  draw();BENCH.el.hidden=false;}
 function frame(now){
   requestAnimationFrame(frame);
   const P=[performance.now()];try{frameBody(now,P);}catch(err){diagErr('bildruta',err);}
@@ -5495,7 +5523,7 @@ function frameBody(now,P){
   const cu=unitById(G.cam);
   if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
   if(!FILM.on||FILM.map){mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,FILM.map?false:G.mainMode!=='map');}P.push(performance.now());/* the trailer draws the chart only in its chart shots */
-  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(G.camDeadT<0)updateCam(dtr);updateSky();if(FILM.on)filmLight();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);if(!FILM.on){renderPip();feedTick(now);}}
+  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(BENCH.v)benchCam();else if(G.camDeadT<0)updateCam(dtr);updateSky();if(FILM.on)filmLight();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);if(!FILM.on){renderPip();feedTick(now);}}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
   hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
