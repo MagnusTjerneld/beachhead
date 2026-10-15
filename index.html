@@ -4714,7 +4714,7 @@ const MUS={on:true,buf:null,g:null,loading:false,timer:null};
 try{const v=localStorage.getItem('brohuvud2:music');if(v!==null)MUS.on=v==='1';}catch(_){}
 function musInit(){
   if(MUS.loading||!AUD.ctx)return;MUS.loading=true;const c=AUD.ctx;MUS.g=c.createGain();MUS.g.gain.value=0;MUS.g.connect(c.destination);
-  fetch('music/theme.mp3').then(r=>r.ok?r.arrayBuffer():null).then(b=>b&&c.decodeAudioData(b)).then(buf=>{if(!buf)return;MUS.buf=buf;if(FILM.on)return;/* the trailer plays its own edit */musPlay(c.currentTime+.1,2.5);}).catch(()=>{});
+  fetch('music/theme.mp3').then(r=>r.ok?r.arrayBuffer():null).then(b=>b&&c.decodeAudioData(b)).then(buf=>{if(!buf){MUS.failed=true;return;}MUS.buf=buf;if(FILM.on)return;/* the trailer plays its own edit */musPlay(c.currentTime+.1,2.5);}).catch(()=>{MUS.failed=true;});/* the trailer waits for the score and says so if it never comes */
 }
 function musPlay(t0,fadeIn){
   const c=AUD.ctx,buf=MUS.buf,start=.3,end=buf.duration-.25,xf=5,len=end-start;
@@ -5101,7 +5101,7 @@ function filmClick(){if(FILM.state!=='idle'&&FILM.state!=='done')return;audInit(
       gg.gain.setValueAtTime(i?0:1,a);if(i)gg.gain.linearRampToValueAtTime(1,a+.012);gg.gain.setValueAtTime(1,a+m.len-.012);if(i<FILM_MUS.length-1)gg.gain.linearRampToValueAtTime(0,a+m.len+.004);
       s.start(a,m.src,m.len+.02);FILM.src.push(s);});
     FILM.state='play';FILM.t=-.25;};
-  const wait=()=>{if(MUS.buf)go();else setTimeout(wait,100);};wait();}
+  const wait=()=>{if(MUS.buf)go();else if(MUS.failed){FILM.state='idle';$('tPress').textContent='MUSIKEN GICK INTE ATT LADDA';}else setTimeout(wait,100);};wait();}
 function filmWarm(){const keep=FILM.t;for(let i=0;i<FILM_SHOTS.length;i++){filmSeek(filmShotT(i)+.6);filmCam(.05);filmCam(.05);updateSky();filmLight();R3.renderer.compile(R3.scene,R3.cam);R3.renderer.render(R3.scene,R3.cam);}
   filmClear();FILM.t=keep;FILM.i=-1;}
 function filmSeek(t){FILM.t=t;FILM.i=-1;filmClear();}
@@ -5171,7 +5171,7 @@ async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
   try{
     audInit();
     try{await filmLoadMuxer();}catch(e){throw Object.assign(new Error('KUNDE INTE LADDA VIDEOKODAREN ('+(e&&e.message||'okänt fel')+')'),{user:true});}
-    while(!MUS.buf)await new Promise(q=>setTimeout(q,100));
+    while(!MUS.buf){if(MUS.failed)throw Object.assign(new Error('MUSIKEN GICK INTE ATT LADDA'),{user:true});await new Promise(q=>setTimeout(q,100));}
     /* H.264 plays everywhere; a browser without an H.264 encoder (Chromium without the licensed codecs) gets VP9 or AV1 in the same mp4,
        which Chrome, Firefox and VLC play but QuickTime does not. Level 4.1 is the lowest that holds 1080p60 in both. */
     let vc=null;for(const [c,m] of[['avc1.64002A','avc'],['avc1.4D002A','avc'],['avc1.42002A','avc'],['vp09.00.41.08','vp9'],['av01.0.05M.08','av1']]){try{const q=await VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:E.vbr,framerate:E.fps});if(q.supported){vc=[c,m];break;}}catch(_){}}
