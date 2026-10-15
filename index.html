@@ -225,6 +225,7 @@ button:disabled{opacity:.45;cursor:default}
         <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
         <button class="btn" id="bRestart" type="button" title="Börja om på samma ö">Starta om ön</button>
         <button class="btn" id="bNewIsland" type="button" title="Börja på en ny ö">Ny ö…</button>
+        <button class="btn" id="bTrailer" type="button" title="Spelar trailern, cirka en och en halv minut på ön Sorkholmen. Spelet du har på gång avbryts; ladda om sidan för att komma tillbaka">Visa trailern</button>
       </div>
       <div class="dlg" id="newIsle" hidden role="dialog" aria-modal="true" aria-labelledby="niTitle"><div class="box">
         <h3 id="niTitle">Ny ö</h3>
@@ -4360,6 +4361,11 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hi
 const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
 confirmBtn('bRestart',()=>restart(G.seed));
 confirmBtn('bBench',()=>{setMenu(false);benchStart();});
+/* the trailer from the settings, in the page itself (a page in a frame cannot always be reopened with ?trailer): the same start as a
+   visit with ?trailer, on Sorkholmen; the game's own music is cut off, the film plays its own edit. Back to the game is a reload. */
+function trailerStart(){if(BENCH.on||FILM.on)return;setMenu(false);if(MUS.g)MUS.g.disconnect();clearTimeout(MUS.timer);MUS.timer=null;
+  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
+confirmBtn('bTrailer',trailerStart);
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
 const niSeed=$('niSeed'),niTime=$('niTime'),niName=$('niName');
 const niVal=()=>{const n=Math.round(+niSeed.value);return niSeed.value!==''&&n>=1000&&n<=9999?n:null;};
