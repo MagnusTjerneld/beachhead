@@ -5440,7 +5440,7 @@ const BENCH={on:false,i:-1,seed:0,phase:'',t0:0,gaps:[],cpus:[],calls:[],tris:[]
   seeds:[1234,2024,4711],hours:[12,17.8,23.5],warm:2500,len:8000};
 BENCH.list=[];for(const sd of BENCH.seeds){for(const h of BENCH.hours)BENCH.list.push({seed:sd,tod:h,main:'cam'});BENCH.list.push({seed:sd,tod:12,main:'map'});}
 const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':'3D');
-function benchStart(){if(BENCH.on)return;try{const q=new URLSearchParams(location.search);BENCH.warm=+q.get('benchwarm')||2500;BENCH.len=+q.get('benchlen')||8000;}catch(_){}BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
+function benchStart(){if(BENCH.on)return;try{const q=new URLSearchParams(location.search);BENCH.warm=+q.get('benchwarm')||2500;BENCH.len=+q.get('benchlen')||8000;if(+q.get('benchmax')>0)BENCH.list=BENCH.list.slice(0,+q.get('benchmax'));}catch(_){}BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
 function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();const sc=BENCH.list[BENCH.i];
   if(G.seed!==sc.seed||BENCH.i===0)restart(sc.seed);
   startGame();G.paused=false;G.speed=1;G.tod=sc.tod;if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}uiTick(true);
@@ -5451,6 +5451,14 @@ function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!s
   if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
   if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),
     calls:Math.round(benchPct(BENCH.calls,.5)),tri:Math.round(benchPct(BENCH.tris,.5)),n:BENCH.gaps.length,ph:DIAG.ph.slice()});benchNext();}}
+/* the clipboard API needs https and a permitted frame; the fallback selects the text in a box and copies from there, and if even that fails the box stays for a manual copy */
+async function benchCopy(el,btn){const txt=el._csv;let ok=false;
+  try{await Promise.race([navigator.clipboard.writeText(txt),new Promise((_,no)=>setTimeout(no,1500))]);ok=true;}catch(_){}/* a pending permission prompt never answers */
+  let ta=el.querySelector('textarea');
+  if(!ok){if(!ta){ta=document.createElement('textarea');ta.readOnly=true;ta.style.cssText='display:block;width:100%;height:120px;margin-top:8px;background:#0e1418;color:#d8e2e6;font:11px ui-monospace,Menlo,Consolas,monospace;border:1px solid rgba(160,190,200,.35);border-radius:4px;';el.insertBefore(ta,el.lastElementChild);}
+    ta.value=txt;ta.focus();ta.select();try{ok=document.execCommand('copy');}catch(_){}}
+  btn.textContent=ok?'Kopierat, klistra in till Claude':'Markera rutan och kopiera (Ctrl+C)';
+  if(ok&&ta)ta.remove();}
 function benchDone(){BENCH.on=false;BENCH.label='';DYNRES.on=BENCH.dyn0.on;DYNRES.scale=1;applyRes();
   let prev=null;try{prev=JSON.parse(localStorage.getItem('bh.bench.last')||'null');}catch(_){}try{localStorage.setItem('bh.bench.last',JSON.stringify(BENCH.res.map(r=>({name:r.name,gap:r.gap,p95:r.p95,cpu:r.cpu,calls:r.calls,tri:r.tri}))));}catch(_){}
   const pm=prev&&Object.fromEntries(prev.map(r=>[r.name,r])),f=(n,d)=>n.toFixed(d),pad=(x,n)=>String(x).padStart(n),dl=(a,b)=>b==null?'':(a-b>=0?'+':'')+f(a-b,1);
@@ -5467,7 +5475,7 @@ function benchDone(){BENCH.on=false;BENCH.label='';DYNRES.on=BENCH.dyn0.on;DYNRE
   console.log(head+'\n'+lines.join('\n')+sum);
   if(!BENCH.el){const el=document.createElement('div');el.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;background:rgba(14,20,26,.96);color:#d8e2e6;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:12px 14px;border:1px solid rgba(160,190,200,.45);border-radius:8px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;';
     el.innerHTML='<b style="color:#e8eef0">Benchmark klart</b><pre style="margin:8px 0;font:inherit;white-space:pre"></pre><div style="display:flex;gap:8px"><button type="button" class="btn" data-a="copy">Kopiera resultat</button><button type="button" class="btn" data-a="again">Kör igen</button><button type="button" class="btn" data-a="close">Stäng</button></div>';
-    el.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset&&e.target.dataset.a;if(a==='close')el.hidden=true;else if(a==='again'){el.hidden=true;benchStart();}else if(a==='copy'){try{navigator.clipboard.writeText(el._csv);e.target.textContent='Kopierat, klistra in till Claude';}catch(_){e.target.textContent='Kunde inte kopiera';}}});
+    el.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset&&e.target.dataset.a;if(a==='close')el.hidden=true;else if(a==='again'){el.hidden=true;benchStart();}else if(a==='copy'){benchCopy(el,e.target);}});
     el.addEventListener('keydown',e=>e.stopPropagation());document.body.appendChild(el);BENCH.el=el;}
   BENCH.el._csv=csv;BENCH.el.children[1].textContent=head+'\n'+lines.join('\n')+sum+(prev?'':'\n(första körningen: ingen jämförelse än)');BENCH.el.hidden=false;}
 function frame(now){
