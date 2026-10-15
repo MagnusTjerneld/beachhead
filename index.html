@@ -2679,10 +2679,15 @@ function drawBatteryLimit(ctx,u,route,k){
   ctx.font=`700 ${10.5*k}px ${FONT}`;ctx.textAlign='left';ctx.lineJoin='round';ctx.strokeStyle=COL.papper;ctx.lineWidth=3.5*k;const tx='Batteri: vänder här mot '+t.h.name+', fortsätter efter laddning';ctx.strokeText(tx,p.x+11*k,p.y);ctx.fillStyle=COL.marin;ctx.fillText(tx,p.x+11*k,p.y);
   ctx.restore();
 }
-function drawMap(ctx,w,h,small){
-  const s0=fitS(w,h),VB=viewBox();let s=s0,ox=w/2-VB.cx*s,oy=h/2-VB.cy*s;
-  if(!small&&(mv.z>1.001||mv.free)){s=s0*mv.z;const hw=w/(2*s),hh=h/(2*s);mv.cx=WW>2*hw?clamp(mv.cx,hw,WW-hw):WW/2;mv.cy=WH>2*hh?clamp(mv.cy,hh,WH-hh):WH/2;ox=w/2-mv.cx*s;oy=h/2-mv.cy*s;}
-  const k=1/s;
+/* the parts of the chart that only change with the view, the island or a destroyed villa or jetty, kept as a picture per canvas:
+   redrawing them every frame was most of the chart's cost (hundreds of small paths, the whole sheet), now it is one copy */
+function mapStatic(ctx,w,h,s,ox,oy,k){const cv=ctx.canvas,T=ctx.getTransform(),dd=G.ddead,
+    key=s+'|'+ox+'|'+oy+'|'+w+'|'+h+'|'+T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+(dd.v?Object.keys(dd.v).length:0)+'|'+(dd.j?Object.keys(dd.j).length:0);
+  let C=cv._mapStatic;if(!C){C=cv._mapStatic=document.createElement('canvas');}
+  if(C._key!==key||C._world!==WORLD){C._key=key;C._world=WORLD;if(C.width!==cv.width||C.height!==cv.height){C.width=cv.width;C.height=cv.height;}
+    const c=C.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,C.width,C.height);c.setTransform(T);mapStaticDraw(c,w,h,s,ox,oy,k);}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(C,0,0);ctx.restore();}
+function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   ctx.fillStyle=PAPER;ctx.fillRect(0,0,w,h);
   ctx.save();ctx.translate(ox,oy);ctx.scale(s,s);
   {const S=surroundData(WORLD);if(!S.paths){S.paths=S.isl.map(q=>{const p=new Path2D(),sh=new Path2D(),n=Math.max(10,Math.min(44,Math.round(q.r/6)));for(let k=0;k<n;k++){const a=k/n*TAU,a1=sIslePt(q,1,a),a2=sIslePt(q,1.18,a);p.lineTo(a1.x,a1.y);sh.lineTo(a2.x,a2.y);}p.closePath();sh.closePath();return{p,sh};});}
@@ -2727,6 +2732,13 @@ function drawMap(ctx,w,h,small){
   // walls
   ctx.strokeStyle='#3a3a36';ctx.lineWidth=4.5;ctx.lineCap='butt';
   for(const wl of WORLD.walls){ctx.beginPath();ctx.moveTo(wl.x-Math.cos(wl.a)*2.2,wl.y-Math.sin(wl.a)*2.2);ctx.lineTo(wl.x+Math.cos(wl.a)*2.2,wl.y+Math.sin(wl.a)*2.2);ctx.stroke();}
+  ctx.restore();}
+function drawMap(ctx,w,h,small){
+  const s0=fitS(w,h),VB=viewBox();let s=s0,ox=w/2-VB.cx*s,oy=h/2-VB.cy*s;
+  if(!small&&(mv.z>1.001||mv.free)){s=s0*mv.z;const hw=w/(2*s),hh=h/(2*s);mv.cx=WW>2*hw?clamp(mv.cx,hw,WW-hw):WW/2;mv.cy=WH>2*hh?clamp(mv.cy,hh,WH-hh):WH/2;ox=w/2-mv.cx*s;oy=h/2-mv.cy*s;}
+  const k=1/s;
+  mapStatic(ctx,w,h,s,ox,oy,k);/* paper, chart, roads, marks, villas, jetties and walls: drawn once per view, then copied */
+  ctx.save();ctx.translate(ox,oy);ctx.scale(s,s);ctx.lineJoin='round';
   ctx.lineCap='round';
   // fog: areas no one has looked at
   if(G.knownV!==fogV||fogG!==G){fogV=G.knownV;fogG=G;const id=fogX.createImageData(GW,GH);for(let i=0;i<GW*GH;i++){if(!G.known[i]){const o=i*4;id.data[o]=118;id.data[o+1]=128;id.data[o+2]=140;id.data[o+3]=135;}}fogX.putImageData(id,0,0);}
@@ -2767,11 +2779,14 @@ function drawMap(ctx,w,h,small){
   if(!G.netAll){const N=netShapes();
     // one outline for the whole net and a faint tint outside it: drawn on a layer where every circle is stroked wide, then the union of
     // the circles is cut out, so overlapping circles leave only their outer edge
-    const oc=drawMap.netC||(drawMap.netC=document.createElement('canvas'));if(oc.width!==ctx.canvas.width||oc.height!==ctx.canvas.height){oc.width=ctx.canvas.width;oc.height=ctx.canvas.height;}
-    const o=oc.getContext('2d');o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,oc.width,oc.height);o.setTransform(ctx.getTransform());
-    o.fillStyle='rgba(60,40,10,.08)';o.fillRect(-5000,-5000,WW+10000,WH+10000);o.setLineDash([10*k,6*k]);o.strokeStyle='rgba(176,110,20,.75)';o.lineWidth=3.2*k;
-    for(const c of N.C){o.beginPath();o.arc(c.x,c.y,c.r,0,TAU);o.stroke();}
-    o.globalCompositeOperation='destination-out';o.fillStyle='#000';o.beginPath();for(const c of N.C){o.moveTo(c.x+c.r,c.y);o.arc(c.x,c.y,c.r,0,TAU);}o.fill();o.globalCompositeOperation='source-over';
+    // the layer is redrawn only when the circles or the view change, and each canvas has its own (the trailer's chart is another canvas)
+    const cv=ctx.canvas,T=ctx.getTransform(),oc=cv._mapNet||(cv._mapNet=document.createElement('canvas'));
+    let key=T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+k;for(const c of N.C)key+='|'+c.x+','+c.y+','+c.r;
+    if(oc._key!==key){oc._key=key;if(oc.width!==cv.width||oc.height!==cv.height){oc.width=cv.width;oc.height=cv.height;}
+      const o=oc.getContext('2d');o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,oc.width,oc.height);o.setTransform(T);
+      o.fillStyle='rgba(60,40,10,.08)';o.fillRect(-5000,-5000,WW+10000,WH+10000);o.setLineDash([10*k,6*k]);o.strokeStyle='rgba(176,110,20,.75)';o.lineWidth=3.2*k;
+      for(const c of N.C){o.beginPath();o.arc(c.x,c.y,c.r,0,TAU);o.stroke();}
+      o.globalCompositeOperation='destination-out';o.fillStyle='#000';o.beginPath();for(const c of N.C){o.moveTo(c.x+c.r,c.y);o.arc(c.x,c.y,c.r,0,TAU);}o.fill();o.globalCompositeOperation='source-over';}
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(oc,0,0);ctx.restore();}
   if(!small&&selUnits().some(v=>v.kind==='scout')){const L=radioRelays();ctx.save();ctx.fillStyle='rgba(40,120,200,.07)';ctx.beginPath();for(const q of L){ctx.moveTo(q.x+RADIO.r,q.y);ctx.arc(q.x,q.y,RADIO.r,0,TAU);}ctx.fill();ctx.setLineDash([6*k,5*k]);ctx.strokeStyle='rgba(40,110,190,.45)';ctx.lineWidth=1.2*k;for(const q of L){ctx.beginPath();ctx.arc(q.x,q.y,RADIO.r,0,TAU);ctx.stroke();}ctx.restore();}
   for(const m of G.mines||[]){if(!m.found||m.cleared)continue;ctx.save();ctx.lineWidth=2.4*k;ctx.fillStyle='rgba(242,194,0,.32)';ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,TAU);ctx.fill();
@@ -5423,7 +5438,7 @@ function diagTick(now,P){
   const L=[],f=n=>n.toFixed(1).padStart(5);
   if(BENCH.on)L.push('BENCHMARK '+BENCH.label+(BENCH.phase==='warm'?'  (värmer upp)':''));
   L.push('fps '+Math.round(1000/Math.max(1,DIAG.gap))+'  bild '+f(DIAG.gap)+' ms  värst '+Math.round(DIAG.worstShow)+' ms');
-  L.push('gpu  '+(GPUT.ok?f(GPUT.ms)+' ms (huvudbilden)':GPUT.tried?'tid saknas i denna webbläsare':'mäts...'));
+  L.push('gpu  '+(GPUT.ok?f(GPUT.ms)+' ms (grafikkortets arbete under bildrutan)':GPUT.tried?'tid saknas i denna webbläsare':'mäts...'));
   L.push('cpu  '+f(DIAG.cpu)+' ms\n     '+DIAG_PH.map((n,i)=>n+' '+DIAG.ph[i].toFixed(1)).join('  '));
   if(R3){const i=R3.renderer.info;L.push('3D   anrop '+i.render.calls+'  tri '+Math.round(i.render.triangles/1000)+'k  geo '+i.memory.geometries+'  tex '+i.memory.textures+'  prog '+(i.programs?i.programs.length:0));L.push('     träd '+(R3.treeVis??'?')+' av '+((R3.treeTiles||[]).length)+' rutor  sikt '+SIKT_N[SIKT.k]);L.push('     upplösning '+(DYNRES.on?Math.round(DYNRES.scale*100)+' %':'full (dynamisk av)')+'  '+R3.renderer.domElement.width+'x'+R3.renderer.domElement.height+' px');
     L.push('     effekter '+R3.fx.size+'  partiklar '+R3.parts.length+'  dyn '+R3.dyn.children.length+(R3.renderer.getContext().isContextLost()?'  KONTEXT FÖRLORAD':''));}
@@ -5435,9 +5450,10 @@ function diagTick(now,P){
   L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units.filter(u=>!(u.kind==='mus'&&u.carried)))+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
   DIAG.body.textContent=L.join('\n');
 }
-/* GPU time of the main view (shadow pass, scene, picture-in-picture) from a WebGL2 timer query: how long the graphics card works on a
-   frame, which the frame time cannot show once it is held at the screen's rate. Not every browser offers the query; the live feeds
-   have their own renderers and are not in it. Results arrive a few frames late, so queries wait in a short queue. */
+/* GPU time from a WebGL2 timer query round the main view (shadow pass, scene, picture-in-picture): how long the graphics card works,
+   which the frame time cannot show once it is held at the screen's rate. The card runs one queue for the whole page, so other work that
+   lands inside the query (the chart's 2D canvas, the live feeds) is counted too: read it as the card's work during the frame. Not every
+   browser offers the query. Results arrive a few frames late, so queries wait in a short queue. */
 const GPUT={ext:null,gl:null,tried:false,cur:null,pend:[],ms:0,last:-1,ok:false};
 function gpuBegin(){if(!(DIAG.on||BENCH.on)||!R3)return;
   if(!GPUT.tried){GPUT.tried=true;const gl=R3.renderer.getContext();if(typeof WebGL2RenderingContext!=='undefined'&&gl instanceof WebGL2RenderingContext){GPUT.gl=gl;GPUT.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');GPUT.ok=!!GPUT.ext;}}
@@ -5456,7 +5472,9 @@ const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],gpus:[],calls:[],tris:[
   seeds:[1234,2024,4711],warm:2500,len:8000};
 BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
   BENCH.all.push({seed:sd,tod:12,main:'map',view:'ö'});BENCH.all.push({seed:sd,tod:23.5,main:'cam',view:'strid'});}
-const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':sc.view==='strid'?'strid':'3D');
+/* the first island once more at the end: shows whether the first scenarios are slow because they come first (a graphics card still clocking up) */
+BENCH.all.push({seed:BENCH.seeds[0],tod:12,main:'cam',view:'ö',again:true});
+const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':sc.view==='strid'?'strid':'3D')+(sc.again?' igen':'');
 /* the fixed views, from the island itself: out at sea off the landing beach looking in over the island, or close on a point inland */
 function benchView(sc){const L=WORLD.landing,dx=CX-L.x,dy=CY-L.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;
   if(sc.view==='strid'){const tx=L.x+ux*130,ty=L.y+uy*130;return{px:tx-ux*75,py:groundY(tx-ux*75,ty-uy*75)+22,pz:ty-uy*75,ax:tx,ay:groundY(tx,ty)+4,az:ty,tx,ty};}
