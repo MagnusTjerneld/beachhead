@@ -5419,6 +5419,7 @@ function diagTick(now,P){
     if(AUD.ctx){const at=AUD.ctx.currentTime;if(DIAG.aud0!=null)DIAG.audRate=(at-DIAG.aud0)/dt;DIAG.aud0=at;}}
   if(now-DIAG.lastUi<250)return;DIAG.lastUi=now;diagVis();if(!DIAG.on||DIAG.el.style.display==='none')return;
   const L=[],f=n=>n.toFixed(1).padStart(5);
+  if(BENCH.on)L.push('BENCHMARK '+BENCH.label+(BENCH.phase==='warm'?'  (värmer upp)':''));
   L.push('fps '+Math.round(1000/Math.max(1,DIAG.gap))+'  bild '+f(DIAG.gap)+' ms  värst '+Math.round(DIAG.worstShow)+' ms');
   L.push('cpu  '+f(DIAG.cpu)+' ms\n     '+DIAG_PH.map((n,i)=>n+' '+DIAG.ph[i].toFixed(1)).join('  '));
   if(R3){const i=R3.renderer.info;L.push('3D   anrop '+i.render.calls+'  tri '+Math.round(i.render.triangles/1000)+'k  geo '+i.memory.geometries+'  tex '+i.memory.textures+'  prog '+(i.programs?i.programs.length:0));L.push('     träd '+(R3.treeVis??'?')+' av '+((R3.treeTiles||[]).length)+' rutor  sikt '+SIKT_N[SIKT.k]);L.push('     upplösning '+(DYNRES.on?Math.round(DYNRES.scale*100)+' %':'full (dynamisk av)')+'  '+R3.renderer.domElement.width+'x'+R3.renderer.domElement.height+' px');
@@ -5431,10 +5432,45 @@ function diagTick(now,P){
   L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units.filter(u=>!(u.kind==='mus'&&u.carried)))+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
   DIAG.body.textContent=L.join('\n');
 }
+/* ---------- benchmark (?bench): the same walk through islands, hours and views every time, so the statistics box (F3) can be compared
+   before and after a change. Real frames in the real browser; the simulation runs at normal speed, the hour is held, dynamic
+   resolution is off. A tab in the background does not render, so keep it in front. The result is a table with the change against
+   the previous run, and can be copied as CSV. ---------- */
+const BENCH={on:false,i:-1,seed:0,phase:'',t0:0,gaps:[],cpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',dyn0:null,
+  seeds:[1234,2024,4711],hours:[12,17.8,23.5],warm:2500,len:8000};
+BENCH.list=[];for(const sd of BENCH.seeds){for(const h of BENCH.hours)BENCH.list.push({seed:sd,tod:h,main:'cam'});BENCH.list.push({seed:sd,tod:12,main:'map'});}
+const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':'3D');
+function benchStart(){if(BENCH.on)return;try{const q=new URLSearchParams(location.search);BENCH.warm=+q.get('benchwarm')||2500;BENCH.len=+q.get('benchlen')||8000;}catch(_){}BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
+function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();const sc=BENCH.list[BENCH.i];
+  if(G.seed!==sc.seed||BENCH.i===0)restart(sc.seed);
+  startGame();G.paused=false;G.speed=1;G.tod=sc.tod;if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}uiTick(true);
+  BENCH.label=(BENCH.i+1)+'/'+BENCH.list.length+'  '+benchName(sc);BENCH.phase='warm';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
+const benchPct=(a,q)=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(q*b.length))];};
+function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!sc)return;G.tod=sc.tod;const t=performance.now()-BENCH.t0,gap=BENCH.last?now-BENCH.last:0;BENCH.last=now;
+  if(BENCH.phase==='warm'){if(t>=BENCH.warm){BENCH.phase='run';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.calls=[];BENCH.tris=[];}return;}
+  if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
+  if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),
+    calls:Math.round(benchPct(BENCH.calls,.5)),tri:Math.round(benchPct(BENCH.tris,.5)),n:BENCH.gaps.length,ph:DIAG.ph.slice()});benchNext();}}
+function benchDone(){BENCH.on=false;BENCH.label='';DYNRES.on=BENCH.dyn0.on;DYNRES.scale=1;applyRes();
+  let prev=null;try{prev=JSON.parse(localStorage.getItem('bh.bench.last')||'null');}catch(_){}try{localStorage.setItem('bh.bench.last',JSON.stringify(BENCH.res.map(r=>({name:r.name,gap:r.gap,p95:r.p95,cpu:r.cpu,calls:r.calls,tri:r.tri}))));}catch(_){}
+  const pm=prev&&Object.fromEntries(prev.map(r=>[r.name,r])),f=(n,d)=>n.toFixed(d),pad=(x,n)=>String(x).padStart(n),dl=(a,b)=>b==null?'':(a-b>=0?'+':'')+f(a-b,1);
+  const rows=BENCH.res.map(r=>{const o=pm&&pm[r.name];return{r,o};});
+  const head='scenario                   bild ms  (Δ)    p95  värst  cpu ms  anrop  tri k';
+  const lines=rows.map(({r,o})=>r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',7)+pad(f(r.p95,1),7)+pad(Math.round(r.worst),6)+pad(f(r.cpu,1),8)+pad(r.calls,7)+pad(r.tri,7));
+  const avg=k=>BENCH.res.reduce((a,r)=>a+r[k],0)/BENCH.res.length,avgP=prev&&prev.length?prev.reduce((a,r)=>a+r.gap,0)/prev.length:null;
+  const sum='\nsnitt bild '+f(avg('gap'),1)+' ms'+(avgP!=null?' ('+dl(avg('gap'),avgP)+' mot förra körningen)':'')+'  fps ca '+Math.round(1000/avg('gap'))+'  p95 '+f(avg('p95'),1)+' ms';
+  const csv='scenario;bild_ms;p95_ms;varst_ms;cpu_ms;anrop;tri_k\n'+BENCH.res.map(r=>[r.name,f(r.gap,2),f(r.p95,2),Math.round(r.worst),f(r.cpu,2),r.calls,r.tri].join(';')).join('\n');
+  console.log(head+'\n'+lines.join('\n')+sum);
+  if(!BENCH.el){const el=document.createElement('div');el.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;background:rgba(14,20,26,.96);color:#d8e2e6;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:12px 14px;border:1px solid rgba(160,190,200,.45);border-radius:8px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;';
+    el.innerHTML='<b style="color:#e8eef0">Benchmark klart</b><pre style="margin:8px 0;font:inherit;white-space:pre"></pre><div style="display:flex;gap:8px"><button type="button" class="btn" data-a="copy">Kopiera CSV</button><button type="button" class="btn" data-a="again">Kör igen</button><button type="button" class="btn" data-a="close">Stäng</button></div>';
+    el.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset&&e.target.dataset.a;if(a==='close')el.hidden=true;else if(a==='again'){el.hidden=true;benchStart();}else if(a==='copy'){try{navigator.clipboard.writeText(el._csv);e.target.textContent='Kopierat';}catch(_){e.target.textContent='Kunde inte kopiera';}}});
+    el.addEventListener('keydown',e=>e.stopPropagation());document.body.appendChild(el);BENCH.el=el;}
+  BENCH.el._csv=csv;BENCH.el.children[1].textContent=head+'\n'+lines.join('\n')+sum+(prev?'':'\n(första körningen: ingen jämförelse än)');BENCH.el.hidden=false;}
 function frame(now){
   requestAnimationFrame(frame);
   const P=[performance.now()];try{frameBody(now,P);}catch(err){diagErr('bildruta',err);}
   try{diagTick(now,P);}catch(err){console.error(err);}
+  if(BENCH.on)try{benchTick(now,P);}catch(err){BENCH.on=false;diagErr('benchmark',err);}
 }
 function frameBody(now,P){
   if(FILM.state==='export'){last=now;return;}/* the trailer's video export draws its own frames */
@@ -5464,6 +5500,7 @@ if(R3)buildStatic();
 mkFeeds();
 placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();if(BOOTQ.has('trailer'))filmStart();
 requestAnimationFrame(frame);
+if(BOOTQ.has('bench'))setTimeout(benchStart,1500);
 })();
 </script>
 
