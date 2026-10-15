@@ -4071,10 +4071,24 @@ function drawHud(ctx,w,h){
 }
 
 /* ---------- picking and input ---------- */
+/* where a ray from the camera meets the ground or the water: marched along the height field instead of tested against the terrain mesh
+   (130 000 triangles, 2 to 8 ms a pick). heightAt follows the mesh's own triangles, and groundY is the higher of it and the water, so the
+   hit is the same point; steps grow with distance (1 m near, 0.4 % of the range far) but shrink to half the height above the ground near
+   it (so a ray grazing a sharp crest still meets it), and the crossing is narrowed down by halving */
+const S2W_O=new THREE.Vector3(),S2W_D=new THREE.Vector3();
 function screenToWorld3D(sx,sy,w,h){
   R3.ray.setFromCamera({x:sx/w*2-1,y:-(sy/h)*2+1},R3.cam);
-  const hits=R3.ray.intersectObjects([R3.terrain,R3.water],false);
-  if(!hits.length)return null;return{x:hits[0].point.x,y:hits[0].point.z};
+  const o=S2W_O.copy(R3.ray.ray.origin),d=S2W_D.copy(R3.ray.ray.direction),HW=3200,cx=WW/2,cz=WH/2;
+  const above=t=>o.y+d.y*t-groundY(o.x+d.x*t,o.z+d.z*t);
+  let t0=0,f0=above(0);if(f0<=0)return{x:o.x,y:o.z};
+  for(let t=0,f=f0;t<9000;){const st=Math.max(.25,Math.min(Math.max(1,t*.004),f*.5)),t1=t+st,x=o.x+d.x*t1,z=o.z+d.z*t1;
+    if(Math.abs(x-cx)>HW||Math.abs(z-cz)>HW)return null;/* past the water's edge: nothing more to hit */
+    const f1=above(t1);
+    if(f1<=0){let a=t,b=t1;for(let k=0;k<14;k++){const m=(a+b)/2;if(above(m)>0)a=m;else b=m;}const tt=(a+b)/2,px=o.x+d.x*tt,pz=o.z+d.z*tt;
+      return Math.abs(px-cx)>HW||Math.abs(pz-cz)>HW?null:{x:px,y:pz};}
+    if(d.y>=0&&o.y+d.y*t1>400)return null;/* climbing above every hill */
+    t=t1;f=f1;}
+  return null;
 }
 function pick(kind,sx,sy){
   const res={world:null,unit:null,enemy:null,relay:null,wp:null,krok:null,barrier:null,struct:null,wreck:null,mine:null};
