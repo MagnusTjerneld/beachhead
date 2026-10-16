@@ -1636,7 +1636,9 @@ function getingTick(u,dt){
   let o=u.orders[0];
   // on Offensiv it strikes by itself at what it sees and can destroy
   if(u.post==='off'&&!(o&&o.type==='attack')&&!u.rtb&&G.time>=(u.autoT||0)){u.autoT=G.time+.5;let best=null,bd=GETING.autoR;
-    for(const e of G.enemies){if(!getingCan(e)||!e.visibleNow)continue;const d=Math.hypot(e.x-u.x,e.y-u.y);if(d<bd){bd=d;best=e;}}
+    /* one GETING per target: a charge is enough for anything it may strike, so a target another GETING already goes for is taken */
+    const taken=new Set();for(const v of G.units)if(v!==u&&!v.dead&&v.kind==='scout'){if(v.dive&&v.dive.e)taken.add(v.dive.e);const q=v.orders[0];if(q&&q.type==='attack')taken.add(q.enemy);}
+    for(const e of G.enemies){if(!getingCan(e)||!e.visibleNow||taken.has(e))continue;const d=Math.hypot(e.x-u.x,e.y-u.y);if(d<bd){bd=d;best=e;}}
     if(best){u.orders.unshift({type:'attack',enemy:best,post:'off',auto:true});u.path=null;say(u,'Ser '+ename(best)+'. Anfaller.');o=u.orders[0];}}
   if(!o||o.type!=='attack')return false;
   const e=o.enemy;if(!e||e.dead){u.orders.shift();u.path=null;return true;}

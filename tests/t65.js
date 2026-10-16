@@ -51,7 +51,7 @@ const foe=(G,x,y)=>{const e=G.enemies.find(q=>q.dead&&(q.kind==='inf'||q.kind===
   ok(h1.orders.length===2&&h1.orders[0].enemy===e1&&h1.orders[1].enemy===e2&&h1.mission&&h1.mission.cover,'the Offensiv HÖK chains the same targets and keeps guarding as its mission');
   e1.dead=true;run(.5);ok(v1.orders[0]&&v1.orders[0].enemy===e2,'when the first falls VARG-1 goes for the next');
   e2.dead=true;run(.5);ok(!v1.orders.length&&v1.engageT>G.time,'after the last the group stays in the fight for a while ('+(v1.engageT-G.time).toFixed(0)+' s)');}
-{const{G,L,v1,v2,h1,h2}=setup();B.groupOrder({world:{x:L.x+40,y:L.y+10}},false);run(8);const cx=(v1.x+v2.x)/2,cy=(v1.y+v2.y)/2;const e=G.enemies.find(q=>q.dead&&!q.canAir&&B.canHit(h2,q));e.dead=false;e.hp=e.maxhp;e.x=cx+70;e.y=cy+30;e.hx=e.x;e.hy=e.y;e.lx=e.x;e.ly=e.y;e.seen=true;e.mobile=false;e.route=null;run(1);
+{const{G,L,v1,v2,h1,h2}=setup();B.groupOrder({world:{x:L.x+40,y:L.y+10}},false);run(8);const cx=(v1.x+v2.x)/2,cy=(v1.y+v2.y)/2;const e=G.enemies.find(q=>q.dead&&!q.canAir&&B.canHit(h2,q));e.dead=false;e.hp=e.maxhp;e.x=cx+70;e.y=cy+30;e.hx=e.x;e.hy=e.y;e.lx=e.x;e.ly=e.y;e.seen=true;e.mobile=false;e.route=null;/* look after a moment: with troops under trees visible from the air the whole wing can see it and it falls within the second */run(.3);
   /* with troops under trees visible from the air (FOREST_HIDE off) the HÖK may already be firing on it before the escort picks it */
   ok(h2.escTgt===e||h2.target===e,'the Defensiv HÖK takes a chance on '+e.id+' close to the wing ('+(h2.escTgt?h2.escTgt.id:h2.target?h2.target.id:'none')+')');}
 // 5. manual control: what the driver shoots at becomes the group's target
