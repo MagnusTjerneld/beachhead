@@ -3983,7 +3983,12 @@ function mkSky(){
    than the ground, so they fade toward the horizon instead of a kilometre out. They cast no shadows and are not in the trailer. */
 /* heights and shapes changed the same day (Magnus: they felt like balloons, too low and too round): fair-weather cumulus at 700 to
    1 300 m, wide and flat, about a fifth as high as they are wide, the top layer a thin flat sheet */
-const CLOUD={span:4400,layers:[{y:700,n:14,sp:6,s:2.4,flat:1},{y:950,n:12,sp:7.5,s:3,flat:.85},{y:1300,n:9,sp:9,s:3.8,flat:.45}],dir:-.18};
+/* cloud cover (decided 16 okt): each island draws its own cover from its number, leaning clear (about a fifth of the islands have hardly
+   a cloud, one in ten a sky over 85 % covered). More cover means bigger clouds that grow together, and only somewhat more of them, not
+   a sky full of small ones. The two cumulus layers live on the sun: they build by day and shrink away in the evening, so clear nights
+   are the rule, while the thin top sheet stays day and night. &moln=0 to 100 in the address forces the cover */
+const CLOUD={span:4400,layers:[{y:700,n:18,sp:6,s:2.4,flat:1,day:1},{y:950,n:14,sp:7.5,s:3,flat:.85,day:1},{y:1300,n:9,sp:9,s:3.8,flat:.45}],dir:-.18,force:null};
+function cloudCover(seed){if(CLOUD.force!=null)return CLOUD.force;return Math.pow(rng((seed|0)*7907+17)(),1.7);}
 function mkClouds(){
   /* their own light, not the scene's (changed the same day: lit as solid bodies, the undersides went black against the sky): a cloud
      scatters light, so the top is white tinted by the sun and the underside a light grey tinted by the sky, with the facets kept.
@@ -4009,14 +4014,17 @@ function mkClouds(){
   const grp=new THREE.Group(),list=[];
   const meshes=T.map(g=>{const m=new THREE.InstancedMesh(g,mat,40);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=false;grp.add(m);return m;});
   CLOUD.layers.forEach((L,li)=>{for(let i=0;i<L.n;i++){const t=Math.floor(R()*4),m=meshes[t],sc=(30+R()*30)*L.s;
-    list.push({m,i:m.count++,x:R()*CLOUD.span,z:(R()-.5)*CLOUD.span,y:L.y+(R()-.5)*80,sp:L.sp*(.85+R()*.3),sx:sc*(1+R()*.6),sy:sc*(L.flat||1)*(.7+R()*.35),sz:sc*(.7+R()*.4),a:R()*PI*2});}});
+    list.push({m,i:m.count++,L,r:R(),x:R()*CLOUD.span,z:(R()-.5)*CLOUD.span,y:L.y+(R()-.5)*80,sp:L.sp*(.85+R()*.3),sx:sc*(1+R()*.6),sy:sc*(L.flat||1)*(.7+R()*.35),sz:sc*(.7+R()*.4),a:R()*PI*2});}});
   return{g:grp,list,meshes,mat};
 }
 const cloudM=T3?new THREE.Matrix4():null,cloudQ=T3?new THREE.Quaternion():null,cloudE=T3?new THREE.Euler():null;
 function cloudTick(){const C=R3.clouds;if(!C)return;C.g.visible=!FILM.on;if(FILM.on)return;
   const t=performance.now()/1000,S=CLOUD.span,ca=Math.cos(CLOUD.dir),sa=Math.sin(CLOUD.dir);
-  for(const c of C.list){const u=((c.x+c.sp*t)%S+S)%S-S/2,x=CX+u*ca-c.z*sa,z=CY+u*sa+c.z*ca;
-    cloudE.set(0,c.a,0);cloudQ.setFromEuler(cloudE);cloudM.compose(tmpV.set(x,c.y,z),cloudQ,tmpV2.set(c.sx,c.sy,c.sz));c.m.setMatrixAt(c.i,cloudM);}
+  // the cover now: the island's, the cumulus layers scaled by daylight (a quarter of it left at night)
+  const cov=cloudCover(G.seed),el=Math.asin(clamp(sunDir.y,-1,1))*180/PI,dayK=clamp((el+8)/16,0,1),dayS=dayK*dayK*(3-2*dayK);
+  for(const c of C.list){const ce=cov*(c.L.day?.25+.75*dayS:1),f=clamp(ce/.08,0,1)*(.3+.5*ce),grow=clamp((f-c.r)/.08,0,1),g=grow*(.55+1.5*ce);
+    const u=((c.x+c.sp*t)%S+S)%S-S/2,x=CX+u*ca-c.z*sa,z=CY+u*sa+c.z*ca;
+    cloudE.set(0,c.a,0);cloudQ.setFromEuler(cloudE);cloudM.compose(tmpV.set(x,c.y,z),cloudQ,tmpV2.set(c.sx*g||1e-4,c.sy*g||1e-4,c.sz*g||1e-4));c.m.setMatrixAt(c.i,cloudM);}
   for(const m of C.meshes)m.instanceMatrix.needsUpdate=true;
   // by day a white top tinted a little by the sun and a light grey base tinted by the sky; at night a shade lighter than the sky
   const U=C.mat.uniforms,sc=R3.scene,bg=sc.background,dk=1-(R3.night||0),sun=R3.sun.color,kf=SIKT_K[SIKT.k]||1;
@@ -6046,6 +6054,7 @@ try{const q=new URLSearchParams(location.search),bu=+q.get('budget');if(bu>0)ENE
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
 const BOOTQ=(()=>{try{return new URLSearchParams(location.search);}catch(_){return new Map();}})();
 /* &datum=2032-12-15 (or 12-15) and &klocka=08:30 choose the date and starting hour, like Ny ö */
+try{const m=BOOTQ.get('moln');if(m!=null&&m!=='')CLOUD.force=clamp(+m/100,0,1);}catch(_){}
 function bootWhen(){const m=/^(?:2032-)?(\d\d)-(\d\d)$/.exec(BOOTQ.get('datum')||''),k=/^(\d\d?):(\d\d)$/.exec(BOOTQ.get('klocka')||'');
   return{doy:m&&+m[1]>=1&&+m[1]<=12?doyOf(+m[1]-1,+m[2]):null,tod:k?(+k[1]+ +k[2]/60)%24:null};}
 newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('trailer')||BOOTQ.has('bench')?undefined:DOCTRINE[BOOTQ.get('doktrin')]?BOOTQ.get('doktrin'):'auto',bootWhen());/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &doktrin= chooses the enemy's doctrine */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
