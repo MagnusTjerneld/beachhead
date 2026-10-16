@@ -225,6 +225,8 @@ button:disabled{opacity:.45;cursor:default}
         <button class="btn" id="bAutoPause" type="button" aria-pressed="false" title="Pausa automatiskt när en annan enhet än den du kör upptäcker en ny fiende">Autopaus av</button>
         <button class="btn" id="bRestart" type="button" title="Börja om på samma ö">Starta om ön</button>
         <button class="btn" id="bNewIsland" type="button" title="Börja på en ny ö">Ny ö…</button>
+        <button class="btn" id="bRec" type="button" title="Spelar in en testrunda: dina order, enheternas och fiendens lägen varje sekund, meddelanden och kontrollpunkter (P). Sparas som en fil att ge till Claude">Spela in testrunda</button>
+        <button class="btn" id="bRecSave" type="button" title="Sparar inspelningen som en JSON-fil" hidden>Spara inspelning</button>
         <button class="btn" id="bTrailer" type="button" title="Spelar trailern, cirka en och en halv minut på ön Sorkholmen. Spelet du har på gång avbryts; ladda om sidan för att komma tillbaka">Visa trailern</button>
       </div>
       <div class="dlg" id="newIsle" hidden role="dialog" aria-modal="true" aria-labelledby="niTitle"><div class="box">
@@ -316,7 +318,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon.</li>
-      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den; på Defensiv stannar den i skyddsrollen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
@@ -5238,7 +5240,8 @@ async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
     feedAudio(Infinity);
     await venc.flush();if(err)throw err;if(aenc){await aenc.flush();if(err)throw err;}
     mux.finalize();
-    const blob=new Blob([mux.target.buffer],{type:'video/mp4'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='uppdrag-arkipelag-trailer.mp4';document.body.appendChild(a);a.click();a.remove();
+    const how=await saveFile('uppdrag-arkipelag-trailer.mp4',new Blob([mux.target.buffer],{type:'video/mp4'}),'video/mp4');
+    if(how==='declined'){say('VIDEON SPARADES INTE · SPELA IGEN');return;}
     say(noSound?'VIDEON ÄR SPARAD UTAN LJUD (INGEN LJUDKODARE I WEBBLÄSAREN) · SPELA IGEN':'VIDEON ÄR SPARAD · SPELA IGEN');}
   catch(e){say(e&&e.user?e.message:'VIDEON MISSLYCKADES: '+(e&&e.message||e));}
   finally{for(const c of[venc,aenc]){try{if(c&&c.state!=='closed')c.close();}catch(_){}}
@@ -5524,6 +5527,69 @@ function gpuEnd(){if(!GPUT.ok)return;const gl=GPUT.gl;if(GPUT.cur){gl.endQuery(G
   if(!GPUT.pend.length)return;const dis=gl.getParameter(GPUT.ext.GPU_DISJOINT_EXT);
   while(GPUT.pend.length){const q=GPUT.pend[0];if(!dis&&!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))break;GPUT.pend.shift();
     if(!dis){const ms=gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6;GPUT.last=ms;GPUT.ms+=(ms-GPUT.ms)*.05;if(BENCH.on&&BENCH.phase==='run')BENCH.gpus.push(ms);}gl.deleteQuery(q);}}
+/* ---------- recording (decided 16 okt): a test round the captain plays by hand, saved as a file Claude can read. Every second of game
+   time: each of our units (place, hull, ammunition, fuel, what it is doing, its order) and every enemy that changed (place, hull, seen,
+   dead). Between: every order the captain gives and what was selected and pointed at, taking control, pausing, building, the log's
+   messages and any error. P sets a checkpoint: the game pauses, the captain writes what he sees, and it is saved with a full picture of
+   the moment. Started under Settings or with ?rec; saved as JSON. ---------- */
+const REC={on:false,ev:[],snaps:[],lastT:-1,en:new Map(),saved:true,head:null,el:null};
+const r1=v=>Math.round(v*10)/10,r0=v=>Math.round(v);
+/* a file handed to the viewer: through the artifact's download capability where the page runs as an artifact, else a plain download */
+async function saveFile(name,data,mime){
+  try{if(window.claude&&window.claude.use){const d=await window.claude.use('downloads');if(d){await d.save({filename:name,data});return 'saved';}}}
+  catch(e){if(e&&e.code==='declined')return 'declined';}
+  const blob=data instanceof Blob?data:new Blob([data],{type:mime||'application/octet-stream'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);return 'link';}
+function recOrd(o){if(!o)return null;const t=o.enemy||o.relay||o.barrier||o.mine||o.s||o.unit||o.wreck;
+  return{type:o.type,post:o.post,tgt:t?(t.id||t.kind||'?'):null,x:o.x!=null?r0(o.x):undefined,y:o.y!=null?r0(o.y):undefined};}
+function recUnit(u){const o=u.orders&&u.orders[0];return{id:u.id,k:u.kind,x:r1(u.x),y:r1(u.y),hp:r0(u.hp),ammo:u.ammo!=null?r1(u.ammo):undefined,fuel:u.fuel!=null?r0(u.fuel):undefined,
+  alt:u.air?r0(u.alt||0):undefined,st:u.state||'',o:recOrd(o),n:u.orders?u.orders.length:0,post:u.post,dead:u.dead?1:undefined,carried:u.carried?1:undefined,path:u.path&&u.path.length?r0(u.path.reduce((s,p,i,a)=>s+Math.hypot(p.x-(i?a[i-1].x:u.x),p.y-(i?a[i-1].y:u.y)),0)):undefined};}
+function recEnemy(e){return{id:e.id,k:e.kind,x:r1(e.x),y:r1(e.y),lx:r1(e.lx),ly:r1(e.ly),hp:r0(e.hp),dead:e.dead?1:0,seen:e.seen?1:0,vis:e.visibleNow?1:0,st:e.state||e.mode||undefined};}
+function recPick(pk){if(!pk)return null;const o={};if(pk.world)o.world={x:r0(pk.world.x),y:r0(pk.world.y)};for(const k of['enemy','relay','barrier','mine','struct','unit','krok','wreck'])if(pk[k])o[k]=pk[k].id||pk[k].kind||true;if(pk.only)o.only=pk.only;return o;}
+function recFull(){return{t:r1(G.time),tod:r1(G.tod),res:r0(G.res),speed:G.speed,paused:!!G.paused,main:G.mainMode,cam:G.cam,sel:(G.selIds||[]).slice(),wings:JSON.parse(JSON.stringify(G.wings||{})),
+  units:[...G.units,...(G.kroks||[])].map(recUnit),enemies:G.enemies.map(recEnemy),relays:G.relays.map(r=>({id:r.id,type:r.type,x:r0(r.x),y:r0(r.y),captured:!!r.captured,prog:r1(r.prog||0)})),
+  barriers:G.barriers.map(b=>({id:b.id,x:r0(b.x),y:r0(b.y),cleared:!!b.cleared})),mines:(G.mines||[]).map(m=>({id:m.id,x:r0(m.x),y:r0(m.y),found:!!m.found,cleared:!!m.cleared}))};}
+function recEv(type,data){if(!REC.on)return;REC.ev.push(Object.assign({t:G?r1(G.time):0,type},data));REC.saved=false;}
+function recStart(){REC.on=true;REC.ev=[];REC.snaps=[];REC.lastT=-1;REC.en=new Map();REC.saved=false;
+  REC.head={format:'uppdrag-arkipelag-inspelning 1',started:new Date().toISOString(),seed:G.seed,island:islandName(G.seed),world:{w:WW,h:WH,landing:{x:r0(WORLD.landing.x),y:r0(WORLD.landing.y)},carrier:{x:r0(CARRIER.x),y:r0(CARRIER.y)}},
+    browser:navigator.userAgent,screen:innerWidth+'x'+innerHeight,start:recFull()};
+  recUI();say(null,'Inspelning startad. P sätter en kontrollpunkt med kommentar.');}
+function recStop(){REC.on=false;recUI();}
+function recTick(){if(!REC.on||!G)return;if(G.time<REC.lastT){REC.lastT=-1;REC.en=new Map();}/* a new game */if(G.time-REC.lastT<1)return;REC.lastT=G.time;
+  const en=[];for(const e of G.enemies){const r=recEnemy(e),key=JSON.stringify(r),prev=REC.en.get(e.id);if(prev!==key){REC.en.set(e.id,key);en.push(r);}}
+  REC.snaps.push({t:r1(G.time),res:r0(G.res),speed:G.speed,paused:G.paused?1:undefined,u:[...G.units,...(G.kroks||[])].filter(u=>!u.dead||!REC.en.has('dead:'+u.id)).map(u=>{if(u.dead)REC.en.set('dead:'+u.id,1);return recUnit(u);}),e:en.length?en:undefined});
+  if(REC.el)REC.el.querySelector('b').textContent='REC '+fmtT(G.time);}
+const fmtT=t=>{t=Math.max(0,Math.floor(t));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');};
+function recUI(){const b=$('bRec'),sv=$('bRecSave');if(b)b.textContent=REC.on?'Stoppa inspelningen':'Spela in testrunda';if(sv)sv.hidden=!(REC.ev.length||REC.snaps.length);
+  if(!REC.el){const el=document.createElement('div');el.id='recBadge';el.style.cssText='position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;background:rgba(120,20,20,.88);color:#fff;font:600 12px ui-monospace,Menlo,Consolas,monospace;padding:4px 10px;border-radius:14px;';
+    el.innerHTML='<b>REC</b><button type="button" class="btn" style="padding:2px 8px;font-size:11px">Kontrollpunkt (P)</button><button type="button" class="btn" style="padding:2px 8px;font-size:11px">Spara</button>';
+    el.children[1].addEventListener('click',e=>{e.stopPropagation();recCheckpoint();});el.children[2].addEventListener('click',e=>{e.stopPropagation();recSave();});document.body.appendChild(el);REC.el=el;}
+  REC.el.style.display=REC.on?'flex':'none';}
+function recCheckpoint(){if(!REC.on||$('recNote'))return;const was=G.paused;if(G.running)G.paused=true;uiTick(true);
+  const d=document.createElement('div');d.id='recNote';d.style.cssText='position:fixed;inset:0;z-index:101;display:grid;place-items:center;background:rgba(0,0,0,.35)';
+  d.innerHTML='<div style="background:#16202a;color:#e8eef0;padding:14px;border-radius:8px;width:min(520px,calc(100vw - 32px));font:14px system-ui,sans-serif"><b>Kontrollpunkt '+fmtT(G.time)+'</b><div style="opacity:.75;margin:4px 0 8px">Vad händer, och vad borde ha hänt? Spelet står pausat.</div><textarea style="width:100%;height:110px;box-sizing:border-box;font:14px system-ui,sans-serif"></textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button type="button" class="btn">Avbryt</button><button type="button" class="btn">Spara (Ctrl+Enter)</button></div></div>';
+  document.body.appendChild(d);const ta=d.querySelector('textarea'),[bc,bs]=d.querySelectorAll('button');setTimeout(()=>ta.focus(),0);
+  const close=save=>{if(save){const c=R3?R3.cam.position:null;recEv('kontrollpunkt',{note:ta.value.trim(),view:{main:G.mainMode,cam:G.cam,camPos:c?{x:r0(c.x),y:r0(c.y),z:r0(c.z)}:null,map:{z:r1(mv.z||1),cx:r0(mv.cx||0),cy:r0(mv.cy||0)}},full:recFull()});say(null,'Kontrollpunkt sparad.');}
+    d.remove();G.paused=was;uiTick(true);};
+  bc.addEventListener('click',()=>close(false));bs.addEventListener('click',()=>close(true));
+  d.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')close(false);else if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))close(true);});}
+async function recSave(){recTick();const data={...REC.head,saved:new Date().toISOString(),end:recFull(),events:REC.ev,snapshots:REC.snaps,
+    legend:'snapshots: varje sekund speltid; u = egna enheter (x,y i meter, hp, ammo, fuel, st = läget som visas, o = första ordern, n = antal order, path = kvarvarande väg i m); e = fiender som ändrats sedan förra (lx,ly = senast kända plats, seen, vis = syns just nu). events: order (spelarens order med urval och det som pekades på), anrop, kontroll, paus, bygg, wing, luftlyft, meddelande, fel, omstart, kontrollpunkt (med full bild).'};
+  const name='inspelning-o'+(REC.head?REC.head.seed:G.seed)+'-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
+  const how=await saveFile(name,JSON.stringify(data),'application/json');if(how!=='declined'){REC.saved=true;say(null,'Inspelningen sparad som '+name+'.');}}
+// what the captain does, recorded on the way in: the functions the chart, the wheel and the keys call
+{const wrap=(f,type,fn)=>function(...a){try{recEv(type,fn(...a));}catch(_){}return f.apply(this,a);};
+  groupOrder=wrap(groupOrder,'order',(pk,append,post)=>({sel:(G.selIds||[]).slice(),pick:recPick(pk),append:!!append,post:post||undefined}));
+  callIn=wrap(callIn,'anrop',(kind,pk,asMission,who)=>({kind,pick:recPick(pk),mission:!!asMission,who:who&&who.id}));
+  setCtrl=wrap(setCtrl,'kontroll',id=>({id}));setPaused=wrap(setPaused,'paus',p=>({paused:!!p}));
+  queueBuild=wrap(queueBuild,'bygg',k=>({kind:k}));assignWing=wrap(assignWing,'wing',n=>({n,sel:(G.selIds||[]).slice()}));
+  airlift=wrap(airlift,'luftlyft',(us,pt)=>({units:(us||[]).map(u=>u.id),x:pt&&r0(pt.x),y:pt&&r0(pt.y)}));
+  say=wrap(say,'meddelande',(u,text)=>({who:u?u.id:null,text:String(text)}));
+  diagErr=wrap(diagErr,'fel',(where,err)=>({where,msg:String(err&&err.message||err)}));
+  restart=wrap(restart,'omstart',seed=>({seed}));}
+$('bRec').addEventListener('click',()=>{setMenu(false);if(REC.on)recStop();else recStart();});
+$('bRecSave').addEventListener('click',()=>{setMenu(false);recSave();});
+window.addEventListener('keydown',e=>{if(e.code==='KeyP'&&REC.on&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName)){e.preventDefault();recCheckpoint();}});
+window.addEventListener('beforeunload',e=>{if(REC.ev.length&&!REC.saved){e.preventDefault();e.returnValue='';}});
 /* ---------- benchmark (?bench): the same walk through islands, hours, views and a staged fight every time, so the statistics box (F3)
    can be compared before and after a change. Real frames in the real browser. Each scenario starts the island afresh with the same
    random seed and a fixed camera: over the island from the landing beach, or close on a staged fight (fires and blasts in front of the
@@ -5603,6 +5669,7 @@ function frame(now){
   const P=[performance.now()];try{frameBody(now,P);}catch(err){diagErr('bildruta',err);}
   try{diagTick(now,P);}catch(err){console.error(err);}
   if(BENCH.on)try{benchTick(now,P);}catch(err){BENCH.on=false;diagErr('benchmark',err);}
+  if(REC.on)try{recTick();}catch(err){REC.on=false;diagErr('inspelning',err);}
 }
 function frameBody(now,P){
   if(FILM.state==='export'){last=now;return;}/* the trailer's video export draws its own frames */
@@ -5634,6 +5701,7 @@ lightsWarm();
 placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();if(BOOTQ.has('trailer'))filmStart();
 requestAnimationFrame(frame);
 if(BOOTQ.has('bench'))setTimeout(benchStart,1500);
+if(BOOTQ.has('rec'))recStart();
 })();
 </script>
 
