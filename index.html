@@ -236,7 +236,9 @@ button:disabled{opacity:.45;cursor:default}
         <label>Öns nummer (1000 till 9999), tomt för slump<input id="niSeed" type="number" min="1000" max="9999" placeholder="auto" inputmode="numeric"></label>
         <div class="hint2" id="niName"></div>
         <label>Fiendens doktrin<select id="niDoc"><option value="auto">Auto: fienden väljer efter ön (hemlig tills ön är vunnen)</option><option value="framskjutet">Framskjutet försvar vid stränderna</option><option value="djup">Djupförsvar med två linjer</option><option value="fastning">Fästning kring ledningscentralen</option><option value="rorligt">Rörligt försvar med stark reserv</option></select></label>
+        <label>Datum 2032, tomt för öns eget<input id="niDate" type="date" min="2032-01-01" max="2032-12-31"></label>
         <label>Klockslag vid start, tomt för öns eget<input id="niTime" type="time" step="900"></label>
+        <div class="hint2" id="niSun"></div>
         <div class="row2"><button class="btn" id="niCancel" type="button">Avbryt</button><button class="btn" id="niGo" type="button">Starta</button></div>
       </div></div>
     </div>
@@ -321,7 +323,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon.</li>
-      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer, fiendens doktrin och klockslaget vid start, eller lämnar dem tomma (Auto) för slump och öns eget klockslag. Samma ö med samma doktrin är alltid samma försvar, så du kan anfalla det igen; Spela igen behåller båda. Med Auto väljer fienden doktrin efter ön, och du får veta vilken först när ön är vunnen. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer, fiendens doktrin, datum och klockslaget vid start, eller lämnar dem tomma (Auto) för slump och öns eget datum och klockslag; under fälten står årstiden och när solen går upp och ner. Samma ö med samma doktrin är alltid samma försvar, så du kan anfalla det igen; Spela igen behåller dem, och datum och klockslag. Med Auto väljer fienden doktrin efter ön, och du får veta vilken först när ön är vunnen. Datum och klocka står i översta raden (håll muspekaren över dem för soltiderna) och på sjökortets etikett, klockan också bredvid T+ i kameran; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den; på Defensiv stannar den i skyddsrollen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, GETING, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
@@ -332,7 +334,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
-      <li><span class="em">Dygn:</span> varje ö startar vid en egen tid på dygnet och klockan går (en timme på fyra minuter). Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
+      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
@@ -477,6 +479,45 @@ function islandName(seed){const R=rng((seed|0)*131+7),groups=Object.values(ISLAN
   if((ISLAND_SFOG.has(stem)||/bär$/.test(stem))&&!/s$/.test(stem))stem+='s';
   const ends=/[aeiouyåäö]$/i.test(stem)?ISLAND_END.slice(1):ISLAND_END;return (stem+ends[Math.floor(R()*ends.length)]).replace(/(.)\1\1/g,'$1$1');}
 function rng(seed){let a=seed|0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* ---------- date and the sun's hours (seasons step 1, decided 15 okt) ----------
+   Every island has a date in 2032 and a starting hour, both from its number; Ny ö can choose them. The sun is reckoned for one
+   fixed point in the archipelago, 59.4 N 18.9 E, on Swedish clock time (summer time from the last Sunday in March to the last in
+   October). doy is the day of the year, 1 to 366 (2032 is a leap year). */
+const YEAR=2032,DAYS=366,SUN_PT={lat:59.4,lon:18.9},MON3=['JAN','FEB','MAR','APR','MAJ','JUN','JUL','AUG','SEP','OKT','NOV','DEC'],
+  MONTHS=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+const lastSun=m=>{const d=new Date(Date.UTC(YEAR,m+1,0));return d.getUTCDate()-d.getUTCDay();};
+const DST=[doyOf(2,lastSun(2)),doyOf(9,lastSun(9))];
+function doyOf(m,d){return Math.round((Date.UTC(YEAR,m,d)-Date.UTC(YEAR,0,1))/864e5)+1;}
+function dayMD(doy){const d=new Date(Date.UTC(YEAR,0,doy));return{m:d.getUTCMonth(),d:d.getUTCDate()};}
+const isDst=doy=>doy>=DST[0]&&doy<DST[1];
+function seasonOf(doy){const m=dayMD(doy).m;return m===11||m<2?'vinter':m<5?'vår':m<8?'sommar':'höst';}
+function fmtDay(doy){const q=dayMD(doy);return q.d+' '+MON3[q.m];}
+const fmtHM=h=>{h=((h%24)+24)%24;let hh=Math.floor(h),mm=Math.round((h-hh)*60);if(mm===60){hh=(hh+1)%24;mm=0;}return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');};
+/* the sun's declination and the clock hour of true noon on that day */
+function sunDay(doy){const g=2*PI*(doy-1)/DAYS,
+  dec=.006918-.399912*Math.cos(g)+.070257*Math.sin(g)-.006758*Math.cos(2*g)+.000907*Math.sin(2*g)-.002697*Math.cos(3*g)+.00148*Math.sin(3*g),
+  eot=229.18*(.000075+.001868*Math.cos(g)-.032077*Math.sin(g)-.014615*Math.cos(2*g)-.040849*Math.sin(2*g));
+  return{dec,noon:12-(SUN_PT.lon-15)/15-eot/60+(isDst(doy)?1:0)};}
+/* the sun's height in degrees at clock hour h */
+function sunElev(doy,h){const D=sunDay(doy),la=SUN_PT.lat*PI/180,H=(h-D.noon)*15*PI/180;
+  return Math.asin(Math.sin(la)*Math.sin(D.dec)+Math.cos(la)*Math.cos(D.dec)*Math.cos(H))*180/PI;}
+/* clock hours when the sun passes el degrees, rising and setting; null when it never gets that low or high that day */
+function sunCross(doy,el){const D=sunDay(doy),la=SUN_PT.lat*PI/180,c=(Math.sin(el*PI/180)-Math.sin(la)*Math.sin(D.dec))/(Math.cos(la)*Math.cos(D.dec));
+  if(c<=-1||c>=1)return null;const w=Math.acos(c)*180/PI/15;return{up:D.noon-w,down:D.noon+w};}
+/* sunrise and sunset (upper limb with refraction) and civil dawn and dusk (6 degrees down; null in the light summer nights) */
+function sunTimes(doy){const s=sunCross(doy,-.833),c=sunCross(doy,-6);return{rise:s.up,set:s.down,dawn:c&&c.up,dusk:c&&c.down};}
+/* light at clock hour h: day from half an hour after sunrise to half an hour before sunset, dawn or dusk from civil twilight to
+   there, night the rest */
+function lightAt(doy,h){const T=sunTimes(doy);if(h>=T.rise+.5&&h<=T.set-.5)return'dag';
+  if(T.dawn==null||(h>=T.dawn&&h<T.rise+.5)||(h>T.set-.5&&h<=T.dusk))return'skymning';return'natt';}
+/* the island's own date (even over the year) and starting hour. The light is drawn first with fixed weights, day 60 %, dawn or
+   dusk 25 %, night 15 %, then an hour in five-minute steps that gives that light on that date, so winter islands do not start in
+   the dark three times in four. A light the date lacks (a June night) falls back to dawn or dusk. */
+function isleDoy(seed){return 1+Math.floor(rng((seed|0)*7919+11)()*DAYS);}
+function isleTod(seed,doy){const R=rng((seed|0)*104729+doy*31+5),r=R(),want=r<.6?'dag':r<.85?'skymning':'natt';
+  const pick=w=>{const L=[];for(let i=0;i<288;i++)if(lightAt(doy,i/12)===w)L.push(i/12);return L;};
+  let L=pick(want);if(!L.length)L=pick('skymning');if(!L.length)L=pick('dag');return L[Math.floor(R()*L.length)];}
+function sunLine(doy){const T=sunTimes(doy),S=seasonOf(doy);return S[0].toUpperCase()+S.slice(1)+', sol upp '+fmtHM(T.rise)+', ner '+fmtHM(T.set);}
 const HLV=[5,13,21,29];
 const pairKey=(a,b)=>a<b?a+'_'+b:b+'_'+a;
 function nearShip(x,y){return Math.hypot(x-CARRIER.x,y-CARRIER.y)<150;}
@@ -1205,7 +1246,7 @@ function deckDrive(u,dt){if(u.orders.length||u.carried||G.ctrl===u.id||!onDeck(u
   if(!u.deckPath)u.deckPath=deckRoute(u,u.deckTo);let t=u.deckPath[0],d=Math.hypot(t.x-u.x,t.y-u.y);if(d<.6&&u.deckPath.length>1){u.deckPath.shift();t=u.deckPath[0];d=Math.hypot(t.x-u.x,t.y-u.y);}
   if(d<.6){u.deckTo=null;u.deckPath=null;u.heading=CARRIER.a;u.state='Väntar på helikopterplattan';return true;}
   const a=Math.atan2(t.y-u.y,t.x-u.x),st=Math.min(d,u.speed*.6*dt);u.x+=Math.cos(a)*st;u.y+=Math.sin(a)*st;u.heading=a;u.state='Kör till en ledig helikopterplatta';return true;}
-function newGame(seed,doc){
+function newGame(seed,doc,when){
   const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed,doc==='auto'?null:doc);WORLD.cfgKey=cfgKey;}
   setDefense(WORLD,doc==='auto'?drawDoctrine(WORLD):doc);
   if(WORLD.carrier0)Object.assign(CARRIER,WORLD.carrier0);/* Birka starts outside the beach again, even on the same island after a docking */
@@ -1214,7 +1255,8 @@ function newGame(seed,doc){
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
     structs:WORLD.structs.map(s=>Object.assign({},s,{isStruct:true,hp:STRUCT[s.kind].hp,maxhp:STRUCT[s.kind].hp,dead:false,prog:0,krok:false,hitBy:{}})),
-    tod:[6.5,9,12,15,17.8,21,23.5,2][seed%8],known:new Uint8Array(GW*GH),knownV:0,kt:0,fbuild:[],buildAt:'ship',fires:[],ddead:{b:{},j:{}},kroks:[],krokQ:[],krokAuto:true,krokMsg:null,pitch:0,firing:false,mlook:false};
+    tod:0,doy:1,known:new Uint8Array(GW*GH),knownV:0,kt:0,fbuild:[],buildAt:'ship',fires:[],ddead:{b:{},j:{}},kroks:[],krokQ:[],krokAuto:true,krokMsg:null,pitch:0,firing:false,mlook:false};
+  {const w=when||{},doy=w.doy||isleDoy(seed);G.doy=doy;G.tod=w.tod!=null?w.tod:isleTod(seed,doy);G.start={doy,tod:G.tod,own:!w.doy&&w.tod==null};}
   WORLD.grid.set(WORLD.baseGrid);for(const b of G.barriers)for(const c of b.cells)WORLD.grid[c]=WALL;
   for(const s of G.structs)WORLD.grid[s.cell]=WALL;
   for(const d of WORLD.debris)addWreck(d.x,d.y,d.value,false,d.kind);
@@ -1327,7 +1369,7 @@ function moveCarrier(x,y,a){
   for(const o of carry){const q=wp(o.l);o.u.x=q.x;o.u.y=q.y;o.u.heading+=da;if(o.to)o.u.deckTo=wp(o.to);if(o.path)o.u.deckPath=o.path.map(wp);}
   for(const o of ks){const q=wp(o.pad);o.k.pad=q;if(o.home){o.k.x=q.x;o.k.y=q.y;o.k.heading+=da;}}}
 function step(dt){
-  G.time+=dt;G.tod=(G.tod+dt/240)%24;harborTick(dt);
+  G.time+=dt;G.tod+=dt/240;if(G.tod>=24){G.tod-=24;G.doy=G.doy%DAYS+1;}harborTick(dt);
   const cap=G.relays.filter(r=>r.captured&&r.type!=='hamn').length;
   G.res+=dt*(INCOME.base+INCOME.relay*cap);
   for(const e of G.enemies){
@@ -4570,16 +4612,20 @@ function trailerStart(){if(BENCH.on||FILM.on)return;setMenu(false);if(MUS.g)MUS.
   restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
 confirmBtn('bTrailer',trailerStart);
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
-const niSeed=$('niSeed'),niTime=$('niTime'),niName=$('niName'),niDoc=$('niDoc');
+const niSeed=$('niSeed'),niTime=$('niTime'),niDate=$('niDate'),niName=$('niName'),niDoc=$('niDoc');
+/* the chosen date as a day of 2032, or null for the island's own */
+const niDoy=()=>{const m=/^2032-(\d\d)-(\d\d)$/.exec(niDate.value);return m?doyOf(+m[1]-1,+m[2]):null;};
 const niVal=()=>{const n=Math.round(+niSeed.value);return niSeed.value!==''&&n>=1000&&n<=9999?n:null;};
-const niShow=()=>{const n=niVal();niName.textContent=niSeed.value===''?'En slumpad ö.':n?islandName(n)+' (ö '+n+')':'Numret ska vara mellan 1000 och 9999.';$('niGo').disabled=niSeed.value!==''&&!n;};
-function newIsleDialog(open){$('newIsle').hidden=!open;if(open){setMenu(false);niSeed.value='';niTime.value='';niDoc.value='auto';niShow();setTimeout(()=>niSeed.focus(),0);}}
+const niShow=()=>{const n=niVal();niName.textContent=niSeed.value===''?'En slumpad ö.':n?islandName(n)+' (ö '+n+')':'Numret ska vara mellan 1000 och 9999.';$('niGo').disabled=niSeed.value!==''&&!n;
+  const d=niDoy()||(n?isleDoy(n):null);$('niSun').textContent=d?(niDoy()?'':'Öns eget datum: '+fmtDay(d).toLowerCase()+'. ')+sunLine(d)+'.':'Datum och klockslag följer den slumpade ön.';};
+function newIsleDialog(open){$('newIsle').hidden=!open;if(open){setMenu(false);niSeed.value='';niTime.value='';niDate.value='';niDoc.value='auto';niShow();setTimeout(()=>niSeed.focus(),0);}}
 $('bNewIsland').addEventListener('click',()=>newIsleDialog(true));
-niSeed.addEventListener('input',niShow);
+niSeed.addEventListener('input',niShow);niDate.addEventListener('input',niShow);
 $('niCancel').addEventListener('click',()=>newIsleDialog(false));
 $('newIsle').addEventListener('click',e=>{if(e.target.id==='newIsle')newIsleDialog(false);});
-$('niGo').addEventListener('click',()=>{const n=niVal();if(niSeed.value!==''&&!n)return;const t=niTime.value;newIsleDialog(false);
-  restart(n||1000+Math.floor(Math.random()*9000),niDoc.value);if(t){const[h,m]=t.split(':').map(Number);G.tod=(h+(m||0)/60)%24;uiTick(true);}});
+$('niGo').addEventListener('click',()=>{const n=niVal();if(niSeed.value!==''&&!n)return;const t=niTime.value,doy=niDoy();newIsleDialog(false);
+  let tod=null;if(t){const[h,m]=t.split(':').map(Number);tod=(h+(m||0)/60)%24;}
+  restart(n||1000+Math.floor(Math.random()*9000),niDoc.value,{doy,tod});});/* the date is known before the world is built */
 $('newIsle').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')newIsleDialog(false);else if(e.key==='Enter')$('niGo').click();});
 // X (or the MUS button): from a VARG, put its MUS out and drive it; on a MUS, take control of it
 function roverKey(){const c=G.ctrl?unitById(G.ctrl):null;if(c&&c.kind==='mus')return;const v=c&&c.kind==='tank'?c:null;
@@ -4614,7 +4660,7 @@ $('tFull').addEventListener('click',ev=>{ev.stopPropagation();toggleFull();});$(
 $('bSound').addEventListener('click',()=>{audInit();setSound(!AUD.on);});
 $('bMusic').addEventListener('click',()=>{audInit();setMusic(!MUS.on);});
 document.addEventListener('pointerdown',()=>audInit(),{capture:true});
-$('bClock').addEventListener('click',()=>{G.tod=(G.tod+3)%24;uiTick(true);});
+$('bClock').addEventListener('click',()=>{G.tod+=3;if(G.tod>=24){G.tod-=24;G.doy=G.doy%DAYS+1;}uiTick(true);});
 $('bSpeed').addEventListener('click',()=>{G.speed=G.speed===1?2:1;uiTick(true);});
 $('bHelp').addEventListener('click',()=>{G.paused=true;$('intro').hidden=false;$('bStart').textContent='Fortsätt';uiTick(true);});
 $('bStart').addEventListener('click',()=>{audInit();startGame();});
@@ -4625,8 +4671,8 @@ $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
-function restart(seed,doc){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
-$('bAgain').addEventListener('click',()=>restart(G.seed,G.doc));
+function restart(seed,doc,when){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
+$('bAgain').addEventListener('click',()=>restart(G.seed,G.doc,G.start));/* the same island, doctrine, date and starting hour */
 $('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000),'auto'));
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
 const keys=new Set();let lastKey={k:null,t:0};
@@ -4827,7 +4873,8 @@ function uiTick(force){
   $('sRel').textContent=G.relays.filter(r=>r.captured&&r.type!=='hamn').length+'/3';
   $('sRes').textContent=Math.floor(G.res);
   $('sLoss').textContent=net;$('lossBox').classList.toggle('warn',net>0);
-  $('sTime').textContent=fmt(G.time);{const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('sClock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+  $('sTime').textContent=fmt(G.time);{const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60),c=$('sClock');c.textContent=fmtDay(G.doy)+' '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+    if(c._doy!==G.doy){c._doy=G.doy;const q=dayMD(G.doy);c.title=q.d+' '+MONTHS[q.m]+' '+YEAR+'. '+sunLine(G.doy)+'.';}}
   $('islandId').textContent=islandName(G.seed)+' · ö '+G.seed;
   $('bPause').setAttribute('aria-pressed',String(G.paused));$('bPause').textContent=G.paused?'Fortsätt':'Paus';
   $('bSpeed').textContent=G.speed+'×';
@@ -4872,7 +4919,7 @@ function uiTick(force){
   const ba=$('bAuto');ba.setAttribute('aria-pressed',String(G.krokAuto));ba.textContent=G.krokAuto?'Hämtar automatiskt':'Bara beställt';
   const nq=G.krokQ.length,nw=G.wrecks.length,sv=G.wrecks.filter(w=>!w.claimed&&wreckSafe(w)).length;$('krokInfo').textContent=nw+' högar · '+sv+' säkra'+(nq?' · '+nq+' beställda':'');
   const cu=unitById(G.cam);
-  {const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('lblMap').textContent='SJÖKORT · T+'+fmt(G.time)+' · KL '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+  {const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('lblMap').textContent='SJÖKORT · T+'+fmt(G.time)+' · '+fmtDay(G.doy)+' KL '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
   $('lblCam').textContent='KAMERA'+(cu&&!cu.dead?' · '+cu.name:'');
 }
 
@@ -5700,7 +5747,7 @@ function recUnit(u){const o=u.orders&&u.orders[0];return{id:u.id,k:u.kind,x:r1(u
   alt:u.air?r0(u.alt||0):undefined,st:u.state||'',o:recOrd(o),n:u.orders?u.orders.length:0,post:u.post,dead:u.dead?1:undefined,carried:u.carried?1:undefined,path:u.path&&u.path.length?r0(u.path.reduce((s,p,i,a)=>s+Math.hypot(p.x-(i?a[i-1].x:u.x),p.y-(i?a[i-1].y:u.y)),0)):undefined};}
 function recEnemy(e){return{id:e.id,k:e.kind,x:r1(e.x),y:r1(e.y),lx:r1(e.lx),ly:r1(e.ly),hp:r0(e.hp),dead:e.dead?1:0,seen:e.seen?1:0,vis:e.visibleNow?1:0,st:e.state||e.mode||undefined};}
 function recPick(pk){if(!pk)return null;const o={};if(pk.world)o.world={x:r0(pk.world.x),y:r0(pk.world.y)};for(const k of['enemy','relay','barrier','mine','struct','unit','krok','wreck'])if(pk[k])o[k]=pk[k].id||pk[k].kind||true;if(pk.only)o.only=pk.only;return o;}
-function recFull(){return{t:r1(G.time),tod:r1(G.tod),res:r0(G.res),speed:G.speed,paused:!!G.paused,main:G.mainMode,cam:G.cam,sel:(G.selIds||[]).slice(),wings:JSON.parse(JSON.stringify(G.wings||{})),
+function recFull(){return{t:r1(G.time),tod:r1(G.tod),doy:G.doy,res:r0(G.res),speed:G.speed,paused:!!G.paused,main:G.mainMode,cam:G.cam,sel:(G.selIds||[]).slice(),wings:JSON.parse(JSON.stringify(G.wings||{})),
   units:[...G.units,...(G.kroks||[])].map(recUnit),enemies:G.enemies.map(recEnemy),relays:G.relays.map(r=>({id:r.id,type:r.type,x:r0(r.x),y:r0(r.y),captured:!!r.captured,prog:r1(r.prog||0)})),
   barriers:G.barriers.map(b=>({id:b.id,x:r0(b.x),y:r0(b.y),cleared:!!b.cleared})),mines:(G.mines||[]).map(m=>({id:m.id,x:r0(m.x),y:r0(m.y),found:!!m.found,cleared:!!m.cleared}))};}
 function recEv(type,data){if(!REC.on)return;REC.ev.push(Object.assign({t:G?r1(G.time):0,type},data));REC.saved=false;}
@@ -5740,7 +5787,7 @@ async function recSave(){recTick();const data={...REC.head,saved:new Date().toIS
   airlift=wrap(airlift,'luftlyft',(us,pt)=>({units:(us||[]).map(u=>u.id),x:pt&&r0(pt.x),y:pt&&r0(pt.y)}));
   say=wrap(say,'meddelande',(u,text)=>({who:u?u.id:null,text:String(text)}));
   diagErr=wrap(diagErr,'fel',(where,err)=>({where,msg:String(err&&err.message||err)}));
-  restart=wrap(restart,'omstart',seed=>({seed}));}
+  restart=wrap(restart,'omstart',(seed,doc,w)=>({seed,doy:w&&w.doy,tod:w&&w.tod}));}
 $('bRec').addEventListener('click',()=>{setMenu(false);if(REC.on)recStop();else recStart();});
 $('bRecSave').addEventListener('click',()=>{setMenu(false);recSave();});
 window.addEventListener('keydown',e=>{if(e.code==='KeyP'&&REC.on&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName)){e.preventDefault();recCheckpoint();}});
@@ -5848,7 +5895,10 @@ try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget');if(bu>0)ENEMY_CFG.budget=bu;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
 const BOOTQ=(()=>{try{return new URLSearchParams(location.search);}catch(_){return new Map();}})();
-newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('trailer')||BOOTQ.has('bench')?undefined:DOCTRINE[BOOTQ.get('doktrin')]?BOOTQ.get('doktrin'):'auto');/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &doktrin= chooses the enemy's doctrine */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
+/* &datum=2032-12-15 (or 12-15) and &klocka=08:30 choose the date and starting hour, like Ny ö */
+function bootWhen(){const m=/^(?:2032-)?(\d\d)-(\d\d)$/.exec(BOOTQ.get('datum')||''),k=/^(\d\d?):(\d\d)$/.exec(BOOTQ.get('klocka')||'');
+  return{doy:m&&+m[1]>=1&&+m[1]<=12?doyOf(+m[1]-1,+m[2]):null,tod:k?(+k[1]+ +k[2]/60)%24:null};}
+newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('trailer')||BOOTQ.has('bench')?undefined:DOCTRINE[BOOTQ.get('doktrin')]?BOOTQ.get('doktrin'):'auto',bootWhen());/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &doktrin= chooses the enemy's doctrine */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
 init3D();
 if(R3)buildStatic();
 mkFeeds();
