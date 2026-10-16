@@ -2184,6 +2184,9 @@ function shoot(a,t,dmg,acc,side,w){
   const x2=t.x+Math.cos(oa)*off,y2=t.y+Math.sin(oa)*off,h2=hit||air?hOf(t)+(air&&!hit?(Math.random()-.5)*8:0):groundY(x2,y2);
   launch(a,t,x2,y2,h2,ws,side,hit,dmg,w);
 }
+/* how hard a hit shakes the camera of the unit taking it: a rifle round barely, a shell or a missile fully. Blasts and mines,
+   which set lastHit without a shot, shake fully */
+const JOLT={e_rifle:.2,e_auto:.45,e_shell:1,e_at:1,e_sam:1,flak:.8};
 function resolveShot(f){
   f.done=true;const t=f.tg,W=WSPEC[f.ws];
   if(f.ws==='cannon'||f.ws==='e_shell'||f.ws==='rocket'||f.ws==='e_at')decorHit(f.x2,f.y2,f.ws==='rocket'?5:4);
@@ -2192,7 +2195,7 @@ function resolveShot(f){
   if(!f.hit||!live)return;
   G.fx.push({k:'spark',x:f.x2,y:f.y2,h:f.h2,t:0,ttl:.18,ws:f.ws,armor:t.cls==='armor'||(!t.cls&&!t.isStruct&&t.kind==='tank')});
   t.hp-=f.dmg*dmgMult(f.a,t,f.w);
-  if(f.side==='e')t.lastHit=G.time;
+  if(f.side==='e'){t.lastHit=G.time;t.joltT=G.time;t.jolt=JOLT[f.ws]??.5;}
   if(t.hp<=0){if(t.isStruct)killStruct(t,f.a,'shot');else if(f.side==='f')killEnemy(t,f.a);else if(t.kind==='krok')killKrok(t);else killUnit(t,null);}
 }
 /* boats and jetties can be blown apart for realism only: an explosive impact or blast nearby sinks or wrecks them */
@@ -4413,7 +4416,7 @@ function sync3D(dtr){
       else if(f.k==='spark'){for(let k=0;k<(f.armor?7:4);k++)fP(f.x,f.h,f.y,{v:[fr()*14,4+Math.random()*8,fr()*14],g:18,s0:.3,s1:.15,a:1,ttl:.35,c:f.armor?0xfff0c0:0xffd080,add:true});
         fP(f.x,f.h,f.y,{s0:1.4,s1:2,a:.9,ttl:.08,c:0xffe0a0,add:true});fxSmoke(f.x,f.h,f.y,.8,0x3a3632,1.5,1);}
       else if(f.k==='puff'){if(f.c===0x2a2a2a)for(let k=0;k<3;k++)fxSmoke(f.x+fr()*2,f.h+fr()*2,f.y+fr()*2,f.s*.9,0x262626,2.2,.4);
-        else if(f.h<=gy+1){fxDust(f.x,gy,f.y,f.s*.7);fxDust(f.x,gy,f.y,f.s*.9);}else fxSmoke(f.x,f.h,f.y,f.s*.7,f.c,1.2,.6);}
+        else if(f.h<=gy+1)fxGroundHit(f.x,gy,f.y,f.s);else fxSmoke(f.x,f.h,f.y,f.s*.7,f.c,1.2,.6);}
       continue;}
     let m=R3.fx.get(f);
     if(!m){
@@ -4449,6 +4452,10 @@ function updateCam(dtr){
   if((aim||daim)&&G.mlook)R3.snap=true;
   const k=R3.snap?1:1-Math.exp(-5*dtr);
   R3.cam.position.lerp(tmpV.set(px,py,pz),k);{const cp=R3.cam.position,f=camFloor(cp.x,cp.z);if(cp.y<f)cp.y=f;}R3.lookAt.lerp(tmpV2.set(ax,ay,az),k);R3.cam.lookAt(R3.lookAt);R3.snap=false;
+  /* a hit on the unit in view jolts the camera for a moment: pitch, yaw and roll that die out over half a second, as hard as
+     the hit (JOLT). Turned after lookAt, so nothing builds up from frame to frame; it stops when the game is paused */
+  const jt=G.time-u.lastHit;if(jt>=0&&jt<.5&&!u.dead){const a=(u.joltT===u.lastHit?u.jolt:1)*.03*(1-jt/.5)**2,q=G.time*60;
+    R3.cam.rotateX(a*Math.sin(q*1.3));R3.cam.rotateY(a*.7*Math.sin(q*1.7+1));R3.cam.rotateZ(a*.8*Math.sin(q*1.1+2));}
 }
 function projectTo(x,y3,z,w,h){const v=tmpV.set(x,y3,z).project(R3.cam);if(v.z>1||v.z<-1)return null;return{x:(v.x+1)/2*w,y:(1-v.y)/2*h,on:v.x>-1&&v.x<1&&v.y>-1&&v.y<1};}
 const grain=mkCanvas(128,128);{const g=grain.getContext('2d'),im=g.createImageData(128,128);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}g.putImageData(im,0,0);}
@@ -4484,6 +4491,9 @@ function drawHud(ctx,w,h){
   }
   // vignette
   const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.45,w/2,h/2,Math.max(w,h)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.38)');ctx.fillStyle=vg;ctx.fillRect(0,0,w,h);
+  {/* a hit on the unit in view: a dark red rim that fades in half a second, as strong as the jolt */const jt=G.time-u.lastHit;
+    if(jt>=0&&jt<.5){const a=(u.joltT===u.lastHit?u.jolt:1)*.45*(1-jt/.5),hg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.72);
+      hg.addColorStop(0,'rgba(90,8,6,0)');hg.addColorStop(1,'rgba(90,8,6,'+a.toFixed(3)+')');ctx.fillStyle=hg;ctx.fillRect(0,0,w,h);}}
   // contacts
   ctx.lineWidth=1.4;
   for(const e of G.enemies){
@@ -5821,6 +5831,13 @@ const fr=()=>Math.random()-.5;
 function fxFlash(x,y,z,s,c){fP(x,y,z,{s0:s,s1:s*1.4,a:1,ttl:.1,c:c||0xffd890,add:true});fP(x,y,z,{s0:s*2.4,s1:s*3,a:.45,ttl:.16,c:0xff9a40,add:true});fLight(x,y,z,c||0xffc070,5,45,.15);}
 function fxSmoke(x,y,z,s,col,ttl,rise){fP(x,y,z,{v:[fr()*1.5,rise??2,fr()*1.5],s0:s,s1:s*3.2,a:.55,ttl:ttl||3,c:col??0x3a3836,drag:.6});}
 function fxDust(x,y,z,s){fP(x+fr()*2,y+.3,z+fr()*2,{v:[fr()*2,.8+Math.random(),fr()*2],s0:s,s1:s*2.6,a:.45,ttl:1.4,c:0x8a7a62,drag:.8});}
+/* a round that lands on the ground throws up earth and dust; in the water a spray. s is the puff's size: 1.1 for small arms,
+   2.4 for a shell. Few sprites, since a firefight lands many of these a second */
+function fxGroundHit(x,y,z,s){const big=s>2,wet=heightAt(x,z)<0;
+  if(wet){for(let k=big?4:2;k>0;k--)fP(x+fr(),y+.2,z+fr(),{v:[fr()*3*s,4+Math.random()*4*s,fr()*3*s],g:16,s0:.3*s,s1:.9*s,a:.8,ttl:.7,c:0xe6ecee});
+    if(big)fP(x,y+.5,z,{v:[0,7,0],g:12,s0:1.2,s1:3.4,a:.6,ttl:1,c:0xdfe6e8});return;}
+  fxDust(x,y,z,s*.8);if(big){fxDust(x,y,z,s);fP(x,y+.6,z,{v:[fr(),5+Math.random()*2,fr()],g:6,s0:1.4,s1:4.2,a:.55,ttl:1.3,c:0x6e5f4a,drag:1.2});}
+  for(let k=big?5:2;k>0;k--)fP(x+fr()*.6,y+.3,z+fr()*.6,{v:[fr()*2.4*s,3+Math.random()*3.5*s,fr()*2.4*s],g:22,s0:big?.45:.3,s1:big?.35:.22,a:.95,ttl:.45+Math.random()*.3,c:0x3e3326});}
 function fxBoom(x,y,z,s){s=s||1;fxFlash(x,y+1,z,6*s,0xfff0c0);fLight(x,y+3,z,0xffa040,8*s,120*s,.9);
   for(let i=0;i<16;i++)fP(x+fr()*2*s,y+1+Math.random()*2*s,z+fr()*2*s,{v:[fr()*12*s,3+Math.random()*9*s,fr()*12*s],g:4,s0:2*s,s1:5*s,a:.95,ttl:.5+Math.random()*.5,c:Math.random()<.5?0xff7a20:0xffb040,add:true,drag:2});
   for(let i=0;i<18;i++)fP(x+fr()*3*s,y+1+Math.random()*3*s,z+fr()*3*s,{v:[fr()*6*s,2+Math.random()*5*s,fr()*6*s],s0:2.5*s,s1:8*s,a:.7,ttl:2.5+Math.random()*2,c:0x2e2a28,drag:.9});
