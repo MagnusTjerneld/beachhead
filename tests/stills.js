@@ -2,7 +2,7 @@
 // sheet. Every picture goes through the game's own __BHstill, the same steps as a frame (sync, sky, clouds, tree culling, render), so
 // the first picture of a series has its trees like the rest. Swiftshader takes about a second and a half a picture; a series of
 // more than about 60 pictures takes over two minutes and needs a yes first (CLAUDE.md).
-//   node tests/stills.js arstider [ut.jpg]        built-in series: arstider (9 dates at noon), ar (12 months x 6 hours), vinter
+//   node tests/stills.js arstider [ut.jpg]        built-in series: arstider (9 dates at noon), manader (12 months at noon), ar (12 months x 6 hours), vinter
 //   node tests/stills.js serie.json [ut.jpg]      your own: {seed, cols, w, h, shots:[{label, datum:'12-21', klocka:'08:30',
 //                                                 moln, cam:{rel,x,y,z}, look:{rel,x,y,z}}]}; rel = relative to the landing beach,
 //                                                 a missing y = that high over the ground (camUp, lookUp)
@@ -15,6 +15,7 @@ if(!fs.existsSync(three)){console.error('three.min.js saknas: kör npm install i
 const low={cam:{rel:true,x:-120,z:60,y:null},look:{rel:true,x:150,z:-120},camUp:35,lookUp:5};
 const SERIES={
   arstider:{cols:3,shots:[['15 jan','01-15'],['1 apr','04-01'],['20 apr','04-20'],['10 maj','05-10'],['1 jul','07-01'],['15 sep','09-15'],['15 okt','10-15'],['10 nov','11-10'],['20 dec','12-20']].map(([l,d])=>({label:l,datum:d,klocka:'12:00',moln:20,...low}))},
+  manader:{cols:4,shots:['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'].map((m,i)=>({label:'15 '+m,datum:String(i+1).padStart(2,'0')+'-15',klocka:'12:00',moln:20,...low}))},
   vinter:{cols:2,shots:[['15 jan 12','01-15','12:00'],['15 jan 22','01-15','22:00'],['20 dec 12','12-20','12:00'],['20 dec 22','12-20','22:00']].map(([l,d,k])=>({label:l,datum:d,klocka:k,moln:20,...low}))},
   ar:{cols:6,w:240,h:142,shots:[].concat(...['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'].map((m,i)=>[0,4,8,12,16,20].map(h=>({label:m+' '+String(h).padStart(2,'0'),datum:String(i+1).padStart(2,'0')+'-15',klocka:String(h).padStart(2,'0')+':00',moln:20,...low}))))}};
 const S=SERIES[arg[0]]||JSON.parse(fs.readFileSync(arg[0],'utf8'));
