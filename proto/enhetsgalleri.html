@@ -328,7 +328,7 @@ const ENEMY={
 };
 
 const TYPES={
-  scout:{label:'SPARV',tag:'S',role:'spaning',cost:40,build:8,hp:5,speed:19,vision:120,fuel:600,air:true,sig:45},
+  scout:{label:'GETING',tag:'G',role:'spaning och verkan',cost:60,build:10,hp:5,speed:19,vision:120,fuel:600,air:true,sig:45},
   drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
@@ -346,7 +346,7 @@ const SIZE_ACC={krok:1.1,drone:1,scout:.5};
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
 
 const COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
-const KROK_SRC="kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};";
+const KROK_SRC="kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},post:'def',heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};";
 
 function bjorn(){const g=new THREE.Group();
   const steel=mat(0x6f7b80),steel2=mat(0x5c676c),dark=mat(0x1b1c1e),track=mat(0x2a2c2e),deck=mat(0x9aa2a0),grill=mat(0x262a2c),gun=mat(0x4a5256);
@@ -387,7 +387,7 @@ const C='#5fb6cc';
 const US=[
   {id:'tank',name:'VARG',mk:()=>mkUnitMesh({kind:'tank',color:C}),move:'Svävare',note:'Stridsfordonet. En svävare som tar sig över vatten och land, når 140 m och skjuter på allt som någon ser.'},
   {id:'drone',name:'HÖK',mk:()=>mkUnitMesh({kind:'drone',color:C,ammo:4}),move:'Flyger',lift:2.5,note:'Attackdrönare med fyra robotar och en kulspruta. Spanar åt VARG och slår mot trupp; pansar bara på order.'},
-  {id:'scout',name:'SPARV',mk:()=>mkUnitMesh({kind:'scout',color:C}),move:'Flyger',lift:1.2,note:'Billig spaningsdrönare. Flyger lågt, ser långt och tål nästan ingenting.'},
+  {id:'scout',name:'GETING',mk:()=>mkUnitMesh({kind:'scout',color:C}),move:'Flyger',lift:1.2,note:'Spaningsdrönare med inbyggd sprängladdning (ersatte SPARV 16 okt). Flyger lågt och ser långt; på order, eller själv på Offensiv, dyker den in i ett pansarvärn, en robotskytt, infanteri, lätt pansar eller ett luftvärn och förbrukas. Laddningen gör 100 i skada inom 3 m och avtar till noll vid 12 m, för lite för bunker och stridsvagn.'},
   {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
   {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
   {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
