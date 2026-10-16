@@ -2254,7 +2254,7 @@ function dropSpot(p){
   return best==null?{x:p.x,y:p.y}:cellCenter(best);
 }
 function krokFly(k,tx,ty,dt,sp){
-  if(!k.pathT||Math.hypot(tx-k.pathT.x,ty-k.pathT.y)>15||k.pathV!==(G.tver||0)||(!k.path&&G.time-(k.pathAt||0)>2)){k.path=krokPath(k,tx,ty);k.pathT={x:tx,y:ty};k.pathV=G.tver||0;k.pathAt=G.time;}
+  if(!k.pathT||Math.hypot(tx-k.pathT.x,ty-k.pathT.y)>15||k.pathV!==(G.tver||0)||(!k.path&&(!k.pathFail||G.time-(k.pathAt||0)>2))){k.path=krokPath(k,tx,ty);k.pathT={x:tx,y:ty};k.pathV=G.tver||0;k.pathAt=G.time;k.pathFail=!k.path;}
   if(!k.path){k.blocked=true;return Infinity;}k.blocked=false;
   let p=k.path.length?k.path[0]:{x:tx,y:ty};
   while(k.path&&k.path.length>1&&Math.hypot(p.x-k.x,p.y-k.y)<5){k.path.shift();p=k.path[0];}
@@ -2272,7 +2272,7 @@ function krokOrders(k,dt,sp){
     if(airDanger(k,u.x,u.y)){say(k,u.name+' står inom räckhåll för kända hot. Kan inte hämta.');u.awaitKrok=null;k.orders.shift();k.path=null;return;}
     const d=krokFly(k,u.x,u.y,dt,sp);k.status='Hämtar '+u.name;
     if(d===Infinity){k.status='Ingen spanad väg till '+u.name;o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område till '+u.name+'. Ordern struken.');u.awaitKrok=null;k.orders.shift();}return;}
-    if(d<3){o.t+=dt;k.low=true;k.status='Kopplar '+u.name;if(o.t>=KROK_LIFT){k.cargo=u;u.carried=k.id;u.awaitKrok=null;k.orders.shift();k.path=null;say(k,u.name+' kopplad. Lyfter.');}}
+    if(d<3){o.t+=dt;k.low=true;k.status='Kopplar '+u.name;if(o.t>=KROK_LIFT){k.cargo=u;u.carried=k.id;u.awaitKrok=null;k.orders.shift();k.path=null;say(k,u.name+' kopplad. Lyfter.'+(k.orders.some(q=>q.type==='drop')?'':' Peka ut var den ska sättas ned.'));}}
     return;
   }
   if(o.type==='drop'){
