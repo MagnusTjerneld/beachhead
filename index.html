@@ -1191,8 +1191,14 @@ function buildWorldTry(seed,tryK){
     const T=mk===M_SKOG?(dense?[.85,3,.85,.6]:[.3,1,.75,.6]):TREE[mk];if(!T)continue;
     for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>T[0])continue;const nT=T[1]>1?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
     for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;
-      const h=hash2(gx*3+qq,gy*5+pass,s+91),k=mk===M_HALL?'pine':mk===M_STRAND?(h<.6?'pine':'birch'):mk===M_HAGE?(h<.55?'birch':h<.85?'pine':'spruce'):dense?(h<.3?'pine':h<.4?'birch':'spruce'):(h<.45?'pine':h<.75?'birch':'spruce');
-      W.trees.push({x,y,s:T[2]+hash2(gx+qq,gy,s+80)*T[3],ci:i,k});}}}
+      /* the kind of tree follows the ground, tuned so that an island comes out near Stockholm county's productive forest (Riksskogstaxeringen):
+         about 48 % spruce, 32 % pine and 20 % broadleaf. Pine on bare rock and the dry shore, broadleaf by the water and in pasture,
+         spruce in the dense forest on the better ground inland */
+      const h=hash2(gx*3+qq,gy*5+pass,s+91),coast=dWet[i]<5,k=mk===M_HALL?(h<.9?'pine':'birch'):mk===M_STRAND?(h<.5?'pine':'birch'):mk===M_HAGE?(h<.6?'birch':h<.8?'pine':'spruce'):
+        dense?(coast?(h<.36?'pine':h<.6?'birch':'spruce'):(h<.27?'pine':h<.44?'birch':'spruce')):(h<.42?'pine':h<.7?'birch':'spruce');
+      // trees are lower where the wind comes in: about 60 % of full height at the water, full height 100 m in; the tallest spruce stops near 17 m
+      let ts=(T[2]+hash2(gx+qq,gy,s+80)*T[3])*(.6+.4*clamp(dWet[i]/10,0,1));if(k==='spruce')ts=Math.min(ts,1.18);
+      W.trees.push({x,y,s:ts,ci:i,k});}}}
   W.baseGrid=grid.slice();
   // elevation grid for 3D
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
@@ -1237,11 +1243,18 @@ function buildWorldTry(seed,tryK){
     if(cand.length){let best=null,bd=-1;for(const c of cand){const d=Math.hypot(c.x-CARRIER.x,c.y-CARRIER.y)+Math.hypot(c.x-CX,c.y-CY)*.6;if(d>bd&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>40)){bd=d;best=c;}}
       if(best){// a lighthouse stands on the highest ground of its stretch of coast, never on the shore under a cliff
         let bx=best.x-best.n.x*8,by=best.y-best.n.y*8,bh=elevAt(bx,by,s,V);
+        /* on bare rock by the water rather than the highest ground in the forest (decided 16 okt: on ö 2316 it stood in dense forest):
+           at most 50 m from the water, and bare rock or open shore counts as if it were 4 or 2 m higher */
+        const lhB=i=>mark[i]===M_HALL?4:mark[i]===M_STRAND?2:0;let bs=bh+lhB(cellIdx(bx,by));
         for(let r=10;r<=140;r+=6){const nk=Math.max(10,Math.round(r/3));for(let k=0;k<nk;k++){const a=k/nk*TAU,x=best.x+Math.cos(a)*r,y=best.y+Math.sin(a)*r;if(x<20||y<20||x>WW-20||y>WH-20)continue;
-          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||!away(x,y,260))continue;const h=elevAt(x,y,s,V);if(h<=bh+.2)continue;
+          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||dWet[ci]>5||!away(x,y,260))continue;const h=elevAt(x,y,s,V),sc=h+lhB(ci);if(sc<=bs+.2)continue;
           if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<22)||E.some(e=>Math.hypot(e.x-x,e.y-y)<26)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<20)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<14))continue;
-          let flat=true;for(let m=0;m<6&&flat;m++){const q2=elevAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5,s,V);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;}}
-        D.light={x:bx,y:by,h:bh};W.trees=W.trees.filter(t=>Math.hypot(t.x-bx,t.y-by)>7);}}
+          let flat=true;for(let m=0;m<6&&flat;m++){const q2=elevAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5,s,V);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;bs=sc;}}
+        D.light={x:bx,y:by,h:bh};
+        // the light station: bare rock round the tower, pasture out to 50 m, and the forest thinning in towards it from 55 m
+        for(let gy=Math.floor((by-50)/CELL);gy<=Math.floor((by+50)/CELL);gy++)for(let gx=Math.floor((bx-50)/CELL);gx<=Math.floor((bx+50)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx,d=Math.hypot(gx*CELL+5-bx,gy*CELL+5-by);
+          if(d>50||!mark[i]||mark[i]===M_AKER)continue;mark[i]=d<25?M_HALL:M_HAGE;W.skog[i]=0;}
+        W.trees=W.trees.filter(t=>{const d=Math.hypot(t.x-bx,t.y-by);return d>55||(d>30&&hash2(Math.round(t.x),Math.round(t.y),s+97)<(d-30)/25);});}}
     const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const q=cellIdx(x+Math.cos(a/12*TAU)*r,y+Math.sin(a/12*TAU)*r);if(!wet(q))return true;}return false;};
     for(let t=0;t<400&&D.boats.length<D.jetties.length*.75+7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r=45+Rd()*90,x=c.x+c.n.x*r+(Rd()-.5)*60,y=c.y+c.n.y*r+(Rd()-.5)*60;
       if(!wet(cellIdx(x,y))||coastNear(x,y,25)||!away(x,y,280)||D.boats.some(b=>Math.hypot(b.x-x,b.y-y)<45)||nearPath(x,y,60))continue;D.boats.push({x,y,a:Rd()*TAU,kind:Rd()<.5?'sail':'motor',anchored:true});}
@@ -1302,9 +1315,10 @@ function buildWorldTry(seed,tryK){
       if(D.secs.length<4){const more=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;if(!(wet(i+2)||wet(i-2)||wet(i+2*GW)||wet(i-2*GW)))continue;const c=cellCenter(i);more.push({x:c.x,y:c.y});}
         for(let k=more.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[more[k],more[j]]=[more[j],more[k]];}
         for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
-    // a light stands in the open (decided 16 okt, Magnus): no trees within 20 m of any light, the lighthouse or a sector light (one
+    // a light stands in the open (decided 16 okt, Magnus): no trees within 25 m of any light, the lighthouse or a sector light (one
     // on ö 1504 stood hidden in the forest)
-    {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>20));}
+    {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>25));
+      for(const z of D.secs){const i=cellIdx(z.x,z.y);if(mark[i]===M_SKOG||mark[i]===M_HAGE){mark[i]=M_HALL;W.skog[i]=0;}}}
     // hidden shoals (grund under ytan) out in open water, each marked by a cardinal mark on its safe-water side
     D.shoals=[];for(let t=0;t<600&&D.shoals.length<7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r0=8+Rd()*16,dd=60+Rd()*230,x=c.x+c.n.x*dd+(Rd()-.5)*80,y=c.y+c.n.y*dd+(Rd()-.5)*80;
       if(!wet(cellIdx(x,y))||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
