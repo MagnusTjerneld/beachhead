@@ -1861,6 +1861,10 @@ function move(u,dt){
   if(!u.path||!u.path.length||u.pathFor!==o||Math.hypot(tx-u.pathT.x,ty-u.pathT.y)>20){
     if(u.air)u.path=airPath(u,tx,ty,o);
     else{let pth=null;
+      // a target on ground the vehicle cannot drive to (behind a barrier or a cliff): shoot from a spot on this side that it can reach,
+      // instead of driving round the island by sea to the target's own side; only with no such spot in range does it take the long way
+      if(o.type==='attack'&&!o.fp&&passLand(cellIdx(u.x,u.y))&&G.time>=(o.reachT||0)){o.reachT=G.time+2;
+        if(!landReach(u)[cellIdx(o.enemy.lx,o.enemy.ly)]){const fp=firingPoint(u,o.enemy,o.close);if(fp){o.fp=fp;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;tx=fp.x;ty=fp.y;}}}
       // BÄVER on its own never drives into the reach of a known ground threat: it waits for a safe route, and only the captain can send it anyway
       if(u.kind==='eng'&&!u.override&&G.ctrl!==u.id&&o.type!=='rtb'&&passLand(cellIdx(u.x,u.y))){const gm=groundThreat(),th=gm[cellIdx(tx,ty)]?threatAt(tx,ty):null;let why=null;
         if(th)why='Målet ligger inom räckhåll för '+ename(th);
@@ -1868,7 +1872,10 @@ function move(u,dt){
         if(why){u.path=null;u.pathFor=null;u.hold=true;u.unsafeWait=true;u.safeT=G.time+3;u.state=u.waitTxt='Väntar: '+why.charAt(0).toLowerCase()+why.slice(1);
           if(!u.safeMsgT||G.time>u.safeMsgT){u.safeMsgT=G.time+25;say(u,why+'. Väntar tills det är säkert (Kör ändå skickar mig ändå).');}return;}
         if(u.unsafeWait){u.unsafeWait=false;u.hold=false;say(u,'Säker väg finns. Kör.');}}
-      if(!pth)pth=astar(u.x,u.y,tx,ty,u.kind==='eng'?passLand:passAmph,costFor(o.post,o.type==='attack'&&u.kind==='tank'?o.enemy:null));
+      if(!pth){const pass=u.kind==='eng'?passLand:passAmph,avoid=o.type==='attack'&&u.kind==='tank';pth=astar(u.x,u.y,tx,ty,pass,costFor(o.post,avoid?o.enemy:null));
+        /* an attack keeps clear of the other known weapons, but not at any price: a way round that is more than half as long again (or 250 m
+           longer) than the plain way is dropped for the plain way; a 300 m wide reach used to send the wing round the island by sea */
+        if(avoid&&pth){const pl=astar(u.x,u.y,tx,ty,pass,costFor(o.post)),L=p=>{let t=0,q=u;for(const r of p){t+=Math.hypot(r.x-q.x,r.y-q.y);q=r;}return t;};if(pl&&L(pth)>Math.max(L(pl)*1.5,L(pl)+250))pth=pl;}}
       if(!pth&&u.kind==='eng'&&(!passLand(cellIdx(u.x,u.y))||(!u.amphT||G.time>u.amphT)&&(u.amphT=G.time+10,!!astar(u.x,u.y,tx,ty,passAmph,costFor(o.post))))&&!u.awaitKrok&&!G.kroks.some(k=>!k.dead&&k.orders.some(q=>q.unit===u))){if(G.time>=(u.liftAskT||0)){u.liftAskT=G.time+3;if(autoLift(u,tx,ty))say(u,'BÄVER kör inte i vatten. Begär lufttransport med KROK.');}if(u.unsafeWait){u.state=u.waitTxt='Väntar på säker landningsplats';return;}u.state='Väntar på lufttransport';return;}
       if(!pth&&o.type==='attack'&&o.arc){o.arc=null;o.fp=null;o.arcT=G.time+8;}/* a point on the arc that cannot be reached: fall back to a firing point the unit can drive to */
       if(!pth&&o.type==='attack'&&!o.fp){o.fp=firingPoint(u,o.enemy,o.close);o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;if(o.fp){u.state='Söker skjutläge mot '+ename(o.enemy);return;}}
@@ -2084,7 +2091,9 @@ function hokHold(u,o){const e=o.enemy,gs=o.withWing.map(id=>G.units.find(v=>v.id
 function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried&&v.kind==='tank'&&v.orders[0]&&v.orders[0].type==='attack'&&v.orders[0].enemy===e).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
   if(atk.length<2||!atk.includes(u))return null;const n=atk.length,i=atk.indexOf(u);let cx=0,cy=0;for(const v of atk){cx+=v.x;cy+=v.y;}cx/=n;cy/=n;
   const base=Math.atan2(cy-e.ly,cx-e.lx),R=Math.min(effRange(u)*.85,e.visibleNow?1e9:u.vision*.9),/* unspotted: close enough to see it ourselves */want=base+(i-(n-1)/2)*.85,others=G.enemies.filter(f=>f!==e&&!f.dead&&f.seen&&f.canGround);
-  const exp=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20).length,okAt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y));
+  /* only spots on ground the VARG can drive to from where it stands: a spot behind a barrier or a cliff took them round the island by sea */
+  const reach=passLand(cellIdx(u.x,u.y))?landReach(u):null;
+  const exp=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20).length,okAt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)]);
   // the spot on the arc that the fewest other known weapons reach (none if possible): guns that cover each other still get a planned attack
   let best=null,bx=1e9;
   for(const da of[0,.25,-.25,.5,-.5,.8,-.8])for(const rr of[R,R*.9]){const a=want+da,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};if(!okAt(p))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break;}
@@ -2094,9 +2103,16 @@ function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried
   const gr=e.canGround?(e.range||0):0;
   let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okAt(q))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
   return{x:p.x,y:p.y,a,st};}
-function firingPoint(u,e,close){
-  const g=WORLD.grid,N=GW*GH,r=new Uint8Array(N),s0=cellIdx(u.x,u.y),st=[s0];r[s0]=1;
+/* the land a vehicle can drive to from where it stands without going into the water: not across a barrier, a cliff or a strait */
+function landReach(u){const N=GW*GH,r=new Uint8Array(N),s0=cellIdx(u.x,u.y),st=[s0];r[s0]=1;
+  while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(let k=0;k<4;k++){const nx=x+(k===0?1:k===1?-1:0),ny=y+(k===2?1:k===3?-1:0);if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!passLand(n))continue;r[n]=1;st.push(n);}}
+  return r;}
+/* the cells a unit reaches from where it stands over anything but cliffs and walls (water included): where it may look for a firing spot */
+function groundReach(u){const g=WORLD.grid,N=GW*GH,r=new Uint8Array(N),s0=cellIdx(u.x,u.y),st=[s0];r[s0]=1;
   while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!isGround(g[n]))continue;r[n]=1;st.push(n);}}
+  return r;}
+function firingPoint(u,e,close){
+  const g=WORLD.grid,r=groundReach(u);
   // prefer waiting just outside the target's reach while it is unspotted, then close range for camouflage, then anything in gun range
   const ur=u.range||100,tries=[],er=u.air?airR(e):e.canGround?e.range:0;/* a vehicle has nothing to keep out of when the target cannot fire on it */
   if(!close&&!e.visibleNow&&er+5<ur*.95)tries.push([Math.max(40,er+5),ur*.95]);
