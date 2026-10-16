@@ -334,7 +334,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
-      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
+      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
@@ -3926,7 +3926,16 @@ const SKY=[ // hour, sky/fog, hemi sky, hemi ground, hemi I, key colour, key I, 
   [18.3,0xcf8c6c,0xd0a8a0,0x3e342c,.66,0xff9a58,.6,.3],[19.3,0x4e4466,0x8a7ea6,0x282634,.58,0xc09ac0,.1,.65],
   [20.4,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1],[24,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1]];
 const T3=typeof THREE!=='undefined',cA=T3?new THREE.Color():null,cB=T3?new THREE.Color():null,vDir=T3?new THREE.Vector3():null,sunDir=T3?new THREE.Vector3():null;
-const SUN_LAT=36,SUN_UP=6,SUN_DOWN=18.6;/* the sun's path: see updateSky */
+const SUN_LAT=36,SUN_UP=6,SUN_DOWN=18.6;/* the trailer's stylised sun path: see updateSky */
+/* the sky by the sun's height (seasons step 2, 16 okt): the hour table's rows placed at the sun height where they belong, one row set
+   for the morning and one for the evening so dawn and dusk keep their own colours: night 14 degrees below the horizon and lower,
+   twilight at 7 below, the low golden sun at 3 up and day from 12 up. A midsummer night (the sun 7 below) never gets darker than
+   twilight, and a winter noon (7 up) stays low and golden */
+const SKY_EL={am:[[-14,SKY[1]],[-7,SKY[2]],[3,SKY[3]],[12,SKY[4]]],pm:[[-14,SKY[8]],[-7,SKY[7]],[3,SKY[6]],[12,SKY[5]]]};
+/* the sun's direction in the world (x east, y up, z south) at clock hour h on day doy; returns its height in degrees */
+function sunVec(doy,h,out){const D=sunDay(doy),la=SUN_PT.lat*PI/180,H=(h-D.noon)*15*PI/180,cd=Math.cos(D.dec),sd=Math.sin(D.dec);
+  const e=-cd*Math.sin(H),nn=Math.cos(la)*sd-Math.sin(la)*cd*Math.cos(H),u=Math.sin(la)*sd+Math.cos(la)*cd*Math.cos(H);
+  out.set(e,u,-nn).normalize();return Math.asin(clamp(u,-1,1))*180/PI;}
 function lerpHex(a,b,t,out){return out.set(cA.setHex(a)).lerp(cB.setHex(b),t);}
 /* sky dome: gradient from the fog colour at the horizon to the zenith, sun disc and glow, moon and stars at night */
 function mkSky(){
@@ -3991,17 +4000,24 @@ function setWaterDepth(){
   U.uDepth.value=tx;U.uHasDepth.value=1;U.uGrid.value.set(W.SX,W.SY);
 }
 function updateSky(){
-  const h=G.tod;let i=0;while(i<SKY.length-2&&SKY[i+1][0]<=h)i++;const A=SKY[i],B=SKY[i+1],t=clamp((h-A[0])/(B[0]-A[0]),0,1);
+  /* the game reads the real sun for the island's date; the trailer keeps its own hour table and stylised path, so it looks as it did */
+  const h=G.tod,film=FILM.on;let A,B,t,el=0;
+  if(film){let i=0;while(i<SKY.length-2&&SKY[i+1][0]<=h)i++;A=SKY[i];B=SKY[i+1];t=clamp((h-A[0])/(B[0]-A[0]),0,1);}
+  else{el=sunVec(G.doy,h,sunDir);const nn=sunDay(G.doy).noon,T=SKY_EL[((h-nn)%24+24)%24<12?'pm':'am'];let i=0;while(i<T.length-2&&T[i+1][0]<=el)i++;
+    A=T[i][1];B=T[i+1][1];t=clamp((el-T[i][0])/(T[i+1][0]-T[i][0]),0,1);}
   const sc=R3.scene;lerpHex(A[1],B[1],t,sc.background);sc.fog.color.copy(sc.background);
   lerpHex(A[2],B[2],t,R3.hemi.color);lerpHex(A[3],B[3],t,R3.hemi.groundColor);R3.hemi.intensity=lerp(A[4],B[4],t);
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
   {const kf=SIKT_K[SIKT.k]||1;sc.fog.near=lerp(240,150,n)*kf;sc.fog.far=lerp(1000,720,n)*kf;}
-  /* the sun's path (decided 16 okt): a real arc, rising in the east, south at midday, setting in the west, stylised to a summer noon of
-     54 degrees with sunrise (06) and sunset (18.36) where the sky table has their colours (an effective latitude of 36 degrees at equinox). Its light fades over the last
-     5 degrees above the horizon, so shadows die out at dusk instead of stretching across the water, and the moon fades in after it */
-  {const SH=((h-SUN_UP)/(SUN_DOWN-SUN_UP)-.5)*PI,SP=SUN_LAT*PI/180,up=Math.cos(SP)*Math.cos(SH);sunDir.set(-Math.sin(SH),up,Math.sin(SP)*Math.cos(SH)).normalize();
-    if(n<.6){vDir.set(sunDir.x,Math.max(.01,sunDir.y),sunDir.z).normalize();R3.sun.intensity*=clamp(Math.asin(clamp(up,-1,1))/(5*PI/180),0,1);}
+  /* the sun's path: in the game the real sun for the island's date at 59.4 N (sunVec); in the trailer the stylised arc of 16 okt, a
+     summer noon of 54 degrees with sunrise at 06 and sunset at 18.36 where its hour table has their colours. Its light fades over the
+     last 5 degrees above the horizon, so shadows die out at dusk instead of stretching across the water, and the moon fades in after it */
+  {if(film){const SH=((h-SUN_UP)/(SUN_DOWN-SUN_UP)-.5)*PI,SP=SUN_LAT*PI/180;sunDir.set(-Math.sin(SH),Math.cos(SP)*Math.cos(SH),Math.sin(SP)*Math.cos(SH)).normalize();}
+    const up=sunDir.y;
+    /* the light keeps a floor of 8 degrees so a low winter sun does not throw shadows hundreds of metres long; the disc in the sky
+       stays where the sun really is */
+    if(n<.6){vDir.set(sunDir.x,film?Math.max(.01,sunDir.y):0,sunDir.z);if(!film){const hz=Math.hypot(vDir.x,vDir.z)||1,fl=Math.max(el,8)*PI/180;vDir.set(vDir.x/hz*Math.cos(fl),Math.sin(fl),vDir.z/hz*Math.cos(fl));}vDir.normalize();R3.sun.intensity*=clamp(Math.asin(clamp(up,-1,1))/(5*PI/180),0,1);}
     else{vDir.set(-.45,.78,-.42).normalize();R3.sun.intensity*=clamp((n-.6)/.15,0,1);}
     /* the light value (decided 16 okt): how dark it is, from the sun's height, not the clock, so another season moves every lamp with
        it: 0 with the sun 6 degrees up or more, 1 at 12 degrees below the horizon (civil into nautical twilight). Everything that is lit
@@ -5800,7 +5816,8 @@ window.addEventListener('beforeunload',e=>{if(REC.ev.length&&!REC.saved){e.preve
    button), and one block to copy and paste back. ---------- */
 const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],gpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',run:'',dyn0:null,rnd0:null,boomT:0,R:null,
   seeds:[1234,2024,4711],warm:2500,len:8000};
-BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
+/* the benchmark always plays on 22 September, so its day, dusk and night look alike on every island and every run */
+const BENCH_DOY=doyOf(8,22);BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
   BENCH.all.push({seed:sd,tod:12,main:'map',view:'ö'});BENCH.all.push({seed:sd,tod:23.5,main:'cam',view:'strid'});}
 /* the first island once more at the end: shows whether the first scenarios are slow because they come first (a graphics card still clocking up) */
 BENCH.all.push({seed:BENCH.seeds[0],tod:12,main:'cam',view:'ö',again:true});
@@ -5817,13 +5834,13 @@ function benchStart(){if(BENCH.on)return;let q=null;try{q=new URLSearchParams(lo
   diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
 function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();const sc=BENCH.list[BENCH.i];
   // the same random numbers and the same fresh island every time, so two runs see the same frames
-  BENCH.R=rng(9001+BENCH.i);Math.random=BENCH.R;restart(sc.seed);startGame();G.speed=1;G.tod=sc.tod;
+  BENCH.R=rng(9001+BENCH.i);Math.random=BENCH.R;restart(sc.seed,undefined,{doy:BENCH_DOY,tod:sc.tod});startGame();G.speed=1;G.tod=sc.tod;
   if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}BENCH.v=benchView(sc);G.paused=sc.view!=='strid';
   if(sc.view==='strid'){const v=BENCH.v;for(let k=0;k<4;k++){const a=k*TAU/4;startFire(v.tx+Math.cos(a)*18,v.ty+Math.sin(a)*18,60,1,0);}}
   uiTick(true);BENCH.label=(BENCH.i+1)+'/'+BENCH.list.length+'  '+benchName(sc);BENCH.phase='warm';BENCH.t0=performance.now();BENCH.boomT=0;
   BENCH.gaps=[];BENCH.cpus=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
 const benchPct=(a,q)=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(q*b.length))];};
-function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!sc)return;G.tod=sc.tod;const t=performance.now()-BENCH.t0,gap=BENCH.last?now-BENCH.last:0;BENCH.last=now;
+function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!sc)return;G.tod=sc.tod;G.doy=BENCH_DOY;const t=performance.now()-BENCH.t0,gap=BENCH.last?now-BENCH.last:0;BENCH.last=now;
   // the staged fight: a blast and a puff of smoke near the fires every 0.3 s of game time
   if(sc.view==='strid'&&G.time-BENCH.boomT>=.3){BENCH.boomT=G.time;const v=BENCH.v,R=BENCH.R,x=v.tx+(R()-.5)*60,y=v.ty+(R()-.5)*60;
     G.fx.push({k:'boom',x,y,t:0,ttl:1.1,big:R()<.3});G.fx.push({k:'puff',x,y,h:groundY(x,y)+1,t:0,ttl:1.2,c:0x6a665e,s:2.4,hit:false,ws:'cannon'});}
