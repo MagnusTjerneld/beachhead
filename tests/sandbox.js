@@ -33,6 +33,8 @@ const SC={
   hokrb:{txt:'2 offensiva HÖK mot en bunker med två robotskyttar framför',own:{hok:['off','off']},def:[['turret',0,0],['rb',-40,-30],['rb',-40,30]],plan:'chain',order:[0]},
   hokpv:{txt:'2 offensiva HÖK mot två pansarvärnslag i skydd som flyttat 50 m sedan de sågs',own:{hok:['off','off']},def:[['at',0,-30],['at',10,40]],plan:'chain',order:[0,1],cover:true,moved:50},
   hokpvlv:{txt:'som hokpv, med ett okänt luftvärn 100 m bakom lagen',own:{hok:['off','off']},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],cover:true,moved:50,hide:[2],need:[0,1]},
+  pvlv:{txt:'2 VARG mot två pansarvärnslag under ett luftvärn (som vid spärren i inspelningen på ö 1234, skog utan skydd)',own:{tank:2},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],need:[0,1]},
+  getpvlv:{txt:'som pvlv, och kaptenen skickar en GETING på vart och ett av pansarvärnslagen',own:{tank:2,get:['def','def']},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],need:[0,1],getOn:[0,1]},
   motanfall:{txt:'3 VARG står kvar och tar emot två stridsvagnar och ett lätt pansarfordon som rycker ut mot dem',
     own:{tank:3},def:[['tank',0,-30],['tank',0,30],['light',20,0]],plan:'hold',dist:330}
 };
@@ -68,29 +70,31 @@ function play(name,rep){
   G.units=[];const own=[],nt=S.own.tank||0,hk=(S.own.hok&&S.own.hok.length)?S.own.hok:HOK?['def']:[],back=-(S.dist||420);
   for(let i=0;i<nt;i++){const p=at(back,(i-(nt-1)/2)*26),u=B.makeUnit('tank',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);if(S.own.hp)u.hp=Math.round(u.maxhp*S.own.hp);G.units.push(u);own.push(u);}
   hk.forEach((post,i)=>{const p=at(back-30,(i-(hk.length-1)/2)*30),u=B.makeUnit('drone',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
+  (S.own.get||[]).forEach((post,i)=>{const p=at(back-50,(i-((S.own.get.length-1)/2))*30),u=B.makeUnit('scout',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
   G.wings={'1':own.map(u=>u.id)};G.selIds=own.map(u=>u.id);G.sel=own[0].id;
   const plan=UNSEEN&&S.plan==='chain'?'advance':S.plan;/* unknown defenders cannot be pointed out: the wing advances on the centre */
   if(plan==='chain')(S.order||S.def.map((_,i)=>i)).forEach((k,j)=>B.groupOrder({enemy:G.enemies[k]},j>0));
   else if(plan==='advance')B.groupOrder({world:at(0,0)},false,'off');
   else if(plan==='hold'){const c=at(back,0);B.counterattack({id:'sandlådan',x:c.x,y:c.y});G.log=G.log.filter(l=>!/fältvarvet/.test(l.text));}
+  if(S.getOn){const gs=own.filter(u=>u.kind==='scout');S.getOn.forEach((k,i)=>{if(gs[i])B.giveOrder(gs[i],{type:'attack',enemy:G.enemies[k],post:'off'},false);});}/* the captain sends a GETING at each */
   const hp0=own.reduce((s,u)=>s+u.hp,0),dmg0=G.enemies.reduce((s,e)=>s+e.hp,0),deaths=[],seenDead=new Set(),rtbOnce=new Set(),rtbT={};let t=0,res='tid',outT=null;
   for(;t<TMAX;t+=DT){B.step(DT);
-    for(const u of own){if(u.rtb&&!u.dead){rtbOnce.add(u.id);if(rtbT[u.id]==null)rtbT[u.id]=t;}else if(!u.dead)rtbT[u.id]=null;if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);const h=Object.entries(u.hitBy).sort((a,b)=>b[1]-a[1])[0],k=h&&G.enemies.find(e=>e.id===h[0]);
+    for(const u of own){if(u.rtb&&!u.dead){rtbOnce.add(u.id);if(rtbT[u.id]==null)rtbT[u.id]=t;}else if(!u.dead)rtbT[u.id]=null;if(u.dead&&!seenDead.has(u.id)&&!u.spent){seenDead.add(u.id);const h=Object.entries(u.hitBy).sort((a,b)=>b[1]-a[1])[0],k=h&&G.enemies.find(e=>e.id===h[0]);
       deaths.push({kind:u.kind,rtb:rtbT[u.id]!=null,rtbS:rtbT[u.id]!=null?t-rtbT[u.id]:null,killer:k?k.kind:'?',d:k?Math.round(Math.hypot(k.x-u.x,k.y-u.y)):0});}}
     if((S.need?S.need.map(k=>G.enemies[k]):G.enemies).every(e=>e.dead)){res='vinst';break;}
     // everyone out (the VARG, when there are any): play on for 25 s so that deaths on the way back count, then stop
     if(own.filter(u=>!u.air||!own.some(v=>!v.air)).every(u=>u.dead||u.rtb||(u.air&&u.orders[0]&&u.orders[0].type==='rtb'))){/* HÖK in a wing with VARG follows them out */if(outT==null)outT=t;else if(t-outT>25){res='ute';break;}}else outT=null;}
   if(LOG)for(const l of [...G.log].reverse())console.log(('     '+(l.t!=null?l.t.toFixed(0):'')).slice(-5)+'  '+l.text);
   for(const d of deaths){KILLER[d.killer]=(KILLER[d.killer]||0)+1;if(d.rtbS!=null)RTBS.push(d.rtbS);}
-  return{res,t,tankLost:deaths.filter(d=>d.kind==='tank').length,hokLost:deaths.filter(d=>d.kind==='drone').length,rtbDeaths:deaths.filter(d=>d.rtb).length,
+  return{res,t,tankLost:deaths.filter(d=>d.kind==='tank').length,hokLost:deaths.filter(d=>d.kind==='drone').length,getSpent:G.getingSpent||0,getLost:deaths.filter(d=>d.kind==='scout').length,rtbDeaths:deaths.filter(d=>d.rtb).length,
     retreats:rtbOnce.size,kills:G.enemies.filter(e=>e.dead).length,nDef:G.enemies.length,dealt:dmg0-G.enemies.reduce((s,e)=>s+(e.dead?0:Math.max(0,e.hp)),0),
     taken:hp0-own.reduce((s,u)=>s+(u.dead?0:Math.max(0,u.hp)),0),deaths};
 }
 const RTBS=[];const avg=(a,k)=>a.reduce((s,r)=>s+r[k],0)/a.length,med=a=>{const b=[...a].sort((x,y)=>x-y);return b.length?b[b.length>>1]:NaN;};
 const t0=Date.now();
-console.log((sets.length?'ändrat: '+sets.join(' ')+'\n':'')+(UNSEEN?'försvararna okända från start\n':'')+(HOK?'en defensiv HÖK i wingar som saknar HÖK\n':'')+'scenario      vinst   tid(med)  VARG förl  HÖK förl  dog i reträtt  reträtter  fiender tagna');
+console.log((sets.length?'ändrat: '+sets.join(' ')+'\n':'')+(UNSEEN?'försvararna okända från start\n':'')+(HOK?'en defensiv HÖK i wingar som saknar HÖK\n':'')+'scenario      vinst   tid(med)  VARG förl  HÖK förl  dog i reträtt  reträtter  fiender tagna  GETING förbr/nedsk');
 for(const name of which){const R=[];for(let r=0;r<REPS;r++)R.push(play(name,r));const W=R.filter(r=>r.res==='vinst'),dead=R.reduce((s,r)=>s+r.tankLost+r.hokLost,0),rd=R.reduce((s,r)=>s+r.rtbDeaths,0);
   console.log(name.padEnd(12)+(Math.round(W.length/REPS*100)+' %').padStart(7)+(W.length?Math.round(med(W.map(r=>r.t)))+' s':'-').padStart(10)+
     avg(R,'tankLost').toFixed(2).padStart(11)+avg(R,'hokLost').toFixed(2).padStart(10)+((dead?Math.round(rd/dead*100):0)+' %').padStart(15)+avg(R,'retreats').toFixed(2).padStart(11)+
-    (avg(R,'kills').toFixed(1)+'/'+R[0].nDef).padStart(15)+(R.some(r=>r.res==='tid')?'   ('+R.filter(r=>r.res==='tid').length+' på tid)':''));}
+    (avg(R,'kills').toFixed(1)+'/'+R[0].nDef).padStart(15)+(avg(R,'getSpent').toFixed(2)+'/'+avg(R,'getLost').toFixed(2)).padStart(20)+(R.some(r=>r.res==='tid')?'   ('+R.filter(r=>r.res==='tid').length+' på tid)':''));}
 console.log((RTBS.length?'de som dog i reträtt dog i median '+med(RTBS).toFixed(1)+' s efter att de vänt\n':'')+'dödande vapen: '+Object.entries(KILLER).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+' '+v).join(', ')+'   ('+((Date.now()-t0)/1000).toFixed(0)+' s)');
