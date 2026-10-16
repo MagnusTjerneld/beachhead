@@ -50,7 +50,8 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
 // 6. troops under trees only show from the air within 40 m, so a HÖK sent to spot them goes that close
 {const G=setup();const L=G.relays[0],h=G.units.find(u=>u.kind==='drone');let p=null;
   for(let r=50;r<900&&!p;r+=10)for(let a=0;a<6.28&&!p;a+=.2){const x=L.x+Math.cos(a)*r,y=L.y+Math.sin(a)*r;if(B.coverAt(x,y))p={x,y};}
-  if(p){const e=live(G,'at',p.x,p.y),q=B.spotPoint(h,e,{x:L.x,y:L.y});const d=q?Math.hypot(q.x-e.lx,q.y-e.ly):-1;ok(q&&d<40,'the spotting point for pansarvärn under trees is '+Math.round(d)+' m from it');}
+  /* only while troops under trees hide from the air (FOREST_HIDE, off since 16 okt) */
+  if(p&&B.FOREST_HIDE){const e=live(G,'at',p.x,p.y),q=B.spotPoint(h,e,{x:L.x,y:L.y});const d=q?Math.hypot(q.x-e.lx,q.y-e.ly):-1;ok(q&&d<40,'the spotting point for pansarvärn under trees is '+Math.round(d)+' m from it');}
   else ok(true,'(no trees on this island)');}
 // 7. staying or leaving: a VARG below 30 % fights on when the guns on it are nearly out, and pulls out early when it is clearly losing
 {const G=setup();const L=G.relays[0],[v1,v2]=G.units.filter(u=>u.kind==='tank');v1.x=L.x+150;v1.y=L.y;v2.x=L.x+150;v2.y=L.y+25;v1.orders=[];v2.orders=[];
