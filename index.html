@@ -722,6 +722,13 @@ function validWorld(W){
   const none=new Uint8Array(g.length),bar=new Uint8Array(g.length);for(const c of W.gateCells||[])bar[c]=1;
   for(const s of W.structs||[]){none[s.cell]=1;bar[s.cell]=1;}
   const open=flood(none),shut=flood(bar),at=p=>cellIdx(p.x,p.y);
+  /* the landing beach opens on the water (fixed 16 okt): within 60 m of the landing, over ground that is neither rock nor a building,
+     a hovercraft reaches the sea. On about one island in twenty-five (ö 1260, 1284) a steep waterline left a band of rock along the
+     whole beach, and VARG drove round the island looking for a way up */
+  {const s0=at(W.landing),seen=new Map([[s0,0]]),q=[s0];let ok=false;
+    for(let h=0;h<q.length&&!ok;h++){const c=q[h],x=c%GW,y=(c/GW)|0,d=seen.get(c);for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;
+      const n=ny*GW+nx,t=g[n];if(seen.has(n))continue;if(t===DEEP||t===SHAL){ok=true;break;}if(!isGround(t)||none[n]||d>=6)continue;seen.set(n,d+1);q.push(n);}}
+    if(!ok){W.why='stranden stängd mot havet';return false;}}
   // every zone in one piece (a zone straddling a lagoon or a strait would put its road and its point on the far side)
   {const mass=new Uint8Array(g.length);{const s0=cellIdx(W.landing.x,W.landing.y),st=[s0];mass[s0]=1;while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(!mass[m]&&g[m]!==DEEP&&g[m]!==SHAL){mass[m]=1;st.push(m);}}}}
     // only pieces on the main landmass count: a holm that the rough coast cut off belongs to no road and no point
