@@ -4163,12 +4163,12 @@ function seasonApply(doy){const S=seasonAt(doy);R3.season=S;R3.seasonDoy=doy;
 function mkWaterMat(){
   const m=new THREE.MeshPhongMaterial({color:0x36677e,transparent:true,opacity:.86,shininess:220,specular:0xdfe8ec});
   const U={uTime:{value:0},uHor:{value:new THREE.Color(0xa9bbc4)},uFoam:{value:new THREE.Color(0xe9f1f2)},uDepth:{value:null},uHasDepth:{value:0},uGrid:{value:new THREE.Vector2(1,1)},
-    uIce:{value:0},uFloe:{value:0},uIceL:{value:1},uChan:{value:Array.from({length:24},()=>new THREE.Vector2(-1e4,-1e4))},uChanN:{value:0}};
+    uIce:{value:0},uFloe:{value:0},uIceL:{value:new THREE.Color(1,1,1)},uChan:{value:Array.from({length:24},()=>new THREE.Vector2(-1e4,-1e4))},uChanN:{value:0}};
   m.userData.U=U;
   m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWPos;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWPos=(modelMatrix*vec4(transformed,1.0)).xyz;');
     sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
-      varying vec3 vWPos;uniform float uTime,uHasDepth,uIce,uFloe,uIceL;uniform vec3 uHor,uFoam;uniform sampler2D uDepth;uniform vec2 uGrid;uniform vec2 uChan[24];uniform int uChanN;
+      varying vec3 vWPos;uniform float uTime,uHasDepth,uIce,uFloe;uniform vec3 uHor,uFoam,uIceL;uniform sampler2D uDepth;uniform vec2 uGrid;uniform vec2 uChan[24];uniform int uChanN;
       ${NOISE_GLSL}
       vec2 wgrad(vec2 p,float t){vec2 g=vec2(0.0);
         g+=vec2(0.83,0.55)*0.55*cos(dot(p,vec2(0.83,0.55))*0.55+t*1.1);
@@ -4230,7 +4230,10 @@ function updateSky(){
   {const kf=SIKT_K[SIKT.k]||1,mf=SE.haze*clamp(1-Math.abs(h-7.5)/3.5,0,1);/* autumn's morning mist: the fog comes closer, purely to look at */
     sc.fog.near=lerp(240,150,n)*kf*(1-.6*mf);sc.fog.far=lerp(1000,720,n)*kf*(1-.4*mf);}
   {const WU=R3.water.material.userData.U;if(WU){R3.water.material.color.setHex(0x36677e).lerp(cA.setHex(0x52626a),SE.gray*.7);
-    const bg=sc.background;WU.uIceL.value=clamp((bg.r*.3+bg.g*.59+bg.b*.11)*1.35+.15,.28,1);
+    /* the ice is drawn unlit: its brightness follows the sky, and at night it takes the hue of the moonlit snow (sky light and moon)
+       and stays near the snow's brightness, instead of a dark neutral grey that reads brown against the blue (decided 16 okt) */
+    const bg=sc.background,L=Math.max(clamp((bg.r*.3+bg.g*.59+bg.b*.11)*1.35+.15,.28,1),lerp(.28,.62,n)),hc=R3.hemi.color,hi=R3.hemi.intensity,lc=R3.sun.color,li=R3.sun.intensity;
+    const tr=hc.r*hi+lc.r*li,tg=hc.g*hi+lc.g*li,tb=hc.b*hi+lc.b*li,tm=Math.max(tr,tg,tb,1e-4);WU.uIceL.value.setRGB(L*lerp(1,tr/tm,n),L*lerp(1,tg/tm,n),L*lerp(1,tb/tm,n));
     /* Birka's channel through the ice: its way in, as far as it has come */
     const H=G.harbor,P=WORLD.birkaPath;let n2=0;if(SE.ice>0&&H&&P&&H.s>0){const N=24,s1=Math.min(H.s,P.L);for(let k=0;k<N;k++){const sk=s1*k/(N-1);let i=0;while(i<P.pts.length-2&&P.len[i+1]<sk)i++;const a=P.pts[i],b=P.pts[i+1],f=(sk-P.len[i])/((P.len[i+1]-P.len[i])||1);WU.uChan.value[k].set(lerp(a.x,b.x,f),lerp(a.y,b.y,f));}n2=N;}
     WU.uChanN.value=n2;}}
