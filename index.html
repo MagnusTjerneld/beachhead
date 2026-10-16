@@ -1165,13 +1165,22 @@ function buildWorldTry(seed,tryK){
         for(let gy=Math.floor((y-9)/CELL);gy<=Math.floor((y+9)/CELL);gy++)for(let gx=Math.floor((x-9)/CELL);gx<=Math.floor((x+9)/CELL);gx++){const i=gy*GW+gx;if(i<0||i>=GW*GH||W.road[i])continue;if(Math.hypot(gx*CELL+5-x,gy*CELL+5-y)>7.5)continue;if(G0[i]===LAND){G0[i]=WALL;grid[i]=WALL;}}}
       W.trees=W.trees.filter(t=>D.villas.every(v=>Math.hypot(t.x-v.x,t.y-v.y)>15));}
     // small sector lights (prickfyrar): four per island, two red and two green, well spread; on skerries first, then on low points of the coast
-    D.secs=[];{const sites=[];for(const o of (W.islets||[]))if(o.kind!=='grynna'&&o.kind!=='stenar')sites.push({x:o.x,y:o.y,h:o.parts[0].h*.85});
-      for(let k=0;k<cand.length;k+=3){const c=cand[k];sites.push({x:c.x-c.n.x*3,y:c.y-c.n.y*3,h:Math.max(0,c.top)});}
-      for(const q of sites){if(D.secs.length>=4)break;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
+    /* on the coast a light stands on level ground at the terrain's own height (fixed 16 okt: on ö 1504 a green one stood at the cliff
+       top's height right at the edge and hung out over the drop): from the coast point it looks up to 9 m further in, still by the water, for a spot where
+       the ground within 2 m is level to under a metre, and sits at the lowest of it; with no such spot the site is skipped. Skerries
+       are their own meshes and keep their height */
+    const shore=(x,y)=>{const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++){const X=gx+ox,Y=gy+oy;if(X>=0&&Y>=0&&X<GW&&Y<GH&&wet(Y*GW+X))return true;}return false;};
+    const seat=q=>{if(q.islet)return q;for(let d=0;d<=9;d+=3){const x=q.x-(q.nx||0)*d,y=q.y-(q.ny||0)*d;let lo=heightAt(x,y),hi=lo;
+      for(let a=0;a<8;a++){const h=heightAt(x+Math.cos(a*PI/4)*2.2,y+Math.sin(a*PI/4)*2.2);lo=Math.min(lo,h);hi=Math.max(hi,h);}if(lo>.3&&hi-lo<.8&&shore(x,y))return{x,y,h:lo};if(!q.nx&&!q.ny)break;}return null;};
+    D.secs=[];{const sites=[];for(const o of (W.islets||[]))if(o.kind!=='grynna'&&o.kind!=='stenar')sites.push({x:o.x,y:o.y,h:o.parts[0].h*.85,islet:true});
+      for(let k=0;k<cand.length;k+=3){const c=cand[k];sites.push({x:c.x-c.n.x*3,y:c.y-c.n.y*3,nx:c.n.x,ny:c.n.y});}
+      for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
         D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}
-      if(D.secs.length<4){const more=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;if(!(wet(i+2)||wet(i-2)||wet(i+2*GW)||wet(i-2*GW)))continue;const c=cellCenter(i);more.push({x:c.x,y:c.y,h:Math.max(0,elevAt(c.x,c.y,s,V))});}
+      if(D.secs.length<4){const more=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;if(!(wet(i+2)||wet(i-2)||wet(i+2*GW)||wet(i-2*GW)))continue;const c=cellCenter(i);more.push({x:c.x,y:c.y});}
         for(let k=more.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[more[k],more[j]]=[more[j],more[k]];}
-        for(const q of more){if(D.secs.length>=4)break;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
+        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
+    // a light stands in the open: no trees within 15 m of it (one on ö 1504 stood hidden in the forest)
+    if(D.secs.length)W.trees=W.trees.filter(t=>D.secs.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>15));
     // a daymark (båk) on one or two of the bigger skerries
     D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7)D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
     // hidden shoals (grund under ytan) out in open water, each marked by a cardinal mark on its safe-water side
