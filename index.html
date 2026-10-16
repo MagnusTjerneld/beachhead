@@ -1262,19 +1262,22 @@ function buildWorldTry(seed,tryK){
         if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+70)return false;if(pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+35)||W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<60))return false;
         if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<28)||E.some(e=>Math.hypot(e.x-x,e.y-y)<40)||D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<45)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<16)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<14)||C.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
         const h=elevAt(x,y,s,V);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.2)return false;return h;};
-      const COL=['falu','falu','falu','vit','gul','svart'];
+      /* five kinds of house (decided 16 okt, Magnus: at least five, and not only red with white corners), each with its own colours;
+         a torp is mostly the old red cottage, by the water anything goes */
+      const pick=(W8)=>{let r=Rd()*W8.reduce((a,b)=>a+b[1],0);for(const[k,w]of W8){r-=w;if(r<=0)return k;}return W8[0][0];};
+      const TYP_T=[['torp',3],['sextio',1]],TYP_S=[['torp',.6],['sextio',1.2],['ahus',.6],['modern',.6],['veranda',1]];
       // torp
       {const tc=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(!((mark[i]===M_HAGE)||(mark[i]===M_SKOG&&dRoad[i]>=2&&dRoad[i]<=3)))continue;const c=cellCenter(i);if(farms.some(f=>Math.hypot(f.x-c.x,f.y-c.y)<110))continue;tc.push(c);}
         for(let k=tc.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[tc[k],tc[j]]=[tc[j],tc[k]];}
         const nT=6+Math.floor(Rd()*6);let n=0;for(const c of tc){if(n>=nT)break;const x=c.x+(Rd()-.5)*6,y=c.y+(Rd()-.5)*6;if(C.some(q=>q.kind==='torp'&&Math.hypot(q.x-x,q.y-y)<100))continue;const h=fits(x,y);if(h===false)continue;
-          const rp=roadNear(x,y),a=(rp&&Math.hypot(rp.x-x,rp.y-y)<80?Math.atan2(rp.y-y,rp.x-x)+PI/2:Rd()*TAU)+(Rd()-.5)*.1;C.push({x,y,a,h,kind:'torp',col:COL[Math.floor(Rd()*3)]});n++;
+          const rp=roadNear(x,y),a=(rp&&Math.hypot(rp.x-x,rp.y-y)<80?Math.atan2(rp.y-y,rp.x-x)+PI/2:Rd()*TAU)+(Rd()-.5)*.1;C.push({x,y,a,h,kind:'torp',type:pick(TYP_T),pal:Math.floor(Rd()*12)});n++;
           for(let gy=Math.floor((y-15)/CELL);gy<=Math.floor((y+15)/CELL);gy++)for(let gx=Math.floor((x-15)/CELL);gx<=Math.floor((x+15)/CELL);gx++){const i=gy*GW+gx;if(i>=0&&i<GW*GH&&mark[i]===M_SKOG&&Math.hypot(gx*CELL+5-x,gy*CELL+5-y)<15)mark[i]=M_HAGE;}}}
       // summer cottages in small groups by the water, from the same low coast points as the jetties (where the shore is under 7 m)
       {const nG=4+Math.floor(Rd()*3),groups=[];
         for(const c of cand){if(groups.length>=nG)break;if(groups.some(g=>Math.hypot(g.x-c.x,g.y-c.y)<180)||farms.some(f=>Math.hypot(f.x-c.x,f.y-c.y)<130))continue;
           const want=2+Math.floor(Rd()*4),mine=[];
           for(let t=0;t<40&&mine.length<want;t++){const din=12+Rd()*30,dl=(Rd()-.5)*80,x=c.x-c.n.x*din-c.n.y*dl,y=c.y-c.n.y*din+c.n.x*dl,ci=cellIdx(x,y);if(dWet[ci]<1||dWet[ci]>5)continue;
-            const h=fits(x,y);if(h===false||h>8||h>c.top+5)continue;const v={x,y,a:Math.atan2(c.n.y,c.n.x)+PI/2+(Rd()-.5)*.3,h,kind:'stuga',col:COL[Math.floor(Rd()*COL.length)]};C.push(v);mine.push(v);}
+            const h=fits(x,y);if(h===false||h>8||h>c.top+5)continue;const v={x,y,a:Math.atan2(c.n.y,c.n.x)+PI/2+(Rd()-.5)*.3,h,kind:'stuga',type:'',pal:0};v.type=pick(TYP_S);v.pal=Math.floor(Rd()*12);C.push(v);mine.push(v);}
           if(!mine.length)continue;groups.push(c);
           // a jetty of the group's own where the shore allows
           if(Rd()<.7&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>60)&&C.every(v=>Math.hypot(v.x-c.x,v.y-c.y)>10)){const L=10+Rd()*8;if(clearRun(c,c.n,L)){const a=Math.atan2(c.n.y,c.n.x);D.jetties.push({x:c.x,y:c.y,a,len:L,top:c.top});
@@ -3056,7 +3059,7 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   if(WORLD.islets){ctx.lineJoin='round';for(const o of WORLD.islets)for(const pp of o.parts){ctx.fillStyle=o.kind==='grynna'?'#cdbf9a':'#d9c79a';ctx.strokeStyle='#26384f';ctx.lineWidth=(o.kind==='grynna'?1:1.4)*k;ctx.beginPath();
     const c=Math.cos(pp.rot),sn=Math.sin(pp.rot);for(let q=0;q<18;q++){const aa=q/18*TAU,w=1+.12*Math.sin(aa*3+o.seed)+.06*Math.sin(aa*5+o.seed*.3),ex=Math.cos(aa)*pp.rx*w,ez=Math.sin(aa)*pp.rz*w;ctx.lineTo(o.x+pp.dx+ex*c-ez*sn,o.y+pp.dy+ex*sn+ez*c);}ctx.closePath();ctx.fill();ctx.stroke();}}
   if(WORLD.decor&&WORLD.decor.villas){ctx.fillStyle='#3c3a34';for(const[vi,v]of WORLD.decor.villas.entries()){if(G.ddead.v&&G.ddead.v[vi]!=null)continue;ctx.save();ctx.translate(v.x,v.y);ctx.rotate(v.a);ctx.fillRect(-6,-4.5,12,9);ctx.restore();}}
-  if(WORLD.decor&&WORLD.decor.cabins){ctx.fillStyle='#3c3a34';for(const[ci,c]of WORLD.decor.cabins.entries()){if(G.ddead.c&&G.ddead.c[ci]!=null)continue;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.a);ctx.fillRect(-3.5,-2.5,7,5);ctx.restore();}}
+  if(WORLD.decor&&WORLD.decor.cabins){ctx.fillStyle='#3c3a34';for(const[ci,c]of WORLD.decor.cabins.entries()){if(G.ddead.c&&G.ddead.c[ci]!=null)continue;ctx.save();ctx.translate(c.x,c.y);const T=CABIN[c.type]||CABIN.torp;ctx.rotate(c.a);ctx.fillRect(-T.L/2,-T.W/2,T.L,T.W);ctx.restore();}}
   // archipelago marks: piers, spar buoys, lighthouse
   if(WORLD.decor){const D=WORLD.decor;ctx.strokeStyle='#3c3a34';ctx.lineWidth=Math.max(1.4,1.6*k);ctx.lineCap='butt';
     for(const[ji,j]of D.jetties.entries()){if(G.ddead.j[ji]!=null)continue;ctx.beginPath();ctx.moveTo(j.x,j.y);ctx.lineTo(j.x+Math.cos(j.a)*j.len,j.y+Math.sin(j.a)*j.len);ctx.stroke();}
@@ -3673,24 +3676,46 @@ function fairwayRoute(W){const N=240,pts=[],half=N/2;
   for(let i=0;i<half;i++){const y=lerp(FAIR.y0,FAIR.y1,i/(half-1));pts.push({x:fairX(W,y)+FAIR.lane,z:y});}
   for(let i=0;i<half;i++){const y=lerp(FAIR.y1,FAIR.y0,i/(half-1));pts.push({x:fairX(W,y)-FAIR.lane,z:y});}
   const len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}return{pts,len,L:len[N],N,off:0};}
-/* torp and summer cottages (decided 16 okt): many small houses, drawn as a few instanced meshes rather than a group each. Local +x
-   is the ridge, the door and the main window face -z (the road for a torp, the water for a cottage); a burnt one sinks like a villa */
-const CABIN_COL={falu:FALU,vit:0xe8e4da,gul:0xd9b860,svart:0x2e2e30};
+/* torp and summer cottages (decided 16 okt): five kinds of house, drawn as a few instanced meshes rather than a group each: all
+   painted boxes in one mesh coloured per box, doors in one, windows in one per lighting group. Local +x along the house, the
+   front (door, big windows) faces -z: the road for a torp, the water for a cottage. A burnt one sinks like a villa.
+   Per kind: length, depth and wall height, and its palettes as [walls, trim, roof] */
+const CABIN={
+  torp:{L:7,W:5,H:2.8,pal:[[FALU,TRIM,0x38383c],[0xc8963e,TRIM,0x6e3a2e],[0xa9a59a,TRIM,0x38383c],[FALU,0x34342f,0x6e3a2e]]},
+  sextio:{L:8,W:5.5,H:2.4,pal:[[0x6b4a32,TRIM,0x2e2e30],[0x3f5a3a,TRIM,0x4a4038],[0xc9a24a,0x2e2e30,0x2e2e30],[0x8a8f8c,TRIM,0x4a4038]]},
+  ahus:{L:6,W:7,H:0,pal:[[0xb08a5a,TRIM,0x2e2e30],[TRIM,0x2e2e30,0x6e3a2e],[0x6b4a32,TRIM,0x3f4a3a]]},
+  modern:{L:9,W:5,H:3.1,pal:[[0x2a2a2c,0x2a2a2c,0x2a2a2c],[0x55585a,0x2a2a2c,0x3a3a3c],[0xa8885e,0x2a2a2c,0x2a2a2c]]},
+  veranda:{L:7,W:5.5,H:3.6,pal:[[0x9ec4d8,TRIM,0x8a4a3a],[0xb8cfa0,TRIM,0x38383c],[0xe6cf7a,TRIM,0x8a4a3a],[0xefece4,0x3f5a3a,0x38383c]]}};
+// the boxes of one house: [mesh (p painted, d dark, w window), colour (0 walls, 1 trim, 2 roof, 3 wood), x,y,z, sx,sy,sz, rx,rz]
+function cabinParts(c){const T=CABIN[c.type]||CABIN.torp,L=T.L,W=T.W,H=T.H,o=[],P=(m,k,x,y,z,sx,sy,sz,rx,rz)=>o.push([m,k,x,y,z,sx,sy,sz,rx||0,rz||0]);
+  const gable=(pitch,over)=>{for(const sz of[-1,1])P('p',2,0,H+W*Math.tan(pitch)*.22+.15,sz*W*.24,L+over,.32,W*.6,sz*pitch,0);};
+  const corners=()=>{for(const sx of[-1,1])for(const sz of[-1,1])P('p',1,sx*L/2,H/2,sz*W/2,.2,H,.2);};
+  const win=(x,y,z,w,h)=>{P('p',1,x,y,z,w+.3,h+.3,.1);P('w',0,x,y,z+Math.sign(z)*.05,w,h,.12);};
+  if(c.type==='ahus'){const th=1.05,a=6.8;for(const sx of[-1,1])P('p',2,sx*a/2*Math.cos(th),a/2*Math.sin(th),0,a,.32,W+.4,0,-sx*th);
+    for(let k=0;k<3;k++)P('p',0,0,.95+k*1.9,0,L*.86*(1-k*.3),1.9,W-.3);
+    P('w',0,0,2.4,-W/2+.1,2,2.6,.12);P('d',0,-1.6,.95,-W/2+.1,.9,1.9,.12);P('p',3,0,.15,-W/2-1,L*.8,.3,2);return o;}
+  P('p',0,0,H/2,0,L,H,W);
+  if(c.type==='torp'){gable(.55,.6);corners();win(-L*.2,H*.55,-W/2-.04,.9,.9);win(0,H*.55,W/2+.04,.9,.9);P('d',0,L*.25,.95,-W/2-.03,.9,1.9,.12);P('p',2,L*.2,H+W*.3,W*.12,.6,1.4,.6);}
+  else if(c.type==='sextio'){gable(.22,1.2);P('p',1,0,H-.1,-W/2-.08,L+.2,.25,.1);P('w',0,-L*.12,H*.52,-W/2-.05,2.6,1.2,.12);win(L*.32,H*.55,W/2+.04,.9,.8);P('d',0,L*.3,.95,-W/2-.03,.9,1.9,.12);P('p',3,-L*.1,.18,-W/2-1.1,L*.6,.3,2.2);}
+  else if(c.type==='modern'){P('p',2,0,H+.15,0,L+.6,.3,W+.8,.07,0);P('w',0,-L*.12,1.35,-W/2-.05,L*.55,2.2,.12);P('d',0,L*.32,1.05,-W/2-.03,1,2.1,.12);P('w',0,L*.2,H*.6,W/2+.05,1.6,.6,.12);P('p',3,-L*.12,.15,-W/2-1.2,L*.7,.3,2.4);}
+  else{gable(.7,.5);corners();win(-L*.25,H*.6,-W/2-.04,.9,1.2);win(L*.05,H*.6,-W/2-.04,.9,1.2);win(0,H*.6,W/2+.04,.9,1.2);P('d',0,L*.3,1.05,-W/2-.03,.9,2,.12);
+    P('p',3,0,.4,-W/2-1.2,L*.75,.25,2.4);for(const sx of[-1,1])P('p',1,sx*L*.36,1.4,-W/2-2.3,.18,2.2,.18);P('p',2,0,2.6,-W/2-1.25,L*.8,.15,2.7,-.18,0);}
+  return o;}
 function mkCabins(D,st){const C=D.cabins||[];R3.cabins=null;if(!C.length)return;
-  const N=C.length,U=new THREE.BoxGeometry(1,1,1),im=(m,n)=>{const o=new THREE.InstancedMesh(U,m,n);o.frustumCulled=false;st.add(o);return o;};
-  const K={C,f:new Array(N).fill(-1),body:im(new THREE.MeshLambertMaterial({color:0xffffff}),N),roof:im(mat(0x38383c),N*2),trim:im(mat(TRIM),N*4),door:im(mat(0x3a3430),N),win:[],wi:[]};
-  WIN_OFF.forEach((_,b)=>{const L=C.map((c,i)=>i).filter(i=>winBucket(C[i].x,C[i].y)===b);if(!L.length)return;const m=im(winMatFor(C[L[0]].x,C[L[0]].y),L.length*2);L.forEach((i,k)=>{K.win[i]=m;K.wi[i]=k;});});
-  const col=new THREE.Color();C.forEach((c,i)=>K.body.setColorAt(i,col.set(CABIN_COL[c.col]||FALU)));K.body.instanceColor.needsUpdate=true;
-  R3.cabins=K;for(let i=0;i<N;i++)cabinAt(i,1);}
+  const U=new THREE.BoxGeometry(1,1,1),im=(m,n)=>{const o=new THREE.InstancedMesh(U,m,n);o.frustumCulled=false;st.add(o);return o;};
+  const parts=C.map(cabinParts);let nP=0,nD=0;const nW=WIN_OFF.map(()=>0);
+  parts.forEach((L,i)=>{for(const q of L)if(q[0]==='p')nP++;else if(q[0]==='d')nD++;else nW[winBucket(C[i].x,C[i].y)]++;});
+  const K={C,f:new Array(C.length).fill(-1),slots:[],paint:im(new THREE.MeshLambertMaterial({color:0xffffff}),nP),dark:im(mat(0x3a3430),Math.max(1,nD))};
+  const win=WIN_OFF.map((_,b)=>{if(!nW[b])return null;const i0=C.findIndex(c=>winBucket(c.x,c.y)===b);return im(winMatFor(C[i0].x,C[i0].y),nW[b]);}),wk=WIN_OFF.map(()=>0);let kp=0,kd=0;
+  const col=new THREE.Color(),d=new THREE.Object3D();
+  parts.forEach((L,i)=>{const c=C[i],T=CABIN[c.type]||CABIN.torp,pal=T.pal[c.pal%T.pal.length];K.slots[i]=L.map(q=>{
+    d.position.set(q[2],q[3],q[4]);d.rotation.set(q[8],0,q[9]);d.scale.set(q[5],q[6],q[7]);d.updateMatrix();const m=d.matrix.clone();
+    if(q[0]==='p'){const k=kp++;K.paint.setColorAt(k,col.set(q[1]===3?0x8a7356:pal[q[1]]));return[K.paint,k,m];}
+    if(q[0]==='d')return[K.dark,kd++,m];const b=winBucket(c.x,c.y);return[win[b],wk[b]++,m];});});
+  K.paint.instanceColor.needsUpdate=true;R3.cabins=K;for(let i=0;i<C.length;i++)cabinAt(i,1);}
 function cabinAt(i,f){const K=R3.cabins,c=K.C[i];if(K.f[i]===f)return;K.f[i]=f;
-  const L=c.kind==='torp'?7:6,Wd=c.kind==='torp'?5:4.4,H=c.kind==='torp'?2.8:2.5,d=new THREE.Object3D(),base=new THREE.Matrix4(),m=new THREE.Matrix4();
-  d.position.set(c.x,Math.max(0,c.h),c.y);d.rotation.set(0,-c.a,0);d.scale.set(1,f,1);d.updateMatrix();base.copy(d.matrix);
-  const put=(o,k,x,y,z,sx,sy,sz,rx)=>{d.position.set(x,y,z);d.rotation.set(rx||0,0,0);d.scale.set(sx,sy,sz);d.updateMatrix();m.multiplyMatrices(base,d.matrix);o.setMatrixAt(k,m);o.instanceMatrix.needsUpdate=true;};
-  put(K.body,i,0,H/2,0,L,H,Wd);
-  for(const sz of[-1,1])put(K.roof,i*2+(sz>0?1:0),0,H+Wd*.12+.15,sz*Wd*.24,L+.6,.35,Wd*.6,sz*.55);
-  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz],k)=>put(K.trim,i*4+k,sx*L/2,H/2,sz*Wd/2,.2,H,.2));
-  put(K.door,i,L*.25,.95,-Wd/2-.03,.9,1.9,.12);
-  if(K.win[i]){put(K.win[i],K.wi[i]*2,-L*.18,H*.55,-Wd/2-.04,.95,.9,.12);put(K.win[i],K.wi[i]*2+1,0,H*.55,Wd/2+.04,.95,.9,.12);}}
+  const d=new THREE.Object3D(),m=new THREE.Matrix4();d.position.set(c.x,Math.max(0,c.h),c.y);d.rotation.set(0,-c.a,0);d.scale.set(1,f,1);d.updateMatrix();
+  for(const[o,k,lm]of K.slots[i]){m.multiplyMatrices(d.matrix,lm);o.setMatrixAt(k,m);o.instanceMatrix.needsUpdate=true;}}
 function mkDecor(D,st){
   const wood=mat(0x8a7356),post=mat(0x5e4e3a);
   R3.villaM=[];for(const v of D.villas||[]){const m=mkVilla(v);st.add(m);R3.villaM.push(m);}
