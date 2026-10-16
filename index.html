@@ -346,7 +346,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
-      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Molnen driver sakta från väster. Knappen +3 h spolar fram.</li>
+      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. Årstiden syns i landskapet: snö och is på vintern, fjolårsgräs och isflak på våren, ljusgröna björkar i maj, höstfärger i oktober, och fritidsbåtarna är ute bara under säsongen. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Molnen driver sakta från väster. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
@@ -529,6 +529,31 @@ function isleDoy(seed){return 1+Math.floor(rng((seed|0)*7919+11)()*DAYS);}
 function isleTod(seed,doy){const R=rng((seed|0)*104729+doy*31+5),r=R(),want=r<.6?'dag':r<.85?'skymning':'natt';
   const pick=w=>{const L=[];for(let i=0;i<288;i++)if(lightAt(doy,i/12)===w)L.push(i/12);return L;};
   let L=pick(want);if(!L.length)L=pick('skymning');if(!L.length)L=pick('dag');return L[Math.floor(R()*L.length)];}
+/* ---------- the season as parameters (seasons step 4, decided 15 okt) ----------
+   No fixed four seasons: sliding values read from key dates and blended in between, so every date looks right and the change is
+   smooth. snow on the ground (patches stay in shade and on north slopes as it melts), ice 0 to 1 (20 to 60 m out from the shore),
+   floe drifting ice, leaf the birches' crowns (0 bare to 1 full), young the light green of new leaves, autumn the yellow and orange,
+   grass 0 green to 1 straw, brown old dead grass, gray a greyer sea and sky, boats the share of leisure boats out, haze morning mist.
+   Key dates for the Stockholm archipelago (day of 2032) */
+const SEASON_KEYS=[
+  [1,{snow:1,ice:1,floe:0,leaf:0,young:0,autumn:0,grass:1,brown:1,gray:1,boats:0,haze:.3}],
+  [75,{snow:.9,ice:.9,floe:0,leaf:0,young:0,autumn:0,grass:1,brown:1,gray:.8,boats:0,haze:.3}],
+  [92,{snow:.35,ice:.3,floe:1,leaf:0,young:0,autumn:0,grass:1,brown:1,gray:.6,boats:0,haze:.4}],
+  [106,{snow:.08,ice:0,floe:.5,leaf:.15,young:1,autumn:0,grass:.9,brown:1,gray:.45,boats:.1,haze:.4}],
+  [126,{snow:0,ice:0,floe:0,leaf:.7,young:1,autumn:0,grass:.35,brown:.6,gray:.25,boats:.4,haze:.2}],
+  [141,{snow:0,ice:0,floe:0,leaf:1,young:.4,autumn:0,grass:0,brown:0,gray:.1,boats:.7,haze:.1}],
+  [183,{snow:0,ice:0,floe:0,leaf:1,young:0,autumn:0,grass:0,brown:0,gray:0,boats:1,haze:0}],
+  [244,{snow:0,ice:0,floe:0,leaf:1,young:0,autumn:0,grass:.15,brown:0,gray:.1,boats:.7,haze:.15}],
+  [259,{snow:0,ice:0,floe:0,leaf:1,young:0,autumn:.2,grass:.3,brown:0,gray:.25,boats:.35,haze:.35}],
+  [289,{snow:0,ice:0,floe:0,leaf:.9,young:0,autumn:1,grass:.8,brown:.2,gray:.55,boats:.05,haze:.7}],
+  [310,{snow:0,ice:0,floe:0,leaf:.15,young:0,autumn:1,grass:1,brown:.9,gray:.85,boats:0,haze:.6}],
+  [330,{snow:.05,ice:.1,floe:0,leaf:0,young:0,autumn:.5,grass:1,brown:1,gray:.95,boats:0,haze:.5}],
+  [350,{snow:.8,ice:.6,floe:0,leaf:0,young:0,autumn:0,grass:1,brown:1,gray:1,boats:0,haze:.35}],
+  [367,{snow:1,ice:1,floe:0,leaf:0,young:0,autumn:0,grass:1,brown:1,gray:1,boats:0,haze:.3}]];
+function seasonAt(doy){const K=SEASON_KEYS;let i=0;while(i<K.length-2&&K[i+1][0]<=doy)i++;const a=K[i],b=K[i+1],t=clamp((doy-a[0])/(b[0]-a[0]),0,1),o={};
+  for(const k in a[1])o[k]=a[1][k]+(b[1][k]-a[1][k])*t;return o;}
+/* the trailer keeps its own late summer, whatever island date the page opened on */
+const FILM_DOY=200;
 function sunLine(doy){const T=sunTimes(doy),S=seasonOf(doy);return S[0].toUpperCase()+S.slice(1)+', sol upp '+fmtHM(T.rise)+', ner '+fmtHM(T.set);}
 const HLV=[5,13,21,29];
 const pairKey=(a,b)=>a<b?a+'_'+b:b+'_'+a;
@@ -1287,6 +1312,8 @@ function newGame(seed,doc,when){
     structs:WORLD.structs.map(s=>Object.assign({},s,{isStruct:true,hp:STRUCT[s.kind].hp,maxhp:STRUCT[s.kind].hp,dead:false,prog:0,krok:false,hitBy:{}})),
     tod:0,doy:1,known:new Uint8Array(GW*GH),knownV:0,kt:0,fbuild:[],buildAt:'ship',fires:[],ddead:{b:{},j:{}},kroks:[],krokQ:[],krokAuto:true,krokMsg:null,pitch:0,firing:false,mlook:false};
   {const w=when||{},doy=w.doy||isleDoy(seed);G.doy=doy;G.tod=w.tod!=null?w.tod:isleTod(seed,doy);G.start={doy,tod:G.tod,own:!w.doy&&w.tod==null};}
+  /* the leisure boats the season has out (seasons step 4): the others are laid up, neither drawn nor hit */
+  {const SE=seasonAt(G.doy);if(WORLD.decor)WORLD.decor.boats.forEach((b,i)=>{b.off=hash2(i,G.seed,91)>=SE.boats;});}
   WORLD.grid.set(WORLD.baseGrid);for(const b of G.barriers)for(const c of b.cells)WORLD.grid[c]=WALL;
   for(const s of G.structs)WORLD.grid[s.cell]=WALL;
   for(const d of WORLD.debris)addWreck(d.x,d.y,d.value,false,d.kind);
@@ -2173,10 +2200,10 @@ function segDist(px,py,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,l2=vx*vx+vy*vy||1,t=
 function decorHit(x,y,r){const D=WORLD.decor;if(!D)return;
   (D.villas||[]).forEach((h,i)=>{if(G.ddead.v&&G.ddead.v[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+6){(G.ddead.v||(G.ddead.v={}))[i]=G.time;startFire(h.x,h.y,150,1.5,Math.max(0,h.h));}});
   (D.sheds||[]).forEach((h,i)=>{if(G.ddead.s&&G.ddead.s[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+3){(G.ddead.s||(G.ddead.s={}))[i]=G.time;startFire(h.x,h.y,90,.8,Math.max(0,h.h));}});
-  D.boats.forEach((b,i)=>{if(G.ddead.b[i])return;if(Math.hypot(b.x-x,b.y-y)<r+3.5){G.ddead.b[i]=G.time;startFire(b.x,b.y,25,.6,0);G.fx.push({k:'boom',x:b.x,y:b.y,t:0,ttl:.9,small:true});}});
+  D.boats.forEach((b,i)=>{if(G.ddead.b[i]||b.off)return;if(Math.hypot(b.x-x,b.y-y)<r+3.5){G.ddead.b[i]=G.time;startFire(b.x,b.y,25,.6,0);G.fx.push({k:'boom',x:b.x,y:b.y,t:0,ttl:.9,small:true});}});
   D.jetties.forEach((j,i)=>{if(G.ddead.j[i])return;const ex=j.x+Math.cos(j.a)*(j.len+2),ey=j.y+Math.sin(j.a)*(j.len+2);if(segDist(x,y,j.x,j.y,ex,ey)<r+1.6){G.ddead.j[i]=G.time;G.fx.push({k:'puff',x,y,h:1,t:0,ttl:1.4,c:0x8a7356,s:2.6,hit:false,ws:'cannon'});}});}
 function startFire(x,y,dur,size,h){G.fires.push({x,y,t0:G.time,dur,size,h:h||0,acc:0});}
-const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i])out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});return out;};
+const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i]&&!b.off)out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});return out;};
 /* vehicles that leave a wreck of themselves and burn on (see blowApart) */
 const WRECK_KINDS={own:new Set(['tank','eng','mus']),enemy:new Set(['tank','light','aa'])};
 function addWreck(x,y,value,own,kind){const w={id:'w'+(G.nextW++),x,y,value,own,kind,claimed:false,rot:Math.random()*TAU,t0:G.time};G.wrecks.push(w);return w;}
@@ -3619,7 +3646,8 @@ const DEB=[];let CHAR_M=null,CHAR_M2=null;
 function charred(g){if(!CHAR_M){CHAR_M=new THREE.MeshLambertMaterial({color:0x1f1c1a});CHAR_M2=new THREE.MeshLambertMaterial({color:0x3a2a22});CHAR_M.userData.shared=CHAR_M2.userData.shared=true;}
   g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=CHAR_M;});return g;}
 const headOf=m=>m.userData.head||m.userData.tur||null;
-function debAdd(o,v,w,r,smoke,tag){o.traverse(c=>{if(c.isMesh&&!c.userData.noShadow){c.castShadow=true;if(tag)c.layers.enable(FILM_SHL);}});R3.scene.add(o);DEB.push({m:o,v,w,r,smoke,rest:!v,t:0,tag});}
+/* flying pieces cast the sun's shadow but not the fire's: right by the light a piece shadowed whole sectors of the ground in hard wedges */
+function debAdd(o,v,w,r,smoke,tag){o.traverse(c=>{if(c.isMesh&&!c.userData.noShadow){c.castShadow=true;c.layers.disable(FILM_SHL);}});R3.scene.add(o);DEB.push({m:o,v,w,r,smoke,rest:!v,t:0,tag});}
 function blowApart(m,tag,H){m.updateMatrixWorld(true);const c=new THREE.Vector3().setFromMatrixPosition(m.matrixWorld),R=Math.random;
   if(H&&H.parent){H.updateMatrixWorld(true);const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();H.matrixWorld.decompose(p,q,sc);H.parent.remove(H);charred(H);
     H.position.copy(p);H.quaternion.copy(q);H.scale.copy(sc);H.rotation.order='XYZ';debAdd(H,new THREE.Vector3((R()-.5)*6,13+R()*4,(R()-.5)*6),new THREE.Vector3((R()-.5)*9,(R()-.5)*7,(R()-.5)*9),.8,1.2,tag);}
@@ -3849,7 +3877,7 @@ function mkSurround(W,st){
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));
   g.setIndex(nv>65535?new THREE.Uint32BufferAttribute(I,1):new THREE.Uint16BufferAttribute(I,1));g.computeVertexNormals();
   // thinner haze on the scenery than on the play area, so the islands around read as land out to two kilometres without clearing the air over the focus island
-  const mt=new THREE.MeshLambertMaterial({vertexColors:true});mt.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <fog_fragment>','#ifdef USE_FOG\n float fogFactor = smoothstep( fogNear, fogFar, fogDepth*.5 );\n gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );\n#endif');};
+  const mt=new THREE.MeshLambertMaterial({vertexColors:true});mt.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <fog_fragment>','#ifdef USE_FOG\n float fogFactor = smoothstep( fogNear, fogFar, fogDepth*.5 );\n gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );\n#endif');};seasonMat(mt,'ground','-surround');
   const m=new THREE.Mesh(g,mt);m.userData.surround=true;st.add(m);
   // night life: one Points draw call for all windows, one for the sector lights (colours flashed per frame)
   const pts=(list,size)=>{const pp=new Float32Array(list.length*3),cc=new Float32Array(list.length*3);list.forEach((q,i)=>{pp.set([q.x,q.h,q.y],i*3);});const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.BufferAttribute(pp,3));gg.setAttribute('color',new THREE.BufferAttribute(cc,3));
@@ -3936,7 +3964,7 @@ function buildStatic(){
   }
   let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(W.diag&&W.diag[j*SX+i]){idx[p++]=a;idx[p++]=c;idx[p++]=d;idx[p++]=a;idx[p++]=d;idx[p++]=b;}else{idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}}
   const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(pos,3));tg.setAttribute('color',new THREE.BufferAttribute(col,3));tg.setIndex(new THREE.BufferAttribute(idx,1));tg.computeVertexNormals();
-  const terrain=new THREE.Mesh(tg,new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000}));st.add(terrain);R3.terrain=terrain;
+  const terrain=new THREE.Mesh(tg,seasonMat(new THREE.MeshPhongMaterial({vertexColors:true,shininess:0,specular:0x000000}),'ground'));st.add(terrain);R3.terrain=terrain;
   // open seabed beyond the terrain mesh, so the edge of the map never shows through the water
   {const sb=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),new THREE.MeshPhongMaterial({color:new THREE.Color(.335,.39,.36),shininess:0,specular:0x000000}));sb.rotation.x=-PI/2;sb.position.set(WW/2,-6.3,WH/2);st.add(sb);R3.seabed=sb;}
   // road ribbons
@@ -3959,15 +3987,15 @@ function buildStatic(){
         const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.17,.26,1,6),mat(0xe9e6dc),birches.length),bd=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.2,1,6),mat(0x2b2a28),birches.length*3),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),leaf,birches.length*4);
         birches.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=8.6*s2,lean=(hash2(i,1,48)-.5)*.08;dummy.rotation.set(lean,0,lean*.7);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
           for(let k=0;k<3;k++){const yy=g0+H*(.12+k*.17+hash2(i,k,49)*.06);dummy.rotation.set(0,0,0);dummy.position.set(t.x,yy,t.y);dummy.scale.set(s2*(1.05-yy/(g0+H)*.25),.22*s2,s2*(1.05-yy/(g0+H)*.25));dummy.updateMatrix();bd.setMatrixAt(i*3+k,dummy.matrix);}
-          for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=g0+H*(k?.52+k*.1:.92);dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?2.1:1.8)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);}});
+          for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=g0+H*(k?.52+k*.1:.92);dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?2.1:1.8)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);cr.setColorAt(i*4+k,(R3.tmpC||(R3.tmpC=new THREE.Color())).setRGB(hash2(Math.round(t.x),Math.round(t.y),53),0,0));}});/* the red channel is the tree's own value for its autumn colour */
         tg.add(tr);tg.add(bd);tg.add(cr);}
-      if(spr.length){const tm=new THREE.InstancedMesh(new THREE.ConeGeometry(2.7,11.5,7),mat(0x34512d),spr.length),tk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.32,1,5),mat(0x5a4636),spr.length);
+      if(spr.length){const tm=new THREE.InstancedMesh(new THREE.ConeGeometry(2.7,11.5,7),R3.sprM,spr.length),tk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.32,1,5),mat(0x5a4636),spr.length);
         spr.forEach((t,i)=>{const s2=t.s*1.12,g0=groundY(t.x,t.y);dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+1.4*s2+5.75*s2,t.y);dummy.scale.set(s2,s2,s2);dummy.updateMatrix();tm.setMatrixAt(i,dummy.matrix);dummy.position.set(t.x,g0+1.1*s2,t.y);dummy.scale.set(s2,2.2*s2,s2);dummy.updateMatrix();tk.setMatrixAt(i,dummy.matrix);});tg.add(tm);tg.add(tk);}
-      if(pines.length){const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.34,1,5),mat(0xa0603a),pines.length),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),mat(0x4a6a3a),pines.length*3);
+      if(pines.length){const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.34,1,5),mat(0xa0603a),pines.length),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),R3.pineM,pines.length*3);
         pines.forEach((t,i)=>{const s2=t.s*1.15,g0=groundY(t.x,t.y),H=9.5*s2;dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
           for(let k=0;k<3;k++){const a=hash2(i,k,43)*TAU,d=(k?1.1:0)*s2,yy=g0+H-(k?1.2:-.6)*s2;dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,44)*3,hash2(i,k,45)*3,0);dummy.scale.set(2.3*s2,1.1*s2,2*s2);dummy.updateMatrix();cr.setMatrixAt(i*3+k,dummy.matrix);}});
         tg.add(tr);tg.add(cr);}};
-    R3.birchLeaf=new THREE.MeshLambertMaterial({color:0x7fa548});
+    R3.birchLeaf=seasonMat(new THREE.MeshLambertMaterial({color:0x7fa548}),'birch');R3.sprM=seasonMat(new THREE.MeshLambertMaterial({color:0x34512d}),'conifer');R3.pineM=seasonMat(new THREE.MeshLambertMaterial({color:0x4a6a3a}),'conifer');
     R3.treeTiles=[];const TS=500,tiles=new Map();for(const t of W.trees){const k=Math.floor(t.x/TS)+','+Math.floor(t.y/TS);if(!tiles.has(k))tiles.set(k,[]);tiles.get(k).push(t);}
     for(const T of tiles.values()){const tg=new THREE.Group();plant(T,tg);let cx=0,cz=0;for(const t of T){cx+=t.x;cz+=t.y;}cx/=T.length;cz/=T.length;let r=0;for(const t of T)r=Math.max(r,Math.hypot(t.x-cx,t.y-cz));
       tg.traverse(o=>{if(o.isInstancedMesh)o.frustumCulled=false;});st.add(tg);R3.treeTiles.push({g:tg,x:cx,z:cz,y:groundY(cx,cz)+8,r:r+12});}}
@@ -3977,9 +4005,9 @@ function buildStatic(){
     const hs=k=>hash2(W.seed,k,61);
     const SAIL_L=[[NAV_R,3.6,1.05,-1.02,'p'],[NAV_G,3.6,1.05,1.02,'s'],[NAV_W,-4.05,1,0,'t']],MOT_L=[[NAV_R,2.6,1.15,-1.22,'p'],[NAV_G,2.6,1.15,1.22,'s'],[NAV_W,-.4,2.4,0,'m'],[NAV_W,-3.25,1.1,0,'t']];
     navLights(R3.steamer,[[NAV_R,5.5,6.4,-1.75,'p'],[NAV_G,5.5,6.4,1.75,'s'],[NAV_W,9.5,11.1,0,'m'],[NAV_W,-12.4,6.5,0,'m'],[NAV_W,-13.1,1.8,0,'t']]);
-    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210),2.4,hs(1),2.4,4,-1,true);
-    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440),2.2,hs(2),2.4,4,1,true);
-    mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),4.5,hs(3),2.4,3.2,-1);
+    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210),2.4,hs(1),2.4,4,-1,true);R3.movers[R3.movers.length-1].leisure=.2;
+    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440),2.2,hs(2),2.4,4,1,true);R3.movers[R3.movers.length-1].leisure=.5;
+    mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),4.5,hs(3),2.4,3.2,-1);R3.movers[R3.movers.length-1].leisure=.8;
     // three VARG on patrol in a V, in the intro film only, meeting the HÖK head on (shown and hidden with the title)
     {const VR=titleRoute(200),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;m.back=back;});}
     /* traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop. Speeds in
@@ -4095,16 +4123,53 @@ function cloudTick(){const C=R3.clouds;if(!C)return;C.g.visible=!FILM.on;if(FILM
   U.uBot.value.copy(bg).lerp(cB.setRGB(1,1,1),.45).multiplyScalar(.92);cA.copy(bg).multiplyScalar(1.03);U.uBot.value.lerp(cA,1-dk);
   U.uSun.value.copy(sun).multiplyScalar(.18*dk*Math.min(1,R3.sun.intensity));U.uSunDir.value.copy(sunDir);
   U.uFogC.value.copy(sc.fog.color);U.uFogN.value=sc.fog.near*3;U.uFogF.value=Math.min(sc.fog.far*2.5,2500);}
+/* the season in the shaders (seasons step 4): one set of uniforms shared by every material that changes with the season, so a
+   new date only sets values. ground: grass turns straw and then dead brown, snow lies on level ground and melts last in shade and
+   on north slopes; conifer: snow on the upper faces of spruce and pine; birch: the crowns go light green, full green, yellow and
+   orange tree by tree (a random value per tree), then bare grey-brown twigs, smaller */
+const SEASU={uSnow:{value:0},uGrass:{value:0},uBrown:{value:0},uLeaf:{value:1},uYoung:{value:0},uAutumn:{value:0}};
+const NOISE_GLSL=`float sHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float sNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sHash(i),sHash(i+vec2(1,0)),f.x),mix(sHash(i+vec2(0,1)),sHash(i+vec2(1,1)),f.x),f.y);}`;
+const SEAS_GLSL=`uniform float uSnow,uGrass,uBrown,uLeaf,uYoung,uAutumn;varying vec3 vSWP,vSWN;varying float vSLY;`+NOISE_GLSL;
+function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <begin_vertex>',`#include <begin_vertex>
+    vSLY=position.y;
+    ${kind==='birch'?'transformed*=mix(.45,1.0,uLeaf);':''}
+    {vec3 sn=objectNormal;vec4 sp=vec4(transformed,1.0);
+    #ifdef USE_INSTANCING
+    sn=mat3(instanceMatrix)*sn;sp=instanceMatrix*sp;
+    #endif
+    vSWN=normalize(mat3(modelMatrix)*sn);vSWP=(modelMatrix*sp).xyz;}`);
+  const F={ground:`{vec3 c=diffuseColor.rgb;float gr=clamp((c.g-max(c.r,c.b))*10.0,0.0,1.0);
+      c=mix(c,mix(vec3(.7,.62,.38),vec3(.5,.42,.31),uBrown)*(.6+.8*c.g),gr*uGrass);
+      vec3 n3=normalize(vSWN);float lvl=smoothstep(.72,.9,n3.y),nz=sNoise(vSWP.xz/22.0)*.6+sNoise(vSWP.xz/5.0)*.4;
+      float v=uSnow*1.15-n3.z*.35+(nz-.5)*.6,sm=smoothstep(.5,.62,v)*lvl*step(.15,vSWP.y);
+      diffuseColor.rgb=mix(c,vec3(.93,.95,.98),sm);}`,
+    conifer:`{vec3 n3=normalize(vSWN);float nz=sNoise(vSWP.xz/2.5+vSWP.y*.4);
+      float sm=uSnow*(.5*smoothstep(.2,.5,n3.y+(nz-.5)*.5)+.55*smoothstep(3.0,5.5,vSLY));
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.9,.93,.96),clamp(sm,0.0,.7));}`,
+    birch:`{float r=vColor.r;vec3 c=mix(vec3(.5,.65,.28),vec3(.68,.82,.38),uYoung);
+      vec3 au=mix(vec3(.88,.72,.2),vec3(.86,.44,.15),smoothstep(.3,.7,r));au=mix(au,vec3(.72,.27,.16),step(.86,r));
+      c=mix(c,au,clamp(uAutumn*1.6-(1.0-r)*.6,0.0,1.0));c=mix(vec3(.42,.37,.33),c,smoothstep(.12,.45,uLeaf));
+      diffuseColor.rgb=c;}`};
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
+function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
+/* the season's values into the uniforms and the water's ice, once per date */
+function seasonApply(doy){const S=seasonAt(doy);R3.season=S;R3.seasonDoy=doy;
+  SEASU.uSnow.value=S.snow;SEASU.uGrass.value=S.grass;SEASU.uBrown.value=S.brown;SEASU.uLeaf.value=S.leaf;SEASU.uYoung.value=S.young;SEASU.uAutumn.value=S.autumn;
+  const WU=R3.water&&R3.water.material.userData.U;if(WU){WU.uIce.value=S.ice;WU.uFloe.value=S.floe;}}
 /* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;
    foam where it is shallow, from a depth map of the seabed (see setWaterDepth) */
 function mkWaterMat(){
   const m=new THREE.MeshPhongMaterial({color:0x36677e,transparent:true,opacity:.86,shininess:220,specular:0xdfe8ec});
-  const U={uTime:{value:0},uHor:{value:new THREE.Color(0xa9bbc4)},uFoam:{value:new THREE.Color(0xe9f1f2)},uDepth:{value:null},uHasDepth:{value:0},uGrid:{value:new THREE.Vector2(1,1)}};
+  const U={uTime:{value:0},uHor:{value:new THREE.Color(0xa9bbc4)},uFoam:{value:new THREE.Color(0xe9f1f2)},uDepth:{value:null},uHasDepth:{value:0},uGrid:{value:new THREE.Vector2(1,1)},
+    uIce:{value:0},uFloe:{value:0},uIceL:{value:1},uChan:{value:Array.from({length:24},()=>new THREE.Vector2(-1e4,-1e4))},uChanN:{value:0}};
   m.userData.U=U;
   m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWPos;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWPos=(modelMatrix*vec4(transformed,1.0)).xyz;');
     sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
-      varying vec3 vWPos;uniform float uTime,uHasDepth;uniform vec3 uHor,uFoam;uniform sampler2D uDepth;uniform vec2 uGrid;
+      varying vec3 vWPos;uniform float uTime,uHasDepth,uIce,uFloe,uIceL;uniform vec3 uHor,uFoam;uniform sampler2D uDepth;uniform vec2 uGrid;uniform vec2 uChan[24];uniform int uChanN;
+      ${NOISE_GLSL}
       vec2 wgrad(vec2 p,float t){vec2 g=vec2(0.0);
         g+=vec2(0.83,0.55)*0.55*cos(dot(p,vec2(0.83,0.55))*0.55+t*1.1);
         g+=vec2(-0.42,0.91)*0.9*0.7*cos(dot(p,vec2(-0.42,0.91))*0.9-t*1.3);
@@ -4126,7 +4191,17 @@ function mkWaterMat(){
           float band=smoothstep(0.6,0.95,sin(dep*4.0-uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
           float lip=smoothstep(0.02,0.3,dep);
           float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
-          outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);}}}`);};
+          outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);
+          /* ice (seasons step 4): a band out from the shore where the water is shallow, widest in sheltered coves, with a ragged edge
+             and a darker thin rim; Birka's channel stays open with broken floes in it; drifting floes on the open water in spring */
+          if(uIce>0.001||uFloe>0.001){float iN=sNoise(vWPos.xz/18.0)*1.1+sNoise(vWPos.xz/5.0)*.45,iceD=uIce*(1.1+iN*1.5);
+            float cd=1e4;for(int i=0;i<23;i++){if(i>=uChanN-1)break;vec2 a=uChan[i],b=uChan[i+1],ab=b-a;float t=clamp(dot(vWPos.xz-a,ab)/max(dot(ab,ab),1.0),0.0,1.0);cd=min(cd,length(vWPos.xz-a-ab*t));}
+            float open=smoothstep(14.0,22.0,cd),raw=smoothstep(iceD,iceD-.3,dep)*step(.02,dep),ice=raw*open;
+            vec3 iceC=mix(vec3(.78,.83,.86),vec3(.9,.93,.95),sNoise(vWPos.xz/3.0))*uIceL;
+            float rim=raw*(1.0-smoothstep(iceD-.3,iceD-.12,dep))*.5;
+            float bits=raw*(1.0-open)*step(.62,sNoise(vWPos.xz/2.2));
+            float floe=uFloe*(1.0-raw)*smoothstep(5.5,2.5,dep)*step(.8,sNoise((vWPos.xz+uTime*vec2(.25,.1))/7.0));
+            float k=max(max(ice,bits),floe);outgoingLight=mix(outgoingLight,iceC*(1.0-rim*.45),k);diffuseColor.a=max(diffuseColor.a,k);}}}}`);};
   return m;
 }
 // depth of the seabed for the foam: the terrain grid packed into a texture (8 m above to 8 m below the surface)
@@ -4143,11 +4218,22 @@ function updateSky(){
   if(film){let i=0;while(i<SKY.length-2&&SKY[i+1][0]<=h)i++;A=SKY[i];B=SKY[i+1];t=clamp((h-A[0])/(B[0]-A[0]),0,1);}
   else{el=sunVec(G.doy,h,sunDir);const nn=sunDay(G.doy).noon,T=SKY_EL[((h-nn)%24+24)%24<12?'pm':'am'];let i=0;while(i<T.length-2&&T[i+1][0]<=el)i++;
     A=T[i][1];B=T[i+1][1];t=clamp((el-T[i][0])/(T[i+1][0]-T[i][0]),0,1);}
-  const sc=R3.scene;lerpHex(A[1],B[1],t,sc.background);sc.fog.color.copy(sc.background);
+  {const sd=film?FILM_DOY:G.doy;if(R3.seasonDoy!==sd)seasonApply(sd);}const SE=R3.season;
+  const sc=R3.scene;lerpHex(A[1],B[1],t,sc.background);
+  /* a greyer sky and sea in autumn and winter (seasons step 4) */
+  if(SE.gray>0){const L=sc.background.r*.3+sc.background.g*.59+sc.background.b*.11;sc.background.lerp(cB.setRGB(L,L,L*1.03),.38*SE.gray);}
+  sc.fog.color.copy(sc.background);
   lerpHex(A[2],B[2],t,R3.hemi.color);lerpHex(A[3],B[3],t,R3.hemi.groundColor);R3.hemi.intensity=lerp(A[4],B[4],t);
+  if(SE.snow>0)R3.hemi.groundColor.lerp(cA.setHex(0x9aa6c0),.55*SE.snow);/* snow lights up the night (and the shade by day) from below */
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
-  {const kf=SIKT_K[SIKT.k]||1;sc.fog.near=lerp(240,150,n)*kf;sc.fog.far=lerp(1000,720,n)*kf;}
+  {const kf=SIKT_K[SIKT.k]||1,mf=SE.haze*clamp(1-Math.abs(h-7.5)/3.5,0,1);/* autumn's morning mist: the fog comes closer, purely to look at */
+    sc.fog.near=lerp(240,150,n)*kf*(1-.6*mf);sc.fog.far=lerp(1000,720,n)*kf*(1-.4*mf);}
+  {const WU=R3.water.material.userData.U;if(WU){R3.water.material.color.setHex(0x36677e).lerp(cA.setHex(0x52626a),SE.gray*.7);
+    const bg=sc.background;WU.uIceL.value=clamp((bg.r*.3+bg.g*.59+bg.b*.11)*1.35+.15,.28,1);
+    /* Birka's channel through the ice: its way in, as far as it has come */
+    const H=G.harbor,P=WORLD.birkaPath;let n2=0;if(SE.ice>0&&H&&P&&H.s>0){const N=24,s1=Math.min(H.s,P.L);for(let k=0;k<N;k++){const sk=s1*k/(N-1);let i=0;while(i<P.pts.length-2&&P.len[i+1]<sk)i++;const a=P.pts[i],b=P.pts[i+1],f=(sk-P.len[i])/((P.len[i+1]-P.len[i])||1);WU.uChan.value[k].set(lerp(a.x,b.x,f),lerp(a.y,b.y,f));}n2=N;}
+    WU.uChanN.value=n2;}}
   /* the sun's path: in the game the real sun for the island's date at 59.4 N (sunVec); in the trailer the stylised arc of 16 okt, a
      summer noon of 54 degrees with sunrise at 06 and sunset at 18.36 where its hour table has their colours. Its light fades over the
      last 5 degrees above the horizon, so shadows die out at dusk instead of stretching across the water, and the moon fades in after it */
@@ -4267,7 +4353,7 @@ function sync3D(dtr){
   syncTags();syncMarks(dtr);
   if(R3.villaM)R3.villaM.forEach((m,i)=>{const t0=G.ddead.v&&G.ddead.v[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.12,1-(G.time-t0)/70);});
   if(R3.shedM)R3.shedM.forEach((m,i)=>{const t0=G.ddead.s&&G.ddead.s[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.15,1-(G.time-t0)/40);});
-  if(R3.boatM)R3.boatM.forEach((m,i)=>{const t0=G.ddead.b[i];if(t0==null){if(m.userData.sunk){m.userData.sunk=false;m.visible=true;}return;}const k2=clamp((G.time-t0)/7,0,1);m.userData.sunk=true;m.userData.y0=.15-3.2*k2;m.rotation.x=.5*k2;m.visible=k2<1;});
+  if(R3.boatM)R3.boatM.forEach((m,i)=>{const bb=WORLD.decor.boats[i];if(bb&&bb.off&&!FILM.on){m.visible=false;return;}const t0=G.ddead.b[i];if(t0==null&&!m.visible&&!m.userData.sunk)m.visible=true;if(t0==null){if(m.userData.sunk){m.userData.sunk=false;m.visible=true;}return;}const k2=clamp((G.time-t0)/7,0,1);m.userData.sunk=true;m.userData.y0=.15-3.2*k2;m.rotation.x=.5*k2;m.visible=k2<1;});
   if(R3.jetM)R3.jetM.forEach((g,i)=>{const dead=G.ddead.j[i]!=null;for(const c of g.children)if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.height===.3)c.visible=!dead;if(dead&&!g.userData.broke){g.userData.broke=true;g.children.forEach((c,k)=>{if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.radiusTop===.14&&k%3===0)c.visible=false;});}if(!dead&&g.userData.broke){g.userData.broke=false;g.children.forEach(c=>c.visible=true);}});
   // fires: flames and a column of smoke
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur,k3=Math.min(1,age/4)*Math.min(1,life*5);if(k3<=0)continue;if(Math.hypot(f.x-R3.cam.position.x,f.y-R3.cam.position.z)>650){f.acc=0;continue;}
@@ -4276,6 +4362,7 @@ function sync3D(dtr){
     for(const m of R3.movers){const RT=m.RT,at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const k=(lo+hi)>>1;if(RT.len[k]<=d)lo=k;else hi=k;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a2=RT.pts[lo],b2=RT.pts[(lo+1)%RT.N];return{x:lerp(a2.x,b2.x,f),z:lerp(a2.z,b2.z,f)};};
       const push=q=>{const dx=q.x-CARRIER.x,dz=q.z-CARRIER.y,d=Math.hypot(dx,dz)||1;if(d<170){q.x+=dx/d*(170-d);q.z+=dz/d*(170-d);}return q;};
       if(m.title){const on=!!TITLE.on;m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
+      if(m.leisure!=null){const on=FILM.on||m.leisure<(R3.season?R3.season.boats:1);m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
       const dd=m.dir*T*m.speed+RT.L*m.ph,p0=push(at(dd)),p1=push(at(dd+m.dir*20)),hd=Math.atan2(p1.z-p0.z,p1.x-p0.x);
       if(m.lat){const lx=-Math.sin(hd)*m.lat,lz=Math.cos(hd)*m.lat;p0.x+=lx;p0.z+=lz;}
       const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.12:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
@@ -5723,7 +5810,7 @@ function fP(x,y,z,o){const P=FX.parts;if(P.length>900)return;const sp=new THREE.
   sp.position.set(x,y,z);sp.scale.setScalar(o.s0??1);R3.scene.add(sp);const v=o.v||[0,0,0];P.push({sp,vx:v[0],vy:v[1],vz:v[2],g:o.g||0,s0:o.s0??1,s1:o.s1??1,o:o.a??1,ttl:o.ttl??1,t:0,drag:o.drag||0,fade:o.fade||0});}
 function fLight(x,y,z,c,i,d,ttl){FX.lts.push({x,y,z,c,i,d,ttl,t:0});}
 /* the fire's own shadow (decided 16 okt): a burning wreck lit the ground all round it, under and behind the hull too, so it seemed
-   to float. In the trailer the first point light casts a shadow, and the nearest fire takes it; only the film's actors (the layer
+   to float. The light sits 5.5 m up in the flames: just over a roof it threw shadows in long hard wedges across the meadow. In the trailer the first point light casts a shadow, and the nearest fire takes it; only the film's actors (the layer
    FILM_SHL) are drawn into that shadow, not trees or terrain, so it costs little */
 const FILM_SHL=5;
 function filmShadowLight(){const P=R3.points[0];P.castShadow=true;P.shadow.mapSize.set(512,512);P.shadow.camera.near=.3;P.shadow.camera.far=60;P.shadow.bias=-.004;P.shadow.camera.layers.set(FILM_SHL);}
@@ -5748,7 +5835,7 @@ function fxWreck(m){m.updateMatrixWorld(true);const w=m.clone(true),hi=m.childre
 /* a fire that burns on: flames, sparks and a smoke column, and a flickering light */
 function fxFire(x,y,z,s){FILM.fires.push({x,y,z,s,acc:0});}
 function filmFx(dtr){debrisTick(dtr,'film');fxTick(dtr);
-  for(const f of FILM.fires){fireEmit(f,dtr,f.x,f.y,f.z,f.s);fLight(f.x,f.y+3,f.z,0xff6a1a,(2.2+Math.sin(FILM.t*13+f.x)*.6+Math.sin(FILM.t*29)*.4)*f.s,50,0);}}
+  for(const f of FILM.fires){fireEmit(f,dtr,f.x,f.y,f.z,f.s);fLight(f.x,f.y+5.5,f.z,0xff6a1a,(2.2+Math.sin(FILM.t*13+f.x)*.6+Math.sin(FILM.t*29)*.4)*f.s,50,0);}}
 function fxTick(dtr){const P=FX.parts;
   for(let i=FX.lts.length-1;i>=0;i--){const q=FX.lts[i];q.t+=dtr;if(!q.ttl||q.t>q.ttl)FX.lts.splice(i,1);}
   for(let i=P.length-1;i>=0;i--){const q=P[i];q.t+=dtr;const k=q.t/q.ttl;if(k>=1||q.sp.position.y<-.6){R3.scene.remove(q.sp);q.sp.material.dispose();P.splice(i,1);continue;}
