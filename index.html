@@ -1254,6 +1254,33 @@ function buildWorldTry(seed,tryK){
         const v={x,y,a:Math.atan2(c.n.y,c.n.x),h,style:STY[Math.floor(Rd()*STY.length)],col:Math.floor(Rd()*4)};D.villas.push(v);
         for(let gy=Math.floor((y-9)/CELL);gy<=Math.floor((y+9)/CELL);gy++)for(let gx=Math.floor((x-9)/CELL);gx<=Math.floor((x+9)/CELL);gx++){const i=gy*GW+gx;if(i<0||i>=GW*GH||W.road[i])continue;if(Math.hypot(gx*CELL+5-x,gy*CELL+5-y)>7.5)continue;if(G0[i]===LAND){G0[i]=WALL;grid[i]=WALL;}}}
       W.trees=W.trees.filter(t=>D.villas.every(v=>Math.hypot(t.x-v.x,t.y-v.y)>15));}
+    /* torp and summer cottages (decided 16 okt, Magnus): scenery only, no salvage and no cover, but they burn, light their windows
+       and stand in the grid as small obstacles. A torp stands in a glade or by the road at the forest edge, facing the road, with a
+       little pasture round it; cottages stand two to five together on low ground by the water (never above a cliff), facing it, often with a jetty of their own */
+    D.cabins=[];{const C=D.cabins,farms=W.farms||[];
+      const fits=(x,y)=>{const ci=cellIdx(x,y),gx=ci%GW,gy=(ci/GW)|0;if(gx<2||gy<2||gx>=GW-2||gy>=GH-2||G0[ci]!==LAND||W.road[ci]||(W.lane&&W.lane[ci])||W.isletMask[ci]||!away(x,y,220))return false;
+        if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+70)return false;if(pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+35)||W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<60))return false;
+        if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<28)||E.some(e=>Math.hypot(e.x-x,e.y-y)<40)||D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<45)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<16)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<14)||C.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
+        const h=elevAt(x,y,s,V);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.2)return false;return h;};
+      const COL=['falu','falu','falu','vit','gul','svart'];
+      // torp
+      {const tc=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(!((mark[i]===M_HAGE)||(mark[i]===M_SKOG&&dRoad[i]>=2&&dRoad[i]<=3)))continue;const c=cellCenter(i);if(farms.some(f=>Math.hypot(f.x-c.x,f.y-c.y)<110))continue;tc.push(c);}
+        for(let k=tc.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[tc[k],tc[j]]=[tc[j],tc[k]];}
+        const nT=6+Math.floor(Rd()*6);let n=0;for(const c of tc){if(n>=nT)break;const x=c.x+(Rd()-.5)*6,y=c.y+(Rd()-.5)*6;if(C.some(q=>q.kind==='torp'&&Math.hypot(q.x-x,q.y-y)<100))continue;const h=fits(x,y);if(h===false)continue;
+          const rp=roadNear(x,y),a=(rp&&Math.hypot(rp.x-x,rp.y-y)<80?Math.atan2(rp.y-y,rp.x-x)+PI/2:Rd()*TAU)+(Rd()-.5)*.1;C.push({x,y,a,h,kind:'torp',col:COL[Math.floor(Rd()*3)]});n++;
+          for(let gy=Math.floor((y-15)/CELL);gy<=Math.floor((y+15)/CELL);gy++)for(let gx=Math.floor((x-15)/CELL);gx<=Math.floor((x+15)/CELL);gx++){const i=gy*GW+gx;if(i>=0&&i<GW*GH&&mark[i]===M_SKOG&&Math.hypot(gx*CELL+5-x,gy*CELL+5-y)<15)mark[i]=M_HAGE;}}}
+      // summer cottages in small groups by the water, from the same low coast points as the jetties (where the shore is under 7 m)
+      {const nG=4+Math.floor(Rd()*3),groups=[];
+        for(const c of cand){if(groups.length>=nG)break;if(groups.some(g=>Math.hypot(g.x-c.x,g.y-c.y)<180)||farms.some(f=>Math.hypot(f.x-c.x,f.y-c.y)<130))continue;
+          const want=2+Math.floor(Rd()*4),mine=[];
+          for(let t=0;t<40&&mine.length<want;t++){const din=12+Rd()*30,dl=(Rd()-.5)*80,x=c.x-c.n.x*din-c.n.y*dl,y=c.y-c.n.y*din+c.n.x*dl,ci=cellIdx(x,y);if(dWet[ci]<1||dWet[ci]>5)continue;
+            const h=fits(x,y);if(h===false||h>8||h>c.top+5)continue;const v={x,y,a:Math.atan2(c.n.y,c.n.x)+PI/2+(Rd()-.5)*.3,h,kind:'stuga',col:COL[Math.floor(Rd()*COL.length)]};C.push(v);mine.push(v);}
+          if(!mine.length)continue;groups.push(c);
+          // a jetty of the group's own where the shore allows
+          if(Rd()<.7&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>60)&&C.every(v=>Math.hypot(v.x-c.x,v.y-c.y)>10)){const L=10+Rd()*8;if(clearRun(c,c.n,L)){const a=Math.atan2(c.n.y,c.n.x);D.jetties.push({x:c.x,y:c.y,a,len:L,top:c.top});
+            if(Rd()<.6){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L-3),y:c.y+c.n.y*(L-3)};D.boats.push({x:e.x-c.n.y*3.6*side,y:e.y+c.n.x*3.6*side,a:a+(Rd()<.5?0:PI),kind:Rd()<.5?'eka':'motor'});}}}}}
+      for(const c of C){const i=cellIdx(c.x,c.y);if(G0[i]===LAND&&!W.road[i]){G0[i]=WALL;grid[i]=WALL;}}
+      W.trees=W.trees.filter(t=>C.every(c=>Math.hypot(t.x-c.x,t.y-c.y)>(c.kind==='torp'?10:8)));}
     // small sector lights (prickfyrar): four per island, two red and two green, well spread; on skerries first, then on low points of the coast
     // a daymark (båk) on one or two of the bigger skerries, placed before the sector lights so they keep away from it (fixed 16 okt: a sector
     // light stood on the same skerry as a daymark, the two drawn into each other)
@@ -2230,7 +2257,7 @@ let canopyW=null,canopyA=null;
 function canopyTop(x,y){
   if(canopyW!==WORLD){canopyW=WORLD;canopyA=new Float32Array(GW*GH);const put=(px,py,h)=>{const i=cellIdx(px,py),t=groundY(px,py)+h;if(t>canopyA[i])canopyA[i]=t;};
     for(const t of WORLD.trees||[])put(t.x,t.y,14.5*t.s);for(const st of WORLD.structs||[])put(st.x,st.y,10);for(const r of WORLD.relays||[])put(r.x,r.y,16);
-    const D=WORLD.decor;if(D){if(D.light)put(D.light.x,D.light.y,18);for(const v of D.villas||[])put(v.x,v.y,10);}}
+    const D=WORLD.decor;if(D){if(D.light)put(D.light.x,D.light.y,18);for(const v of D.villas||[])put(v.x,v.y,10);for(const c of D.cabins||[])put(c.x,c.y,7);}}
   const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);let m=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=gx+dx,ny=gy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const v=canopyA[ny*GW+nx];if(v>m)m=v;}return m;}
 const flyAlt=(x,y,base,margin)=>{const g=groundY(x,y);return Math.max(g+base,canopyTop(x,y)+margin);};
 function hOf(o){const g=groundY(o.x,o.y);if(o.kind==='mus')return g+.6;if(o.kind==='krok')return flyAlt(o.x,o.y,28,6);if(o.air)return flyAlt(o.x,o.y,o.kind==='scout'?12:24,o.kind==='scout'?4:6);if(o.isStruct)return g+3;if(o.kind==='inf'||o.kind==='at'||o.kind==='rb')return g+1.2;return g+2.7;}
@@ -2264,11 +2291,12 @@ function resolveShot(f){
 function segDist(px,py,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,l2=vx*vx+vy*vy||1,t=clamp(((px-ax)*vx+(py-ay)*vy)/l2,0,1);return Math.hypot(px-ax-vx*t,py-ay-vy*t);}
 function decorHit(x,y,r){const D=WORLD.decor;if(!D)return;
   (D.villas||[]).forEach((h,i)=>{if(G.ddead.v&&G.ddead.v[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+6){(G.ddead.v||(G.ddead.v={}))[i]=G.time;startFire(h.x,h.y,150,1.5,Math.max(0,h.h));}});
+  (D.cabins||[]).forEach((h,i)=>{if(G.ddead.c&&G.ddead.c[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+4){(G.ddead.c||(G.ddead.c={}))[i]=G.time;startFire(h.x,h.y,110,1,Math.max(0,h.h));}});
   (D.sheds||[]).forEach((h,i)=>{if(G.ddead.s&&G.ddead.s[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+3){(G.ddead.s||(G.ddead.s={}))[i]=G.time;startFire(h.x,h.y,90,.8,Math.max(0,h.h));}});
   D.boats.forEach((b,i)=>{if(G.ddead.b[i]||b.off)return;if(Math.hypot(b.x-x,b.y-y)<r+3.5){G.ddead.b[i]=G.time;startFire(b.x,b.y,25,.6,0);G.fx.push({k:'boom',x:b.x,y:b.y,t:0,ttl:.9,small:true});}});
   D.jetties.forEach((j,i)=>{if(G.ddead.j[i])return;const ex=j.x+Math.cos(j.a)*(j.len+2),ey=j.y+Math.sin(j.a)*(j.len+2);if(segDist(x,y,j.x,j.y,ex,ey)<r+1.6){G.ddead.j[i]=G.time;G.fx.push({k:'puff',x,y,h:1,t:0,ttl:1.4,c:0x8a7356,s:2.6,hit:false,ws:'cannon'});}});}
 function startFire(x,y,dur,size,h){G.fires.push({x,y,t0:G.time,dur,size,h:h||0,acc:0});}
-const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i]&&!b.off)out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});return out;};
+const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i]&&!b.off)out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});(D.cabins||[]).forEach((h,i)=>{if(!(G.ddead.c&&G.ddead.c[i]!=null))out.push({x:h.x,y:h.y,h:3});});return out;};
 /* vehicles that leave a wreck of themselves and burn on (see blowApart) */
 const WRECK_KINDS={own:new Set(['tank','eng','mus']),enemy:new Set(['tank','light','aa'])};
 function addWreck(x,y,value,own,kind){const w={id:'w'+(G.nextW++),x,y,value,own,kind,claimed:false,rot:Math.random()*TAU,t0:G.time};G.wrecks.push(w);return w;}
@@ -2990,7 +3018,7 @@ function drawBatteryLimit(ctx,u,route,k){
 /* the parts of the chart that only change with the view, the island or a destroyed villa or jetty, kept as a picture per canvas:
    redrawing them every frame was most of the chart's cost (hundreds of small paths, the whole sheet), now it is one copy */
 function mapStatic(ctx,w,h,s,ox,oy,k){const cv=ctx.canvas,T=ctx.getTransform(),dd=G.ddead,
-    key=s+'|'+ox+'|'+oy+'|'+w+'|'+h+'|'+T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+(dd.v?Object.keys(dd.v).length:0)+'|'+(dd.j?Object.keys(dd.j).length:0);
+    key=s+'|'+ox+'|'+oy+'|'+w+'|'+h+'|'+T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+(dd.v?Object.keys(dd.v).length:0)+'|'+(dd.j?Object.keys(dd.j).length:0)+'|'+(dd.c?Object.keys(dd.c).length:0);
   let C=cv._mapStatic;if(!C){C=cv._mapStatic=document.createElement('canvas');}
   if(C._key!==key||C._world!==WORLD||C._doc!==WORLD.doc){C._key=key;C._world=WORLD;C._doc=WORLD.doc;if(C.width!==cv.width||C.height!==cv.height){C.width=cv.width;C.height=cv.height;}
     const c=C.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,C.width,C.height);c.setTransform(T);mapStaticDraw(c,w,h,s,ox,oy,k);}
@@ -3028,6 +3056,7 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   if(WORLD.islets){ctx.lineJoin='round';for(const o of WORLD.islets)for(const pp of o.parts){ctx.fillStyle=o.kind==='grynna'?'#cdbf9a':'#d9c79a';ctx.strokeStyle='#26384f';ctx.lineWidth=(o.kind==='grynna'?1:1.4)*k;ctx.beginPath();
     const c=Math.cos(pp.rot),sn=Math.sin(pp.rot);for(let q=0;q<18;q++){const aa=q/18*TAU,w=1+.12*Math.sin(aa*3+o.seed)+.06*Math.sin(aa*5+o.seed*.3),ex=Math.cos(aa)*pp.rx*w,ez=Math.sin(aa)*pp.rz*w;ctx.lineTo(o.x+pp.dx+ex*c-ez*sn,o.y+pp.dy+ex*sn+ez*c);}ctx.closePath();ctx.fill();ctx.stroke();}}
   if(WORLD.decor&&WORLD.decor.villas){ctx.fillStyle='#3c3a34';for(const[vi,v]of WORLD.decor.villas.entries()){if(G.ddead.v&&G.ddead.v[vi]!=null)continue;ctx.save();ctx.translate(v.x,v.y);ctx.rotate(v.a);ctx.fillRect(-6,-4.5,12,9);ctx.restore();}}
+  if(WORLD.decor&&WORLD.decor.cabins){ctx.fillStyle='#3c3a34';for(const[ci,c]of WORLD.decor.cabins.entries()){if(G.ddead.c&&G.ddead.c[ci]!=null)continue;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.a);ctx.fillRect(-3.5,-2.5,7,5);ctx.restore();}}
   // archipelago marks: piers, spar buoys, lighthouse
   if(WORLD.decor){const D=WORLD.decor;ctx.strokeStyle='#3c3a34';ctx.lineWidth=Math.max(1.4,1.6*k);ctx.lineCap='butt';
     for(const[ji,j]of D.jetties.entries()){if(G.ddead.j[ji]!=null)continue;ctx.beginPath();ctx.moveTo(j.x,j.y);ctx.lineTo(j.x+Math.cos(j.a)*j.len,j.y+Math.sin(j.a)*j.len);ctx.stroke();}
@@ -3644,9 +3673,28 @@ function fairwayRoute(W){const N=240,pts=[],half=N/2;
   for(let i=0;i<half;i++){const y=lerp(FAIR.y0,FAIR.y1,i/(half-1));pts.push({x:fairX(W,y)+FAIR.lane,z:y});}
   for(let i=0;i<half;i++){const y=lerp(FAIR.y1,FAIR.y0,i/(half-1));pts.push({x:fairX(W,y)-FAIR.lane,z:y});}
   const len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}return{pts,len,L:len[N],N,off:0};}
+/* torp and summer cottages (decided 16 okt): many small houses, drawn as a few instanced meshes rather than a group each. Local +x
+   is the ridge, the door and the main window face -z (the road for a torp, the water for a cottage); a burnt one sinks like a villa */
+const CABIN_COL={falu:FALU,vit:0xe8e4da,gul:0xd9b860,svart:0x2e2e30};
+function mkCabins(D,st){const C=D.cabins||[];R3.cabins=null;if(!C.length)return;
+  const N=C.length,U=new THREE.BoxGeometry(1,1,1),im=(m,n)=>{const o=new THREE.InstancedMesh(U,m,n);o.frustumCulled=false;st.add(o);return o;};
+  const K={C,f:new Array(N).fill(-1),body:im(new THREE.MeshLambertMaterial({color:0xffffff}),N),roof:im(mat(0x38383c),N*2),trim:im(mat(TRIM),N*4),door:im(mat(0x3a3430),N),win:[],wi:[]};
+  WIN_OFF.forEach((_,b)=>{const L=C.map((c,i)=>i).filter(i=>winBucket(C[i].x,C[i].y)===b);if(!L.length)return;const m=im(winMatFor(C[L[0]].x,C[L[0]].y),L.length*2);L.forEach((i,k)=>{K.win[i]=m;K.wi[i]=k;});});
+  const col=new THREE.Color();C.forEach((c,i)=>K.body.setColorAt(i,col.set(CABIN_COL[c.col]||FALU)));K.body.instanceColor.needsUpdate=true;
+  R3.cabins=K;for(let i=0;i<N;i++)cabinAt(i,1);}
+function cabinAt(i,f){const K=R3.cabins,c=K.C[i];if(K.f[i]===f)return;K.f[i]=f;
+  const L=c.kind==='torp'?7:6,Wd=c.kind==='torp'?5:4.4,H=c.kind==='torp'?2.8:2.5,d=new THREE.Object3D(),base=new THREE.Matrix4(),m=new THREE.Matrix4();
+  d.position.set(c.x,Math.max(0,c.h),c.y);d.rotation.set(0,-c.a,0);d.scale.set(1,f,1);d.updateMatrix();base.copy(d.matrix);
+  const put=(o,k,x,y,z,sx,sy,sz,rx)=>{d.position.set(x,y,z);d.rotation.set(rx||0,0,0);d.scale.set(sx,sy,sz);d.updateMatrix();m.multiplyMatrices(base,d.matrix);o.setMatrixAt(k,m);o.instanceMatrix.needsUpdate=true;};
+  put(K.body,i,0,H/2,0,L,H,Wd);
+  for(const sz of[-1,1])put(K.roof,i*2+(sz>0?1:0),0,H+Wd*.12+.15,sz*Wd*.24,L+.6,.35,Wd*.6,sz*.55);
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz],k)=>put(K.trim,i*4+k,sx*L/2,H/2,sz*Wd/2,.2,H,.2));
+  put(K.door,i,L*.25,.95,-Wd/2-.03,.9,1.9,.12);
+  if(K.win[i]){put(K.win[i],K.wi[i]*2,-L*.18,H*.55,-Wd/2-.04,.95,.9,.12);put(K.win[i],K.wi[i]*2+1,0,H*.55,Wd/2+.04,.95,.9,.12);}}
 function mkDecor(D,st){
   const wood=mat(0x8a7356),post=mat(0x5e4e3a);
   R3.villaM=[];for(const v of D.villas||[]){const m=mkVilla(v);st.add(m);R3.villaM.push(m);}
+  mkCabins(D,st);
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
   R3.baks=[];(D.baks||[]).forEach((b,i)=>{const g=mkDaymark(b);st.add(g);R3.baks.push({b,...g.userData.lamp,ch:LIGHT_CH[[6,2,0][i%3]],ph:hash2(Math.round(b.x),Math.round(b.y),23)*6});});
@@ -4343,6 +4391,7 @@ function updateSky(){
     for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
     for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
     for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),d)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*d,36]);
+    for(const[ci,c]of((WORLD.decor&&WORLD.decor.cabins)||[]).entries())if(!(G.ddead.c&&G.ddead.c[ci]!=null)&&winLevel(winBucket(c.x,c.y),d)>.3)cand.push([3,c.x,Math.max(0,c.h)+3,c.y,0xffb860,.8*d,28]);
   }
   if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*d*R3.lit,70]);}
   for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
@@ -4425,6 +4474,7 @@ function sync3D(dtr){
   for(const b of G.barriers){const m=R3.bars.get(b.id);if(m)m.visible=!b.cleared;}
   syncTags();syncMarks(dtr);
   if(R3.villaM)R3.villaM.forEach((m,i)=>{const t0=G.ddead.v&&G.ddead.v[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.12,1-(G.time-t0)/70);});
+  if(R3.cabins)R3.cabins.C.forEach((c,i)=>{const t0=G.ddead.c&&G.ddead.c[i];cabinAt(i,t0==null?1:Math.max(.12,1-Math.floor((G.time-t0)*2)/120));});
   if(R3.shedM)R3.shedM.forEach((m,i)=>{const t0=G.ddead.s&&G.ddead.s[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.15,1-(G.time-t0)/40);});
   if(R3.boatM)R3.boatM.forEach((m,i)=>{const bb=WORLD.decor.boats[i];if(bb&&bb.off&&!FILM.on){m.visible=false;return;}const t0=G.ddead.b[i];if(t0==null&&!m.visible&&!m.userData.sunk)m.visible=true;if(t0==null){if(m.userData.sunk){m.userData.sunk=false;m.visible=true;}return;}const k2=clamp((G.time-t0)/7,0,1);m.userData.sunk=true;m.userData.y0=.15-3.2*k2;m.rotation.x=.5*k2;m.visible=k2<1;});
   if(R3.jetM)R3.jetM.forEach((g,i)=>{const dead=G.ddead.j[i]!=null;for(const c of g.children)if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.height===.3)c.visible=!dead;if(dead&&!g.userData.broke){g.userData.broke=true;g.children.forEach((c,k)=>{if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.radiusTop===.14&&k%3===0)c.visible=false;});}if(!dead&&g.userData.broke){g.userData.broke=false;g.children.forEach(c=>c.visible=true);}});
