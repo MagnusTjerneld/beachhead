@@ -3477,6 +3477,10 @@ function mkVilla(v){const g=new THREE.Group(),TR=mat(TRIM),GL=winMatFor(v.x,v.y)
     g.add(mesh(box(.2,4.6,6.6),GL,6.52,3,0));for(const z of[-2.2,0,2.2])g.add(mesh(box(.24,4.7,.14),mat(0x1a1a1a),6.54,3,z));g.add(mesh(box(4,1.4,.2),GL,-2,3.2,4.02));
     g.add(mesh(box(5,.3,8),mat(0x7a6650),9,.55,0));g.add(mesh(cyl(.25,.25,2.6,8),mat(0x5a5a5a),-3,7.2,2));}
   g.rotation.y=-v.a;g.position.set(v.x,Math.max(0,v.h)-.1,v.y);return sh(g);}
+/* spray from a hovercraft's skirt on the water, more and higher with speed: the game's VARG and the trailer's alike */
+function vargSpray(x,z,sp,dt){if(!(dt>0))return;let n=dt*(4+sp*2.5);const k=1-.7*(R3.night||0),col=new THREE.Color(.91*k,.9*k,.88*k).getHex(),up=1+Math.min(1,sp/14);
+  while(n>0){if(n<1&&Math.random()>n)break;n--;const a=Math.random()*TAU,r=3.5+Math.random()*1.5;
+    fP(x+Math.cos(a)*r,.4,z+Math.sin(a)*r,{v:[Math.cos(a)*(2+sp*.25),(1.5+Math.random()*2.5)*up,Math.sin(a)*(2+sp*.25)],g:9,s0:.6,s1:2.4,a:.7,ttl:.7,c:col});}}
 /* foam wake: a ribbon over the last seconds of a boat's track, widening and fading behind it */
 let wakeTex=null;
 function mkWake(){
@@ -4227,6 +4231,18 @@ function sync3D(dtr){
     if(m.userData.rockets)m.userData.rockets.forEach((r,i)=>r.visible=i<u.ammo);
     if(m.userData.tur)m.userData.tur.rotation.y=-angWrap(u.turret-u.heading);
   }
+  /* VARG on the water (decided 16 okt, as the trailer showed it): the boats' foam wake behind, and spray from the skirt that grows
+     with speed; on land the wake stops and fades */
+  {const T=R3.decoT||0,dt=G.running&&!G.paused?dtr*G.speed:0;if(!R3.uwake)R3.uwake=new Map();const live=new Set();
+    for(const u of G.units){if(u.kind!=='tank'||u.dead||u.carried)continue;live.add(u.id);let w=R3.uwake.get(u.id);
+      if(!w){w={wake:mkWake(),trail:[],tt:-1,beam:5.6,lx:u.x,ly:u.y,sp:0};D.add(w.wake.mesh);R3.uwake.set(u.id,w);}
+      if(dt>0){w.sp=lerp(w.sp,Math.hypot(u.x-w.lx,u.y-w.ly)/dt,Math.min(1,dt*4));}w.lx=u.x;w.ly=u.y;
+      const wet=heightAt(u.x,u.y)<=.05&&!onDeck(u.x,u.y),c=Math.cos(u.heading),sn=Math.sin(u.heading),sx=u.x-c*4.4,sz=u.y-sn*4.4;
+      if(wet&&w.sp>1.5){if(w.trail.length&&Math.hypot(sx-w.trail[0].x,sz-w.trail[0].z)>30){w.trail.length=0;w.tt=-1;}
+        if(w.tt<0||T-w.tt>.25){w.tt=T;w.trail.unshift({x:sx,z:sz,t:T});if(w.trail.length>w.wake.N)w.trail.pop();}updWake(w,{x:sx,z:sz,t:T},T);}
+      else if(w.trail.length){if(T-w.trail[0].t>8)w.trail.length=0;else updWake(w,w.trail[0],T);}
+      w.wake.mesh.visible=w.trail.length>0;if(wet)vargSpray(u.x,u.y,w.sp,dt);}
+    for(const[id,w]of R3.uwake)if(!live.has(id)){D.remove(w.wake.mesh);w.wake.geo.dispose();w.wake.mesh.material.dispose();R3.uwake.delete(id);}}
   for(const[id,m]of R3.units)if(!seen.has(id)){const u=G.units.find(v=>v.id===id);if(u&&u.dead&&WRECK_KINDS.own.has(u.kind))blowApart(m,null,headOf(m));D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
     km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;}
@@ -4828,7 +4844,7 @@ $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStar
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
-function restart(seed,doc,when){if(R3){debClear(null);filmClear();R3.fxSeen=new WeakSet();}/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
+function restart(seed,doc,when){if(R3){debClear(null);filmClear();R3.fxSeen=new WeakSet();if(R3.uwake){for(const w of R3.uwake.values())R3.dyn.remove(w.wake.mesh);R3.uwake.clear();}}/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and starting hour */
 $('bNew').addEventListener('click',()=>{restart(1000+Math.floor(Math.random()*9000),'auto');opStart(true);});
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -5807,7 +5823,7 @@ const FILM_SHOTS=[
   lane.forEach(([i,back,lat],n)=>{const m=fVarg(n),d=lerp(-80,45,tau/dur)+back+(n===1?6:0),x=LD.x+iv.x*d+pv.x*lat,z=LD.y+iv.z*d+pv.z*lat,hd=Math.atan2(iv.z,iv.x),gy=groundY(x,z);
     if(m.userData.tur)m.userData.tur.rotation.y=0;
     if(gy<.3){m.position.set(x,0,z);m.rotation.set(0,-hd,0);fVargWater(m,dtr,FILM.t,n,170);}
-    else{fPlace(m,x,z,hd,HOVER_Y);if(Math.random()<dtr*30)fxDust(x-iv.x*3,gy,z-iv.z*3,1.3);if(gy<1.5){for(let k=0;k<3;k++)fP(x+fr()*5,.5,z+fr()*5,{v:[fr()*6,2+Math.random()*3,fr()*6],g:9,s0:.6,s1:2.4,a:.7,ttl:.7,c:0xe8e6e0});}}});
+    else{fPlace(m,x,z,hd,HOVER_Y);if(Math.random()<dtr*30)fxDust(x-iv.x*3,gy,z-iv.z*3,1.3);if(gy<1.5)vargSpray(x,z,14,dtr*2.2);}});
   // BÄVER set down by KROK to one side
   {const km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng'),x=LD.x+iv.x*18-pv.x*34,z=LD.y+iv.z*18-pv.z*34,gy=fGround(x,z),dn=sm(clamp(tau/3.6,0,1)),hd=Math.atan2(iv.z,iv.x);
     bm.position.set(x,lerp(gy+7,gy,dn),z);bm.rotation.set(0,-hd,0);km.position.set(x,lerp(gy+15,gy+8.6,dn)+(tau>3.8?(tau-3.8)*3:0),z);km.rotation.set(0,-hd,.02);km.userData.cable.visible=tau<4;km.userData.hook.visible=tau<4;
