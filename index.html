@@ -346,7 +346,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
-      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
+      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Molnen driver sakta från väster. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
@@ -3719,9 +3719,10 @@ function init3D(){
   const water=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),mkWaterMat());
   water.rotation.x=-PI/2;water.position.set(WW/2,0,WH/2);water.receiveShadow=true;scene.add(water);
   const sky=mkSky();scene.add(sky);
+  const clouds=mkClouds();scene.add(clouds.g);
   const ship=mkCarrier(lampMat,winMat);ship.traverse(o=>{if(o.isMesh&&!o.userData.noShadow){o.castShadow=true;o.receiveShadow=true;}});scene.add(ship);
   const dyn=new THREE.Group();scene.add(dyn);
-  R3={sky,parts:[],sphere:new THREE.SphereGeometry(1,10,8),hemi,sun,spots,lhSpots,spotGroup:spots.concat(lhSpots),points,lampMat,winMat,night:0,renderer,scene,cam,dyn,water,ship,bars:new Map(),stat:null,terrain:null,ray:new THREE.Raycaster(),units:new Map(),enemies:new Map(),wrecks:new Map(),relays:new Map(),fx:new Map(),kroks:new Map(),structs:new Map(),route:null,lookAt:new THREE.Vector3(),snap:true,seed:null};
+  R3={sky,clouds,parts:[],sphere:new THREE.SphereGeometry(1,10,8),hemi,sun,spots,lhSpots,spotGroup:spots.concat(lhSpots),points,lampMat,winMat,night:0,renderer,scene,cam,dyn,water,ship,bars:new Map(),stat:null,terrain:null,ray:new THREE.Raycaster(),units:new Map(),enemies:new Map(),wrecks:new Map(),relays:new Map(),fx:new Map(),kroks:new Map(),structs:new Map(),route:null,lookAt:new THREE.Vector3(),snap:true,seed:null};
   return true;
 }
 /* ---------- the surrounding archipelago: scenery only, outside the play area ----------
@@ -3976,6 +3977,34 @@ function mkSky(){
   sky.onBeforeRender=(r,sc,cam)=>{sky.position.copy(cam.position);sky.updateMatrixWorld();};
   return sky;
 }
+/* clouds (decided 16 okt): low-poly cumulus in the game's style, the same sky on every island (a fixed seed, no weather), drifting
+   slowly from the west in three layers, the lower ones faster. Each cloud is a cluster of faceted puffs with a flat base; they are
+   lit by the sun and the sky like everything else, so they turn rose at sunset and grey-blue at night. The fog reaches them later
+   than the ground, so they fade toward the horizon instead of a kilometre out. They cast no shadows and are not in the trailer. */
+const CLOUD={span:3400,layers:[{y:230,n:13,sp:3.4,s:1},{y:340,n:11,sp:2.2,s:1.25},{y:480,n:9,sp:1.3,s:1.5,flat:.7}],dir:-.18};
+function mkClouds(){
+  const R=rng(424242),T=[],mat=new THREE.MeshLambertMaterial({color:0xffffff,emissive:0x1c2128});
+  mat.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <fog_fragment>','#ifdef USE_FOG\nfloat fogFactor=smoothstep(fogNear*2.6,fogFar*2.6,fogDepth);gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,fogFactor);\n#endif');};
+  // four cloud shapes, each a few icosahedron puffs merged into one geometry, the base cut flat
+  for(let k=0;k<4;k++){const pos=[],np=5+Math.floor(R()*4);
+    for(let j=0;j<np;j++){const g=new THREE.IcosahedronGeometry(1,1).toNonIndexed(),a=g.attributes.position.array,r=.55+R()*.5,
+      cx=(j/(np-1)-.5)*2.4+(R()-.5)*.4,cz=(R()-.5)*.9,cy=r*.25+(1-Math.abs(j/(np-1)-.5)*2)*.25;
+      for(let i=0;i<a.length;i+=3){pos.push(cx+a[i]*r*1.05,Math.max(-.05,cy+a[i+1]*r*.8),cz+a[i+2]*r);}g.dispose();}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();T.push(g);}
+  const grp=new THREE.Group(),list=[];
+  const meshes=T.map(g=>{const m=new THREE.InstancedMesh(g,mat,40);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=false;grp.add(m);return m;});
+  CLOUD.layers.forEach((L,li)=>{for(let i=0;i<L.n;i++){const t=Math.floor(R()*4),m=meshes[t],sc=(48+R()*40)*L.s;
+    list.push({m,i:m.count++,x:R()*CLOUD.span,z:(R()-.5)*CLOUD.span,y:L.y+(R()-.5)*40,sp:L.sp*(.85+R()*.3),sx:sc*(1+R()*.6),sy:sc*(L.flat||1)*(.7+R()*.35),sz:sc*(.7+R()*.4),a:R()*PI*2});}});
+  return{g:grp,list,meshes,mat};
+}
+const cloudM=T3?new THREE.Matrix4():null,cloudQ=T3?new THREE.Quaternion():null,cloudE=T3?new THREE.Euler():null;
+function cloudTick(){const C=R3.clouds;if(!C)return;C.g.visible=!FILM.on;if(FILM.on)return;
+  const t=performance.now()/1000,S=CLOUD.span,ca=Math.cos(CLOUD.dir),sa=Math.sin(CLOUD.dir);
+  for(const c of C.list){const u=((c.x+c.sp*t)%S+S)%S-S/2,x=CX+u*ca-c.z*sa,z=CY+u*sa+c.z*ca;
+    cloudE.set(0,c.a,0);cloudQ.setFromEuler(cloudE);cloudM.compose(tmpV.set(x,c.y,z),cloudQ,tmpV2.set(c.sx,c.sy,c.sz));c.m.setMatrixAt(c.i,cloudM);}
+  for(const m of C.meshes)m.instanceMatrix.needsUpdate=true;
+  // a little light of their own by day so the shaded undersides stay a soft grey, almost none at night
+  lerpHex(0x3a404a,0x10141c,R3.night||0,C.mat.emissive);}
 /* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;
    foam where it is shallow, from a depth map of the seabed (see setWaterDepth) */
 function mkWaterMat(){
@@ -5986,7 +6015,7 @@ function frameBody(now,P){
   const cu=unitById(G.cam);
   if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
   if(!FILM.on||FILM.map){mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,FILM.map?false:G.mainMode!=='map');}P.push(performance.now());/* the trailer draws the chart only in its chart shots */
-  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(OP.on)opCam(dtr);else if(BENCH.v)benchCam();else if(G.camDeadT<0)updateCam(dtr);updateSky();if(FILM.on)filmLight();treeCull(R3.cam,true);gpuBegin();R3.renderer.render(R3.scene,R3.cam);if(!FILM.on)renderPip();gpuEnd();if(!FILM.on)feedTick(now);}
+  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(OP.on)opCam(dtr);else if(BENCH.v)benchCam();else if(G.camDeadT<0)updateCam(dtr);updateSky();cloudTick();if(FILM.on)filmLight();treeCull(R3.cam,true);gpuBegin();R3.renderer.render(R3.scene,R3.cam);if(!FILM.on)renderPip();gpuEnd();if(!FILM.on)feedTick(now);}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
   hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on||OP.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);if(TITLE.on)titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
