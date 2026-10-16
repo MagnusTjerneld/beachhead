@@ -325,7 +325,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen skyddar den. Det du skjuter på blir gruppens mål i 8 s efter senaste skottet: följarna bekämpar det när det är inom räckhåll, och HÖK på Offensiv anfaller det. V och H tar i första hand gruppens egna VARG och HÖK. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
-      <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. Dina egna order följer den även in i hot och okänt område, men den väljer den säkraste kända vägen dit. När BÄVER själv ber om transport landar KROK bara på en säkrad plats: spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, SPARV först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
+      <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. KROK har två hållningar. Defensiv (standard) håller den vid liv: den flyger inte in i kända hot, sätter bara ned på en säkrad plats och drar sig tillbaka under halva skrovet. Offensiv följer dina egna order även in i hot och okänt område och avbryter inte. Båda väljer den säkraste kända vägen. När BÄVER själv ber om transport landar KROK bara på en säkrad plats: spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, SPARV först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
@@ -1211,7 +1211,7 @@ function deckSpot(n){const k=(n||0)%4;return shipPos(6+(k%2)*6,-6-Math.floor(k/2
 function shipPos(lat,fwd){const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)};return[CARRIER.x-f.y*lat+f.x*fwd,CARRIER.y+f.x*lat+f.y*fwd];}
 function makeKrok(){
   const n=G.krokN=(G.krokN||0)+1,pad=shipPos([4.5,-4.5,13,-13][(n-1)%4],-38);
-  return{id:n===1?'K':'K'+n,kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};
+  return{id:n===1?'K':'K'+n,kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},post:'def',heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};
 }
 const unitById=id=>id&&id[0]==='K'?G.kroks.find(k=>k.id===id):G.units.find(u=>u.id===id);
 const selUnit=()=>G.units.find(u=>u.id===G.sel&&!u.dead)||null;
@@ -2177,15 +2177,17 @@ function markKnown(){
   if(ch)G.knownV++;
 }
 const isKnown=(x,y)=>!!G.known[cellIdx(x,y)];
-function knownSafe(k,x,y){ // nearest known cell outside known air threats
-  const t0=cellIdx(x,y);if(G.known[t0]&&!airDanger(k,x,y))return{x,y,moved:false};
+function knownSafe(k,x,y,sec){ // nearest known cell outside known air threats; sec: a landing, so also secured (secureMask)
+  if(sec&&onDeck(x,y))return{x,y,moved:false};
+  const sm=sec?secureMask():null,ok=c=>!sm||sm[c];
+  const t0=cellIdx(x,y);if(G.known[t0]&&!airDanger(k,x,y)&&ok(t0))return{x,y,moved:false};
   const seen=new Uint8Array(GW*GH),q=[t0];seen[t0]=1;
-  for(let h=0;h<q.length;h++){const c=q[h];const p=cellCenter(c);if(G.known[c]&&WORLD.baseGrid[c]!==DEEP&&!airDanger(k,p.x,p.y))return{x:p.x,y:p.y,moved:true};
+  for(let h=0;h<q.length;h++){const c=q[h];const p=cellCenter(c);if(G.known[c]&&WORLD.baseGrid[c]!==DEEP&&ok(c)&&!airDanger(k,p.x,p.y))return{x:p.x,y:p.y,moved:true};
     const cx=c%GW,cy=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!seen[n]){seen[n]=1;q.push(n);}}}
   return null;
 }
 /* KROK route: only over known cells, never into a known air threat; if already inside one it takes the shortest way out.
-   On the captain's order (cap) it goes anyway, by the safest known way: known safe air first, then unscouted, known threats last. */
+   On the captain's order in Offensiv (cap) it goes anyway, by the safest known way: known safe air first, then unscouted, known threats last. */
 function krokPath(k,tx,ty,cap){
   const K=G.known,s=cellIdx(k.x,k.y),t=cellIdx(tx,ty);if(!K[t]&&!cap)return null;
   const dz=new Uint8Array(GW*GH);
@@ -2292,15 +2294,20 @@ function krokFly(k,tx,ty,dt,sp,cap){
 }
 function krokOrders(k,dt,sp){
   const o=k.orders[0];k.low=false;
-  // the captain's order is followed even into known danger or unscouted ground; KROK only warns, once
-  if((o.type==='move'||o.type==='drop')&&o.cap){if(!o.tp){o.tp={x:o.x,y:o.y};const e=airDanger(k,o.x,o.y);if(e||!isKnown(o.x,o.y))say(k,e?'Punkten ligger inom räckhåll för '+ename(e)+'. Flyger ändå på din order.':'Okänt område. Flyger ändå på din order.');}}
-  else if(o.type==='move'||o.type==='drop'){if(!o.tp||o.sv!==(G.tver||0)){o.sv=G.tver||0;const ks=knownSafe(k,o.x,o.y);if(!ks){say(k,'Inget spanat och säkert område nära punkten. Ordern struken.');k.orders.shift();return;}o.tp=ks;if(ks.moved&&!o.warned){o.warned=1;say(k,isKnown(o.x,o.y)?'Punkten ligger inom räckhåll för kända hot. Stannar strax utanför.':'Okänt område. Flyger bara till kanten av det vi har spanat.');}}}
-  if(o.type==='move'){k.status='Flyger till '+sq(o.tp.x,o.tp.y);const d=krokFly(k,o.tp.x,o.tp.y,dt,sp,o.cap);if(d===Infinity){k.status='Ingen spanad väg dit';o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område. Ordern struken.');k.orders.shift();}return;}if(d<3){k.orders.shift();k.path=null;}return;}
+  /* stance (decided 16 okt): in Offensiv the captain's order is followed even into known danger or unscouted ground, KROK only
+     warns once; in Defensiv (the default) and for automation it keeps itself alive: no known threat, and a landing only on a
+     secured place */
+  const bold=!!o.force||!!o.cap&&k.post==='off';
+  if((o.type==='move'||o.type==='drop')&&bold){if(!o.tp){o.tp={x:o.x,y:o.y};const e=airDanger(k,o.x,o.y);if(e||!isKnown(o.x,o.y))say(k,e?'Punkten ligger inom räckhåll för '+ename(e)+'. Flyger ändå på din order.':'Okänt område. Flyger ändå på din order.');}}
+  else if(o.type==='move'||o.type==='drop'){const land=o.type==='drop'&&!!k.cargo;if(!o.tp||o.sv!==(G.tver||0)||land&&G.time-(o.st||0)>2){o.sv=G.tver||0;o.st=G.time;const ks=knownSafe(k,o.x,o.y,land);
+    if(!ks){const ox=o.x,oy=o.y,ty=o.type;say(k,land?'Ingen säkrad landningsplats nära punkten. Ordern struken.':'Inget spanat och säkert område nära punkten. Ordern struken.',o.cap?[{l:'Offensiv och flyg ändå',f:()=>{k.post='off';krokOrder(k,{type:ty,x:ox,y:oy},true);}}]:null);k.orders.shift();return;}o.tp=ks;
+    if(ks.moved&&!o.warned){o.warned=1;say(k,!isKnown(o.x,o.y)?'Okänt område. Flyger bara till kanten av det vi har spanat.':airDanger(k,o.x,o.y)?'Punkten ligger inom räckhåll för kända hot. Stannar strax utanför.':'Platsen är inte säkrad: allt land inom '+SECURE_R+' m är inte spanat. Sätter ned på närmaste säkrade plats.',o.cap?[{l:'Offensiv och flyg ändå',f:()=>{k.post='off';o.tp=null;o.warned=0;}}]:null);}}}
+  if(o.type==='move'){k.status='Flyger till '+sq(o.tp.x,o.tp.y);const d=krokFly(k,o.tp.x,o.tp.y,dt,sp,bold);if(d===Infinity){k.status='Ingen spanad väg dit';o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område. Ordern struken.');k.orders.shift();}return;}if(d<3){k.orders.shift();k.path=null;}return;}
   if(o.type==='lift'){
     const u=o.unit;if(!u||u.dead||u.carried||k.cargo){if(u&&u.awaitKrok===k.id)u.awaitKrok=null;k.orders.shift();k.path=null;return;}
     if(!o.started){o.started=true;o.t=0;if(!o.keep){u.orders=[];u.mission=null;u.tempOn=false;}resetFor(u);if(G.ctrl===u.id)dropCtrl();u.awaitKrok=k.id;say(u,'Väntar på '+k.name+' för lufttransport.');}
-    if(airDanger(k,u.x,u.y)&&!o.cap){say(k,u.name+' står inom räckhåll för kända hot. Kan inte hämta.');u.awaitKrok=null;k.orders.shift();k.path=null;return;}
-    const d=krokFly(k,u.x,u.y,dt,sp,o.cap);k.status='Hämtar '+u.name;
+    if(airDanger(k,u.x,u.y)&&!bold){say(k,u.name+' står inom räckhåll för kända hot. Kan inte hämta.'+(o.cap?' Sätt KROK på Offensiv om den ska hämta ändå.':''));u.awaitKrok=null;k.orders.shift();k.path=null;return;}
+    const d=krokFly(k,u.x,u.y,dt,sp,bold);k.status='Hämtar '+u.name;
     if(d===Infinity){k.status='Ingen spanad väg till '+u.name;o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område till '+u.name+'. Ordern struken.');u.awaitKrok=null;k.orders.shift();}return;}
     if(d<3){o.t+=dt;k.low=true;k.status='Kopplar '+u.name;if(o.t>=KROK_LIFT){k.cargo=u;u.carried=k.id;u.awaitKrok=null;k.orders.shift();k.path=null;say(k,u.name+' kopplad. Lyfter.'+(k.orders.some(q=>q.type==='drop')?'':' Peka ut var den ska sättas ned.'));}}
     return;
@@ -2308,7 +2315,7 @@ function krokOrders(k,dt,sp){
   if(o.type==='drop'){
     if(!k.cargo){k.orders.shift();return;}
     if(!o.dp||o.dpv!==o.tp){o.dpv=o.tp;o.dp=dropSpot(o.tp);}
-    const d=krokFly(k,o.dp.x,o.dp.y,dt,sp,o.cap);k.status='Flyger '+k.cargo.name+' till '+sq(o.dp.x,o.dp.y);
+    const d=krokFly(k,o.dp.x,o.dp.y,dt,sp,bold);k.status='Flyger '+k.cargo.name+' till '+sq(o.dp.x,o.dp.y);
     if(d===Infinity){k.status='Ingen spanad väg dit';o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område. Väntar med lasten.');k.orders.shift();}return;}
     if(d<3){o.t=(o.t||0)+dt;k.low=true;k.status='Sätter ned '+k.cargo.name;if(o.t>=KROK_LIFT){const u=k.cargo;u.x=o.dp.x;u.y=o.dp.y;u.carried=null;u.path=null;u.waitT=0;k.cargo=null;k.orders.shift();k.path=null;say(u,'Nedsatt i ruta '+sq(u.x,u.y)+'.'+(u.orders.length?' Fortsätter med köade order.':''));}}
     return;
@@ -2326,7 +2333,7 @@ function updateKrok(k,dt){
   const fly=(tx,ty)=>krokFly(k,tx,ty,dt,sp);
   if(dist(k,k.pad)<10&&!k.cargo){k.hp=Math.min(k.maxhp,k.hp+8*dt);if(k.retreat&&k.hp>=k.maxhp*.6)k.retreat=false;}
   if(G.ctrl===k.id){krokManual(k,dt,sp);return;}
-  if(!k.retreat&&k.hp<k.maxhp*.5&&G.time-k.lastHit<1)krokRetreat(k);
+  if(!k.retreat&&k.hp<k.maxhp*.5&&G.time-k.lastHit<1&&!(k.orders[0]&&(k.orders[0].force||k.post==='off'&&k.orders[0].cap)))krokRetreat(k);
   // queued orders take over unless a salvaged load is already on the hook
   if(k.orders.length&&(k.state==='idle'||k.state==='out')){if(k.state==='out'&&k.target){k.target.claimed=false;k.target=null;}k.state='idle';krokOrders(k,dt,sp);return;}
   if(k.cargo){k.low=false;const d=fly(k.pad.x,k.pad.y);k.status=d>6?'Väntar på order, återvänder med '+k.cargo.name:'Väntar med '+k.cargo.name+' i kroken';return;}
@@ -2418,17 +2425,18 @@ function safeLZ(u,tx,ty){
 /* a ground vehicle asks for a lift on its own: KROK only takes it to a safe landing zone; without one the vehicle waits.
    Only the captain (Kör ändå, Flyg ändå or an explicit lift order) sends KROK past its rules. */
 function autoLift(u,tx,ty){
-  if(u.override){airlift([u],{x:tx,y:ty},true);return true;}
+  if(u.override){airlift([u],{x:tx,y:ty},true,false,true);return true;}
   const lz=safeLZ(u,tx,ty);
   if(!lz){u.hold=true;u.unsafeWait=true;u.safeT=G.time+3;if(!u.lzMsgT||G.time>u.lzMsgT){u.lzMsgT=G.time+25;const k=G.kroks.find(k2=>!k2.dead);
-    say(k||u,'Ingen säker landningsplats för '+u.name+' mot ruta '+sq(tx,ty)+'. '+u.name+' väntar tills det finns en.',[{l:'Flyg ändå',f:()=>{u.override=true;u.hold=false;u.unsafeWait=false;airlift([u],{x:tx,y:ty},true);}}]);}return false;}
+    say(k||u,'Ingen säker landningsplats för '+u.name+' mot ruta '+sq(tx,ty)+'. '+u.name+' väntar tills det finns en.',[{l:'Flyg ändå',f:()=>{u.override=true;u.hold=false;u.unsafeWait=false;airlift([u],{x:tx,y:ty},true,false,true);}}]);}return false;}
   if(u.unsafeWait){u.unsafeWait=false;u.hold=false;}airlift([u],lz,true,true);return true;}
-/* fly ground vehicles to a point with the least busy KROK; the captain's order (cap) unless auto, the vehicle's own request */
-function airlift(units,pt,keep,auto){
+/* fly ground vehicles to a point with the least busy KROK; the captain's order (cap) unless auto, the vehicle's own request;
+   force (Flyg ändå) goes into danger whatever KROK's stance */
+function airlift(units,pt,keep,auto,force){
   const ks=G.kroks.filter(k=>!k.dead&&G.ctrl!==k.id);if(!ks.length){say(null,'Ingen KROK tillgänglig.');return;}
   const offs=formation(units.length,-PI/2);
   units.forEach((u,i)=>{const k=ks.slice().sort((a,b)=>a.orders.length-b.orders.length||dist(a,u)-dist(b,u))[0];
-    k.orders.push({type:'lift',unit:u,keep:!!keep,cap:!auto},{type:'drop',x:clamp(pt.x+offs[i].x*1.6,10,WW-10),y:clamp(pt.y+offs[i].y*1.6,10,WH-10),cap:!auto});
+    k.orders.push({type:'lift',unit:u,keep:!!keep,cap:!auto,force:!!force},{type:'drop',x:clamp(pt.x+offs[i].x*1.6,10,WW-10),y:clamp(pt.y+offs[i].y*1.6,10,WH-10),cap:!auto,force:!!force});
     say(k,'Lufttransport av '+u.name+' till ruta '+sq(pt.x,pt.y)+' beställd.');});
   ping(pt.x,pt.y);
 }
@@ -4103,6 +4111,7 @@ function drawHud(ctx,w,h){
   ctx.fillText('KURS '+String(Math.round(brg)%360).padStart(3,'0')+'°  '+extra,w-8,h-22);
   if(u.kind!=='krok'&&G.time-u.lastHit<1.2){ctx.fillStyle='#ff7aa8';ctx.fillText('TRÄFF',w-8,h-6);}
   else if(u.kind!=='krok'){ctx.fillText(G.ctrl===u.id?'MANUELL':POST[curPost(u)].toUpperCase(),w-8,h-6);}
+  else ctx.fillText(G.ctrl===u.id?'MANUELL':POST[u.post||'def'].toUpperCase(),w-8,h-6);
   if(G.ctrl===u.id){ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#f0c45a';
     ctx.font=mono(11);ctx.fillText(u.kind==='mus'?'FJÄRRSTYRD · W A S D KÖR · F SPRÄNGER · E SLÄPPER · KÖR TILL VARG FÖR ATT KOMMA OMBORD':u.kind==='krok'?'MANUELL · W A S D FLYGER · F KROKEN · E SLÄPPER':u.kind==='drone'?(G.mlook?'MUSEN STYR · KLICK KULSPRUTA · R ROBOT · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D FLYGER · E SLÄPPER'):u.kind!=='tank'?'MANUELL · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':G.mlook?'MUSEN SIKTAR · KLICK SKJUTER · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D KÖR · E SLÄPPER',w/2,64);ctx.fillStyle='rgba(240,196,90,.75)';ctx.fillText('PEKA OCH TRYCK  B BÄVER · H LUFTSTÖD · V VARG · K KROK',w/2,80);ctx.fillStyle='#f0c45a';ctx.font=mono(12);
     if((u.kind==='tank'||u.kind==='drone')&&G.mlook){const cx2=w/2,cy2=h/2,t=u.target;ctx.shadowBlur=0;ctx.strokeStyle=t?'#ff7aa8':'rgba(240,244,240,.9)';ctx.lineWidth=1.5;
@@ -4404,7 +4413,7 @@ function buildRoster(){
   }
 }
 const postRow=$('postRow');
-for(const p of PK){const b=document.createElement('button');b.type='button';b.className='chip';b.dataset.p=p;b.innerHTML=postSvg(p)+'<span></span>';b.lastChild.textContent=POST[p];b.addEventListener('click',()=>{for(const u of selUnits()){u.post=p;if(u.orders[0]&&u.orders[0].type!=='rtb'){u.orders[0].post=p;u.path=null;}}uiTick(true);});postRow.appendChild(b);}
+for(const p of PK){const b=document.createElement('button');b.type='button';b.className='chip';b.dataset.p=p;b.innerHTML=postSvg(p)+'<span></span>';b.lastChild.textContent=POST[p];b.addEventListener('click',()=>{const sk=selKrok();if(sk){if(p==='off'||p==='def'){sk.post=p;say(sk,p==='off'?'Offensiv: följer dina order även in i hot och okänt område.':'Defensiv: håller mig vid liv, landar bara på säkrade platser.');}uiTick(true);return;}for(const u of selUnits()){u.post=p;if(u.orders[0]&&u.orders[0].type!=='rtb'){u.orders[0].post=p;u.path=null;}}uiTick(true);});postRow.appendChild(b);}
 const wingRow=$('wingRow');
 for(let n=1;n<=4;n++){const k=String(n),b=document.createElement('button');b.type='button';b.className='chip wing';b.dataset.n=k;b.title='Tryck: välj wing, eller spara valda om den är tom. Håll inne: spara valda.';let lp=null,fired=false;
   b.addEventListener('pointerdown',()=>{fired=false;lp=setTimeout(()=>{fired=true;assignWing(k);uiTick(true);},550);});
@@ -4724,11 +4733,11 @@ function uiTick(force){
     if(r.fu)r.fu.style.width=(u.fuel/u.maxFuel*100)+'%';
   }
   const u=selUnit(),us=selUnits(),sk=selKrok();const w=$('who');w.textContent='';
-  if(sk){w.append('Order till ');const b=document.createElement('b');b.textContent=sk.name;w.append(b);w.append(' · klick på fordon: lyft, på kartan: flyg eller sätt ned, Skift lägger i kö');}
+  if(sk){w.append('Order till ');const b=document.createElement('b');b.textContent=sk.name;w.append(b);w.append(' · '+POST[sk.post||'def'].toLowerCase()+' · klick på fordon: lyft, på kartan: flyg eller sätt ned, Skift lägger i kö');}
   else if(us.length){w.append('Order till ');const b=document.createElement('b');b.textContent=us.length>1?us.map(x=>x.name).join(', '):u?u.name:us[0].name;w.append(b);w.append(' · standardhållning');}
   else w.append('Ingen enhet vald');
   renderOrders(sk||(us.length===1?us[0]:null));
-  for(const b of postRow.children){b.disabled=!us.length;b.setAttribute('aria-pressed',String(!!u&&u.post===b.dataset.p));}
+  for(const b of postRow.children){const kp=b.dataset.p==='off'||b.dataset.p==='def';b.disabled=sk?!kp:!us.length;b.setAttribute('aria-pressed',String(sk?sk.post===b.dataset.p:!!u&&u.post===b.dataset.p));}
   $('bStop').disabled=!us.length&&!sk;$('bRtb').disabled=!us.length&&!sk;
   $('bOverride').hidden=!us.some(x=>x.hold||(x.rtb&&x.saved&&x.saved.length));
   $('bExplore').hidden=!selUnits().some(v=>v.kind==='scout');
