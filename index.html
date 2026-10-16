@@ -233,6 +233,7 @@ button:disabled{opacity:.45;cursor:default}
         <h3 id="niTitle">Ny ö</h3>
         <label>Öns nummer (1000 till 9999), tomt för slump<input id="niSeed" type="number" min="1000" max="9999" placeholder="auto" inputmode="numeric"></label>
         <div class="hint2" id="niName"></div>
+        <label>Försvarets nummer (0 till 9999, 0 är öns grundförsvar), tomt för slump<input id="niDef" type="number" min="0" max="9999" placeholder="auto" inputmode="numeric"></label>
         <label>Klockslag vid start, tomt för öns eget<input id="niTime" type="time" step="900"></label>
         <div class="row2"><button class="btn" id="niCancel" type="button">Avbryt</button><button class="btn" id="niGo" type="button">Starta</button></div>
       </div></div>
@@ -318,7 +319,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon.</li>
-      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer, försvarets nummer och klockslaget vid start, eller lämnar dem tomma för slump och öns eget klockslag. Öns nummer ger alltid samma geografi; försvaret, hur fienden befäster ön, slumpas vid varje nytt spel och står i sidhuvudet (0 är öns grundförsvar), så ett försvar du vill möta igen går att välja. Klockan på dygnet står bredvid T+ i kameran och på sjökortets etikett; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt och 3D-last (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den; på Defensiv stannar den i skyddsrollen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, SPARV, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
@@ -635,11 +636,26 @@ function buildChart(W){
   W.lines={coast:iso(0),deep:iso(-3.2),cont:[9,17,25].map(iso)};
   W._cs=W._cv=null;
 }
-function buildWorld(seed){
+/* the island's own seed decides the geography (and the base defence it is checked with); def decides how the enemy fortifies it
+   (decided 16 okt): 0 is the base defence, any other number a defence of its own on the same geography */
+function buildWorld(seed,def){
   let W=null;
   for(let k=0;k<(SHAPE_CFG.rough?12:8);k++){W=buildWorldTry(seed,k);W.tries=k+1;W.valid=validWorld(W);{const lg=buildWorld.log=buildWorld.log||[];lg.push(W.valid?"ok":W.why);if(lg.length>200)lg.shift();}if(W.valid)break;}
-  buildChart(W);W.seed=seed;WORLD=W;return W;
+  W.seed=seed;W.def=0;WORLD=W;setDefense(W,def|0);return W;
 }
+/* a defence number that fails the island's check (two bunkers at LC) tries a few numbers derived from it, then the base defence,
+   so the same number always gives the same defence */
+function setDefense(W,def){
+  const lc=W.relays[2],ok2=()=>W.enemies.filter(e=>e.kind==='turret'&&Math.hypot(e.x-lc.x,e.y-lc.y)<200).length>=2;/* the one part of validWorld the defence decides; the rest is geography, checked with the base */
+  let ok=!def;if(def){for(let k=0;k<6&&!ok;k++){W._replan(k?def*7+k*104729:def);ok=ok2();}if(!ok)W._replan(0);}
+  else if(W.def)W._replan(0);
+  W.def=def;coverW=null;canopyW=null;buildChart(W);}
+/* what the defence moves: trees give way to its positions and barriers, and only passes without a barrier are labelled */
+function defenseDress(W){const bar=new Uint8Array(GW*GH);for(const b of W.barriers)for(const c of b.cells)bar[c]=1;
+  const near=new Map(),key=(x,y)=>Math.floor(x/16)*4096+Math.floor(y/16);for(const e of W.enemies){const k=key(e.x,e.y);if(!near.has(k))near.set(k,[]);near.get(k).push(e);}
+  const hit=t=>{const bx=Math.floor(t.x/16),by=Math.floor(t.y/16);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const L=near.get((bx+dx)*4096+by+dy);if(L&&L.some(e=>Math.hypot(e.x-t.x,e.y-t.y)<16))return true;}return false;};
+  W.trees=W.treeAll.filter(t=>!bar[t.ci]&&!hit(t));
+  W.labels=W.labels.filter(l=>l.t!=='Pass');for(const p of W._pass)if(!W.barriers.some(b=>pairKey(b.za,b.zb)===pairKey(p.a,p.b)))W.labels.push({x:p.x,y:p.y,t:'Pass',off:0});}
 function birkaClear(W){const P=W.birkaPath,g=W.baseGrid,wet=(x,y)=>{if(x<0||y<0||x>=WW||y>=WH)return true;const t=g[cellIdx(x,y)];return t===DEEP||t===SHAL;},end=P.L-(HARB.dockLi+60);
   for(let s=0;s<end;s+=5){let i=0;while(i<P.pts.length-2&&P.len[i+1]<s)i++;const a=P.pts[i],b=P.pts[i+1],t=(s-P.len[i])/((P.len[i+1]-P.len[i])||1),x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
     if(!wet(x,y))return false;for(let k=0;k<8;k++){const an=k*PI/4;if(!wet(x+Math.cos(an)*20,y+Math.sin(an)*20))return false;}}
@@ -823,12 +839,15 @@ function buildWorldTry(seed,tryK){
   /* ---------- the enemy plans its defence ----------
      threat analysis: every way in from the sea and the traffic each pass would carry towards what matters; a defended region
      whose line of passes it blocks by doctrine and budget; cracks where it judges traffic lowest; covering fire on every obstacle */
+  const covePt=V.cove?snapZ(inl(V.cove,15,.97),null,TIER.beach):null;
+  /* the plan is a function of its own random sequence (decided 16 okt): the island is built once with the base defence, which the
+     buildings, trees and decoration below are placed around, and W._replan(def) plans a different defence on the same geography */
+  const planDefense=(Rp,first)=>{W.barriers=[];
   const mids=lz.filter(i=>![land,r1z,r2z,r3z].includes(i));
-  const Rp=rng(s*97+3),CFG=ENEMY_CFG,COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
+  const CFG=ENEMY_CFG,COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
   const nbr=z=>pass.filter(p=>p.a===z||p.b===z).map(p=>({p,n:p.a===z?p.b:p.a}));
   const DM=new Map();for(const z of lz){const d=new Map([[z,0]]),q=[z];while(q.length){const c=q.shift();for(const{n}of nbr(c))if(!d.has(n)){d.set(n,d.get(c)+1);q.push(n);}}DM.set(z,d);}
   const dz=(a,b)=>{const m=DM.get(a);return m&&m.has(b)?m.get(b):99;};
-  const covePt=V.cove?snapZ(inl(V.cove,15,.97),null,TIER.beach):null;
   // ways in: land a VARG can climb from water, per zone
   const coastN=new Map(),coastXY=new Map();
   for(let i=0;i<grid.length;i++){const t=grid[i];if((t!==LAND&&t!==BEACH)||!reach[i])continue;const z=zid[i];if(z<0||Z[z].water)continue;const gx=i%GW,gy=(i/GW)|0;let wet=false;
@@ -968,7 +987,7 @@ function buildWorldTry(seed,tryK){
     else{if(!take('turret'))break;const r=doctrine==='fastning'||k%2?relays[2]:relays[1],a2=k*1.9+1.1;add('turret','T',snapZ({x:r.x+Math.cos(a2)*110,y:r.y+Math.sin(a2)*110},zid[cellIdx(r.x,r.y)]));}}
   for(let tries=0;tries<300&&left>=COST.rb;tries++){const i=Math.floor(Rp()*grid.length),c=cellCenter(i);if(grid[i]!==LAND||!reach[i]||W.road[i]||Math.hypot(c.x-landing.x,c.y-landing.y)<330||E.some(e=>Math.hypot(e.x-c.x,e.y-c.y)<90))continue;if(!take('rb'))break;add('rb','RB',c);}
   const line=inner;
-  if(mids.length){R();R();}   // keep the world's random sequence where the old placement drew from it
+  if(first&&mids.length){R();R();}   // keep the world's random sequence where the old placement drew from it
   W.plan={doctrine,budget,left:Math.round(left),spent,defended:[...Dz],inner:inner.length,outer:outer.length,barred:lineBar.length,mined:W.mineSites.length,cracks:cracks.length,open:deliberate.length,airPockets:pockets.length,entries:entries.map(e=>e.kind),beachT:nBeach};
   {const role=p=>lineBar.some(x=>x.p===p)?'barrier':minedP.includes(p)?'mine':deliberate.includes(p)?'open':cracks.includes(p)?'crack':'';const mid=p=>{const st=sites.get(p);if(st)return{x:st.x,y:st.y};const a2=zc[p.a],b2=zc[p.b];return{x:(a2.x+b2.x)/2,y:(a2.y+b2.y)/2};};
     W.planDbg={entries:entries.map(e=>({z:e.z,x:e.pt.x,y:e.pt.y,w:e.w,kind:e.kind})),pass:pass.map(p=>({a:p.a,b:p.b,...mid(p),t:+traffic.get(p).toFixed(2),line:inner.includes(p)?'inner':outer.includes(p)?'outer':'',role:role(p),crackRank:cracks.indexOf(p)})),
@@ -977,7 +996,8 @@ function buildWorldTry(seed,tryK){
      else become its guards, and if there are none it gets one bunker, so it is locked by defenders you can find, not by a radius */
   if(V.harbor&&V.harbor.std&&harborPt){const hg=E.filter(e=>e.guard==null&&(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-harborPt.x,e.y-harborPt.y)<170);
     for(const e of hg)e.guard=3;if(!hg.length){take('turret');add('turret','T',snapZ({x:harborPt.x+V.harbor.nx*0-V.harbor.ny*55,y:harborPt.y+V.harbor.nx*55},null,TIER.beach),{guard:3});}}
-  W.enemies=E;
+  W.enemies=E;return E;};
+  const gridPlan=grid.slice();let E=planDefense(rng(s*97+3),true);
   /* salvage: building clusters per zone, loose materiel, old hulks on the landing beach. The material is in the flanks: zones on
      a shortest route from the beach to LC are lean, zones off it are rich and have more buildings, so a sector is worth taking for
      what is in it and not only because it is on the way (decided 12 okt, Halva ön är död mark) */
@@ -1014,12 +1034,11 @@ function buildWorldTry(seed,tryK){
   const lab=(p,t,off)=>W.labels.push({x:p.x,y:p.y,t,off:off?1:0});
   lab(landing,'Strand',1);if(harborPt&&!(V.harbor&&V.harbor.std))lab(harborPt,'Hamn',1);/* the standard harbour is point H and carries its own label */
   if(covePt)lab(covePt,'Vik',1);
-  for(const p of pass)if(!W.barriers.some(b=>pairKey(b.za,b.zb)===pairKey(p.a,p.b)))lab(p,'Pass');
+  W._pass=pass.map(p=>({x:p.x,y:p.y,a:p.a,b:p.b}));
   // trees
-  const isBar=new Uint8Array(GW*GH);for(const b of W.barriers)for(const c of b.cells)isBar[c]=1;
-  for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i]||isBar[i])continue;const c=cellCenter(i);const fd=fbm(c.x*1.7,c.y*1.7,s+313),dense=fd>.56,pr=dense?Math.min(.95,.5+(fd-.56)*4):.1;
+  for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i])continue;const c=cellCenter(i);const fd=fbm(c.x*1.7,c.y*1.7,s+313),dense=fd>.56,pr=dense?Math.min(.95,.5+(fd-.56)*4):.1;
     for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>pr)continue;const nT=dense?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
-    for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(E.some(e=>Math.hypot(e.x-x,e.y-y)<16))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;W.trees.push({x,y,s:(dense?.85:.75)+hash2(gx+qq,gy,s+80)*.6});}}}
+    for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;W.trees.push({x,y,s:(dense?.85:.75)+hash2(gx+qq,gy,s+80)*.6,ci:i});}}}
   W.baseGrid=grid.slice();
   // elevation grid for 3D
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
@@ -1109,6 +1128,9 @@ function buildWorldTry(seed,tryK){
         const r={x:m.x+left.x*wd,y:m.y+left.y*wd},g={x:m.x-left.x*wd,y:m.y-left.y*wd};if(wet(cellIdx(r.x,r.y))&&wet(cellIdx(g.x,g.y))){D.marks.push({...r,type:'red'},{...g,type:'green'});}}}
   }
   W._cs=s;W._cv=V;/* the chart picture is built once, for the world that is kept (buildChart) */
+  W.treeAll=W.trees;defenseDress(W);
+  /* the decoration below writes islets and villas into the grid; a new plan sees the grid as the first one did */
+  W._replan=x=>{const now=grid.slice();grid.set(gridPlan);E=planDefense(x?rng(((seed*97+3)^Math.imul(x,0x9E3779B1))|0):rng(s*97+3),false);grid.set(now);defenseDress(W);};
   return W;
 }
 function heightAt(x,y){const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1;const fx=clamp(x/WW*SX,0,SX-.001),fy=clamp(y/WH*SY,0,SY-.001);const i=Math.floor(fx),j=Math.floor(fy),u=fx-i,v=fy-j;const e=W.ev;const a=e[j*nx+i],b=e[j*nx+i+1],c=e[(j+1)*nx+i],d=e[(j+1)*nx+i+1];
@@ -1178,10 +1200,10 @@ function deckDrive(u,dt){if(u.orders.length||u.carried||G.ctrl===u.id||!onDeck(u
   if(!u.deckPath)u.deckPath=deckRoute(u,u.deckTo);let t=u.deckPath[0],d=Math.hypot(t.x-u.x,t.y-u.y);if(d<.6&&u.deckPath.length>1){u.deckPath.shift();t=u.deckPath[0];d=Math.hypot(t.x-u.x,t.y-u.y);}
   if(d<.6){u.deckTo=null;u.deckPath=null;u.heading=CARRIER.a;u.state='Väntar på helikopterplattan';return true;}
   const a=Math.atan2(t.y-u.y,t.x-u.x),st=Math.min(d,u.speed*.6*dt);u.x+=Math.cos(a)*st;u.y+=Math.sin(a)*st;u.heading=a;u.state='Kör till en ledig helikopterplatta';return true;}
-function newGame(seed){
-  const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed);WORLD.cfgKey=cfgKey;}
+function newGame(seed,def){def=def|0;
+  const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed,def);WORLD.cfgKey=cfgKey;}else if(WORLD.def!==def)setDefense(WORLD,def);
   if(WORLD.carrier0)Object.assign(CARRIER,WORLD.carrier0);/* Birka starts outside the beach again, even on the same island after a docking */
-  G={seed,time:0,res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
+  G={seed,def,time:0,res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
     relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
@@ -2747,7 +2769,7 @@ function drawBatteryLimit(ctx,u,route,k){
 function mapStatic(ctx,w,h,s,ox,oy,k){const cv=ctx.canvas,T=ctx.getTransform(),dd=G.ddead,
     key=s+'|'+ox+'|'+oy+'|'+w+'|'+h+'|'+T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+(dd.v?Object.keys(dd.v).length:0)+'|'+(dd.j?Object.keys(dd.j).length:0);
   let C=cv._mapStatic;if(!C){C=cv._mapStatic=document.createElement('canvas');}
-  if(C._key!==key||C._world!==WORLD){C._key=key;C._world=WORLD;if(C.width!==cv.width||C.height!==cv.height){C.width=cv.width;C.height=cv.height;}
+  if(C._key!==key||C._world!==WORLD||C._def!==WORLD.def){C._key=key;C._world=WORLD;C._def=WORLD.def;if(C.width!==cv.width||C.height!==cv.height){C.width=cv.width;C.height=cv.height;}
     const c=C.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,C.width,C.height);c.setTransform(T);mapStaticDraw(c,w,h,s,ox,oy,k);}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(C,0,0);ctx.restore();}
 function mapStaticDraw(ctx,w,h,s,ox,oy,k){
@@ -3788,7 +3810,7 @@ function buildStatic(){
   if(R3.lhBeam)for(const m of R3.lhBeam.beam.children){m.castShadow=false;m.receiveShadow=false;}
   // boats throw their shadow on the water surface, not on the seabed metres below (that made them look as if they hovered)
   if(R3.seabed){R3.seabed.castShadow=false;R3.seabed.receiveShadow=false;}
-  R3.scene.add(st);R3.stat=st;R3.seed=W.seed;R3.snap=true;setWaterDepth();
+  R3.scene.add(st);R3.stat=st;R3.seed=W.seed+':'+W.def;R3.snap=true;setWaterDepth();
   try{TITLE.vSync=null;}catch(_){}/* new movers: place the intro's VARG patrol again */
 }
 /* ---------- time of day: sun by day, moon by night (dark blue, never black), pooled lamps ---------- */
@@ -4454,7 +4476,7 @@ $('settings').addEventListener('click',ev=>ev.stopPropagation());
 document.addEventListener('click',()=>{if(!$('settings').hidden)setMenu(false);});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hidden){setMenu(false);ev.stopPropagation();}},true);
 const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
-confirmBtn('bRestart',()=>restart(G.seed));
+confirmBtn('bRestart',()=>restart(G.seed,G.def));
 confirmBtn('bBench',()=>{setMenu(false);benchStart();});
 /* the trailer from the settings, in the page itself (a page in a frame cannot always be reopened with ?trailer): the same start as a
    visit with ?trailer, on Sorkholmen; the game's own music is cut off, the film plays its own edit. Back to the game is a reload. */
@@ -4462,16 +4484,17 @@ function trailerStart(){if(BENCH.on||FILM.on)return;setMenu(false);if(MUS.g)MUS.
   restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
 confirmBtn('bTrailer',trailerStart);
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
-const niSeed=$('niSeed'),niTime=$('niTime'),niName=$('niName');
+const niSeed=$('niSeed'),niTime=$('niTime'),niName=$('niName'),niDef=$('niDef');
 const niVal=()=>{const n=Math.round(+niSeed.value);return niSeed.value!==''&&n>=1000&&n<=9999?n:null;};
 const niShow=()=>{const n=niVal();niName.textContent=niSeed.value===''?'En slumpad ö.':n?islandName(n)+' (ö '+n+')':'Numret ska vara mellan 1000 och 9999.';$('niGo').disabled=niSeed.value!==''&&!n;};
-function newIsleDialog(open){$('newIsle').hidden=!open;if(open){setMenu(false);niSeed.value='';niTime.value='';niShow();setTimeout(()=>niSeed.focus(),0);}}
+function newIsleDialog(open){$('newIsle').hidden=!open;if(open){setMenu(false);niSeed.value='';niTime.value='';niDef.value='';niShow();setTimeout(()=>niSeed.focus(),0);}}
 $('bNewIsland').addEventListener('click',()=>newIsleDialog(true));
 niSeed.addEventListener('input',niShow);
 $('niCancel').addEventListener('click',()=>newIsleDialog(false));
 $('newIsle').addEventListener('click',e=>{if(e.target.id==='newIsle')newIsleDialog(false);});
 $('niGo').addEventListener('click',()=>{const n=niVal();if(niSeed.value!==''&&!n)return;const t=niTime.value;newIsleDialog(false);
-  restart(n||1000+Math.floor(Math.random()*9000));if(t){const[h,m]=t.split(':').map(Number);G.tod=(h+(m||0)/60)%24;uiTick(true);}});
+  const dv=Math.round(+niDef.value),df=niDef.value!==''&&dv>=0&&dv<=9999?dv:randDef();
+  restart(n||1000+Math.floor(Math.random()*9000),df);if(t){const[h,m]=t.split(':').map(Number);G.tod=(h+(m||0)/60)%24;uiTick(true);}});
 $('newIsle').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')newIsleDialog(false);else if(e.key==='Enter')$('niGo').click();});
 // X (or the MUS button): from a VARG, put its MUS out and drive it; on a MUS, take control of it
 function roverKey(){const c=G.ctrl?unitById(G.ctrl):null;if(c&&c.kind==='mus')return;const v=c&&c.kind==='tank'?c:null;
@@ -4515,10 +4538,12 @@ $('bStart').addEventListener('click',()=>{audInit();startGame();});
 $('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
-$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd);if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
-function restart(seed){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed);if(R3&&R3.seed!==WORLD.seed)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
-$('bAgain').addEventListener('click',()=>restart(G.seed));
-$('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000)));
+$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,randDef());if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
+/* def: the defence number, 0 the island's base defence; a new game draws one (randDef) */
+const randDef=()=>1+Math.floor(Math.random()*9999);
+function restart(seed,def){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,def);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.def)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
+$('bAgain').addEventListener('click',()=>restart(G.seed,G.def));
+$('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000),randDef()));
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
 const keys=new Set();let lastKey={k:null,t:0};
 window.addEventListener('keyup',e=>keys.delete(e.code));
@@ -4701,7 +4726,7 @@ function renderOrders(v){
 function showEnd(){
   const net=Math.max(0,G.lostValue-G.salvagedOwn);
   $('rLoss').textContent=net;$('rTime').textContent=fmt(G.time);$('rUnits').textContent=G.unitsLost;$('rSalv').textContent=G.salvaged;
-  $('endSub').textContent=islandName(G.seed)+' · ö '+G.seed;
+  $('endSub').textContent=islandName(G.seed)+' · ö '+G.seed+' · försvar '+G.def;
   {const P=WORLD.plan;$('rPlan').textContent=P?'Fienden valde '+DOCTRINE[P.doctrine]+': '+P.barred+' spärrar, '+P.mined+' minfält'+(P.cracks?', '+P.cracks+' oskyddade pass':'')+' (budget '+P.budget+').':'';}
   let best=null;try{best=JSON.parse(localStorage.getItem('brohuvud2:'+G.seed)||'null');}catch(_){}
   const better=!best||net<best.l||(net===best.l&&G.time<best.t);
@@ -4717,7 +4742,7 @@ function uiTick(force){
   $('sRes').textContent=Math.floor(G.res);
   $('sLoss').textContent=net;$('lossBox').classList.toggle('warn',net>0);
   $('sTime').textContent=fmt(G.time);{const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);$('sClock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
-  $('islandId').textContent=islandName(G.seed)+' · ö '+G.seed;
+  $('islandId').textContent=islandName(G.seed)+' · ö '+G.seed+' · försvar '+G.def;
   $('bPause').setAttribute('aria-pressed',String(G.paused));$('bPause').textContent=G.paused?'Fortsätt':'Paus';
   $('bSpeed').textContent=G.speed+'×';
   const ids=[...G.units.filter(u=>!(u.kind==='mus'&&u.carried)).map(u=>u.id),...G.kroks.map(k=>k.id)].join(',');
@@ -5549,7 +5574,7 @@ function diagTick(now,P){
   L.push('ljud '+(AUD.ctx?AUD.ctx.state+'  klocka '+DIAG.audRate.toFixed(2)+'x'+(AUD.ctx.baseLatency!=null?'  lat '+Math.round(AUD.ctx.baseLatency*1000)+' ms':'')+(AUD.on?'':'  (avstängt)')+'\n     motorer '+AUD.voices.size+'  ljud/s '+DIAG.playsShow:'ej startat'+(AUD.on?'':'  (avstängt)')));
   const alive=a=>a.filter(x=>!x.dead).length;
   if(WORLD.plan){const P=WORLD.plan;L.push('fiende '+P.doctrine+'  budget '+P.budget+' (kvar '+P.left+')  spärrar '+P.barred+'  minor '+P.mined+'  luckor '+P.cracks);}
-  L.push('spel ö '+G.seed+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units.filter(u=>!(u.kind==='mus'&&u.carried)))+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
+  L.push('spel ö '+G.seed+' försvar '+G.def+'  t '+Math.round(G.time)+' s  x'+G.speed+(G.paused?'  paus':'')+'\n     egna '+alive(G.units.filter(u=>!(u.kind==='mus'&&u.carried)))+'+'+alive(G.kroks||[])+'  fiender '+alive(G.enemies||[])+'  skott '+G.fx.length+'  bränder '+(G.fires||[]).length);
   DIAG.body.textContent=L.join('\n');
 }
 /* GPU time from a WebGL2 timer query round the main view (shadow pass, scene, picture-in-picture): how long the graphics card works,
@@ -5589,7 +5614,7 @@ function recFull(){return{t:r1(G.time),tod:r1(G.tod),res:r0(G.res),speed:G.speed
   barriers:G.barriers.map(b=>({id:b.id,x:r0(b.x),y:r0(b.y),cleared:!!b.cleared})),mines:(G.mines||[]).map(m=>({id:m.id,x:r0(m.x),y:r0(m.y),found:!!m.found,cleared:!!m.cleared}))};}
 function recEv(type,data){if(!REC.on)return;REC.ev.push(Object.assign({t:G?r1(G.time):0,type},data));REC.saved=false;}
 function recStart(){REC.on=true;REC.ev=[];REC.snaps=[];REC.lastT=-1;REC.en=new Map();REC.saved=false;
-  REC.head={format:'uppdrag-arkipelag-inspelning 1',started:new Date().toISOString(),seed:G.seed,island:islandName(G.seed),world:{w:WW,h:WH,landing:{x:r0(WORLD.landing.x),y:r0(WORLD.landing.y)},carrier:{x:r0(CARRIER.x),y:r0(CARRIER.y)}},
+  REC.head={format:'uppdrag-arkipelag-inspelning 1',started:new Date().toISOString(),seed:G.seed,def:G.def,island:islandName(G.seed),world:{w:WW,h:WH,landing:{x:r0(WORLD.landing.x),y:r0(WORLD.landing.y)},carrier:{x:r0(CARRIER.x),y:r0(CARRIER.y)}},
     browser:navigator.userAgent,screen:innerWidth+'x'+innerHeight,start:recFull()};
   recUI();say(null,'Inspelning startad. P sätter en kontrollpunkt med kommentar.');}
 function recStop(){REC.on=false;recUI();}
@@ -5732,7 +5757,7 @@ try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget'),dk=q.get('doktrin');if(bu>0)ENEMY_CFG.budget=bu;if(dk&&DOCTRINE[dk])ENEMY_CFG.doctrine=dk;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
 const BOOTQ=(()=>{try{return new URLSearchParams(location.search);}catch(_){return new Map();}})();
-newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000));/* the trailer is shot on Sorkholmen (ö 7341) */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
+newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('forsvar')?+BOOTQ.get('forsvar')||0:BOOTQ.has('trailer')||BOOTQ.has('bench')?0:randDef());/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &forsvar=N locks the defence */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
 init3D();
 if(R3)buildStatic();
 mkFeeds();
