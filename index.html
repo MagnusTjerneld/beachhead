@@ -2266,7 +2266,7 @@ const flyAlt=(x,y,base,margin)=>{const g=groundY(x,y);return Math.max(g+base,can
 function hOf(o){const g=groundY(o.x,o.y);if(o.kind==='mus')return g+.6;if(o.kind==='krok')return flyAlt(o.x,o.y,28,6);if(o.air)return flyAlt(o.x,o.y,o.kind==='scout'?12:24,o.kind==='scout'?4:6);if(o.isStruct)return g+3;if(o.kind==='inf'||o.kind==='at'||o.kind==='rb')return g+1.2;return g+2.7;}
 function launch(a,t,x2,y2,h2,ws,side,hit,dmg,w){
   const W=WSPEC[ws],dx=x2-a.x,dy=y2-a.y,d=Math.hypot(dx,dy)||1,ang=a.turret!=null&&a.kind==='tank'?a.turret:a.aim!=null&&!a.mobile?a.aim:Math.atan2(dy,dx);
-  const mx=a.x+Math.cos(ang)*3.4,my=a.y+Math.sin(ang)*3.4,h1=hOf(a)+(a.kind==='tank'?.3:0);
+  const mx=a.x+Math.cos(ang)*3.4,my=a.y+Math.sin(ang)*3.4,h1=hOf(a)+(a.kind==='tank'?-.2:0)/* the gun of a VARG at 0.8 scale */;
   G.fx.push({k:'shot',x1:mx,y1:my,h1,x2,y2,h2,t:0,ttl:Math.max(.05,Math.hypot(x2-mx,y2-my)/W.v),ws,side,a,tg:t,hit,dmg,w,done:false});
   G.fx.push({k:'flash',x:mx,y:my,h:h1,t:0,ttl:ws==='mg'||ws==='e_rifle'?.05:.09,big:ws==='cannon'||ws==='e_shell',ws,side});
 }
@@ -3454,7 +3454,9 @@ function mkUnitMesh(u){
     const hook=mesh(box(1,1,1),mat(0x2a2a2a),0,-6,0);hook.visible=false;g.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-3,0);cable.visible=false;g.add(cable);g.userData.cable=cable;
   }
-  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);return r;}
+  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
+    /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
+    if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
 function mkEnemyMesh(e){
   const g=new THREE.Group();
@@ -3528,7 +3530,7 @@ function mkEnemyMesh(e){
     g.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));g.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
     const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;g.add(b);g.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));
     g.add(mesh(cyl(.025,.025,2,4),DK,-1.4,3.8,.9));}
-  {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa')contactShadow(r,.02);return r;}
+  {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa'){contactShadow(r,.02);r.scale.setScalar(.8);}/* ground vehicles at 0.8, like ours */return r;}
 }
 function roofOn(g,len,w,y,c){for(const sz of[-1,1]){const r=mesh(box(len,.4,w*.6),mat(c),0,y,sz*w*.24);r.rotation.x=sz*.55;g.add(r);}}
 const FALU=0x8e2b1f,TRIM=0xf0ece0;

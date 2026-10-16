@@ -239,7 +239,9 @@ function mkUnitMesh(u){
     const hook=mesh(box(1,1,1),mat(0x2a2a2a),0,-6,0);hook.visible=false;g.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-3,0);cable.visible=false;g.add(cable);g.userData.cable=cable;
   }
-  return sh(bake(g));
+  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
+    /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
+    if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
 function mkEnemyMesh(e){
   const g=new THREE.Group();
@@ -313,7 +315,7 @@ function mkEnemyMesh(e){
     g.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));g.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
     const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;g.add(b);g.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));
     g.add(mesh(cyl(.025,.025,2,4),DK,-1.4,3.8,.9));}
-  return sh(bake(g));
+  {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa'){contactShadow(r,.02);r.scale.setScalar(.8);}/* ground vehicles at 0.8, like ours */return r;}
 }
 const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x3a3826})};
 
