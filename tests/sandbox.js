@@ -31,6 +31,8 @@ const SC={
   hokaa:{txt:'2 offensiva HÖK mot ett ensamt luftvärn',own:{hok:['off','off']},def:[['aa',0,0]],plan:'chain',order:[0]},
   hokaarb:{txt:'2 offensiva HÖK mot luftvärn med en robotskytt bredvid',own:{hok:['off','off']},def:[['aa',0,0],['rb',-20,50]],plan:'chain',order:[0,1]},
   hokrb:{txt:'2 offensiva HÖK mot en bunker med två robotskyttar framför',own:{hok:['off','off']},def:[['turret',0,0],['rb',-40,-30],['rb',-40,30]],plan:'chain',order:[0]},
+  hokpv:{txt:'2 offensiva HÖK mot två pansarvärnslag i skydd som flyttat 50 m sedan de sågs',own:{hok:['off','off']},def:[['at',0,-30],['at',10,40]],plan:'chain',order:[0,1],cover:true,moved:50},
+  hokpvlv:{txt:'som hokpv, med ett okänt luftvärn 100 m bakom lagen',own:{hok:['off','off']},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],cover:true,moved:50,hide:[2],need:[0,1]},
   motanfall:{txt:'3 VARG står kvar och tar emot två stridsvagnar och ett lätt pansarfordon som rycker ut mot dem',
     own:{tank:3},def:[['tank',0,-30],['tank',0,30],['light',20,0]],plan:'hold',dist:330}
 };
@@ -58,6 +60,11 @@ function play(name,rep){
   const{D,f,n}=arena(),at=(fw,la)=>({x:D.x+f.x*fw+n.x*la,y:D.y+f.y*fw+n.y*la});
   G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(!UNSEEN)e.seen=true;return e;});
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
+  /* cover: troops hidden from the air as in buildings; moved: they moved this far since they were seen, so the known place is stale;
+     hide: defenders nobody has seen yet; need: the ones that must fall for a win (default all) */
+  if(S.cover)for(const e of G.enemies)if(e.kind==='at'||e.kind==='inf')e.cover=true;
+  if(S.moved)G.enemies.forEach((e,i)=>{if(e.kind!=='at'&&e.kind!=='inf')return;const a=Math.random()*6.283;e.lx=e.x+Math.cos(a)*S.moved;e.ly=e.y+Math.sin(a)*S.moved;});
+  for(const k of S.hide||[])G.enemies[k].seen=false;
   G.units=[];const own=[],nt=S.own.tank||0,hk=(S.own.hok&&S.own.hok.length)?S.own.hok:HOK?['def']:[],back=-(S.dist||420);
   for(let i=0;i<nt;i++){const p=at(back,(i-(nt-1)/2)*26),u=B.makeUnit('tank',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);if(S.own.hp)u.hp=Math.round(u.maxhp*S.own.hp);G.units.push(u);own.push(u);}
   hk.forEach((post,i)=>{const p=at(back-30,(i-(hk.length-1)/2)*30),u=B.makeUnit('drone',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
@@ -70,7 +77,7 @@ function play(name,rep){
   for(;t<TMAX;t+=DT){B.step(DT);
     for(const u of own){if(u.rtb&&!u.dead){rtbOnce.add(u.id);if(rtbT[u.id]==null)rtbT[u.id]=t;}else if(!u.dead)rtbT[u.id]=null;if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);const h=Object.entries(u.hitBy).sort((a,b)=>b[1]-a[1])[0],k=h&&G.enemies.find(e=>e.id===h[0]);
       deaths.push({kind:u.kind,rtb:rtbT[u.id]!=null,rtbS:rtbT[u.id]!=null?t-rtbT[u.id]:null,killer:k?k.kind:'?',d:k?Math.round(Math.hypot(k.x-u.x,k.y-u.y)):0});}}
-    if(G.enemies.every(e=>e.dead)){res='vinst';break;}
+    if((S.need?S.need.map(k=>G.enemies[k]):G.enemies).every(e=>e.dead)){res='vinst';break;}
     // everyone out (the VARG, when there are any): play on for 25 s so that deaths on the way back count, then stop
     if(own.filter(u=>!u.air||!own.some(v=>!v.air)).every(u=>u.dead||u.rtb||(u.air&&u.orders[0]&&u.orders[0].type==='rtb'))){/* HÖK in a wing with VARG follows them out */if(outT==null)outT=t;else if(t-outT>25){res='ute';break;}}else outT=null;}
   if(LOG)for(const l of [...G.log].reverse())console.log(('     '+(l.t!=null?l.t.toFixed(0):'')).slice(-5)+'  '+l.text);

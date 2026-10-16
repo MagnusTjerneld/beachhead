@@ -1728,7 +1728,7 @@ const rVs=(e,t)=>t&&t.kind==='krok'&&e.kRange?e.kRange:t&&t.air?airR(e):e.range;
 function airThreatR(u,e){return u.kind==='krok'?rVs(e,u)+25:u.sig?Math.min(airR(e)+25,(e.radar||u.sig)+20):airR(e)+25;}
 /* spotting for ground units: a point inside air vision of the target but outside every known air threat, on our side of it */
 /* how close an aircraft must be to see e: troops in cover (airCover) only show from the air within HIDE_AIR */
-const airSeeR=(h,e)=>(e.kind==='inf'||e.kind==='at')&&airCover(e.lx,e.ly)?Math.min(HIDE_AIR,h.vision):h.vision;
+const airSeeR=(h,e)=>(e.kind==='inf'||e.kind==='at')&&(e.cover||airCover(e.lx,e.ly))?Math.min(HIDE_AIR,h.vision):h.vision;
 function spotPoint(h,e,from){
   const a0=Math.atan2((from?from.y:CARRIER.y)-e.ly,(from?from.x:CARRIER.x)-e.lx),c=[],R=airSeeR(h,e);
   for(const f of [.9,.85,.95,.8])for(let k=0;k<24;k++){const da=(k%2?1:-1)*Math.ceil(k/2)*TAU/24;c.push({r:R*f,a:a0+da,s:Math.abs(da)*60+Math.abs(f-.9)*100});}
@@ -1827,10 +1827,14 @@ function move(u,dt){
   else if(o.type==='obs'){if(o.spotFor&&(o.spotFor.dead||!spotNeeded(o.spotFor))){u.orders.shift();u.path=null;if(!u.orders.length&&!u.mission&&o.back)u.orders.push({type:'move',x:o.back.x,y:o.back.y,post:'def'});say(u,o.spotFor.dead?ename(o.spotFor)+' utslagen. Spaningen klar.':'Ingen anfaller '+ename(o.spotFor)+' längre. Avbryter spaningen.');return;}tx=o.x;ty=o.y;arr=u.air?14:10;u.state=o.spotFor?'På väg att spana på '+ename(o.spotFor):'Till observationspunkt '+sq(tx,ty);}
   else if(o.type==='capture'){if(o.relay.captured){u.orders.shift();u.path=null;return;}tx=o.relay.x;ty=o.relay.y;arr=16;u.state='På väg mot '+pname(o.relay)+' · '+POST[o.post].toLowerCase();}
   else if(o.type==='attack'&&u.air&&o.withWing&&!o.enemy.dead&&hokHold(u,o)){tx=o.hold.x;ty=o.hold.y;arr=25;u.state=o.hold.s;}
-  else if(o.type==='attack'){if(o.enemy.dead){attackDone(u);return;}if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;o.arc=null;u.path=null;}
+  else if(o.type==='attack'&&u.air&&o.search&&!o.enemy.dead&&!o.enemy.visibleNow){
+    /* an aircraft that cannot see its target where it was last seen circles the place where it may have moved (scoot distance) */
+    if(G.time>o.search){say(u,'Hittar inte '+ename(o.enemy)+' kring senast kända plats. Avbryter.');u.orders.shift();u.path=null;u.orbit=null;return;}
+    u.orbit={x:o.enemy.lx,y:o.enemy.ly};orbit(u,dt,o.searchR||55);u.state='Söker '+ename(o.enemy)+' kring senast kända plats';return;}
+  else if(o.type==='attack'){if(o.enemy.dead){attackDone(u);return;}if(o.search&&o.enemy.visibleNow)o.search=0;if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;o.arc=null;u.path=null;}
     if(!o.fp&&u.kind==='tank'&&!o.close&&(o.enemy.visibleNow||!o.enemy.camo)&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=arcPoint(u,o);if(ap){o.fp=ap;o.arc=ap;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}}
     let stg=null;if(o.fp&&o.arc&&o.arc.st&&!o.go){const st=assaultStage(u,o);if(st){tx=st.x;ty=st.y;arr=8;stg=u.state;}}
-    if(stg){}else if(o.fp&&(!o.arc||!o.arc.st||o.go)){tx=o.fp.x;ty=o.fp.y;arr=6;if(o.arc&&dist(u,o.fp)<30){const sw=Math.sin(G.time*.45+u.id.charCodeAt(u.id.length-1)*1.7)*15,ta=o.arc.a+PI/2,jx=tx+Math.cos(ta)*sw,jy=ty+Math.sin(ta)*sw;if(passAmph(cellIdx(jx,jy))){tx=jx;ty=jy;arr=3;}}}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?(u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):45;}u.state=stg||('Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':''));if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400){o.spotAsk=1;requestSpot(u,o.enemy);}if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
+    if(stg){}else if(o.fp&&(!o.arc||!o.arc.st||o.go)){tx=o.fp.x;ty=o.fp.y;arr=6;if(o.arc&&dist(u,o.fp)<30){const sw=Math.sin(G.time*.45+u.id.charCodeAt(u.id.length-1)*1.7)*15,ta=o.arc.a+PI/2,jx=tx+Math.cos(ta)*sw,jy=ty+Math.sin(ta)*sw;if(passAmph(cellIdx(jx,jy))){tx=jx;ty=jy;arr=3;}}}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?(u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):u.air?Math.min(45,airSeeR(u,o.enemy)*.75):45;}u.state=stg||('Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':''));if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400){o.spotAsk=1;requestSpot(u,o.enemy);}if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
   else if(o.type==='clear'){const b=o.barrier;if(b.cleared){u.orders.shift();u.path=null;return;}const bd=barrierDist(b,u);if(bd<12){workBarrier(b,u,dt);return;}/* charges are laid by hand: BÄVER drives right up to the barrier, through its side of the pass to the cell next to it */if(!o.sd||(u.waitT&&G.time<u.waitT)){o.sd=barrierSide(b,u);o.at=barrierFoot(b,o.sd);}const sd=o.at||o.sd;tx=sd.x;ty=sd.y;arr=o.at?1.5:3;u.state='På väg mot spärr '+b.id;}
   else if(o.type==='demolish'){const st=o.s;if(st.dead){u.orders.shift();u.path=null;return;}tx=st.x;ty=st.y;arr=16;u.state='På väg att riva '+slabel(st);}
   else if(o.type==='demine'){const m=o.mine;if(m.cleared){u.orders.shift();u.path=null;return;}if(dist(u,m)<m.r+5||(o.sd&&dist(u,o.sd)<3)){workMine(m,u,dt);return;}/* mines are cleared by hand: BÄVER drives to the edge of the field */if(!o.sd||(u.waitT&&G.time<u.waitT))o.sd=mineSide(m,u);tx=o.sd.x;ty=o.sd.y;arr=2;u.state='På väg mot minfält '+m.id;}
@@ -1870,7 +1874,7 @@ function move(u,dt){
       return;
     }
     if(o.type==='attack'&&o.arc&&o.arc.st&&!o.go)return;   // at the staging point: waiting for the others, not for spotting
-    if(o.type==='attack'){if(o.enemy.visibleNow){o.waitS=0;u.state='I position, söker skottläge';return;}u.state='I position, väntar på spaning';if(spotterFor(o.enemy)){o.waitS=0;u.state='I position, HÖK spanar på väg';return;}o.waitS=(o.waitS||0)+dt;if(o.waitS>20&&!o.close&&!u.air){o.close=true;o.fp=null;u.path=null;say(u,'Ingen spaning på '+ename(o.enemy)+'. Går närmare för att se själv.');}return;}
+    if(o.type==='attack'){if(o.enemy.visibleNow){o.waitS=0;u.state='I position, söker skottläge';return;}u.state='I position, väntar på spaning';if(spotterFor(o.enemy)){o.waitS=0;u.state='I position, HÖK spanar på väg';return;}o.waitS=(o.waitS||0)+dt;if(u.air&&o.waitS>3&&!o.search){o.search=G.time+30;o.searchR=SCOOT[o.enemy.kind]?Math.min(75,SCOOT[o.enemy.kind].max*.6):55;/* a ring of 55 m with 40 m sight in cover covers 15 to 95 m out */say(u,'Ser inte '+ename(o.enemy)+' här. Söker runt senast kända plats.');return;}if(o.waitS>20&&!o.close&&!u.air){o.close=true;o.fp=null;u.path=null;say(u,'Ingen spaning på '+ename(o.enemy)+'. Går närmare för att se själv.');}return;}
     if(o.type==='clear'){workBarrier(o.barrier,u,dt);return;}
     if(o.type==='demolish'){workStruct(o.s,u,dt);return;}
     if(o.type==='raze'){u.path=null;u.state='I position mot '+slabel(o.s);return;}
@@ -2014,7 +2018,7 @@ function coverAt(x,y){if(coverW!==WORLD){coverW=WORLD;const n=new Uint8Array(GW*
    still take their positions in cover (coverAt) */
 const FOREST_HIDE=false;let coverS=null;
 const airCover=(x,y)=>{if(FOREST_HIDE)return coverAt(x,y);coverAt(0,0);const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);return gx>=0&&gy>=0&&gx<GW&&gy<GH&&!!coverS[gy*GW+gx];};
-const hides=e=>(e.kind==='inf'||e.kind==='at')&&airCover(e.x,e.y);
+const hides=e=>(e.kind==='inf'||e.kind==='at')&&(e.cover||airCover(e.x,e.y));/* e.cover: placed in cover by hand (the sandbox) */
 let canopyW=null,canopyA=null;
 function canopyTop(x,y){
   if(canopyW!==WORLD){canopyW=WORLD;canopyA=new Float32Array(GW*GH);const put=(px,py,h)=>{const i=cellIdx(px,py),t=groundY(px,py)+h;if(t>canopyA[i])canopyA[i]=t;};
