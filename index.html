@@ -3194,6 +3194,18 @@ function mkPointMesh(r){
   const a=pointBld(r).a;for(const c of g.children){c.position.x+=Math.cos(a)*11;c.position.z+=Math.sin(a)*11;}
   return g;
 }
+/* a soft dark contact shadow on the ground under a vehicle or wreck (decided 16 okt): lamps and fires are point lights that cast no
+   shadow, so at night and by a burning wreck the ground under a vehicle was lit like everything round it and the vehicle seemed to
+   float. A flat, blurred ellipse the size of the footprint, at ground level in the model's own space */
+let BLOB=null;
+function contactShadow(g,y,k){
+  if(!BLOB){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,4,32,32,32);
+    gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.6,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
+    const mt=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,opacity:.78,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});mt.userData.shared=true;
+    BLOB={geo:new THREE.PlaneGeometry(1,1).rotateX(-PI/2),mat:mt};}
+  g.updateMatrixWorld(true);const b=new THREE.Box3();g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();b.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));}});
+  if(b.isEmpty())return g;k=k||1;const m=new THREE.Mesh(BLOB.geo,BLOB.mat);m.scale.set((b.max.x-b.min.x)*1.15*k,1,(b.max.z-b.min.z)*1.45*k);
+  m.position.set((b.min.x+b.max.x)/2,y,(b.min.z+b.max.z)/2);m.castShadow=false;m.receiveShadow=false;m.userData.noShadow=true;m.renderOrder=2;g.add(m);g.userData.blob=m;g.userData.blobY=y;return g;}
 function mkUnitMesh(u){
   const g=new THREE.Group();
   if(u.kind==='mus'){
@@ -3314,7 +3326,7 @@ function mkUnitMesh(u){
     const hook=mesh(box(1,1,1),mat(0x2a2a2a),0,-6,0);hook.visible=false;g.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-3,0);cable.visible=false;g.add(cable);g.userData.cable=cable;
   }
-  return sh(bake(g));
+  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);return r;}
 }
 function mkEnemyMesh(e){
   const g=new THREE.Group();
@@ -3388,7 +3400,7 @@ function mkEnemyMesh(e){
     g.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));g.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
     const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;g.add(b);g.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));
     g.add(mesh(cyl(.025,.025,2,4),DK,-1.4,3.8,.9));}
-  return sh(bake(g));
+  {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa')contactShadow(r,.02);return r;}
 }
 function roofOn(g,len,w,y,c){for(const sz of[-1,1]){const r=mesh(box(len,.4,w*.6),mat(c),0,y,sz*w*.24);r.rotation.x=sz*.55;g.add(r);}}
 const FALU=0x8e2b1f,TRIM=0xf0ece0;
@@ -3599,7 +3611,8 @@ function mkWreckMesh(w){
   else if(w.kind==='crate'){g.add(mesh(box(2.4,1.6,1.6),mat(0x5f6138),0,.8,0));g.add(mesh(box(2.4,1.6,1.6),mat(0x6b6d40),.3,.8,1.8));g.add(mesh(box(2.2,1.4,1.5),mat(0x55572f),.1,2.3,.9));}
   else if(w.kind==='hulk'){const m=mesh(box(9,2.4,4.4),mat(0x6b4a32),0,.9,0);m.rotation.set(.08,0,.18);g.add(m);g.add(mesh(box(.4,2.6,4.2),mat(0x5a3c28),-4.4,1.6,0));}
   else{const m=mesh(box(6,1.4,4),mat(0x2b2b2a),0,.6,0);m.rotation.set(.12,0,.08);g.add(m);}
-  g.rotation.y=w.rot;g.position.set(w.x,groundY(w.x,w.y),w.y);return sh(g);
+  sh(g);if(w.kind!=='rubble'&&w.kind!=='crate')contactShadow(g,.03,1.1);
+  g.rotation.y=w.rot;g.position.set(w.x,groundY(w.x,w.y),w.y);return g;
 }
 const FXM=new Map();
 function fxMat(c,add){const k=c+(add?'a':'');if(!FXM.has(k)){const m=new THREE.MeshBasicMaterial({color:c,transparent:true,depthWrite:false,blending:add?THREE.AdditiveBlending:THREE.NormalBlending});m.userData.shared=true;FXM.set(k,m);}const m=FXM.get(k).clone();m.userData.shared=false;return m;}
@@ -3617,7 +3630,7 @@ function printTick(sh,now){const gan=sh.gantry;if(!gan)return;const hd=gan.userD
   if(grow&&R3.printKind!==b.kind){if(R3.printM){R3.ship.remove(R3.printM);R3.ship.remove(R3.printEdge);}
     const m=mkUnitMesh({kind:b.kind,color:'#9aa6ae'});R3.clip=R3.clip||new THREE.Plane(new THREE.Vector3(0,-1,0),0);
     m.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.clippingPlanes=[R3.clip];o.castShadow=false;}});
-    m.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(m),sz=bb.getSize(new THREE.Vector3()),y0=sh.DY+(b.kind==='tank'?.45:b.kind==='drone'||b.kind==='scout'?.6:0);
+    m.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(m),sz=bb.getSize(new THREE.Vector3()),y0=sh.DY+(b.kind==='tank'?HOVER_Y:b.kind==='drone'||b.kind==='scout'?.6:0);
     m.position.set(BAY.lat,y0,-BAY.fwd);m.rotation.y=PI/2;R3.ship.add(m);R3.printLo=R3.ship.position.y+y0+bb.min.y;R3.printH=Math.max(1,sz.y);
     const ed=new THREE.Mesh(new THREE.BoxGeometry(1,.06,1),new THREE.MeshBasicMaterial({color:0xff9a40,transparent:true,opacity:.42,blending:THREE.AdditiveBlending,depthWrite:false}));ed.scale.set(Math.max(1,sz.z*.85),1,Math.max(1,sz.x*.85));ed.userData.noShadow=true;R3.ship.add(ed);
     R3.printM=m;R3.printEdge=ed;R3.printKind=b.kind;}
@@ -4159,12 +4172,15 @@ function lightsShow(arr,on){if(arr._on===on)return;arr._on=on;for(const L of arr
 function lightsWarm(){if(!R3)return;const rs=[R3.renderer,...(FEED.list||[]).map(F=>F.r).filter(Boolean)];
   for(const a of[false,true])for(const b of[false,true]){lightsShow(R3.spotGroup,a);lightsShow(R3.points,b);for(const r of rs){try{r.compile(R3.scene,R3.cam);}catch(_){}}}
   R3.spotGroup._on=R3.points._on=undefined;}
+const HOVER_Y=.05;
 function unitY(u,dtr){
   const g=groundY(u.x,u.y);
   if(u.dive){/* a GETING diving: straight down the line to where it strikes */const D=u.dive,d=Math.hypot(D.x-u.x,D.y-u.y),g=groundY(u.x,u.y);if(D.a0==null){D.a0=u.alt==null?g+12:u.alt;D.d0=Math.max(1,d);}u.alt=g+Math.max(0,D.a0-g)*Math.min(1,d/D.d0);return u.alt;}
   if(u.air||u.kind==='krok'){const want=u.kind==='krok'?flyAlt(u.x,u.y,u.low?15:30,u.low?3:6):flyAlt(u.x,u.y,u.kind==='scout'?12:24,u.kind==='scout'?4:6);u.alt=u.alt==null?want:lerp(u.alt,want,Math.min(1,1.5*(dtr||0)));return u.alt;}
-  if(!u.carried&&onDeck(u.x,u.y))return DECK_Y+(u.kind==='tank'?.45:0);
-  if(u.kind==='tank')return g+.45+Math.sin(G.time*2.3+(u.id.charCodeAt(1)||0))*.08;
+  /* a hovercraft's skirt rests on the surface (fixed 16 okt: the whole model stood 0.45 m up, and over the water at night a lit strip
+     showed between the skirt and its shadow, so VARG seemed to float); it bobs a few centimetres */
+  if(!u.carried&&onDeck(u.x,u.y))return DECK_Y+(u.kind==='tank'?HOVER_Y:0);
+  if(u.kind==='tank')return g+HOVER_Y+Math.sin(G.time*2.3+(u.id.charCodeAt(1)||0))*.04;
   return g;
 }
 function sync3D(dtr){
@@ -4215,7 +4231,7 @@ function sync3D(dtr){
       if(m.title){const on=!!TITLE.on;m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
       const dd=m.dir*T*m.speed+RT.L*m.ph,p0=push(at(dd)),p1=push(at(dd+m.dir*20)),hd=Math.atan2(p1.z-p0.z,p1.x-p0.x);
       if(m.lat){const lx=-Math.sin(hd)*m.lat,lz=Math.cos(hd)*m.lat;p0.x+=lx;p0.z+=lz;}
-      const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.9:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
+      const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.12:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
       const sx=p0.x-Math.cos(hd)*m.half,sz=p0.z-Math.sin(hd)*m.half;
       if(m.trail.length&&Math.hypot(sx-m.trail[0].x,sz-m.trail[0].z)>Math.max(30,m.speed*2)){m.trail.length=0;m.tt=-1;}/* a mover that was placed anew (the film's VARG patrol) starts a fresh wake instead of drawing one from where it was */
       if(m.tt<0||T-m.tt>.25){m.tt=T;m.trail.unshift({x:sx,z:sz,t:T});if(m.trail.length>m.wake.N)m.trail.pop();}
@@ -5497,7 +5513,7 @@ function filmStart(){
   FILM.b0={x:CARRIER.x,y:CARRIER.y,a:CARRIER.a};G.known.fill(1);G.knownV=(G.knownV||0)+1;document.querySelector('.tfoot').style.display='none';filmClearings(FILM_CLEAR);
   // a black veil for fades, and the play button
   const st=$('titleStage');const fd=document.createElement('div');fd.id='filmFade';fd.style.cssText='position:absolute;inset:0;background:#000;opacity:1;pointer-events:none;z-index:2';st.appendChild(fd);FILM.fade=fd;
-  if(R3){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
+  if(R3){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();filmShadowLight();}
   if(FILM.clock==='frame'){const t0=+q.get('t')||0;filmSeed(FILM.seed);FILM.t=t0-FILM.pre;FILM.state='play';return;}
   const b=$('tPress');b.textContent='SPELA TRAILERN';b.hidden=false;$('title').classList.remove('clean');for(const id of['tMenu','logoWrap'])$(id).hidden=true;
   FILM.t=fk(2);FILM.state='idle';FILM.fade.style.opacity=.35;filmSaveBtn(true);}
@@ -5629,7 +5645,7 @@ function filmSaveBtn(on){let b=$('filmSave');if(!b){b=document.createElement('bu
     b.style.cssText='position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:4';b.addEventListener('click',ev=>{ev.stopPropagation();filmExport();});$('title').appendChild(b);}
   b.hidden=!on||!window.VideoEncoder;}
 /* ---- helpers: actors, placing, paths, the camera ---- */
-function fA(key,make){let m=FILM.act[key];if(!m){m=make();m.rotation.order='YXZ';R3.scene.add(m);FILM.act[key]=m;}m.visible=true;return m;}
+function fA(key,make){let m=FILM.act[key];if(!m){m=make();m.rotation.order='YXZ';m.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.layers.enable(FILM_SHL);});R3.scene.add(m);FILM.act[key]=m;}m.visible=true;return m;}
 const fVarg=i=>fA('v'+i,()=>mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1}));
 const fUnit=(key,kind,col)=>fA(key,()=>mkUnitMesh({kind,color:col||PAL[0][0],ammo:4}));
 const fEnemy=(key,kind)=>fA(key,()=>mkEnemyMesh({kind,id:key}));
@@ -5637,7 +5653,7 @@ function fGround(x,z){return Math.max(0,groundY(x,z));}
 /* on the ground (or afloat), pitched and rolled with the slope; the model's nose is +x */
 function fPlace(m,x,z,hd,lift){const c=Math.cos(hd),s=Math.sin(hd),L=3,g=(a,b)=>fGround(a,b);
   const pitch=Math.atan2(g(x+c*L,z+s*L)-g(x-c*L,z-s*L),2*L),roll=Math.atan2(g(x+s*2,z-c*2)-g(x-s*2,z+c*2),4);
-  m.position.set(x,g(x,z)+(lift||0),z);m.rotation.set(roll,-hd,pitch);return m;}
+  m.position.set(x,g(x,z)+(lift||0),z);m.rotation.set(roll,-hd,pitch);if(m.userData.blob)m.userData.blob.position.y=.02-(lift||0);return m;}
 /* a polyline at constant speed: the point and heading at distance d */
 function fPath(P,d){let L=0;for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<=L+l||i===P.length-2){const f=clamp((d-L)/(l||1),0,1);return{x:lerp(a[0],b[0],f),z:lerp(a[1],b[1],f),hd:Math.atan2(b[1]-a[1],b[0]-a[0])};}L+=l;}return{x:P[0][0],z:P[0][1],hd:0};}
 function fCam(px,py,pz,tx,ty,tz,shake){const c=R3.cam,t=FILM.t;py=Math.max(py,fGround(px,pz)+.7);
@@ -5655,6 +5671,11 @@ function filmTex(){if(FILM.tex)return FILM.tex;const c=document.createElement('c
 function fP(x,y,z,o){const P=FILM.parts;if(P.length>900)return;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:filmTex(),color:o.c??0xffffff,transparent:true,depthWrite:false,opacity:o.a??1,blending:o.add?THREE.AdditiveBlending:THREE.NormalBlending}));
   sp.position.set(x,y,z);sp.scale.setScalar(o.s0??1);R3.scene.add(sp);const v=o.v||[0,0,0];P.push({sp,vx:v[0],vy:v[1],vz:v[2],g:o.g||0,s0:o.s0??1,s1:o.s1??1,o:o.a??1,ttl:o.ttl??1,t:0,drag:o.drag||0,fade:o.fade||0});}
 function fLight(x,y,z,c,i,d,ttl){FILM.lts.push({x,y,z,c,i,d,ttl,t:0});}
+/* the fire's own shadow (decided 16 okt): a burning wreck lit the ground all round it, under and behind the hull too, so it seemed
+   to float. In the trailer the first point light casts a shadow, and the nearest fire takes it; only the film's actors (the layer
+   FILM_SHL) are drawn into that shadow, not trees or terrain, so it costs little */
+const FILM_SHL=5;
+function filmShadowLight(){const P=R3.points[0];P.castShadow=true;P.shadow.mapSize.set(512,512);P.shadow.camera.near=.3;P.shadow.camera.far=60;P.shadow.bias=-.004;P.shadow.camera.layers.set(FILM_SHL);}
 const fr=()=>Math.random()-.5;
 function fxFlash(x,y,z,s,c){fP(x,y,z,{s0:s,s1:s*1.4,a:1,ttl:.1,c:c||0xffd890,add:true});fP(x,y,z,{s0:s*2.4,s1:s*3,a:.45,ttl:.16,c:0xff9a40,add:true});fLight(x,y,z,c||0xffc070,5,45,.15);}
 function fxSmoke(x,y,z,s,col,ttl,rise){fP(x,y,z,{v:[fr()*1.5,rise??2,fr()*1.5],s0:s,s1:s*3.2,a:.55,ttl:ttl||3,c:col??0x3a3836,drag:.6});}
@@ -5692,7 +5713,7 @@ function filmBattle(dtr){const B=FILM_BF;FILM.amb=(FILM.amb||0)+dtr*7;while(FILM
     fxTracer({x:ax,y:fGround(ax,az)+2.5,z:az},{x:bx,y:fGround(bx,bz)+1.5+Math.random()*2,z:bz,hit:Math.random()<.3},460,ours?0xffd27a:0xff6a4a,.22);}
   FILM.ambB=(FILM.ambB??1.2)-dtr;if(FILM.ambB<=0){FILM.ambB=1.6+Math.random()*1.8;const x=B.x+fr()*200,z=B.z+fr()*160;fxBoom(x,fGround(x,z)+1,z,.7);}}
 /* the lights the frame adds to the game's pool of point lights (asked for by updateSky) */
-function filmLightCands(){return FILM.lts.map(q=>[0,q.x,q.y,q.z,q.c,q.i*(q.ttl?Math.max(0,1-q.t/q.ttl):1),q.d]);}
+function filmLightCands(){return FILM.lts.map(q=>[q.ttl?0:-1,q.x,q.y,q.z,q.c,q.i*(q.ttl?Math.max(0,1-q.t/q.ttl):1),q.d]);}/* fires first, so the nearest takes the shadow light */
 
 /* ---- VARG at speed on the water: bow up, pitch and roll, spray off the bow and a wash along the sides ---- */
 function fVargWater(g,dtr,T,i,fast){g.rotation.z=.045+Math.sin(T*2.1+i)*.012;g.rotation.x=Math.sin(T*1.7+i*2)*.025;g.position.y=.75+Math.sin(T*2.4+i)*.1;
@@ -5744,7 +5765,7 @@ const FILM_SHOTS=[
   lane.forEach(([i,back,lat],n)=>{const m=fVarg(n),d=lerp(-80,45,tau/dur)+back+(n===1?6:0),x=LD.x+iv.x*d+pv.x*lat,z=LD.y+iv.z*d+pv.z*lat,hd=Math.atan2(iv.z,iv.x),gy=groundY(x,z);
     if(m.userData.tur)m.userData.tur.rotation.y=0;
     if(gy<.3){m.position.set(x,0,z);m.rotation.set(0,-hd,0);fVargWater(m,dtr,FILM.t,n,170);}
-    else{fPlace(m,x,z,hd,.45);if(Math.random()<dtr*30)fxDust(x-iv.x*3,gy,z-iv.z*3,1.3);if(gy<1.5){for(let k=0;k<3;k++)fP(x+fr()*5,.5,z+fr()*5,{v:[fr()*6,2+Math.random()*3,fr()*6],g:9,s0:.6,s1:2.4,a:.7,ttl:.7,c:0xe8e6e0});}}});
+    else{fPlace(m,x,z,hd,HOVER_Y);if(Math.random()<dtr*30)fxDust(x-iv.x*3,gy,z-iv.z*3,1.3);if(gy<1.5){for(let k=0;k<3;k++)fP(x+fr()*5,.5,z+fr()*5,{v:[fr()*6,2+Math.random()*3,fr()*6],g:9,s0:.6,s1:2.4,a:.7,ttl:.7,c:0xe8e6e0});}}});
   // BÄVER set down by KROK to one side
   {const km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng'),x=LD.x+iv.x*18-pv.x*34,z=LD.y+iv.z*18-pv.z*34,gy=fGround(x,z),dn=sm(clamp(tau/3.6,0,1)),hd=Math.atan2(iv.z,iv.x);
     bm.position.set(x,lerp(gy+7,gy,dn),z);bm.rotation.set(0,-hd,0);km.position.set(x,lerp(gy+15,gy+8.6,dn)+(tau>3.8?(tau-3.8)*3:0),z);km.rotation.set(0,-hd,.02);km.userData.cable.visible=tau<4;km.userData.hook.visible=tau<4;
@@ -5782,7 +5803,7 @@ const FILM_SHOTS=[
     fxFlash(mp.x,mp.y,mp.z,1.6,0xffe0a0);fxTracer(mp,{x:tgt.x+fr()*16,y:tgt.y+fr()*10,z:tgt.z+fr()*16,hit:false},330,0xffe08a,.3);}
   const a=2.4+tau*.36,r=17;fCam(x+Math.cos(a)*r,fGround(x,z)+2.2,z+Math.sin(a)*r,x,fGround(x,z)+3.4,z,.05);FILM.fov=44;}},
 /* 12. a VARG fires: over its shoulder, flash, the tracer streaking off, the dust ring at the muzzle */
-{k:22,id:'eld',f(tau,dur,dtr,S){const m=fVarg(0),x=1446,z=738,tx=1300,tz=762,hd=Math.atan2(tz-z,tx-x);fPlace(m,x,z,hd,.45);const T=m.userData.tur;
+{k:22,id:'eld',f(tau,dur,dtr,S){const m=fVarg(0),x=1446,z=738,tx=1300,tz=762,hd=Math.atan2(tz-z,tx-x);fPlace(m,x,z,hd,HOVER_Y);const T=m.userData.tur;
   for(const [t,n] of[[.25,1],[1.35,2]])if(tau>t&&(S.n||0)<n){S.n=n;S.rk=tau;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4);
     fxTracer(mp,{x:tx+fr()*10,y:fGround(tx,tz)+2,z:tz+fr()*10},520,0xffe0a0,.18);for(let k=0;k<10;k++){const a=k/10*TAU;fP(mp.x,fGround(mp.x,mp.z)+.4,mp.z,{v:[Math.cos(a)*8,1,Math.sin(a)*8],s0:1,s1:4,a:.5,ttl:1.2,c:0x8a7a62,drag:2});}}
   if(T)T.position.x=.2-(S.rk!=null?Math.max(0,.45-(tau-S.rk)*2.4):0);
@@ -5818,17 +5839,17 @@ const FILM_SHOTS=[
 /* 18. the VARG push on through the smoke past the burning wreck, headlights on */
 {k:28,id:'genom',f(tau,dur,dtr,S){const wx=1332,wz=734;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.3);for(let i=0;i<30;i++)fxSmoke(wx+fr()*40,fGround(wx,wz)+2,wz+fr()*40,3,0x34302e,5,.6);}
   const w=fEnemy('et1','tank');fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;
-  const P=[[1452,740],[1288,754]];[0,1,2].forEach(n=>{const m=fVarg(n),q=fPath(P,tau*11+[50,32,18][n]),lat=[-10,0,10][n];const x=q.x-Math.sin(q.hd)*lat,z=q.z+Math.cos(q.hd)*lat;fPlace(m,x,z,q.hd,.45);if(Math.random()<dtr*20)fxDust(x,fGround(x,z),z,1.4);});
+  const P=[[1452,740],[1288,754]];[0,1,2].forEach(n=>{const m=fVarg(n),q=fPath(P,tau*11+[50,32,18][n]),lat=[-10,0,10][n];const x=q.x-Math.sin(q.hd)*lat,z=q.z+Math.cos(q.hd)*lat;fPlace(m,x,z,q.hd,HOVER_Y);if(Math.random()<dtr*20)fxDust(x,fGround(x,z),z,1.4);});
   const cx=1362,cz=711;fCam(cx,fGround(cx,cz)+1.4,cz,1338,fGround(1338,740)+3,740,.03);FILM.fov=42;}},
 /* 19. three VARG fire in turn on the beat, silhouetted against the last of the light, and at the forest edge it goes up */
 {k:29,id:'salva',f(tau,dur,dtr,S){const tx=1272,tz=742,beat=FILM_BAR/4;
-  [[1452,736],[1440,752],[1455,768]].forEach(([x,z],n)=>{const hd=Math.atan2(tz-z,tx-x),m=fVarg(n);fPlace(m,x,z,hd,.45);
+  [[1452,736],[1440,752],[1455,768]].forEach(([x,z],n)=>{const hd=Math.atan2(tz-z,tx-x),m=fVarg(n);fPlace(m,x,z,hd,HOVER_Y);
     const tf=beat*(1+n),T=m.userData.tur;if(tau>tf&&!S['f'+n]){S['f'+n]=1;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4.5);fxTracer(mp,{x:tx+fr()*20,y:fGround(tx,tz)+2,z:tz+fr()*20,hit:false},600,0xffe0a0,.2);}});
   if(tau>FILM_BAR&&!S.b){S.b=1;fxBoom(tx,fGround(tx,tz)+1,tz,3);fxFire(tx,fGround(tx,tz)+2,tz,2);}
   const cx=1482,cz=748;fCam(cx-tau*.6,fGround(cx,cz)+2,cz,tx,fGround(tx,tz)+9,tz+8,.02);FILM.fov=38;}},
 /* 20. after: the music drops away; the wreck burns into the dusk and a VARG goes slowly by in front of it */
 {k:31,id:'efter',f(tau,dur,dtr,S){const wx=1332,wz=734;const w=fEnemy('et1','tank');fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.5);}
-  const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,.45);
+  const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,HOVER_Y);
   const cx=wx+42,cz=wz-30;fCam(cx-tau*.8,fGround(cx,cz)+1.6,cz+tau*.3,wx,fGround(wx,wz)+4+tau*.4,wz,0);FILM.fov=34;}},
 /* 21. HMS Birka comes into the harbour in the blue hour, lights on, gliding past the quay */
 {k:33,id:'hamn',birka:false,f(tau,dur,dtr,S){const P=WORLD.birkaPath,H=WORLD.harbor;if(!P)return;G.harbor.secured=true;
