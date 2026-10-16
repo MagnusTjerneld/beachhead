@@ -3605,11 +3605,39 @@ function mkStructMesh(st){
   else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}const d=mesh(new THREE.SphereGeometry(1.2,10,6,0,TAU,0,PI/2),mat(0xe0e2e0),0,19,.9);d.rotation.x=PI/2;g.add(d);g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
   g.rotation.y=-st.a;g.position.set(st.x,groundY(st.x,st.y),st.y);return sh(g);
 }
+/* vehicles blown apart (decided 16 okt, Magnus: a destroyed vehicle vanished in a fireball and a dark box took its place): the hull
+   stays as a charred wreck of the vehicle itself, the turret is torn off and tumbles away, and a dozen plates fly out, bounce and
+   settle, the big ones trailing smoke. One routine for the game and the trailer; the trailer's pieces carry the tag 'film' and run
+   on the film's clock */
+const DEB=[];let CHAR_M=null,CHAR_M2=null;
+function charred(g){if(!CHAR_M){CHAR_M=new THREE.MeshLambertMaterial({color:0x1f1c1a});CHAR_M2=new THREE.MeshLambertMaterial({color:0x3a2a22});CHAR_M.userData.shared=CHAR_M2.userData.shared=true;}
+  g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=CHAR_M;});return g;}
+const headOf=m=>m.userData.head||m.userData.tur||null;
+const WRECK_KINDS={own:new Set(['tank','eng','mus']),enemy:new Set(['tank','light','aa'])};
+function debAdd(o,v,w,r,smoke,tag){o.traverse(c=>{if(c.isMesh&&!c.userData.noShadow){c.castShadow=true;if(tag)c.layers.enable(FILM_SHL);}});R3.scene.add(o);DEB.push({m:o,v,w,r,smoke,rest:!v,t:0,tag});}
+function blowApart(m,tag,H){m.updateMatrixWorld(true);const c=new THREE.Vector3().setFromMatrixPosition(m.matrixWorld),R=Math.random;
+  if(H&&H.parent){H.updateMatrixWorld(true);const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();H.matrixWorld.decompose(p,q,sc);H.parent.remove(H);charred(H);
+    H.position.copy(p);H.quaternion.copy(q);H.scale.copy(sc);H.rotation.order='XYZ';debAdd(H,new THREE.Vector3((R()-.5)*6,13+R()*4,(R()-.5)*6),new THREE.Vector3((R()-.5)*9,(R()-.5)*7,(R()-.5)*9),.8,1.2,tag);}
+  if(!CHAR_M)charred(new THREE.Group());
+  for(let i=0;i<12;i++){const sx=.4+R()*1.3,sy=.08+R()*.25,sz=.3+R()*1,d=new THREE.Mesh(box(sx,sy,sz),R()<.6?CHAR_M:CHAR_M2),a=R()*TAU,sp=5+R()*10;
+    d.position.set(c.x+Math.cos(a)*1.2,c.y+1.5+R()*1.2,c.z+Math.sin(a)*1.2);d.rotation.set(R()*3,R()*3,R()*3);
+    debAdd(d,new THREE.Vector3(Math.cos(a)*sp,7+R()*10,Math.sin(a)*sp),new THREE.Vector3((R()-.5)*14,(R()-.5)*14,(R()-.5)*14),sy/2+.05,sx>1.2?.7:0,tag);}
+  while(DEB.length>260){const q=DEB.findIndex(d=>d.rest&&!d.tag);if(q<0)break;R3.scene.remove(DEB[q].m);DEB.splice(q,1);}}
+const debPuff=(tag,x,y,z,s0,s1,c,o,ttl,v)=>{if(tag==='film')fP(x,y,z,{v:v||[(Math.random()-.5),.8,(Math.random()-.5)],s0,s1,a:o,ttl,c,drag:.6});else addPart(x,y,z,s0,s1,c,o,ttl);};
+/* falls, tumbles, bounces once or twice and comes to rest; the game's pieces lie two minutes and go */
+function debrisTick(dtr,tag){if(!dtr)return;for(let i=DEB.length-1;i>=0;i--){const q=DEB[i];if((q.tag||null)!==(tag||null))continue;q.t+=dtr;
+    if(!q.tag&&q.t>120){R3.scene.remove(q.m);DEB.splice(i,1);continue;}if(q.rest)continue;const m=q.m;q.v.y-=18*dtr;m.position.addScaledVector(q.v,dtr);
+    m.rotation.x+=q.w.x*dtr;m.rotation.y+=q.w.y*dtr;m.rotation.z+=q.w.z*dtr;const gy=Math.max(0,groundY(m.position.x,m.position.z))+q.r;
+    if(m.position.y<gy){m.position.y=gy;if(q.v.y<-3){q.v.y*=-.28;q.v.x*=.45;q.v.z*=.45;q.w.multiplyScalar(.4);debPuff(q.tag,m.position.x,gy-q.r+.3,m.position.z,.3+q.r*.5,1.2+q.r,0x8a7a62,.3,.9);}else q.rest=true;}
+    if(q.smoke&&!q.rest&&Math.random()<dtr*(q.tag?40:14))debPuff(q.tag,m.position.x,m.position.y,m.position.z,(q.tag?.5:.25)*q.smoke,(q.tag?2.2:1)*q.smoke,0x2a2826,q.tag?.45:.3,q.tag?1.4:1);}}
+function debClear(tag){for(let i=DEB.length-1;i>=0;i--)if(tag===undefined||(DEB[i].tag||null)===(tag||null)){R3.scene.remove(DEB[i].m);DEB.splice(i,1);}}
 function mkWreckMesh(w){
   const g=new THREE.Group();let seed=Math.floor(w.rot*1000);const rn=()=>{seed=(seed*16807)%2147483647;return(seed%1000)/1000;};
   if(w.kind==='rubble'){const n=w.big?7:5;for(let i=0;i<n;i++){const s=1.4+rn()*(w.big?3.2:2.2);const m=mesh(box(s,s*.6,s*.9),mat(rn()<.5?0x7a6a58:0x5d5246),(rn()-.5)*(w.big?9:6),s*.25,(rn()-.5)*(w.big?7:5));m.rotation.set(rn()*.6,rn()*3,rn()*.6);g.add(m);}}
   else if(w.kind==='crate'){g.add(mesh(box(2.4,1.6,1.6),mat(0x5f6138),0,.8,0));g.add(mesh(box(2.4,1.6,1.6),mat(0x6b6d40),.3,.8,1.8));g.add(mesh(box(2.2,1.4,1.5),mat(0x55572f),.1,2.3,.9));}
   else if(w.kind==='hulk'){const m=mesh(box(9,2.4,4.4),mat(0x6b4a32),0,.9,0);m.rotation.set(.08,0,.18);g.add(m);g.add(mesh(box(.4,2.6,4.2),mat(0x5a3c28),-4.4,1.6,0));}
+  else if((w.own?WRECK_KINDS.own:WRECK_KINDS.enemy).has(w.kind)){const v=w.own?mkUnitMesh({kind:w.kind,color:'#3a3a3a',ammo:0}):mkEnemyMesh({kind:w.kind,id:w.id});
+    const H=headOf(v);if(H&&H.parent)H.parent.remove(H);if(v.userData.blob)v.remove(v.userData.blob);charred(v);v.rotation.set(.05,0,.07);v.position.y=-.2;g.add(v);}
   else{const m=mesh(box(6,1.4,4),mat(0x2b2b2a),0,.6,0);m.rotation.set(.12,0,.08);g.add(m);}
   sh(g);if(w.kind!=='rubble'&&w.kind!=='crate')contactShadow(g,.03,1.1);
   g.rotation.y=w.rot;g.position.set(w.x,groundY(w.x,w.y),w.y);return g;
@@ -4196,7 +4224,7 @@ function sync3D(dtr){
     if(m.userData.rockets)m.userData.rockets.forEach((r,i)=>r.visible=i<u.ammo);
     if(m.userData.tur)m.userData.tur.rotation.y=-angWrap(u.turret-u.heading);
   }
-  for(const[id,m]of R3.units)if(!seen.has(id)){D.remove(m);R3.units.delete(id);}
+  for(const[id,m]of R3.units)if(!seen.has(id)){const u=G.units.find(v=>v.id===id);if(u&&u.dead&&WRECK_KINDS.own.has(u.kind))blowApart(m,null,headOf(m));D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
     km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;}
   if(TITLE.on&&TITLE.land)titleLandingApply(dtr);
@@ -4211,7 +4239,8 @@ function sync3D(dtr){
     if(m.userData.truck){m.rotation.y=-e.hd;const st=!!e.sc&&(e.sc.ph!=='setup'||e.sc.t>SCOOT.aa.setup*.5);/* down while it packs and moves, up halfway through setting up */m.userData.head.rotation.y=st?PI:-(e.aim-e.hd);for(const b of m.userData.barrels)b.rotation.z=st?PI/2:PI/2-.9;}
     else if(!e.mobile&&m.userData.head)m.userData.head.rotation.y=-e.aim;else m.rotation.y=-e.aim;
   }
-  for(const[id,m]of R3.enemies)if(!seen.has(id)){D.remove(m);R3.enemies.delete(id);}
+  for(const[id,m]of R3.enemies)if(!seen.has(id)){const e=G.enemies.find(v=>v.id===id);if(e&&e.dead&&WRECK_KINDS.enemy.has(e.kind))blowApart(m,null,headOf(m));D.remove(m);R3.enemies.delete(id);}
+  debrisTick(G.running&&!G.paused&&!FILM.on?dtr*G.speed:0,null);
   seen.clear();
   for(const w of G.wrecks){seen.add(w.id);let m=R3.wrecks.get(w.id);if(!m){m=mkWreckMesh(w);D.add(m);R3.wrecks.set(w.id,m);}}
   for(const[id,m]of R3.wrecks)if(!seen.has(id)){D.remove(m);R3.wrecks.delete(id);}
@@ -4796,7 +4825,7 @@ $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStar
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
-function restart(seed,doc,when){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
+function restart(seed,doc,when){if(R3)debClear(null);/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and starting hour */
 $('bNew').addEventListener('click',()=>{restart(1000+Math.floor(Math.random()*9000),'auto');opStart(true);});
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -5536,7 +5565,7 @@ function filmClick(){if(FILM.state!=='idle'&&FILM.state!=='done')return;audInit(
 function filmWarm(){const keep=FILM.t;for(let i=0;i<FILM_SHOTS.length;i++){filmSeek(filmShotT(i)+.6);filmCam(.05);filmCam(.05);updateSky();filmLight();R3.renderer.compile(R3.scene,R3.cam);R3.renderer.render(R3.scene,R3.cam);}
   filmClear();FILM.t=keep;FILM.i=-1;}
 function filmSeek(t){FILM.t=t;FILM.i=-1;filmClear();}
-function filmClear(){for(const q of FILM.parts){R3.scene.remove(q.sp);q.sp.material.dispose();}FILM.parts.length=0;for(const q of FILM.tr){R3.scene.remove(q.m);q.m.material.dispose();}FILM.tr.length=0;
+function filmClear(){debClear('film');for(const q of FILM.parts){R3.scene.remove(q.sp);q.sp.material.dispose();}FILM.parts.length=0;for(const q of FILM.tr){R3.scene.remove(q.m);q.m.material.dispose();}FILM.tr.length=0;
   for(const q of FILM.ms)R3.scene.remove(q.m);FILM.ms.length=0;FILM.lts.length=0;FILM.fires.length=0;}
 const filmShotT=i=>FILM_SHOTS[i].k!=null?fk(FILM_SHOTS[i].k):0;
 /* every frame: the clock, the shot, the actors, the effects */
@@ -5690,9 +5719,14 @@ function fxTracer(a,b,v,c,thick){const d=new THREE.Vector3(b.x-a.x,b.y-a.y,b.z-a
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d);m.scale.set(thick||.12,Math.min(9,L*.3),thick||.12);R3.scene.add(m);FILM.tr.push({m,a:new THREE.Vector3(a.x,a.y,a.z),d,L,v:v||300,s:0,hit:b.hit});}
 /* a missile or rocket: a bright head and a smoke trail along an arc from a to b over dur seconds, a blast at the end */
 function fxMissile(a,b,dur,arc,boom){const m=new THREE.Group();R3.scene.add(m);FILM.ms.push({m,a,b,dur,arc:arc||0,t:0,boom:boom??1,em:0});}
+/* the AA truck blown apart in the trailer: the same as in the game (blowApart), on a copy of the film's actor */
+function fxWreck(m){m.updateMatrixWorld(true);const w=m.clone(true),hi=m.children.indexOf(headOf(m));charred(w);
+  w.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.layers.enable(FILM_SHL);});w.visible=true;w.rotation.z+=.06;w.position.y-=.2;R3.scene.add(w);w.updateMatrixWorld(true);
+  DEB.push({m:w,rest:true,t:0,tag:'film'});blowApart(w,'film',hi>=0?w.children[hi]:null);}
 /* a fire that burns on: flames, sparks and a smoke column, and a flickering light */
 function fxFire(x,y,z,s){FILM.fires.push({x,y,z,s,acc:0});}
 function filmFx(dtr){const P=FILM.parts;
+  debrisTick(dtr,'film');
   for(let i=FILM.lts.length-1;i>=0;i--){const q=FILM.lts[i];q.t+=dtr;if(!q.ttl||q.t>q.ttl)FILM.lts.splice(i,1);}
   for(let i=P.length-1;i>=0;i--){const q=P[i];q.t+=dtr;const k=q.t/q.ttl;if(k>=1||q.sp.position.y<-.6){R3.scene.remove(q.sp);q.sp.material.dispose();P.splice(i,1);continue;}
     const dr=Math.exp(-q.drag*dtr);q.vx*=dr;q.vz*=dr;q.vy=q.vy*dr-q.g*dtr;q.sp.position.x+=q.vx*dtr;q.sp.position.y+=q.vy*dtr;q.sp.position.z+=q.vz*dtr;
@@ -5834,7 +5868,7 @@ const FILM_SHOTS=[
 {k:27,id:'lvtraff',f(tau,dur,dtr,S){const m=fEnemy('aa1','aa'),x=1340,z=690,hd=2.2;fPlace(m,x,z,hd,0);const H=m.userData.head;if(H)H.rotation.y=.6;
   S.cd=(S.cd||0)-dtr;if(tau<1&&S.cd<=0){S.cd=.11;const mp=new THREE.Vector3(-.22,2.41,(S.n=(S.n||0)+1)%2?.45:-.45);if(H){H.updateMatrixWorld();H.localToWorld(mp);}fxFlash(mp.x,mp.y,mp.z,1.6,0xffe0a0);fxTracer(mp,{x:x+40+fr()*20,y:90,z:z-60+fr()*20,hit:false},330,0xffe08a,.3);}
   if(S.first){for(let i=0;i<3;i++)fxMissile({x:x+70+i*6,y:80+i*4,z:z-60},{x:x+fr()*4,y:fGround(x,z)+2,z:z+fr()*4},1+i*.07,0,i===2?1.6:.6);}
-  if(tau>1.05)m.visible=tau<1.07;if(tau>1.07&&!S.w){S.w=1;fxFire(x,fGround(x,z)+1.5,z,1.3);}
+  if(tau>1.05)m.visible=tau<1.07;if(tau>1.07&&!S.w){S.w=1;fxFire(x,fGround(x,z)+1.5,z,1.3);fxWreck(m);}
   const cx=x+24,cz=z+16;fCam(cx,fGround(cx,cz)+2.4,cz,x,fGround(x,z)+5,z,tau>1?Math.max(.03,.9-(tau-1)*.9):.03);FILM.fov=42;}},
 /* 18. the VARG push on through the smoke past the burning wreck, headlights on */
 {k:28,id:'genom',f(tau,dur,dtr,S){const wx=1332,wz=734;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.3);for(let i=0;i<30;i++)fxSmoke(wx+fr()*40,fGround(wx,wz)+2,wz+fr()*40,3,0x34302e,5,.6);}
