@@ -1272,6 +1272,8 @@ function buildWorldTry(seed,tryK){
        little pasture round it; cottages stand two to five together on low ground by the water (never above a cliff), facing it, often with a jetty of their own */
     D.cabins=[];{const C=D.cabins,farms=W.farms||[];
       const fits=(x,y)=>{const ci=cellIdx(x,y),gx=ci%GW,gy=(ci/GW)|0;if(gx<2||gy<2||gx>=GW-2||gy>=GH-2||G0[ci]!==LAND||W.road[ci]||(W.lane&&W.lane[ci])||W.isletMask[ci]||!away(x,y,220))return false;
+        /* never next to a cliff or another obstacle: a house there can close the only way up from the shore (fixed 16 okt) */
+        for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const t=G0[ci+oy*GW+ox];if(t===ROCK||t===WALL)return false;}
         if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+70)return false;if(pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+35)||W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<60))return false;
         if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<28)||E.some(e=>Math.hypot(e.x-x,e.y-y)<40)||D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<45)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<16)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<14)||C.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
         const h=elevAt(x,y,s,V);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.2)return false;return h;};
