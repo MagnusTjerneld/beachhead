@@ -1165,6 +1165,9 @@ function buildWorldTry(seed,tryK){
         for(let gy=Math.floor((y-9)/CELL);gy<=Math.floor((y+9)/CELL);gy++)for(let gx=Math.floor((x-9)/CELL);gx<=Math.floor((x+9)/CELL);gx++){const i=gy*GW+gx;if(i<0||i>=GW*GH||W.road[i])continue;if(Math.hypot(gx*CELL+5-x,gy*CELL+5-y)>7.5)continue;if(G0[i]===LAND){G0[i]=WALL;grid[i]=WALL;}}}
       W.trees=W.trees.filter(t=>D.villas.every(v=>Math.hypot(t.x-v.x,t.y-v.y)>15));}
     // small sector lights (prickfyrar): four per island, two red and two green, well spread; on skerries first, then on low points of the coast
+    // a daymark (båk) on one or two of the bigger skerries, placed before the sector lights so they keep away from it (fixed 16 okt: a sector
+    // light stood on the same skerry as a daymark, the two drawn into each other)
+    D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7)D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
     /* on the coast a light stands on level ground at the terrain's own height (fixed 16 okt: on ö 1504 a green one stood at the cliff
        top's height right at the edge and hung out over the drop): from the coast point it looks up to 9 m further in, still by the water, for a spot where
        the ground within 2 m is level to under a metre, and sits at the lowest of it; with no such spot the site is skipped. Skerries
@@ -1182,8 +1185,6 @@ function buildWorldTry(seed,tryK){
     // a light stands in the open (decided 16 okt, Magnus): no trees within 20 m of any light, the lighthouse or a sector light (one
     // on ö 1504 stood hidden in the forest)
     {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>20));}
-    // a daymark (båk) on one or two of the bigger skerries
-    D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7)D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
     // hidden shoals (grund under ytan) out in open water, each marked by a cardinal mark on its safe-water side
     D.shoals=[];for(let t=0;t<600&&D.shoals.length<7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r0=8+Rd()*16,dd=60+Rd()*230,x=c.x+c.n.x*dd+(Rd()-.5)*80,y=c.y+c.n.y*dd+(Rd()-.5)*80;
       if(!wet(cellIdx(x,y))||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
@@ -3427,6 +3428,11 @@ function mkDaymark(b){const g=new THREE.Group(),W1=mat(0xf2f0ea),B1=mat(0x1e1c1c
       geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));geo.computeVertexNormals();const m=new THREE.Mesh(geo,((t+sd)%2?B1:W1).clone());m.material.side=THREE.DoubleSide;m.rotation.y=PI/4;g.add(m);}
     g.add(mesh(box(2.4,.25,2.4),R1,0,9.1,0));g.add(mesh(new THREE.SphereGeometry(.35,8,6),mat(0x4a4a4a),0,9.5,0));}
   else{for(let t=0;t<5;t++){const r0=2.4-t*.42,r1=2.4-(t+1)*.42;g.add(mesh(new THREE.CylinderGeometry(Math.max(.1,r1),r0,1.8,4),t%2?R1:W1,0,.9+t*1.8,0));}g.children.forEach(c=>c.rotation.y=PI/4);}
+  /* every daymark carries a small white flashing light on its top (decided 16 okt, Magnus): a dark housing, a lens and a glow, lit
+     and flashing like the sector lights but white and seen from all round */
+  {const y0=b.style==='ruta'?9.85:9,D2=mat(0x2e2e2e);g.add(mesh(cyl(.42,.5,.35,10),D2,0,y0+.18,0));const lm=new THREE.MeshBasicMaterial({color:0xd8d6cc});
+    g.add(mesh(cyl(.3,.3,.55,10),lm,0,y0+.62,0));g.add(mesh(new THREE.ConeGeometry(.42,.4,10),D2,0,y0+1.1,0));
+    const glow=haloSprite(0xfff4dc);glow.position.set(0,y0+.62,0);glow.scale.setScalar(.1);glow.visible=false;g.add(glow);g.userData.lamp={lm,glow,y:y0+.62};}
   g.position.set(b.x,b.h,b.y);return g;}
 const WIN_OFF=[22.5,23.25,24,24.75];
 const winBucket=(x,y)=>Math.floor(hash2(Math.round(x),Math.round(y),17)*WIN_OFF.length)%WIN_OFF.length;
@@ -3531,7 +3537,7 @@ function mkDecor(D,st){
   R3.villaM=[];for(const v of D.villas||[]){const m=mkVilla(v);st.add(m);R3.villaM.push(m);}
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
-  for(const b of D.baks||[])st.add(mkDaymark(b));
+  R3.baks=[];(D.baks||[]).forEach((b,i)=>{const g=mkDaymark(b);st.add(g);R3.baks.push({b,...g.userData.lamp,ch:LIGHT_CH[[6,2,0][i%3]],ph:hash2(Math.round(b.x),Math.round(b.y),23)*6});});
   R3.jetM=[];R3.boatM=[];
   for(const j of D.jetties){const g=new THREE.Group();R3.jetM.push(g);g.add(mesh(box(j.len,.3,2.2),wood,j.len/2+2,.95,0));
     for(let t=4;t<=j.len+2;t+=4)for(const z of[-1.1,1.1])g.add(mesh(cyl(.14,.14,2.4,5),post,t,.1,z));
@@ -4135,6 +4141,7 @@ function updateSky(){
   }
   if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*d*R3.lit,70]);}
   for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
+  for(const q of R3.baks||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.b.x,q.b.h+q.y,q.b.y,0xfff4dc,1.4*n,30]);}
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur;if(life<=0)continue;const fl=.8+.3*Math.sin(G.time*11+f.x)+.2*Math.sin(G.time*29+f.y);cand.push([1,f.x,groundY(f.x,f.y)+f.h+3,f.y,0xff6a1a,fl*Math.min(1,life*4)*(.7+n)*f.size*1.4,55]);}
   for(const w of G.wrecks){const age=G.time-w.t0;if(w.kind==='crate'||w.kind==='hulk'||age>120)continue;const fl=.8+.3*Math.sin(G.time*13+w.rot*9)+.2*Math.sin(G.time*31);cand.push([2,w.x,groundY(w.x,w.y)+2.5,w.y,0xff7024,fl*(1-age/120)*(.4+n),30]);}
   if(FILM.on)for(const c of filmLightCands())cand.push(c);/* the trailer's flashes, blasts and fires */
@@ -4227,7 +4234,8 @@ function sync3D(dtr){
     if(R3.sWin){R3.sWin.visible=lit>0;R3.sWin.material.opacity=.85*lit;}
     if(R3.sNav){R3.sNav.visible=lit>0;if(lit>0){const D=WORLD.surround,cc=R3.sNav.geometry.attributes.color;D.navs.forEach((q,i)=>{const on=lightOn(LIGHT_CH[q.ch],RTs+q.ph);const v=on?1:0;if(q.col==='red')cc.setXYZ(i,v,.18*v,.12*v);else cc.setXYZ(i,.2*v,v,.4*v);});cc.needsUpdate=true;R3.sNav.material.opacity=lit;}}
     for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180,on=lit>0&&inSec&&lightOn(q.ch,RTs+z.ph);
-      q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
+      q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}
+    for(const q of R3.baks||[]){const on=lit>0&&lightOn(q.ch,RTs+q.ph);q.lm.color.setHex(on?0xfff4dc:0xd8d6cc);q.glow.scale.setScalar(1.8+2.6*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
   R3.ship.position.x=CARRIER.x;R3.ship.position.z=CARRIER.y;R3.ship.rotation.y=-(CARRIER.a+PI/2);
   {const Hs=G.harbor,HM=R3.harborM,L=R3.lit||0;
     if(HM){const own=!!(Hs&&Hs.secured);for(const b of HM.boats)b.visible=!own;HM.poolM.opacity=own?.7*L:0;HM.headM.color.setHex(own&&L>0?0xfff1c8:0x3a3a36);}
