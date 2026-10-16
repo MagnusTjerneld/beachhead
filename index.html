@@ -166,6 +166,7 @@ button:disabled{opacity:.45;cursor:default}
 .feeds[hidden]{display:none}
 .feed{position:relative;aspect-ratio:16/10;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:#0b1015;cursor:pointer}
 .feed canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.feed .fnz{position:absolute;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen}
 .feed .fl{position:absolute;left:0;right:0;bottom:0;padding:10px 6px 3px;background:linear-gradient(transparent,rgba(8,12,16,.88));font-family:var(--f-mono);font-size:10.5px;color:var(--ink);display:flex;gap:6px;align-items:baseline;pointer-events:none}
 .feed .fl b{font-weight:400;letter-spacing:.06em;flex:none}
 .feed .fl span{color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -1826,6 +1827,9 @@ function airPath(u,tx,ty,o){
 const RADIO={r:250};
 function radioRelays(){const L=[{x:CARRIER.x,y:CARRIER.y}];for(const v of G.units)if(!v.dead&&!v.carried&&(v.kind==='tank'||v.kind==='eng'||v.kind==='drone')&&inNet(v.x,v.y))L.push(v);return L;}
 function linkAt(x,y,L){L=L||radioRelays();let best=null,bd=1e9;for(const q of L){const d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;best=q;}}return{ok:bd<=RADIO.r,d:bd,relay:best};}
+/* how weak a remote unit's link is, 0 to 1, for noise in its picture and sound (presentation only, decided 16 okt): GETING by its radio
+   link, MUS by its tether to its VARG; it starts at 70 % of the reach and is full at 98 % */
+function sigNoise(u){if(!u||u.dead)return 0;let f=0;if(u.kind==='scout')f=linkAt(u.x,u.y).d/RADIO.r;else if(u.kind==='mus'&&!u.carried){const v=unitById(u.owner);if(v&&!v.dead)f=Math.hypot(u.x-v.x,u.y-v.y)/ROVER.link;}return clamp((f-.7)/.28,0,1);}
 /* the nearest point to (x,y) that is still inside the radio net */
 function linkClamp(x,y){const L=radioRelays(),k=linkAt(x,y,L);if(k.ok)return{x,y,moved:false};const r=k.relay,d=k.d||1;return{x:r.x+(x-r.x)/d*(RADIO.r-12),y:r.y+(y-r.y)/d*(RADIO.r-12),moved:true};}
 function move(u,dt){
@@ -4147,7 +4151,12 @@ function drawHud(ctx,w,h){
     if(!grainPat)grainPat=ctx.createPattern(grain,'repeat');
     ctx.save();ctx.globalAlpha=.85;ctx.translate(-Math.random()*128,-Math.random()*128);ctx.fillStyle=grainPat;ctx.fillRect(0,0,w+128,h+128);ctx.restore();
     ctx.fillStyle='#e3e8e2';ctx.font=mono(15);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SIGNAL FÖRLORAD',w/2,h/2);
-    return;
+    return;}
+  {/* a weak link: grain, torn lines and now and then a dropout, growing towards the edge of the reach */const n=sigNoise(u);
+    if(n>0){if(!grainPat)grainPat=ctx.createPattern(grain,'repeat');ctx.save();ctx.globalAlpha=.1+.5*n;ctx.translate(-Math.random()*128,-Math.random()*128);ctx.fillStyle=grainPat;ctx.fillRect(0,0,w+128,h+128);ctx.restore();
+      ctx.fillStyle='rgba(230,236,230,'+(.06+.14*n).toFixed(2)+')';for(let i=Math.floor(n*7);i>0;i--)ctx.fillRect(0,Math.random()*h,w,1+Math.random()*3*n);
+      if(n>.55&&Math.random()<(n-.55)*.3){ctx.fillStyle='rgba(12,14,16,'+(.4+.4*Math.random()).toFixed(2)+')';ctx.fillRect(0,Math.random()*h*.6,w,h*(.15+Math.random()*.4));}
+      ctx.fillStyle='rgba(232,236,230,.85)';ctx.font=mono(11);ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('SVAG SIGNAL '+Math.round((1-n)*100)+' %',w/2,98);}
   }
   // vignette
   const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.45,w/2,h/2,Math.max(w,h)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.38)');ctx.fillStyle=vg;ctx.fillRect(0,0,w,h);
@@ -4678,10 +4687,10 @@ globalThis.__BHUI={restart:s=>restart(s),FEED,feedPick:()=>feedPick(),setSel:ids
 try{FEED.on=localStorage.getItem('bh.feeds')!=='0';}catch(_){}
 function mkFeeds(){const box=$('feeds');box.innerHTML='';FEED.list=[];
   for(let i=0;i<2;i++){const el=document.createElement('div');el.className='feed';
-    el.innerHTML='<canvas></canvas><div class="fhp"></div><div class="fl"><b></b><span></span></div><button class="fpin" type="button" aria-pressed="false" title="Fäst bilden vid enheten">FÄST</button>';box.appendChild(el);
+    el.innerHTML='<canvas></canvas><div class="fnz"></div><div class="fhp"></div><div class="fl"><b></b><span></span></div><button class="fpin" type="button" aria-pressed="false" title="Fäst bilden vid enheten">FÄST</button>';box.appendChild(el);
     const cv=el.querySelector('canvas');let r=null;
     if(R3){try{r=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'low-power'});r.setPixelRatio(1);r.localClippingEnabled=true;r.shadowMap.enabled=false;}catch(_){r=null;}}
-    const F={el,cv,r,cam:R3?new THREE.PerspectiveCamera(55,16/10,.5,1400):null,uid:null,pin:false,w:0,h:0,lbl:el.querySelector('.fl b'),st:el.querySelector('.fl span'),hp:el.querySelector('.fhp'),pinB:el.querySelector('.fpin')};
+    const F={el,cv,r,cam:R3?new THREE.PerspectiveCamera(55,16/10,.5,1400):null,uid:null,pin:false,w:0,h:0,lbl:el.querySelector('.fl b'),st:el.querySelector('.fl span'),hp:el.querySelector('.fhp'),pinB:el.querySelector('.fpin'),nz:el.querySelector('.fnz'),nzv:-1};F.nz.style.backgroundImage='url('+grain.toDataURL()+')';
     el.title='Klick: visa i kameran · dubbelklick: helbild';
     el.addEventListener('click',ev=>{if(ev.target===F.pinB)return;const u=unitById(F.uid);if(u&&!u.dead){setCam(u.id);uiTick(true);}});
     el.addEventListener('dblclick',()=>{const u=unitById(F.uid);if(u&&!u.dead){setCam(u.id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}uiTick(true);}});
@@ -4727,11 +4736,12 @@ function feedTick(now){if(!FEED.on||TITLE.on||!FEED.list.length)return;
     if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
     const c=shipPos(BAY.lat+15,BAY.fwd-13),t=shipPos(BAY.lat,BAY.fwd);F.cam.position.set(c[0],DECK_Y+10,c[1]);F.cam.lookAt(t[0],DECK_Y+2.5,t[1]);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);return;}
   const u=unitById(F.uid);F.el.classList.toggle('empty',!u||u.dead||!F.r);
-  if(!u||u.dead){F.lbl.textContent='';F.st.textContent='';F.hp.style.width='0';return;}
+  if(!u||u.dead){F.lbl.textContent='';F.st.textContent='';F.hp.style.width='0';if(F.nzv){F.nzv=0;F.nz.style.opacity=0;}return;}
   F.lbl.textContent=u.name;const st=(u.kind==='krok'?u.status:u.state)||'';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width=(u.hp/u.maxhp*100)+'%';F.el.classList.toggle('hit',G.time-u.lastHit<1.5);
   if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;
   if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
-  feedCam(u,F.cam);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);}
+  feedCam(u,F.cam);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);
+  {const n=sigNoise(u),v=n?Math.round((.12+.6*n)*20)/20:0;if(v!==F.nzv){F.nzv=v;F.nz.style.opacity=v;}if(n)F.nz.style.backgroundPosition=(Math.random()*128|0)+'px '+(Math.random()*128|0)+'px';}}
 $('bFeeds').addEventListener('click',()=>setFeeds(!FEED.on));
 $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
@@ -4957,6 +4967,10 @@ function mkVoice(u){
 function killVoice(V){const t=AUD.ctx.currentTime;V.out.gain.setTargetAtTime(0,t,.15);setTimeout(()=>{for(const n of V.nodes){try{n.stop();}catch(_){}}try{V.out.disconnect();V.lp.disconnect();if(V.pan)V.pan.disconnect();}catch(_){}},800);}
 function updAudio(dtr){
   if(!AUD.ctx||!G)return;updListener();musLevel();
+  {/* radio hiss with a weak link on the unit the camera follows (sigNoise), a band of noise that grows towards the edge */
+    const n=G.running&&!TITLE.on?sigNoise(unitById(G.cam)):0;
+    if(n>0&&!AUD.hiss){const c=AUD.ctx,src=noiseSrc(),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2600;bp.Q.value=.8;const g=c.createGain();g.gain.value=0;src.connect(bp);bp.connect(g);g.connect(AUD.master);src.start();AUD.hiss={src,g};}
+    if(AUD.hiss){const t=AUD.ctx.currentTime;AUD.hiss.g.gain.setTargetAtTime(n*n*.09*(.7+.6*Math.random()),t,.05);if(n===0&&AUD.hiss.g.gain.value<.001){AUD.hiss.src.stop();AUD.hiss=null;}}}
   // engines: the six nearest live vehicles
   const L=AUD.L,cand=[];
   for(const u of [...G.units,...G.kroks]){if(u.dead||(u.kind==='mus'&&u.carried))continue;const h=u.air||u.kind==='krok'?(u.alt||groundY(u.x,u.y)+20):groundY(u.x,u.y)+1.5;const d=Math.hypot(u.x-L.x,h-L.y,u.y-L.z);if(d<520)cand.push([d,u,h]);}
