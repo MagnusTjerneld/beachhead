@@ -378,6 +378,10 @@ button:disabled{opacity:.45;cursor:default}
 'use strict';
 const WW=2200,WH=2200,CELL=10,GW=WW/CELL,GH=WH/CELL,TS=2,TW=WW/TS,TH=WH/TS;
 const DEEP=0,SHAL=1,BEACH=2,LAND=3,ROCK=4,WALL=5;
+/* the land plan (markkarta, W.mark): what each land cell is used for. Häll is bare rock, strand the open shore, skog forest land,
+   åker a field, hage pasture and farmyard with single trees. The forest density per cell (W.skog: 0 open, 1 sparse, 2 dense) is what
+   the game will read for cover and for vehicles once the forest gets its rules (decided 16 okt) */
+const M_HALL=1,M_STRAND=2,M_SKOG=3,M_AKER=4,M_HAGE=5;
 const PI=Math.PI,TAU=PI*2;
 const CX=WW/2,CY=WH/2,CARRIER={x:WW/2,y:WH-300,a:-PI/2};
 const hasDOM=typeof document!=='undefined'&&!!document.getElementById&&!!document.getElementById('app');
@@ -929,6 +933,18 @@ function buildWorldTry(seed,tryK){
      threat analysis: every way in from the sea and the traffic each pass would carry towards what matters; a defended region
      whose line of passes it blocks by doctrine and budget; cracks where it judges traffic lowest; covering fire on every obstacle */
   const covePt=V.cove?snapZ(inl(V.cove,15,.97),null,TIER.beach):null;
+  /* the land plan, part one: what the ground itself decides (decided 16 okt). Ridges and the edges of cliffs are bare rock, the low
+     granite along the water is open shore, the rest is forest land; the farms further down cut their fields and pasture out of it.
+     It is made before the defence so that the defence can read it once the forest gets its rules */
+  const cellDist=(src,cap)=>{const D=new Uint8Array(GW*GH).fill(cap),q=[];for(let i=0;i<GW*GH;i++)if(src(i)){D[i]=0;q.push(i);}
+    for(let h=0;h<q.length;h++){const c=q[h],x=c%GW,y=(c/GW)|0;if(D[c]+1>=cap)continue;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(D[n]>D[c]+1){D[n]=D[c]+1;q.push(n);}}}return D;};
+  const dWet=cellDist(i=>grid[i]===DEEP||grid[i]===SHAL,40),dRock=cellDist(i=>grid[i]===ROCK,12);
+  const mark=new Uint8Array(GW*GH);W.mark=mark;
+  for(let i=0;i<GW*GH;i++){const t=grid[i];if(t===BEACH){mark[i]=M_STRAND;continue;}if(t!==LAND)continue;
+    const c=cellCenter(i),z=zid[i],hn=fbm(c.x*2.3,c.y*2.3,s+411);
+    // above the zone's own level is a ridge, unless it is the ramp up to a pass
+    const up=z>=0&&!Z[z].water&&!pass.some(p=>Math.hypot(p.x-c.x,p.y-c.y)<p.w+45)?eg[i]-Z[z].h:0;
+    mark[i]=up>3+hn*4||(dRock[i]<=1&&hn>.52)?M_HALL:dWet[i]<=1||eg[i]<2.6?M_STRAND:M_SKOG;}
   /* the plan is a function of its own random sequence (decided 16 okt): the island is built once with the base defence, which the
      buildings, trees and decoration below are placed around, and W._replan(doc,k) plans another doctrine on the same geography */
   const planDefense=(Rp,first,doc)=>{W.barriers=[];
@@ -1093,7 +1109,7 @@ function buildWorldTry(seed,tryK){
   const STR=[],DEB=[];W.structs=STR;W.debris=DEB;
   const pr3=bfs(r3z,pad),onRoute=i=>pd[i]+pr3[i]===pd[r3z];W.route=lz.filter(onRoute);
   const zoneVal=i=>i===r3z?.8:i===r2z?1.3:onRoute(i)?.6:1.8;
-  const spotOK=(x,y,zi,loose,beach)=>{
+  const spotOK=(x,y,zi,loose,beach,sep)=>{
     const c=cellIdx(x,y),t=grid[c];if(!reach[c]||W.road[c])return false;
     if(beach?t!==BEACH:loose?(t!==LAND&&t!==BEACH):t!==LAND)return false;
     if(zi!=null&&zid[c]!==zi)return false;
@@ -1101,20 +1117,57 @@ function buildWorldTry(seed,tryK){
     if(!loose)for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const n=(gy+oy)*GW+gx+ox;if((grid[n]!==LAND&&grid[n]!==BEACH)||W.road[n]||Math.abs(eg[n]-eg[c])>2.4)return false;}
     if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<(loose?38:60)))return false;
     if(E.some(e=>Math.hypot(e.x-x,e.y-y)<22))return false;
-    if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<22)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<14))return false;
+    if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<(sep||22))||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<14))return false;
     if(!loose&&pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+30))return false;
     if(W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<55))return false;
     if(Math.hypot(landing.x-x,landing.y-y)<(beach?18:40))return false;
     return true;};
   const findSpot=(a,r0,r1,zi,loose,beach)=>{for(let t=0;t<80;t++){const ang=R()*TAU,rr=r0+R()*(r1-r0),x=a.x+Math.cos(ang)*rr,y=a.y+Math.sin(ang)*rr;if(spotOK(x,y,zi,loose,beach)){const c=cellCenter(cellIdx(x,y));return loose?{x,y}:c;}}return null;};
   const r5=v=>Math.round(v/5)*5;
-  const addS=(kind,p,m)=>STR.push({id:'B'+(STR.length+1),kind,x:p.x,y:p.y,cell:cellIdx(p.x,p.y),a:Math.floor(R()*4)*PI/2+(R()-.5)*.3,value:r5(STRUCT[kind].value*m)});
+  const addS=(kind,p,m)=>STR.push({id:'B'+(STR.length+1),kind,x:p.x,y:p.y,cell:cellIdx(p.x,p.y),a:p.a!=null?p.a:Math.floor(R()*4)*PI/2+(R()-.5)*.3,value:r5(STRUCT[kind].value*m)});
+  /* the land plan, part two: a zone's buildings are one farm (a depot yard in the two core zones), not loose houses (decided 16 okt).
+     The site is drawn among the good ones: flat ground off the bare rock, a short drive from the road and, for a farm, near the
+     water but not on it. The buildings stand round a yard square to the road, the main house on the far side with its long side
+     to the road; a lane runs from the yard to the road, and fields and pasture are cleared round a farm. A radio mast stands on the
+     highest ground of its zone instead */
+  const dRoad=cellDist(i=>W.road[i],30);W.farms=[];W.lanes=[];W.lane=new Uint8Array(GW*GH);
+  const flatAt=(x,y,e0,r)=>{for(let k=0;k<8;k++){const q=cellIdx(x+Math.cos(k*PI/4)*r,y+Math.sin(k*PI/4)*r),t=grid[q];if((t!==LAND&&t!==BEACH)||Math.abs(eg[q]-e0)>2.2)return false;}return true;};
+  const roadNear=(x,y)=>{const c0=cellIdx(x,y),gx0=c0%GW,gy0=(c0/GW)|0;let best=null,bd=1e9;for(let oy=-25;oy<=25;oy++)for(let ox=-25;ox<=25;ox++){const gx=gx0+ox,gy=gy0+oy;if(gx<0||gy<0||gx>=GW||gy>=GH||!W.road[gy*GW+gx])continue;const d=ox*ox+oy*oy;if(d<bd){bd=d;best=cellCenter(gy*GW+gx);}}return best;};
+  const farmSite=(i,core,anchor)=>{let best=null,bs=-1e9;for(let gy=1;gy<GH-1;gy+=2)for(let gx=1;gx<GW-1;gx+=2){const c=gy*GW+gx;if(zid[c]!==i||grid[c]!==LAND||mark[c]===M_HALL||dRoad[c]>=25)continue;
+      const p=cellCenter(c);if(!spotOK(p.x,p.y,i,false,false)||!flatAt(p.x,p.y,eg[c],16)||!flatAt(p.x,p.y,eg[c],30))continue;const dr=dRoad[c]*CELL,dw=dWet[c]*CELL;
+      const sc=core?-Math.abs(dr-30)/25-Math.hypot(p.x-anchor.x,p.y-anchor.y)/50+R()*.6:-Math.abs(dr-55)/30-Math.abs(Math.min(dw,250)-90)/90-(E.some(e=>Math.hypot(e.x-p.x,e.y-p.y)<45)?1.5:0)+R()*1.2;
+      if(sc>bs){bs=sc;best=p;}}return best;};
+  // yard slots: along the axis to the road (u), across it (v), and 1 where the long side faces the road
+  const FARM=[[-22,0,1],[-5,18,0],[-5,-18,0],[12,22,0],[12,-22,0],[-38,0,1]],YARD=[[-12,-12,1],[-12,12,1],[12,-12,1],[12,12,1],[-34,0,0]];
+  const layOut=(site,kinds,i,m,core)=>{const rp=roadNear(site.x,site.y),a=rp?Math.atan2(rp.y-site.y,rp.x-site.x):R()*TAU,ca=Math.cos(a),sa=Math.sin(a),L=core?YARD:FARM;let si=0,nb=0;
+    for(const kind of kinds){let p=null;
+      for(;si<L.length&&!p;si++){const[u,v,lng]=L[si];for(const f of[1,1.15,1.3]){const x=site.x+(ca*u-sa*v)*f,y=site.y+(sa*u+ca*v)*f;if(spotOK(x,y,i,false,false,16)){p={x,y,a:a+(lng?PI/2:0)+(R()-.5)*.06};break;}}}
+      if(!p){const q=findSpot(site,20,70,i,false,false);if(q)p={x:q.x,y:q.y,a:a+Math.floor(R()*2)*PI/2+(R()-.5)*.06};}
+      if(!p||(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85)))continue;addS(kind,p,m);nb++;}
+    if(!nb)return;W.farms.push({x:site.x,y:site.y,a,core,z:i});
+    // the lane: the shortest way over open land from the yard to the road, round the buildings; not a road for the units
+    if(rp&&Math.hypot(rp.x-site.x,rp.y-site.y)>14){const own=new Set(STR.map(q=>q.cell)),cells=astarCells(cellIdx(site.x,site.y),cellIdx(rp.x,rp.y),passLand,c=>own.has(c)?30:1);
+      if(cells&&cells.length&&cells.length<26){let pts=[{x:site.x,y:site.y},...cells.map(cellCenter)];pts[pts.length-1]={x:rp.x,y:rp.y};pts=chaikin(chaikin(pts));W.lanes.push(pts);
+        for(const q of pts){const gx=Math.floor(q.x/CELL),gy=Math.floor(q.y/CELL);for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const c=(gy+oy)*GW+gx+ox;if(c>=0&&c<GW*GH&&Math.hypot((gx+ox)*CELL+5-q.x,(gy+oy)*CELL+5-q.y)<6)W.lane[c]=1;}}}}
+    if(core)return;
+    // fields round the farm: the yard is pasture with a few big trees, then fields, and pasture again at the edge; the edge
+    // follows a noise so that no two farms are round, and stops at bare rock, the shore and a change of level
+    const r0=55+nb*8+R()*45,ax=R()*PI,cx=Math.cos(ax),sx=Math.sin(ax),c0=cellIdx(site.x,site.y),e0=eg[c0],seen=new Set([c0]),q=[c0];
+    for(let h=0;h<q.length;h++){const c=q[h],p=cellCenter(c),dx=p.x-site.x,dy=p.y-site.y,d=Math.hypot(dx*cx+dy*sx,(dy*cx-dx*sx)*1.5),lim=r0*(.45+1.3*fbm(p.x*1.6,p.y*1.6,s+601));if(d>lim)continue;
+      if(mark[c]===M_SKOG||mark[c]===M_HAGE)mark[c]=d<28||d>lim*.8?M_HAGE:M_AKER;
+      const x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;
+        if(seen.has(n)||zid[n]!==i||grid[n]!==LAND||mark[n]===M_HALL||Math.abs(eg[n]-e0)>3)continue;seen.add(n);q.push(n);}}};
   for(const i of lz){
     const m=zoneVal(i),core=i===r2z||i===r3z,anchor=zc[i];if(!anchor)continue;
     const n=i===land?2:core?3:onRoute(i)?2:4+(R()<.5?1:0);
     const pool=core?['depot','house','mast','fuel']:safe.has(i)?['shed','house','shed','mast']:['house','depot','shed','fuel'];
-    let base=null;
-    for(let k=0;k<n;k++){const kind=k===0&&core?'depot':pool[Math.floor(R()*pool.length)];const p=findSpot(base||anchor,base?18:30,base?60:130,i,false,false);if(!p)continue;if(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85))continue;if(!base)base=p;addS(kind,p,m);}
+    const kinds=[];for(let k=0;k<n;k++)kinds.push(k===0&&core?'depot':pool[Math.floor(R()*pool.length)]);
+    const ORD={depot:0,house:0,shed:1,fuel:2};const yard=kinds.filter(k=>k!=='mast').sort((a,b)=>ORD[a]-ORD[b]);
+    const site=yard.length?farmSite(i,core,anchor):null;
+    if(site)layOut(site,yard,i,m,core);
+    else for(const kind of yard){const p=findSpot(anchor,30,130,i,false,false);if(p&&!(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85)))addS(kind,p,m);}
+    for(const kind of kinds)if(kind==='mast'){let best=null,bs=-1e9;for(let gy=1;gy<GH-1;gy+=2)for(let gx=1;gx<GW-1;gx+=2){const c=gy*GW+gx;if(zid[c]!==i||grid[c]!==LAND)continue;const p=cellCenter(c);if(!spotOK(p.x,p.y,i,false,false))continue;const sc=eg[c]+R()*3;if(sc>bs){bs=sc;best=p;}}
+      if(best)addS('mast',best,m);}
     const nc=2;for(let k=0;k<nc;k++){const p=findSpot(anchor,20,150,i,true,false);if(p)DEB.push({x:p.x,y:p.y,kind:'crate',value:r5(20*m)});}
   }
   for(const zi of[r2z,r3z]){const g=E.find(e=>(e.kind==='turret'||e.kind==='aa')&&zid[cellIdx(e.x,e.y)]===zi);if(g){const p=findSpot(g,26,46,zi,false,false);if(p&&!relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85))addS('fuel',p,zoneVal(zi));}}
@@ -1124,10 +1177,22 @@ function buildWorldTry(seed,tryK){
   lab(landing,'Strand',1);if(harborPt&&!(V.harbor&&V.harbor.std))lab(harborPt,'Hamn',1);/* the standard harbour is point H and carries its own label */
   if(covePt)lab(covePt,'Vik',1);
   W._pass=pass.map(p=>({x:p.x,y:p.y,a:p.a,b:p.b}));
-  // trees
-  for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i])continue;const c=cellCenter(i);const fd=fbm(c.x*1.7,c.y*1.7,s+313),dense=fd>.56,pr=dense?Math.min(.95,.5+(fd-.56)*4):.1;
-    for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>pr)continue;const nT=dense?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
-    for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;W.trees.push({x,y,s:(dense?.85:.75)+hash2(gx+qq,gy,s+80)*.6,ci:i});}}}
+  /* the land plan, part three: the forest. Small glades open in the forest land; per zone a share of what is left is dense forest,
+     drawn between 30 and 60 %, so that no zone is all thicket or all open, and the same noise as before decides where in the zone.
+     Trees follow the plan: dense and sparse forest, low pines on bare rock, a few trees on the shore, single big trees in pasture
+     and none on fields, and the kind of tree follows the ground */
+  const Rf=rng(s*191+17),skog=new Uint8Array(GW*GH);W.skog=skog;
+  {const byZ=new Map();for(let i=0;i<GW*GH;i++){if(mark[i]!==M_SKOG)continue;const c=cellCenter(i);if(fbm(c.x*2,c.y*2,s+707)>.69){mark[i]=M_HAGE;continue;}
+      let L=byZ.get(zid[i]);if(!L)byZ.set(zid[i],L=[]);L.push([i,fbm(c.x*1.2,c.y*1.2,s+313)]);}
+    for(const[,L]of byZ){const nd=Math.round(L.length*(.3+Rf()*.3));L.sort((a,b)=>b[1]-a[1]);L.forEach(([i],k)=>{skog[i]=k<nd?2:1;});}}
+  // per kind of ground: chance per pass, most trees in a cell, smallest size and its spread
+  const TREE={[M_HALL]:[.13,1,.6,.25],[M_STRAND]:[.05,1,.7,.4],[M_HAGE]:[.06,1,.95,.45]};
+  for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i]||W.lane[i])continue;const c=cellCenter(i),mk=mark[i],dense=skog[i]===2;
+    const T=mk===M_SKOG?(dense?[.85,3,.85,.6]:[.3,1,.75,.6]):TREE[mk];if(!T)continue;
+    for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>T[0])continue;const nT=T[1]>1?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
+    for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;
+      const h=hash2(gx*3+qq,gy*5+pass,s+91),k=mk===M_HALL?'pine':mk===M_STRAND?(h<.6?'pine':'birch'):mk===M_HAGE?(h<.55?'birch':h<.85?'pine':'spruce'):dense?(h<.3?'pine':h<.4?'birch':'spruce'):(h<.45?'pine':h<.75?'birch':'spruce');
+      W.trees.push({x,y,s:T[2]+hash2(gx+qq,gy,s+80)*T[3],ci:i,k});}}}
   W.baseGrid=grid.slice();
   // elevation grid for 3D
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
@@ -2949,6 +3014,8 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   // roads: chart double line
   ctx.lineCap='round';ctx.lineJoin='round';
   for(const pass of[[5.5,'#6e5536'],[3,'#fbf3d6']]){ctx.lineWidth=pass[0]*Math.max(k,1.6);ctx.strokeStyle=pass[1];for(const rd of WORLD.roads){ctx.beginPath();ctx.moveTo(rd[0].x,rd[0].y);for(const p of rd)ctx.lineTo(p.x,p.y);ctx.stroke();}}
+  // farm lanes: a single thin line, as a track on a chart
+  ctx.lineWidth=1.3*Math.max(k,1.6);ctx.strokeStyle='#6e5536';for(const rd of WORLD.lanes||[]){ctx.beginPath();ctx.moveTo(rd[0].x,rd[0].y);for(const p of rd)ctx.lineTo(p.x,p.y);ctx.stroke();}
   // hidden shoals: light tint and dotted danger line, as on a real chart
   if(WORLD.decor&&WORLD.decor.shoals){ctx.save();ctx.setLineDash([1.5*k,2.5*k]);ctx.strokeStyle='rgba(38,56,79,.8)';ctx.lineWidth=1*k;ctx.fillStyle='rgba(150,200,225,.55)';
     for(const q of WORLD.decor.shoals){ctx.beginPath();ctx.ellipse(q.x,q.y,q.r,q.r*q.el,q.rot,0,TAU);ctx.fill();ctx.stroke();}ctx.setLineDash([]);
@@ -3959,7 +4026,10 @@ function buildStatic(){
     if(t<=SHAL){const d=clamp(-e/8,0,1);c=[lerp(.47,.24,d),lerp(.47,.32,d),lerp(.43,.32,d)];}
     else if(t===BEACH){const sw=clamp((90-Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y))/35,0,1);c=[lerp(granite[0],.78,sw),lerp(granite[1],.71,sw),lerp(granite[2],.54,sw)];}
     else if(t===ROCK){const dk=hash2(i,j,W.seed+11)*.1;c=[.57-dk,.53-dk,.51-dk];}
-    else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
+    else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];
+      // the land plan shows on the ground: fields a pale hay green, pasture between, bare rock the granite, dense forest a darker floor
+      const ci=cellIdx(x,y),mk=W.mark?W.mark[ci]:0;
+      if(mk===M_AKER)c=[.55,.58,.33];else if(mk===M_HAGE)c=[.47,.56,.3];else if(mk===M_HALL)c=[lerp(granite[0],c[0],.35),lerp(granite[1],c[1],.35),lerp(granite[2],c[2],.35)];else if(W.skog&&W.skog[ci]===2)c=[c[0]*.86,c[1]*.88,c[2]*.86];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
     col[k*3]=c[0]+n;col[k*3+1]=c[1]+n;col[k*3+2]=c[2]+n*.6;
   }
   let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(W.diag&&W.diag[j*SX+i]){idx[p++]=a;idx[p++]=c;idx[p++]=d;idx[p++]=a;idx[p++]=d;idx[p++]=b;}else{idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}}
@@ -3969,7 +4039,7 @@ function buildStatic(){
   {const sb=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),new THREE.MeshPhongMaterial({color:new THREE.Color(.335,.39,.36),shininess:0,specular:0x000000}));sb.rotation.x=-PI/2;sb.position.set(WW/2,-6.3,WH/2);st.add(sb);R3.seabed=sb;}
   // road ribbons
   const rv=[];
-  for(const rd of W.roads)for(let i=0;i<rd.length-1;i++){const a=rd[i],b=rd[i+1],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,nxv=-dy/l*3.2,nyv=dx/l*3.2,ya=groundY(a.x,a.y)+.4,yb=groundY(b.x,b.y)+.4;
+  for(const[RL,hw]of[[W.roads,3.2],[W.lanes||[],1.7]])for(const rd of RL)for(let i=0;i<rd.length-1;i++){const a=rd[i],b=rd[i+1],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,nxv=-dy/l*hw,nyv=dx/l*hw,ya=groundY(a.x,a.y)+.4,yb=groundY(b.x,b.y)+.4;
     rv.push(a.x+nxv,ya,a.y+nyv, a.x-nxv,ya,a.y-nyv, b.x+nxv,yb,b.y+nyv, b.x+nxv,yb,b.y+nyv, a.x-nxv,ya,a.y-nyv, b.x-nxv,yb,b.y-nyv);}
   if(rv.length){const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rv),3));rg.computeVertexNormals();st.add(new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0x6b6156,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));}
   const dummy=new THREE.Object3D();
@@ -3981,8 +4051,8 @@ function buildStatic(){
     // trees are built per 500 m tile (decided 13 okt) so that a tile out of view, past the fog or far from the shadow box costs
     // nothing: the whole forest was about 640 000 triangles drawn in full every frame, in the shadow map too, and in each live view
     const plant=(T,tg)=>{
-    const isBirch=t=>hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t));
-      const isPine=t=>hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
+    const isBirch=t=>t.k?t.k==='birch':hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t));
+      const isPine=t=>t.k?t.k==='pine':hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
       if(birches.length){const leaf=R3.birchLeaf;
         const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.17,.26,1,6),mat(0xe9e6dc),birches.length),bd=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.2,1,6),mat(0x2b2a28),birches.length*3),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),leaf,birches.length*4);
         birches.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=8.6*s2,lean=(hash2(i,1,48)-.5)*.08;dummy.rotation.set(lean,0,lean*.7);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
