@@ -5381,12 +5381,12 @@ function opCam(dtr){
     const p=tmpV.set(i*i*S.x+2*i*s*C.x+s*s*E.x,i*i*S.y+2*i*s*C.y+s*s*E.y,i*i*S.z+2*i*s*C.z+s*s*E.z);p.y=Math.max(p.y,camFloor(p.x,p.z)+1);
     const w=u<.5?0:(u-.5)/.5,k=w*w*(3-2*w);R3.lookAt.copy(OP.B).lerp(OP.EL,k);R3.cam.position.copy(p);R3.cam.lookAt(R3.lookAt);}
   else updateCam(dtr);
-  // the ticker: the lines type out in turn, a soft tick for every letter as on a teleprinter (decided 16 okt)
+  // the ticker: the lines type out in turn, a soft tick for every letter as on a teleprinter, all in one tone (decided 16 okt)
   // (the lines are the game's own letters and digits, nothing to escape; a pause of six characters' time between lines)
   const t0=OP.fly?1.2:.4,cps=31;let left=Math.max(0,OP.t-t0)*cps,html='',typed=0,last='';
   for(const [a,b] of OP.lines){const L=a.length+b.length;if(left<=0)break;const n=Math.min(L,Math.floor(left));left-=L+6;typed+=n;if(n)last=(a+b)[n-1];
     html+=a.slice(0,n)+(n>a.length?'<span class="dim">'+b.slice(0,n-a.length)+'</span>':'')+(left<=0?'<span class="cur"></span>':'')+'\n';}
-  if(typed>OP.typed){OP.typed=typed;if(last!==' '&&AUD.ctx&&AUD.on)tone(AUD.master,AUD.ctx.currentTime,'square',1500+Math.random()*400,0,.001,.022,.018);}
+  if(typed>OP.typed){OP.typed=typed;if(last!==' '&&AUD.ctx&&AUD.on)tone(AUD.master,AUD.ctx.currentTime,'square',1650,0,.001,.022,.018);}
   const el=$('opText');if(el._h!==html){el._h=html;el.innerHTML=html;}
   if(OP.phase==='run'&&OP.t>=OP.dur-.5)el.style.opacity=0;
   if(OP.phase==='run'&&OP.t>=OP.dur)opEnd(false);
