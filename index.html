@@ -6231,6 +6231,13 @@ function frameBody(now,P){
   hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on||OP.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);if(TITLE.on)titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
 }
+/* a still for review (tests/stills.js): the same steps as a frame of the game, the tree culling included, at a given date, hour,
+   cloud cover and camera. Without the culling the first still of a series kept the title camera's tiles and showed no trees */
+globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP.on=false;$('opStage').hidden=true;placePanes();}
+  G.paused=true;if(o.doy!=null)G.doy=o.doy;if(o.tod!=null)G.tod=o.tod;if(o.moln!=null)CLOUD.force=o.moln/100;if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
+  const L=WORLD.landing,P=(v,d)=>v?{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z}:d,c=P(o.cam),t=P(o.look);
+  const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);};
+  put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL('image/jpeg',o.q||.85);};
 globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
 try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
