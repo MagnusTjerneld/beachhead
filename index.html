@@ -3360,7 +3360,9 @@ function mkDaymark(b){const g=new THREE.Group(),W1=mat(0xf2f0ea),B1=mat(0x1e1c1c
 const WIN_OFF=[22.5,23.25,24,24.75];
 const winBucket=(x,y)=>Math.floor(hash2(Math.round(x),Math.round(y),17)*WIN_OFF.length)%WIN_OFF.length;
 const winMatFor=(x,y)=>{if(!R3.winMats)R3.winMats=WIN_OFF.map(()=>R3.winMat.clone());return R3.winMats[winBucket(x,y)];};
-function winLevel(b,n){const t=G.tod,off=WIN_OFF[b];let on=t>=15?t<off:t<off-24;if(t>=5.5&&t<7.5&&b%2===0)on=true;return on?clamp((n-.15)/.35,0,1):0;}
+/* house windows: lit when it is dark enough (the light value, R3.dark) and people are up, which is the clock: four groups go to bed
+   between 22.30 and 00.45, and half of them are up from 05.30 and switch on if it is still dark (decided 16 okt) */
+function winLevel(b,d){const t=G.tod,off=WIN_OFF[b];let on=t>=12?t<off:t<off-24;if(t>=5.5&&t<12&&b%2===0)on=true;return on?clamp((d-.15)/.35,0,1):0;}
 function mkVilla(v){const g=new THREE.Group(),TR=mat(TRIM),GL=winMatFor(v.x,v.y),WD=mat(0x9a7a56),DK=mat(0x2f2f34);
   const win=(x,y,z,w,h,face)=>{if(face==='x'){g.add(mesh(box(.14,h+.3,w+.3),TR,x,y,z));g.add(mesh(box(.18,h,w),GL,x+.03*Math.sign(x||1),y,z));}else{g.add(mesh(box(w+.3,h+.3,.14),TR,x,y,z));g.add(mesh(box(w,h,.18),GL,x,y,z+.03*Math.sign(z||1)));}};
   if(v.style==='klassisk'||v.style==='rod'){const cols=v.style==='rod'?[FALU,FALU,FALU,FALU]:[0xe9dca4,0xf1eee6,0xc9d6dc,0xe6cfa8],body=mat(cols[v.col]);const H=v.style==='rod'?5.6:7,L=v.style==='rod'?11:12,Wd=v.style==='rod'?8:9;
@@ -3952,14 +3954,17 @@ function updateSky(){
   lerpHex(A[2],B[2],t,R3.hemi.color);lerpHex(A[3],B[3],t,R3.hemi.groundColor);R3.hemi.intensity=lerp(A[4],B[4],t);
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
-  // navigation lights come on at dusk (after sunset, about 18:20) and go out at dawn (about 06:15)
-  R3.lit=clamp((n-.3)/.25,0,1);{const kf=SIKT_K[SIKT.k]||1;sc.fog.near=lerp(240,150,n)*kf;sc.fog.far=lerp(1000,720,n)*kf;}
+  {const kf=SIKT_K[SIKT.k]||1;sc.fog.near=lerp(240,150,n)*kf;sc.fog.far=lerp(1000,720,n)*kf;}
   /* the sun's path (decided 16 okt): a real arc, rising in the east, south at midday, setting in the west, stylised to a summer noon of
      54 degrees with sunrise (06) and sunset (18.36) where the sky table has their colours (an effective latitude of 36 degrees at equinox). Its light fades over the last
      5 degrees above the horizon, so shadows die out at dusk instead of stretching across the water, and the moon fades in after it */
   {const SH=((h-SUN_UP)/(SUN_DOWN-SUN_UP)-.5)*PI,SP=SUN_LAT*PI/180,up=Math.cos(SP)*Math.cos(SH);sunDir.set(-Math.sin(SH),up,Math.sin(SP)*Math.cos(SH)).normalize();
     if(n<.6){vDir.set(sunDir.x,Math.max(.01,sunDir.y),sunDir.z).normalize();R3.sun.intensity*=clamp(Math.asin(clamp(up,-1,1))/(5*PI/180),0,1);}
-    else{vDir.set(-.45,.78,-.42).normalize();R3.sun.intensity*=clamp((n-.6)/.15,0,1);}}
+    else{vDir.set(-.45,.78,-.42).normalize();R3.sun.intensity*=clamp((n-.6)/.15,0,1);}
+    /* the light value (decided 16 okt): how dark it is, from the sun's height, not the clock, so another season moves every lamp with
+       it: 0 with the sun 6 degrees up or more, 1 at 12 degrees below the horizon (civil into nautical twilight). Everything that is lit
+       in the dark follows it; navigation lights, the lighthouse and the harbour lamps come on as it passes about a quarter */
+    R3.dark=clamp((6-Math.asin(clamp(up,-1,1))*180/PI)/18,0,1);R3.lit=clamp((R3.dark-.25)/.28,0,1);}
   // sky dome and water: horizon is the fog colour, zenith deepens towards blue by day and ink at night
   if(R3.sky){const U=R3.sky.material.uniforms,tt=(h-6)/12,az=tt*PI,el=Math.sin(tt*PI)*1.05;
     U.uHor.value.copy(sc.background);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
@@ -3968,10 +3973,10 @@ function updateSky(){
     U.uMoonDir.value.set(-.45,.78,-.42).normalize();U.uMoonVis.value=clamp((n-.55)/.3,0,1);U.uNight.value=n;
     const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sc.background);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
-  R3.lampMat.emissive.setRGB(.15+.85*n,.14+.8*n,.1+.62*n);R3.winMat.emissive.setRGB(.95*n,.66*n,.3*n);if(R3.shipWin)R3.shipWin.emissive.setRGB(.95*n,.66*n,.3*n);if(R3.winMats)R3.winMats.forEach((m,b)=>{const L=winLevel(b,n);m.emissive.setRGB(.95*L,.66*L,.3*L);});
+  const d=R3.dark;R3.lampMat.emissive.setRGB(.15+.85*d,.14+.8*d,.1+.62*d);R3.winMat.emissive.setRGB(.95*d,.66*d,.3*d);if(R3.shipWin)R3.shipWin.emissive.setRGB(.95*d,.66*d,.3*d);if(R3.winMats)R3.winMats.forEach((m,b)=>{const L=winLevel(b,d);m.emissive.setRGB(.95*L,.66*L,.3*L);});
   // headlights: nearest vehicles to the camera focus
   const fx=f.x,fz=f.z,dd=o=>(o.x-fx)*(o.x-fx)+(o.y-fz)*(o.y-fz);
-  const veh=n>.05?[...G.units.filter(u=>!u.dead),...G.kroks]:[];
+  const veh=d>.05?[...G.units.filter(u=>!u.dead),...G.kroks]:[];
   veh.sort((a,b)=>dd(a)-dd(b));
   R3.spots.forEach((L,k)=>{const u=veh[k];if(!u){L.intensity=0;return;}const air=u.air||u.kind==='krok',y=air?(u.alt||unitY(u,0)):groundY(u.x,u.y),c=Math.cos(u.heading),s2=Math.sin(u.heading);
     L.position.set(u.x+c*2,y+(air?-1:5.5),u.y+s2*2);const ah=air?10:20;L.target.position.set(u.x+c*ah,groundY(u.x+c*ah,u.y+s2*ah),u.y+s2*ah);L.target.updateMatrixWorld();
@@ -3980,12 +3985,12 @@ function updateSky(){
   const cand=[];
   for(const e of G.fx){if(e.k==='boom')cand.push([0,e.x,groundY(e.x,e.y)+4,e.y,0xffa040,3.2*(1-e.t/e.ttl),e.big?140:e.small?40:80]);
     else if(e.k==='flash')cand.push([1,e.x,e.h+.5,e.y,e.side==='f'?0xffe0a0:0xff9060,e.big?2.6:1.4,e.big?40:24]);}
-  if(n>.05){
+  if(d>.05){
     for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
-    for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),n)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*n,34]);
-    for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),n)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*n,36]);
+    for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
+    for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),d)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*d,36]);
   }
-  if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*n*R3.lit,70]);}
+  if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*d*R3.lit,70]);}
   for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur;if(life<=0)continue;const fl=.8+.3*Math.sin(G.time*11+f.x)+.2*Math.sin(G.time*29+f.y);cand.push([1,f.x,groundY(f.x,f.y)+f.h+3,f.y,0xff6a1a,fl*Math.min(1,life*4)*(.7+n)*f.size*1.4,55]);}
   for(const w of G.wrecks){const age=G.time-w.t0;if(w.kind==='crate'||w.kind==='hulk'||age>120)continue;const fl=.8+.3*Math.sin(G.time*13+w.rot*9)+.2*Math.sin(G.time*31);cand.push([2,w.x,groundY(w.x,w.y)+2.5,w.y,0xff7024,fl*(1-age/120)*(.4+n),30]);}
@@ -4069,7 +4074,7 @@ function sync3D(dtr){
         m.g.updateMatrixWorld();const lc=m.g.worldToLocal((R3.navV||(R3.navV=new THREE.Vector3())).copy(R3.cam.position)),brg=Math.atan2(lc.z,lc.x);
         m.g.userData.navH.forEach(h=>{h.material.opacity=.9*L;});nv.forEach(n=>n.m.visible=L>0&&navSeen(n.sec,brg));}}}
   // lights: the lighthouse sweeps (10 s a turn); the small lights flash once every 3 s, seen only from inside their 140 degree sector facing the sea
-  {const nn=R3.night||0,cx=R3.cam.position.x,cz=R3.cam.position.z;
+  {const nn=R3.dark||0,cx=R3.cam.position.x,cz=R3.cam.position.z;
     const RTs=performance.now()/1000;
     const lit=R3.lit||0;
     if(R3.lhBeam){const B=R3.lhBeam,ang=RTs*TAU/10;B.beam.rotation.y=-ang;B.mat.uniforms.uOp.value=.42*lit;B.beam.visible=B.flare.visible=lit>0;
