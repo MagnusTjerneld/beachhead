@@ -3881,7 +3881,8 @@ const SKY=[ // hour, sky/fog, hemi sky, hemi ground, hemi I, key colour, key I, 
   [8,0xa9bbc4,0xe4edf2,0x4b4a3c,.8,0xfff0d4,.8,0],[16.5,0xa9bbc4,0xe4edf2,0x4b4a3c,.8,0xfff0d4,.8,0],
   [18.3,0xcf8c6c,0xd0a8a0,0x3e342c,.66,0xff9a58,.6,.3],[19.3,0x4e4466,0x8a7ea6,0x282634,.58,0xc09ac0,.1,.65],
   [20.4,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1],[24,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1]];
-const T3=typeof THREE!=='undefined',cA=T3?new THREE.Color():null,cB=T3?new THREE.Color():null,vDir=T3?new THREE.Vector3():null;
+const T3=typeof THREE!=='undefined',cA=T3?new THREE.Color():null,cB=T3?new THREE.Color():null,vDir=T3?new THREE.Vector3():null,sunDir=T3?new THREE.Vector3():null;
+const SUN_LAT=36,SUN_UP=6,SUN_DOWN=18.6;/* the sun's path: see updateSky */
 function lerpHex(a,b,t,out){return out.set(cA.setHex(a)).lerp(cB.setHex(b),t);}
 /* sky dome: gradient from the fog colour at the horizon to the zenith, sun disc and glow, moon and stars at night */
 function mkSky(){
@@ -3953,12 +3954,16 @@ function updateSky(){
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
   // navigation lights come on at dusk (after sunset, about 18:20) and go out at dawn (about 06:15)
   R3.lit=clamp((n-.3)/.25,0,1);{const kf=SIKT_K[SIKT.k]||1;sc.fog.near=lerp(240,150,n)*kf;sc.fog.far=lerp(1000,720,n)*kf;}
-  if(n<.6){const tt=(h-6)/12,az=tt*PI,el=clamp(Math.sin(tt*PI),.13,1)*1.05;vDir.set(Math.cos(az)*Math.cos(el),Math.sin(el),.55*Math.cos(el)).normalize();}
-  else vDir.set(-.45,.78,-.42).normalize();
+  /* the sun's path (decided 16 okt): a real arc, rising in the east, south at midday, setting in the west, stylised to a summer noon of
+     54 degrees with sunrise (06) and sunset (18.36) where the sky table has their colours (an effective latitude of 36 degrees at equinox). Its light fades over the last
+     5 degrees above the horizon, so shadows die out at dusk instead of stretching across the water, and the moon fades in after it */
+  {const SH=((h-SUN_UP)/(SUN_DOWN-SUN_UP)-.5)*PI,SP=SUN_LAT*PI/180,up=Math.cos(SP)*Math.cos(SH);sunDir.set(-Math.sin(SH),up,Math.sin(SP)*Math.cos(SH)).normalize();
+    if(n<.6){vDir.set(sunDir.x,Math.max(.01,sunDir.y),sunDir.z).normalize();R3.sun.intensity*=clamp(Math.asin(clamp(up,-1,1))/(5*PI/180),0,1);}
+    else{vDir.set(-.45,.78,-.42).normalize();R3.sun.intensity*=clamp((n-.6)/.15,0,1);}}
   // sky dome and water: horizon is the fog colour, zenith deepens towards blue by day and ink at night
   if(R3.sky){const U=R3.sky.material.uniforms,tt=(h-6)/12,az=tt*PI,el=Math.sin(tt*PI)*1.05;
     U.uHor.value.copy(sc.background);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
-    U.uSunDir.value.set(Math.cos(az)*Math.cos(el),Math.sin(el),.55*Math.cos(el)).normalize();
+    U.uSunDir.value.copy(sunDir);
     U.uSunCol.value.copy(R3.sun.color).lerp(cB.setHex(0xffffff),.25);U.uSunVis.value=clamp((U.uSunDir.value.y+.06)/.12,0,1);
     U.uMoonDir.value.set(-.45,.78,-.42).normalize();U.uMoonVis.value=clamp((n-.55)/.3,0,1);U.uNight.value=n;
     const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sc.background);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
