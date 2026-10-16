@@ -43,6 +43,16 @@ html,body{height:100%;margin:0;overflow:hidden}
 .tmenu .btn{min-width:150px;backdrop-filter:blur(2px)}
 .tfoot{position:absolute;bottom:18px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:rgba(238,241,234,.7);text-shadow:0 1px 2px #000}
 #intro{z-index:9}
+/* the opening of a round (seasons step 3): the camera full screen, a military ticker over it, and a dark dip back to the game */
+#opStage{position:fixed;inset:0;z-index:8;background:#0b1015;cursor:pointer}
+#opView,#opView .pane{position:absolute;inset:0}
+#opView .vlabel,#opView canvas#cHud{display:none}
+.opShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,9,12,0) 45%,rgba(6,9,12,.62) 100%)}
+#opText{position:absolute;left:max(24px,5vw);bottom:max(40px,9vh);margin:0;font-family:var(--f-mono);font-size:clamp(14px,1.7vw,20px);line-height:1.65;letter-spacing:.14em;color:#e9ede4;text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:pre;transition:opacity .5s}
+#opText .dim{color:rgba(233,237,228,.62)}
+#opText .cur{display:inline-block;width:.6em;height:1em;vertical-align:-.12em;background:#f0c45a;animation:tpulse 1s steps(2) infinite}
+#opSkip{position:absolute;right:18px;bottom:16px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:rgba(238,241,234,.55)}
+#opVeil{position:fixed;inset:0;z-index:10;background:#05080b;opacity:0;pointer-events:none;transition:opacity .25s}
 body{background:var(--chrome);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.35;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
@@ -284,6 +294,8 @@ button:disabled{opacity:.45;cursor:default}
   </main>
 </div>
 
+<div id="opStage" hidden><div id="opView"></div><div class="opShade"></div><pre id="opText"></pre><div id="opSkip">Klick eller tangent hoppar över</div></div>
+<div id="opVeil"></div>
 <div class="title" id="title">
   <div id="titleStage"></div>
   <div class="tshade"></div>
@@ -334,7 +346,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
-      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
+      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
@@ -4620,7 +4632,7 @@ $('settings').addEventListener('click',ev=>ev.stopPropagation());
 document.addEventListener('click',()=>{if(!$('settings').hidden)setMenu(false);});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hidden){setMenu(false);ev.stopPropagation();}},true);
 const confirmBtn=(id,f)=>{const b=$(id);b.dataset.l=b.textContent;b.addEventListener('click',()=>{if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+b.dataset.l.toLowerCase();clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent=b.dataset.l;},3500);return;}setMenu(false);f();});};
-confirmBtn('bRestart',()=>restart(G.seed,G.doc));
+confirmBtn('bRestart',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and hour */
 confirmBtn('bBench',()=>{setMenu(false);benchStart();});
 /* the trailer from the settings, in the page itself (a page in a frame cannot always be reopened with ?trailer): the same start as a
    visit with ?trailer, on Sorkholmen; the game's own music is cut off, the film plays its own edit. Back to the game is a reload. */
@@ -4641,7 +4653,7 @@ $('niCancel').addEventListener('click',()=>newIsleDialog(false));
 $('newIsle').addEventListener('click',e=>{if(e.target.id==='newIsle')newIsleDialog(false);});
 $('niGo').addEventListener('click',()=>{const n=niVal();if(niSeed.value!==''&&!n)return;const t=niTime.value,doy=niDoy();newIsleDialog(false);
   let tod=null;if(t){const[h,m]=t.split(':').map(Number);tod=(h+(m||0)/60)%24;}
-  restart(n||1000+Math.floor(Math.random()*9000),niDoc.value,{doy,tod});});/* the date is known before the world is built */
+  restart(n||1000+Math.floor(Math.random()*9000),niDoc.value,{doy,tod});opStart(true);});/* the date is known before the world is built */
 $('newIsle').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')newIsleDialog(false);else if(e.key==='Enter')$('niGo').click();});
 // X (or the MUS button): from a VARG, put its MUS out and drive it; on a MUS, take control of it
 function roverKey(){const c=G.ctrl?unitById(G.ctrl):null;if(c&&c.kind==='mus')return;const v=c&&c.kind==='tank'?c:null;
@@ -4679,17 +4691,17 @@ document.addEventListener('pointerdown',()=>audInit(),{capture:true});
 $('bClock').addEventListener('click',()=>{G.tod+=3;if(G.tod>=24){G.tod-=24;G.doy=G.doy%DAYS+1;}uiTick(true);});
 $('bSpeed').addEventListener('click',()=>{G.speed=G.speed===1?2:1;uiTick(true);});
 $('bHelp').addEventListener('click',()=>{G.paused=true;$('intro').hidden=false;$('bStart').textContent='Fortsätt';uiTick(true);});
-$('bStart').addEventListener('click',()=>{audInit();startGame();});
+$('bStart').addEventListener('click',()=>{audInit();const first=TITLE.on;startGame();if(first)opStart(true);});
 /* a click in the film itself (not on a button or the help) hides the logo and every control so the film can run clean in full
    screen, and the next click brings them back (decided 13 okt); the very first click still starts the intro */
 $('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
-$('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();});
+$('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStart(true);});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
 function restart(seed,doc,when){if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
-$('bAgain').addEventListener('click',()=>restart(G.seed,G.doc,G.start));/* the same island, doctrine, date and starting hour */
-$('bNew').addEventListener('click',()=>restart(1000+Math.floor(Math.random()*9000),'auto'));
+$('bAgain').addEventListener('click',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and starting hour */
+$('bNew').addEventListener('click',()=>{restart(1000+Math.floor(Math.random()*9000),'auto');opStart(true);});
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
 const keys=new Set();let lastKey={k:null,t:0};
 window.addEventListener('keyup',e=>keys.delete(e.code));
@@ -5315,6 +5327,72 @@ function startGame(){
   $('intro').hidden=true;G.running=true;G.paused=false;G.resumedAt=G.time;uiTick(true);
 }
 
+/* ---------- the opening of a round (seasons step 3, decided 15 and 16 okt) ----------
+   When a round begins to be played, a short military ticker types out over the camera: the island, its position, the date-time
+   group and the next sunrise or sunset. After the title screen and after Ny ö the camera first flies in low over the water toward
+   Birka and ends in the game's ordinary start view, so the game takes over without a cut; after Starta om ön, which one does often,
+   only the ticker shows, over the start view. The game stands paused throughout, and a click or a key skips it all. Never in the
+   trailer or the benchmark. */
+const OP={on:false,phase:'',t:0,fly:false,dur:0,lines:null,typed:-1,S:null,C:null,E:null,EL:null,B:null};globalThis.__op=OP;
+/* the island's position: a made-up but plausible point in the Stockholm archipelago, from its number */
+function islePos(seed){const R=rng((seed|0)*48271+3);return{lat:59.2+R()*.6,lon:18.6+R()*.6};}
+/* MGRS, the military grid reference (WGS84, UTM zone and band, 100 km square letters, 1 m digits) */
+function mgrs(lat,lon){const a=6378137,f=1/298.257223563,e2=f*(2-f),ep2=e2/(1-e2),k0=.9996,zone=Math.floor((lon+180)/6)+1,l0=((zone-1)*6-180+3)*PI/180;
+  const la=lat*PI/180,lo=lon*PI/180,N=a/Math.sqrt(1-e2*Math.sin(la)**2),T=Math.tan(la)**2,C=ep2*Math.cos(la)**2,A=Math.cos(la)*(lo-l0);
+  const M=a*((1-e2/4-3*e2*e2/64-5*e2**3/256)*la-(3*e2/8+3*e2*e2/32+45*e2**3/1024)*Math.sin(2*la)+(15*e2*e2/256+45*e2**3/1024)*Math.sin(4*la)-(35*e2**3/3072)*Math.sin(6*la));
+  const E=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+500000;
+  const Nn=k0*(M+N*Math.tan(la)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));
+  const band='CDEFGHJKLMNPQRSTUVWXX'[Math.floor((lat+80)/8)],set=(zone-1)%6,cols='ABCDEFGHJKLMNPQRSTUVWXYZ',rows='ABCDEFGHJKLMNPQRSTUV';
+  const col=cols[(set%3)*8+Math.floor(E/1e5)-1],row=rows[(Math.floor(Nn/1e5)+(set%2?5:0))%20];
+  const d5=v=>String(Math.floor(v%1e5)).padStart(5,'0');return zone+band+' '+col+row+' '+d5(E)+' '+d5(Nn);}
+/* the date-time group: day, hour, minute, zone letter (B Swedish summer time, A winter time), month, year */
+function dtgOf(doy,h){const q=dayMD(doy),hm=fmtHM(h).replace(':','');return String(q.d).padStart(2,'0')+hm+(isDst(doy)?'B':'A')+' '+MON3[q.m]+' '+String(YEAR).slice(2);}
+function nextSun(doy,h){const T=sunTimes(doy);if(h<T.rise)return'SOL UPP '+fmtHM(T.rise);if(h<T.set)return'SOL NED '+fmtHM(T.set);return'SOL UPP '+fmtHM(sunTimes(doy%DAYS+1).rise)+' I MORGON';}
+function opLines(){const P=islePos(G.seed),q=dayMD(G.doy);
+  return[['UPPDRAG ARKIPELAG',''],['MÅL: '+islandName(G.seed).toUpperCase()+' (Ö '+G.seed+')',''],['POS: '+mgrs(P.lat,P.lon),''],
+    ['DTG: '+dtgOf(G.doy,G.tod),'   '+q.d+' '+MONTHS[q.m].toUpperCase()+' '+YEAR+' KL '+fmtHM(G.tod)],[nextSun(G.doy,G.tod),'']];}
+const opWanted=()=>!!R3&&!FILM.on&&!BENCH.on&&!BOOTQ.has('nointro');
+function opStart(fly){
+  if(!opWanted())return;
+  OP.on=true;OP.phase='run';OP.t=0;OP.fly=!!fly;OP.dur=fly?7.2:5;OP.lines=opLines();OP.typed=-1;
+  G.running=true;G.paused=true;$('intro').hidden=true;
+  $('opText').style.opacity=1;$('opText').textContent='';$('opStage').hidden=false;$('opView').appendChild(paneCam);fitPanes();
+  // the end of the flight is the start view itself, so the game's own camera takes over where the flight stops
+  R3.snap=true;updateCam(0);OP.E=R3.cam.position.clone();OP.EL=R3.lookAt.clone();
+  /* the flight comes in low over the water from behind the start view, a little to one side, and climbs over Birka's stern to
+     settle into the view, so it never passes through the superstructure */
+  if(fly){const E=OP.E,fx=OP.EL.x-E.x,fz=OP.EL.z-E.z,fl=Math.hypot(fx,fz)||1,ux=fx/fl,uz=fz/fl,side=hash2(G.seed,7,3)<.5?-1:1;
+    OP.B=new THREE.Vector3(CARRIER.x,10,CARRIER.y);
+    OP.S=new THREE.Vector3(E.x-ux*760-uz*side*190,14,E.z-uz*760+ux*side*190);
+    OP.C=new THREE.Vector3(E.x-ux*170-uz*side*25,E.y+34,E.z-uz*170+ux*side*25);
+    opCam(0);}
+  uiTick(true);
+}
+function opCam(dtr){
+  OP.t+=dtr;
+  if(OP.fly){const u=clamp(OP.t/(OP.dur-.4),0,1),s=1-Math.pow(1-u,2.4),S=OP.S,C=OP.C,E=OP.E,i=1-s;
+    const p=tmpV.set(i*i*S.x+2*i*s*C.x+s*s*E.x,i*i*S.y+2*i*s*C.y+s*s*E.y,i*i*S.z+2*i*s*C.z+s*s*E.z);p.y=Math.max(p.y,camFloor(p.x,p.z)+1);
+    const w=u<.5?0:(u-.5)/.5,k=w*w*(3-2*w);R3.lookAt.copy(OP.B).lerp(OP.EL,k);R3.cam.position.copy(p);R3.cam.lookAt(R3.lookAt);}
+  else updateCam(dtr);
+  // the ticker: each line types out in turn, with a soft tick as it begins
+  // (the lines are the game's own letters and digits, nothing to escape; a pause of six characters' time between lines)
+  const t0=OP.fly?.8:.25,cps=46;let left=Math.max(0,OP.t-t0)*cps,html='',line=-1;
+  for(const [a,b] of OP.lines){const L=a.length+b.length;if(left<=0)break;line++;const n=Math.min(L,Math.floor(left));left-=L+6;
+    html+=a.slice(0,n)+(n>a.length?'<span class="dim">'+b.slice(0,n-a.length)+'</span>':'')+(left<=0?'<span class="cur"></span>':'')+'\n';}
+  if(line!==OP.typed){OP.typed=line;if(line>=0&&AUD.ctx&&AUD.on)tone(AUD.master,AUD.ctx.currentTime,'square',1650,0,.001,.035,.025);}
+  const el=$('opText');if(el._h!==html){el._h=html;el.innerHTML=html;}
+  if(OP.phase==='run'&&OP.t>=OP.dur-.5)el.style.opacity=0;
+  if(OP.phase==='run'&&OP.t>=OP.dur)opEnd(false);
+}
+function opEnd(skip){
+  if(!OP.on||OP.phase!=='run')return;OP.phase='out';
+  const veil=$('opVeil');veil.style.opacity=1;
+  setTimeout(()=>{OP.on=false;OP.phase='';$('opStage').hidden=true;$('opText').textContent='';$('opText')._h='';placePanes();R3.snap=true;updateCam(0);
+    G.paused=false;G.resumedAt=G.time;uiTick(true);veil.style.transition='opacity .4s';veil.style.opacity=0;setTimeout(()=>{veil.style.transition='';},450);},skip?180:260);
+}
+$('opStage').addEventListener('click',ev=>{ev.stopPropagation();opEnd(true);});
+window.addEventListener('keydown',e=>{if(!OP.on)return;e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)opEnd(true);},true);
+
 /* ---------- trailer (?trailer, /trailer/): an action film for the game, apart from the intro (decided 14 okt) ----------
    The intro is a calm mood film; the trailer may go close and low, with shots the game never shows. It plays live in the game's
    own engine, so it always shows the game's current models. The music is the clock: picture time is read from the audio clock, so
@@ -5901,9 +5979,9 @@ function frameBody(now,P){
   const cu=unitById(G.cam);
   if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
   if(!FILM.on||FILM.map){mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,FILM.map?false:G.mainMode!=='map');}P.push(performance.now());/* the trailer draws the chart only in its chart shots */
-  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(BENCH.v)benchCam();else if(G.camDeadT<0)updateCam(dtr);updateSky();if(FILM.on)filmLight();treeCull(R3.cam,true);gpuBegin();R3.renderer.render(R3.scene,R3.cam);if(!FILM.on)renderPip();gpuEnd();if(!FILM.on)feedTick(now);}
+  if(R3){sync3D(dtr);if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(OP.on)opCam(dtr);else if(BENCH.v)benchCam();else if(G.camDeadT<0)updateCam(dtr);updateSky();if(FILM.on)filmLight();treeCull(R3.cam,true);gpuBegin();R3.renderer.render(R3.scene,R3.cam);if(!FILM.on)renderPip();gpuEnd();if(!FILM.on)feedTick(now);}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
-  hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
+  hctx.setTransform(dpr,0,0,dpr,0,0);if(TITLE.on||OP.on){hctx.clearRect(0,0,size.cam.w,size.cam.h);if(TITLE.on)titleTick(dtr);}else drawHud(hctx,size.cam.w,size.cam.h);
   uiTick(false);P.push(performance.now());
 }
 globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
