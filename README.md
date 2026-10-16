@@ -82,6 +82,7 @@ Testerna kör spelets skript utan webbläsare. `mk.py` plockar ut skriptet ur `i
 ```
 node tests/run.js  # bygger g2.js och kör de snabba testerna parallellt (cirka en och en halv minut)
 node tests/sandbox.js   # anfallsscenarier i en sandlåda, tio omgångar var (några sekunder)
+node tests/falt.js      # fälttest: wingar på sex riktiga öar med order som från sjökortet, flaggar omvägar och fastlåsta enheter (cirka en halv minut)
 cd tests
 python3 mk.py
 node t23.js        # kartvalidering: målen nåbara, ledningscentralen försvarad, budgeten använd
