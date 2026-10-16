@@ -2177,6 +2177,8 @@ function decorHit(x,y,r){const D=WORLD.decor;if(!D)return;
   D.jetties.forEach((j,i)=>{if(G.ddead.j[i])return;const ex=j.x+Math.cos(j.a)*(j.len+2),ey=j.y+Math.sin(j.a)*(j.len+2);if(segDist(x,y,j.x,j.y,ex,ey)<r+1.6){G.ddead.j[i]=G.time;G.fx.push({k:'puff',x,y,h:1,t:0,ttl:1.4,c:0x8a7356,s:2.6,hit:false,ws:'cannon'});}});}
 function startFire(x,y,dur,size,h){G.fires.push({x,y,t0:G.time,dur,size,h:h||0,acc:0});}
 const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i])out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});return out;};
+/* vehicles that leave a wreck of themselves and burn on (see blowApart) */
+const WRECK_KINDS={own:new Set(['tank','eng','mus']),enemy:new Set(['tank','light','aa'])};
 function addWreck(x,y,value,own,kind){const w={id:'w'+(G.nextW++),x,y,value,own,kind,claimed:false,rot:Math.random()*TAU,t0:G.time};G.wrecks.push(w);return w;}
 function killStruct(st,by,how){
   if(st.dead)return;st.dead=true;st.hp=0;
@@ -2202,13 +2204,13 @@ function workStruct(st,u,dt){
   st.prog=Math.min(1,st.prog+dt/STRUCT[st.kind].demo);u.state='River '+slabel(st)+' '+Math.round(st.prog*100)+' %';
   if(st.prog>=1){if(u.orders[0]&&u.orders[0].s===st)u.orders.shift();u.path=null;killStruct(st,u,'demo');}
 }
-function killEnemy(e,by){if(e.dead)return;e.dead=true;if(e.canAir)G.tver=(G.tver||0)+1;e.hp=0;e.visibleNow=false;e.seen=true;e.lx=e.x;e.ly=e.y;G.fx.push({k:'boom',x:e.x,y:e.y,t:0,ttl:1.1});if(e.value>0)addWreck(e.x,e.y,e.value,false,e.kind);say(by,ENEMY[e.kind].label+' '+e.id+' utslagen.'+(e.value>0?' Vrak att bärga.':''));}
+function killEnemy(e,by){if(e.dead)return;e.dead=true;if(e.canAir)G.tver=(G.tver||0)+1;e.hp=0;e.visibleNow=false;e.seen=true;e.lx=e.x;e.ly=e.y;G.fx.push({k:'boom',x:e.x,y:e.y,t:0,ttl:1.1});if(e.value>0)addWreck(e.x,e.y,e.value,false,e.kind);if(WRECK_KINDS.enemy.has(e.kind))startFire(e.x,e.y,90+Math.random()*60,1,1.5);/* a destroyed vehicle burns on, as in the trailer */say(by,ENEMY[e.kind].label+' '+e.id+' utslagen.'+(e.value>0?' Vrak att bärga.':''));}
 function killUnit(u,msg){
   if(u.dead)return;
   if(G.ctrl===u.id)dropCtrl();
   u.dead=true;u.diedAt=G.time;u.hp=0;u.orders=[];u.path=null;G.lostValue+=u.cost;G.unitsLost++;
   G.fx.push({k:'boom',x:u.x,y:u.y,t:0,ttl:1.1});
-  addWreck(u.x,u.y,Math.round(u.cost*.5),true,u.kind);
+  addWreck(u.x,u.y,Math.round(u.cost*.5),true,u.kind);if(WRECK_KINDS.own.has(u.kind)&&u.kind!=='mus')startFire(u.x,u.y,70,.8,1);
   say(u,msg||'Träffad. Signalen bruten.');
 }
 function relayGuards(r){return G.enemies.filter(e=>!e.dead&&r.guards.includes(e.id));}
@@ -3613,7 +3615,6 @@ const DEB=[];let CHAR_M=null,CHAR_M2=null;
 function charred(g){if(!CHAR_M){CHAR_M=new THREE.MeshLambertMaterial({color:0x1f1c1a});CHAR_M2=new THREE.MeshLambertMaterial({color:0x3a2a22});CHAR_M.userData.shared=CHAR_M2.userData.shared=true;}
   g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=CHAR_M;});return g;}
 const headOf=m=>m.userData.head||m.userData.tur||null;
-const WRECK_KINDS={own:new Set(['tank','eng','mus']),enemy:new Set(['tank','light','aa'])};
 function debAdd(o,v,w,r,smoke,tag){o.traverse(c=>{if(c.isMesh&&!c.userData.noShadow){c.castShadow=true;if(tag)c.layers.enable(FILM_SHL);}});R3.scene.add(o);DEB.push({m:o,v,w,r,smoke,rest:!v,t:0,tag});}
 function blowApart(m,tag,H){m.updateMatrixWorld(true);const c=new THREE.Vector3().setFromMatrixPosition(m.matrixWorld),R=Math.random;
   if(H&&H.parent){H.updateMatrixWorld(true);const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();H.matrixWorld.decompose(p,q,sc);H.parent.remove(H);charred(H);
@@ -3644,7 +3645,8 @@ function mkWreckMesh(w){
 }
 const FXM=new Map();
 function fxMat(c,add){const k=c+(add?'a':'');if(!FXM.has(k)){const m=new THREE.MeshBasicMaterial({color:c,transparent:true,depthWrite:false,blending:add?THREE.AdditiveBlending:THREE.NormalBlending});m.userData.shared=true;FXM.set(k,m);}const m=FXM.get(k).clone();m.userData.shared=false;return m;}
-function addPart(x,y,z,s0,s1,c,o,ttl,glow){if(!R3||R3.parts.length>420)return;const m=new THREE.Mesh(R3.sphere,glow?fxMat(c,true):new THREE.MeshLambertMaterial({color:c,transparent:true,opacity:o,depthWrite:false}));if(glow)m.material.opacity=o;m.position.set(x,y,z);m.scale.set(s0,s0,s0);R3.dyn.add(m);R3.parts.push({m,t:0,ttl,s0,s1,o,rise:1.2});}
+/* the game's small puffs (muzzle smoke, rocket trails) on the shared soft sprites; s0 and s1 were sphere radii */
+function addPart(x,y,z,s0,s1,c,o,ttl,glow){if(!R3)return;fP(x,y,z,{v:[0,1.2,0],s0:s0*2.2,s1:s1*2.2,c,a:o,ttl,add:!!glow});}
 /* the carrier: low-poly but with a pointed bow, boot stripe, flight deck with pads, an island with a lit bridge, radar and
    masts, lifeboats and a crane; at night floodlights shine down into the water all round and the navigation lights burn */
 /* HMS Birka: a barge platform, a floating yard. Pontoon hull, the big revolving crane at the bow (after Lodbrok, Stockholm's
@@ -3779,7 +3781,7 @@ function init3D(){
   const clouds=mkClouds();scene.add(clouds.g);
   const ship=mkCarrier(lampMat,winMat);ship.traverse(o=>{if(o.isMesh&&!o.userData.noShadow){o.castShadow=true;o.receiveShadow=true;}});scene.add(ship);
   const dyn=new THREE.Group();scene.add(dyn);
-  R3={sky,clouds,parts:[],sphere:new THREE.SphereGeometry(1,10,8),hemi,sun,spots,lhSpots,spotGroup:spots.concat(lhSpots),points,lampMat,winMat,night:0,renderer,scene,cam,dyn,water,ship,bars:new Map(),stat:null,terrain:null,ray:new THREE.Raycaster(),units:new Map(),enemies:new Map(),wrecks:new Map(),relays:new Map(),fx:new Map(),kroks:new Map(),structs:new Map(),route:null,lookAt:new THREE.Vector3(),snap:true,seed:null};
+  R3={sky,clouds,fxSeen:new WeakSet(),parts:[],sphere:new THREE.SphereGeometry(1,10,8),hemi,sun,spots,lhSpots,spotGroup:spots.concat(lhSpots),points,lampMat,winMat,night:0,renderer,scene,cam,dyn,water,ship,bars:new Map(),stat:null,terrain:null,ray:new THREE.Raycaster(),units:new Map(),enemies:new Map(),wrecks:new Map(),relays:new Map(),fx:new Map(),kroks:new Map(),structs:new Map(),route:null,lookAt:new THREE.Vector3(),snap:true,seed:null};
   return true;
 }
 /* ---------- the surrounding archipelago: scenery only, outside the play area ----------
@@ -4173,8 +4175,7 @@ function updateSky(){
     L.intensity=(air?2:3.2)*n;L.angle=air?.7:.55;});
   // point lights: explosions and muzzle flashes first, then relays, lit windows and burning wrecks
   const cand=[];
-  for(const e of G.fx){if(e.k==='boom')cand.push([0,e.x,groundY(e.x,e.y)+4,e.y,0xffa040,3.2*(1-e.t/e.ttl),e.big?140:e.small?40:80]);
-    else if(e.k==='flash')cand.push([1,e.x,e.h+.5,e.y,e.side==='f'?0xffe0a0:0xff9060,e.big?2.6:1.4,e.big?40:24]);}
+
   if(d>.05){
     for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
     for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
@@ -4185,7 +4186,9 @@ function updateSky(){
   for(const q of R3.baks||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.b.x,q.b.h+q.y,q.b.y,0xfff4dc,1.4*n,30]);}
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur;if(life<=0)continue;const fl=.8+.3*Math.sin(G.time*11+f.x)+.2*Math.sin(G.time*29+f.y);cand.push([1,f.x,groundY(f.x,f.y)+f.h+3,f.y,0xff6a1a,fl*Math.min(1,life*4)*(.7+n)*f.size*1.4,55]);}
   for(const w of G.wrecks){const age=G.time-w.t0;if(w.kind==='crate'||w.kind==='hulk'||age>120)continue;const fl=.8+.3*Math.sin(G.time*13+w.rot*9)+.2*Math.sin(G.time*31);cand.push([2,w.x,groundY(w.x,w.y)+2.5,w.y,0xff7024,fl*(1-age/120)*(.4+n),30]);}
-  if(FILM.on)for(const c of filmLightCands())cand.push(c);/* the trailer's flashes, blasts and fires */
+  /* the shared effects' flashes, blasts and fires; in the game their light is damped by daylight (a blast at noon turned the meadow
+     yellow, the trailer's strengths are set for its dusk), full in the dark */
+  {const kd=FILM.on?1:.35+.65*(R3.dark||0);for(const c of filmLightCands()){c[5]*=kd;cand.push(c);}}
   for(const c of cand)c.push((c[1]-fx)*(c[1]-fx)+(c[3]-fz)*(c[3]-fz));
   const near=cand.filter(c=>c[7]<400*400).sort((a,b)=>a[0]-b[0]||a[7]-b[7]);/* the distance is the 8th entry (index 7); reading index 8 left every point light dark until 15 okt */
   R3.points.forEach((P,k)=>{const c=near[k];if(!c){P.intensity=0;return;}P.position.set(c[1],c[2],c[3]);P.color.setHex(c[4]);P.intensity=c[5];P.distance=c[6];});
@@ -4240,7 +4243,7 @@ function sync3D(dtr){
     else if(!e.mobile&&m.userData.head)m.userData.head.rotation.y=-e.aim;else m.rotation.y=-e.aim;
   }
   for(const[id,m]of R3.enemies)if(!seen.has(id)){const e=G.enemies.find(v=>v.id===id);if(e&&e.dead&&WRECK_KINDS.enemy.has(e.kind))blowApart(m,null,headOf(m));D.remove(m);R3.enemies.delete(id);}
-  debrisTick(G.running&&!G.paused&&!FILM.on?dtr*G.speed:0,null);
+  debrisTick(G.running&&!G.paused&&!FILM.on?dtr*G.speed:0,null);if(!FILM.on)fxTick(G.running&&!G.paused?dtr*G.speed:0);
   seen.clear();
   for(const w of G.wrecks){seen.add(w.id);let m=R3.wrecks.get(w.id);if(!m){m=mkWreckMesh(w);D.add(m);R3.wrecks.set(w.id,m);}}
   for(const[id,m]of R3.wrecks)if(!seen.has(id)){D.remove(m);R3.wrecks.delete(id);}
@@ -4251,9 +4254,8 @@ function sync3D(dtr){
   if(R3.boatM)R3.boatM.forEach((m,i)=>{const t0=G.ddead.b[i];if(t0==null){if(m.userData.sunk){m.userData.sunk=false;m.visible=true;}return;}const k2=clamp((G.time-t0)/7,0,1);m.userData.sunk=true;m.userData.y0=.15-3.2*k2;m.rotation.x=.5*k2;m.visible=k2<1;});
   if(R3.jetM)R3.jetM.forEach((g,i)=>{const dead=G.ddead.j[i]!=null;for(const c of g.children)if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.height===.3)c.visible=!dead;if(dead&&!g.userData.broke){g.userData.broke=true;g.children.forEach((c,k)=>{if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.radiusTop===.14&&k%3===0)c.visible=false;});}if(!dead&&g.userData.broke){g.userData.broke=false;g.children.forEach(c=>c.visible=true);}});
   // fires: flames and a column of smoke
-  for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur,k3=Math.min(1,age/4)*Math.min(1,life*5);if(k3<=0)continue;f.acc+=dtr;const gy=groundY(f.x,f.y)+f.h;if(Math.hypot(f.x-R3.cam.position.x,f.y-R3.cam.position.z)>650){f.acc=0;continue;}
-    while(f.acc>.07){f.acc-=.07;const j=()=>(Math.random()-.5)*3.6*f.size;addPart(f.x+j(),gy+.6+Math.random()*1.6*f.size,f.y+j(),1.3*f.size*k3,.3*f.size*k3,Math.random()<.5?0xff6a1a:0xffb030,.9,.45+Math.random()*.35,true);{const q=R3.parts[R3.parts.length-1];if(q)q.rise=4+Math.random()*3;}
-      if(Math.random()<.45){addPart(f.x+j()*.5,gy+3.5*f.size,f.y+j()*.5,1*f.size*k3,3.6*f.size*k3,0x2a2826,.32,4.2);const q2=R3.parts[R3.parts.length-1];if(q2)q2.rise=5;}}}
+  for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur,k3=Math.min(1,age/4)*Math.min(1,life*5);if(k3<=0)continue;if(Math.hypot(f.x-R3.cam.position.x,f.y-R3.cam.position.z)>650){f.acc=0;continue;}
+    fireEmit(f,G.running&&!G.paused?dtr*G.speed:0,f.x,groundY(f.x,f.y)+f.h,f.y,f.size*k3);}
   if(R3.movers){const T=R3.decoT||0;
     for(const m of R3.movers){const RT=m.RT,at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const k=(lo+hi)>>1;if(RT.len[k]<=d)lo=k;else hi=k;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a2=RT.pts[lo],b2=RT.pts[(lo+1)%RT.N];return{x:lerp(a2.x,b2.x,f),z:lerp(a2.z,b2.z,f)};};
       const push=q=>{const dx=q.x-CARRIER.x,dz=q.z-CARRIER.y,d=Math.hypot(dx,dz)||1;if(d<170){q.x+=dx/d*(170-d);q.z+=dz/d*(170-d);}return q;};
@@ -4298,13 +4300,18 @@ function sync3D(dtr){
   const live=new Set(G.fx);
   for(const f of G.fx){
     if(f.k==='ping')continue;
+    /* one-off effects start the shared ones the first time they are seen: the blast, the muzzle flash, the strike, the puff */
+    if(f.k!=='shot'){if(R3.fxSeen.has(f))continue;R3.fxSeen.add(f);const gy=Math.max(0,groundY(f.x,f.y));
+      if(f.k==='boom')fxBoom(f.x,gy,f.y,f.big?2:f.small?.5:1);
+      else if(f.k==='flash'){fxFlash(f.x,f.h,f.y,f.big?1.6:.6,f.side==='e'?0xffb070:0xffe0a0);addPart(f.x,f.h+.4,f.y,f.big?.5:.25,f.big?2.4:1.1,0xa8a49c,.3,1.6);}
+      else if(f.k==='spark'){for(let k=0;k<(f.armor?7:4);k++)fP(f.x,f.h,f.y,{v:[fr()*14,4+Math.random()*8,fr()*14],g:18,s0:.3,s1:.15,a:1,ttl:.35,c:f.armor?0xfff0c0:0xffd080,add:true});
+        fP(f.x,f.h,f.y,{s0:1.4,s1:2,a:.9,ttl:.08,c:0xffe0a0,add:true});fxSmoke(f.x,f.h,f.y,.8,0x3a3632,1.5,1);}
+      else if(f.k==='puff'){if(f.c===0x2a2a2a)for(let k=0;k<3;k++)fxSmoke(f.x+fr()*2,f.h+fr()*2,f.y+fr()*2,f.s*.9,0x262626,2.2,.4);
+        else if(f.h<=gy+1){fxDust(f.x,gy,f.y,f.s*.7);fxDust(f.x,gy,f.y,f.s*.9);}else fxSmoke(f.x,f.h,f.y,f.s*.7,f.c,1.2,.6);}
+      continue;}
     let m=R3.fx.get(f);
     if(!m){
       if(f.k==='shot'){const W=WSPEC[f.ws];m=new THREE.Mesh(box(W.r,W.r,W.len),fxMat(W.col,true));if(W.trail){m.scale.set(1,1,.6);}m.userData.lastTrail=0;}
-      else if(f.k==='flash'){m=new THREE.Mesh(R3.sphere,fxMat(f.side==='e'?0xffb070:0xffe0a0,true));m.position.set(f.x,f.h,f.y);addPart(f.x,f.h+.4,f.y,f.big?.5:.25,f.big?2.4:1.1,0xa8a49c,.3,1.6);}
-      else if(f.k==='spark'){m=new THREE.Mesh(R3.sphere,fxMat(f.armor?0xfff0c0:0xffc080,true));m.position.set(f.x,f.h,f.y);addPart(f.x,f.h,f.y,.8,f.armor?2:1.4,0x3a3632,.5,1.5);}
-      else if(f.k==='puff'){m=new THREE.Mesh(R3.sphere,new THREE.MeshLambertMaterial({color:f.c,transparent:true,opacity:.8,depthWrite:false}));m.position.set(f.x,f.h+.4,f.y);m.userData.own=true;}
-      else{m=new THREE.Mesh(R3.sphere,fxMat(0xffa040,true));m.position.set(f.x,groundY(f.x,f.y)+2,f.y);for(let i=0;i<(f.big?7:f.small?1:4);i++)addPart(f.x+(Math.random()-.5)*6,groundY(f.x,f.y)+2+Math.random()*3,f.y+(Math.random()-.5)*6,f.big?4:2.5,f.big?16:9,0x2c2a28,.7,f.big?5:3.5);}
       D.add(m);R3.fx.set(f,m);
     }
     const a=1-f.t/f.ttl;
@@ -4314,10 +4321,6 @@ function sync3D(dtr){
       const W=WSPEC[f.ws];m.position.set(hx,hy,hz);tmpV.set(f.x2,f.h2,f.y2);if(tmpV.distanceToSquared(m.position)>.01)m.lookAt(tmpV);const dc=R3.cam.position.distanceTo(m.position),th=Math.max(1,dc/55);m.scale.set(th,th,W.trail?.6:Math.max(1,th*.6));
       if(W.trail&&f.t-m.userData.lastTrail>.035){m.userData.lastTrail=f.t;addPart(hx,hy,hz,.35,1.6,0xd8d4cc,.55,1.4);}
     }
-    else if(f.k==='flash'){const sc=(f.big?1.1:.55)*(.5+a*.7);m.scale.set(sc,sc,sc);m.material.opacity=a;}
-    else if(f.k==='spark'){const sc=(f.armor?1.1:.7)*(.4+a);m.scale.set(sc,sc,sc);m.material.opacity=a;}
-    else if(f.k==='puff'){const sc=f.s*(.5+f.t/f.ttl*1.4);m.scale.set(sc,sc,sc);m.material.opacity=.75*a;m.position.y+=.6*dtr;}
-    else{const s2=f.small?1+f.t*6:f.big?4+f.t*34:2+f.t*14;m.scale.set(s2,s2,s2);m.material.opacity=a*.85;}
   }
   for(const[f,m]of R3.fx)if(!live.has(f)){D.remove(m);if(m.userData.own||!m.material.userData.shared)m.material.dispose();R3.fx.delete(f);}
   // particles (smoke trails, muzzle smoke, explosion smoke)
@@ -4825,7 +4828,7 @@ $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStar
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
-function restart(seed,doc,when){if(R3)debClear(null);/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
+function restart(seed,doc,when){if(R3){debClear(null);filmClear();R3.fxSeen=new WeakSet();}/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc)buildStatic();else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and starting hour */
 $('bNew').addEventListener('click',()=>{restart(1000+Math.floor(Math.random()*9000),'auto');opStart(true);});
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -5529,6 +5532,9 @@ window.addEventListener('keydown',e=>{if(!OP.on)return;e.preventDefault();e.stop
    every time. With &render the film runs on the frame clock instead (a fixed step per frame), for frame-by-frame capture. */
 const FILM_BAR=4*60/107.21,FILM_DB=.588,fk=k=>FILM_DB+k*FILM_BAR;
 const FILM_MUS=[{at:0,src:0,len:fk(13)},{at:fk(13),src:fk(65),len:213.6-fk(65)}],FILM_END=fk(13)+213.6-fk(65);
+/* the effects, shared by the game and the trailer (decided 16 okt, Magnus: the trailer shows nothing the game does not): soft
+   sprite particles, tracers, missiles and the point lights they ask for */
+const FX={parts:[],tr:[],ms:[],lts:[],tex:null};
 const FILM={on:false,t:-1,i:-1,state:'idle',clock:'audio',fov:40,pre:.4,act:{},parts:[],lts:[],tr:[],ms:[],fires:[],seed:7341,S:null,useMovers:false,map:false};
 /* the light over the film: hour of the day at each point (golden hour, sunset, dusk during the firefight, night for the logo) */
 const FILM_TOD=[[0,17.72],[fk(13),17.92],[fk(20),18.1],[fk(26),18.32],[fk(31),18.75],[fk(33),19.15],[fk(36),19.5],[fk(40),20.25],[999,20.6]];
@@ -5565,8 +5571,8 @@ function filmClick(){if(FILM.state!=='idle'&&FILM.state!=='done')return;audInit(
 function filmWarm(){const keep=FILM.t;for(let i=0;i<FILM_SHOTS.length;i++){filmSeek(filmShotT(i)+.6);filmCam(.05);filmCam(.05);updateSky();filmLight();R3.renderer.compile(R3.scene,R3.cam);R3.renderer.render(R3.scene,R3.cam);}
   filmClear();FILM.t=keep;FILM.i=-1;}
 function filmSeek(t){FILM.t=t;FILM.i=-1;filmClear();}
-function filmClear(){debClear('film');for(const q of FILM.parts){R3.scene.remove(q.sp);q.sp.material.dispose();}FILM.parts.length=0;for(const q of FILM.tr){R3.scene.remove(q.m);q.m.material.dispose();}FILM.tr.length=0;
-  for(const q of FILM.ms)R3.scene.remove(q.m);FILM.ms.length=0;FILM.lts.length=0;FILM.fires.length=0;}
+function filmClear(){debClear('film');for(const q of FX.parts){R3.scene.remove(q.sp);q.sp.material.dispose();}FX.parts.length=0;for(const q of FX.tr){R3.scene.remove(q.m);q.m.material.dispose();}FX.tr.length=0;
+  for(const q of FX.ms)R3.scene.remove(q.m);FX.ms.length=0;FX.lts.length=0;FILM.fires.length=0;}
 const filmShotT=i=>FILM_SHOTS[i].k!=null?fk(FILM_SHOTS[i].k):0;
 /* every frame: the clock, the shot, the actors, the effects */
 function filmCam(dtr){
@@ -5694,12 +5700,12 @@ function filmBirka(p){const b=p||FILM.b0;if(Math.abs(CARRIER.x-b.x)>.01||Math.ab
 /* the beaver on deck is hidden once the KROK has taken it ashore (the game's own mesh stays on deck otherwise) */
 
 /* ---- effects: soft sprites, flashes and light, tracers, missiles, fire ---- */
-function filmTex(){if(FILM.tex)return FILM.tex;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
-  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.35,'rgba(255,255,255,.6)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return FILM.tex=new THREE.CanvasTexture(c);}
+function filmTex(){if(FX.tex)return FX.tex;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.35,'rgba(255,255,255,.6)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return FX.tex=new THREE.CanvasTexture(c);}
 /* o: v velocity [x,y,z], g gravity, s0 s1 size, a opacity, ttl, c colour, add additive, drag */
-function fP(x,y,z,o){const P=FILM.parts;if(P.length>900)return;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:filmTex(),color:o.c??0xffffff,transparent:true,depthWrite:false,opacity:o.a??1,blending:o.add?THREE.AdditiveBlending:THREE.NormalBlending}));
+function fP(x,y,z,o){const P=FX.parts;if(P.length>900)return;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:filmTex(),color:o.c??0xffffff,transparent:true,depthWrite:false,opacity:o.a??1,blending:o.add?THREE.AdditiveBlending:THREE.NormalBlending}));
   sp.position.set(x,y,z);sp.scale.setScalar(o.s0??1);R3.scene.add(sp);const v=o.v||[0,0,0];P.push({sp,vx:v[0],vy:v[1],vz:v[2],g:o.g||0,s0:o.s0??1,s1:o.s1??1,o:o.a??1,ttl:o.ttl??1,t:0,drag:o.drag||0,fade:o.fade||0});}
-function fLight(x,y,z,c,i,d,ttl){FILM.lts.push({x,y,z,c,i,d,ttl,t:0});}
+function fLight(x,y,z,c,i,d,ttl){FX.lts.push({x,y,z,c,i,d,ttl,t:0});}
 /* the fire's own shadow (decided 16 okt): a burning wreck lit the ground all round it, under and behind the hull too, so it seemed
    to float. In the trailer the first point light casts a shadow, and the nearest fire takes it; only the film's actors (the layer
    FILM_SHL) are drawn into that shadow, not trees or terrain, so it costs little */
@@ -5716,38 +5722,40 @@ function fxBoom(x,y,z,s){s=s||1;fxFlash(x,y+1,z,6*s,0xfff0c0);fLight(x,y+3,z,0xf
 /* a tracer: a streak of light from a to b at speed v; sparks and dust where it lands */
 function fxTracer(a,b,v,c,thick){const d=new THREE.Vector3(b.x-a.x,b.y-a.y,b.z-a.z),L=d.length();d.normalize();
   const m=new THREE.Mesh(R3.film_trGeo||(R3.film_trGeo=new THREE.CylinderGeometry(.5,.5,1,5)),new THREE.MeshBasicMaterial({color:c||0xffd27a,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d);m.scale.set(thick||.12,Math.min(9,L*.3),thick||.12);R3.scene.add(m);FILM.tr.push({m,a:new THREE.Vector3(a.x,a.y,a.z),d,L,v:v||300,s:0,hit:b.hit});}
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d);m.scale.set(thick||.12,Math.min(9,L*.3),thick||.12);R3.scene.add(m);FX.tr.push({m,a:new THREE.Vector3(a.x,a.y,a.z),d,L,v:v||300,s:0,hit:b.hit});}
 /* a missile or rocket: a bright head and a smoke trail along an arc from a to b over dur seconds, a blast at the end */
-function fxMissile(a,b,dur,arc,boom){const m=new THREE.Group();R3.scene.add(m);FILM.ms.push({m,a,b,dur,arc:arc||0,t:0,boom:boom??1,em:0});}
+function fxMissile(a,b,dur,arc,boom){const m=new THREE.Group();R3.scene.add(m);FX.ms.push({m,a,b,dur,arc:arc||0,t:0,boom:boom??1,em:0});}
 /* the AA truck blown apart in the trailer: the same as in the game (blowApart), on a copy of the film's actor */
 function fxWreck(m){m.updateMatrixWorld(true);const w=m.clone(true),hi=m.children.indexOf(headOf(m));charred(w);
   w.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.layers.enable(FILM_SHL);});w.visible=true;w.rotation.z+=.06;w.position.y-=.2;R3.scene.add(w);w.updateMatrixWorld(true);
   DEB.push({m:w,rest:true,t:0,tag:'film'});blowApart(w,'film',hi>=0?w.children[hi]:null);}
 /* a fire that burns on: flames, sparks and a smoke column, and a flickering light */
 function fxFire(x,y,z,s){FILM.fires.push({x,y,z,s,acc:0});}
-function filmFx(dtr){const P=FILM.parts;
-  debrisTick(dtr,'film');
-  for(let i=FILM.lts.length-1;i>=0;i--){const q=FILM.lts[i];q.t+=dtr;if(!q.ttl||q.t>q.ttl)FILM.lts.splice(i,1);}
+function filmFx(dtr){debrisTick(dtr,'film');fxTick(dtr);
+  for(const f of FILM.fires){fireEmit(f,dtr,f.x,f.y,f.z,f.s);fLight(f.x,f.y+3,f.z,0xff6a1a,(2.2+Math.sin(FILM.t*13+f.x)*.6+Math.sin(FILM.t*29)*.4)*f.s,50,0);}}
+function fxTick(dtr){const P=FX.parts;
+  for(let i=FX.lts.length-1;i>=0;i--){const q=FX.lts[i];q.t+=dtr;if(!q.ttl||q.t>q.ttl)FX.lts.splice(i,1);}
   for(let i=P.length-1;i>=0;i--){const q=P[i];q.t+=dtr;const k=q.t/q.ttl;if(k>=1||q.sp.position.y<-.6){R3.scene.remove(q.sp);q.sp.material.dispose();P.splice(i,1);continue;}
     const dr=Math.exp(-q.drag*dtr);q.vx*=dr;q.vz*=dr;q.vy=q.vy*dr-q.g*dtr;q.sp.position.x+=q.vx*dtr;q.sp.position.y+=q.vy*dtr;q.sp.position.z+=q.vz*dtr;
     q.sp.scale.setScalar(lerp(q.s0,q.s1,Math.sqrt(k)));q.sp.material.opacity=q.o*(1-k)*(1-k*.3);}
-  for(let i=FILM.tr.length-1;i>=0;i--){const q=FILM.tr[i];q.s+=q.v*dtr;if(q.s>=q.L){R3.scene.remove(q.m);q.m.material.dispose();FILM.tr.splice(i,1);
+  for(let i=FX.tr.length-1;i>=0;i--){const q=FX.tr[i];q.s+=q.v*dtr;if(q.s>=q.L){R3.scene.remove(q.m);q.m.material.dispose();FX.tr.splice(i,1);
       const e=q.a.clone().addScaledVector(q.d,q.L);if(q.hit!==false){for(let k=0;k<5;k++)fP(e.x,e.y,e.z,{v:[fr()*14,4+Math.random()*8,fr()*14],g:18,s0:.3,s1:.15,a:1,ttl:.35,c:0xffd080,add:true});if(e.y<fGround(e.x,e.z)+2){fxDust(e.x,e.y,e.z,1.4);fxDust(e.x,e.y,e.z,1.8);}}continue;}
     q.m.position.copy(q.a).addScaledVector(q.d,q.s);}
-  for(let i=FILM.ms.length-1;i>=0;i--){const q=FILM.ms[i];q.t+=dtr;const k=Math.min(1,q.t/q.dur),x=lerp(q.a.x,q.b.x,k),z=lerp(q.a.z,q.b.z,k),y=lerp(q.a.y,q.b.y,k)+Math.sin(k*PI)*q.arc;
+  for(let i=FX.ms.length-1;i>=0;i--){const q=FX.ms[i];q.t+=dtr;const k=Math.min(1,q.t/q.dur),x=lerp(q.a.x,q.b.x,k),z=lerp(q.a.z,q.b.z,k),y=lerp(q.a.y,q.b.y,k)+Math.sin(k*PI)*q.arc;
     q.em+=dtr*70;while(q.em>1){q.em--;fP(x+fr()*.4,y+fr()*.4,z+fr()*.4,{v:[fr(),.4,fr()],s0:.7,s1:2.6,a:.5,ttl:1.6,c:0xc8c4bc,drag:1});}
     fP(x,y,z,{s0:1.6,s1:1.2,a:.9,ttl:.06,c:0xfff0c0,add:true});fLight(x,y,z,0xffd090,2,30,.05);
-    if(k>=1){if(q.boom)fxBoom(q.b.x,q.b.y,q.b.z,q.boom);R3.scene.remove(q.m);FILM.ms.splice(i,1);}}
-  for(const f of FILM.fires){f.acc+=dtr*26*f.s;while(f.acc>1){f.acc--;const j=()=>fr()*2.4*f.s;fP(f.x+j(),f.y+.5+Math.random()*f.s,f.z+j(),{v:[fr(),3+Math.random()*3,fr()],s0:1.4*f.s,s1:.4*f.s,a:.9,ttl:.5+Math.random()*.4,c:Math.random()<.5?0xff6a1a:0xffb030,add:true});
-      if(Math.random()<.45)fP(f.x+j()*.5,f.y+2.5*f.s,f.z+j()*.5,{v:[fr()+.6,3.5+Math.random()*2,fr()+.3],s0:1.6*f.s,s1:7*f.s,a:.5,ttl:4.5,c:0x262422,drag:.25});}
-    fLight(f.x,f.y+3,f.z,0xff6a1a,(2.2+Math.sin(FILM.t*13+f.x)*.6+Math.sin(FILM.t*29)*.4)*f.s,50,0);}}
+    if(k>=1){if(q.boom)fxBoom(q.b.x,q.b.y,q.b.z,q.boom);R3.scene.remove(q.m);FX.ms.splice(i,1);}}
+}
+/* a fire's flames, sparks and smoke column: the game's fires and the trailer's alike */
+function fireEmit(f,dtr,x,y,z,sz){if(sz<=0)return;f.acc=(f.acc||0)+dtr*26*sz;while(f.acc>1){f.acc--;const j=()=>fr()*2.4*sz;fP(x+j(),y+.5+Math.random()*sz,z+j(),{v:[fr(),3+Math.random()*3,fr()],s0:1.4*sz,s1:.4*sz,a:.9,ttl:.5+Math.random()*.4,c:Math.random()<.5?0xff6a1a:0xffb030,add:true});
+      if(Math.random()<.45)fP(x+j()*.5,y+2.5*sz,z+j()*.5,{v:[fr()+.6,3.5+Math.random()*2,fr()+.3],s0:1.6*sz,s1:7*sz,a:.5,ttl:4.5,c:0x262422,drag:.25});}}
 /* the firefight goes on around every shot of it: tracers both ways across the meadow, ours yellow and theirs red, and now
    and then a blast further off */
 function filmBattle(dtr){const B=FILM_BF;FILM.amb=(FILM.amb||0)+dtr*7;while(FILM.amb>1){FILM.amb--;const ours=Math.random()<.55,ax=ours?B.x+70+fr()*40:B.x-90+fr()*30,az=B.z+fr()*90,bx=ours?B.x-80+fr()*40:B.x+60+fr()*40,bz=B.z+fr()*90;
     fxTracer({x:ax,y:fGround(ax,az)+2.5,z:az},{x:bx,y:fGround(bx,bz)+1.5+Math.random()*2,z:bz,hit:Math.random()<.3},460,ours?0xffd27a:0xff6a4a,.22);}
   FILM.ambB=(FILM.ambB??1.2)-dtr;if(FILM.ambB<=0){FILM.ambB=1.6+Math.random()*1.8;const x=B.x+fr()*200,z=B.z+fr()*160;fxBoom(x,fGround(x,z)+1,z,.7);}}
 /* the lights the frame adds to the game's pool of point lights (asked for by updateSky) */
-function filmLightCands(){return FILM.lts.map(q=>[q.ttl?0:-1,q.x,q.y,q.z,q.c,q.i*(q.ttl?Math.max(0,1-q.t/q.ttl):1),q.d]);}/* fires first, so the nearest takes the shadow light */
+function filmLightCands(){return FX.lts.map(q=>[q.ttl?0:-1,q.x,q.y,q.z,q.c,q.i*(q.ttl?Math.max(0,1-q.t/q.ttl):1),q.d]);}/* fires first, so the nearest takes the shadow light */
 
 /* ---- VARG at speed on the water: bow up, pitch and roll, spray off the bow and a wash along the sides ---- */
 function fVargWater(g,dtr,T,i,fast){g.rotation.z=.045+Math.sin(T*2.1+i)*.012;g.rotation.x=Math.sin(T*1.7+i*2)*.025;g.position.y=.75+Math.sin(T*2.4+i)*.1;
