@@ -382,6 +382,8 @@ const DEEP=0,SHAL=1,BEACH=2,LAND=3,ROCK=4,WALL=5;
    åker a field, hage pasture and farmyard with single trees. The forest density per cell (W.skog: 0 open, 1 sparse, 2 dense) is what
    the game will read for cover and for vehicles once the forest gets its rules (decided 16 okt) */
 const M_HALL=1,M_STRAND=2,M_SKOG=3,M_AKER=4,M_HAGE=5;
+/* broadleaf kinds as the season shader knows them (the leaf colour's green channel is the code / 8) */
+const TREE_SP={birch:0,alder:1,aspen:2,oak:3,maple:4,rowan:5};
 const PI=Math.PI,TAU=PI*2;
 const CX=WW/2,CY=WH/2,CARRIER={x:WW/2,y:WH-300,a:-PI/2};
 const hasDOM=typeof document!=='undefined'&&!!document.getElementById&&!!document.getElementById('app');
@@ -1186,7 +1188,7 @@ function buildWorldTry(seed,tryK){
       let L=byZ.get(zid[i]);if(!L)byZ.set(zid[i],L=[]);L.push([i,fbm(c.x*1.2,c.y*1.2,s+313)]);}
     for(const[,L]of byZ){const nd=Math.round(L.length*(.3+Rf()*.3));L.sort((a,b)=>b[1]-a[1]);L.forEach(([i],k)=>{skog[i]=k<nd?2:1;});}}
   // per kind of ground: chance per pass, most trees in a cell, smallest size and its spread
-  const TREE={[M_HALL]:[.13,1,.6,.25],[M_STRAND]:[.05,1,.7,.4],[M_HAGE]:[.06,1,.95,.45]};
+  const TREE={[M_HALL]:[.13,1,.6,.25],[M_STRAND]:[.05,1,.7,.4],[M_HAGE]:[.08,1,.95,.45]};
   for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i]||W.lane[i])continue;const c=cellCenter(i),mk=mark[i],dense=skog[i]===2;
     const T=mk===M_SKOG?(dense?[.85,3,.85,.6]:[.3,1,.75,.6]):TREE[mk];if(!T)continue;
     for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>T[0])continue;const nT=T[1]>1?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
@@ -1196,9 +1198,14 @@ function buildWorldTry(seed,tryK){
          spruce in the dense forest on the better ground inland */
       const h=hash2(gx*3+qq,gy*5+pass,s+91),coast=dWet[i]<5,k=mk===M_HALL?(h<.9?'pine':'birch'):mk===M_STRAND?(h<.5?'pine':'birch'):mk===M_HAGE?(h<.6?'birch':h<.8?'pine':'spruce'):
         dense?(coast?(h<.36?'pine':h<.6?'birch':'spruce'):(h<.27?'pine':h<.44?'birch':'spruce')):(h<.42?'pine':h<.7?'birch':'spruce');
+      /* which broadleaf (decided 17 okt, Magnus): alder by the water, oak and maple in pasture and round the farms, aspen and rowan in the
+         edges and the sparse forest, birch everywhere else; about 9 % birch, 3 % alder, 3 % aspen, 2 % oak, 2 % maple and 1 % rowan of all trees */
+      let kk=k;if(k==='birch'){const h2=hash2(gx*7+qq,gy*3+pass,s+93);
+        kk=dWet[i]<=5&&mk!==M_HALL?(h2<.62?'alder':h2<.84?'birch':h2<.92?'aspen':'rowan'):mk===M_HAGE?(h2<.35?'oak':h2<.6?'maple':h2<.7?'rowan':'birch'):mk===M_HALL||mk===M_STRAND?(h2<.15?'rowan':h2<.3?'aspen':'birch'):
+          dense?(h2<.16?'aspen':h2<.26?'maple':h2<.35?'oak':h2<.38?'rowan':'birch'):(h2<.18?'aspen':h2<.3?'oak':h2<.42?'maple':h2<.5?'rowan':'birch');}
       // trees are lower where the wind comes in: about 60 % of full height at the water, full height 100 m in; the tallest spruce stops near 17 m
       let ts=(T[2]+hash2(gx+qq,gy,s+80)*T[3])*(.6+.4*clamp(dWet[i]/10,0,1));if(k==='spruce')ts=Math.min(ts,1.18);
-      W.trees.push({x,y,s:ts,ci:i,k});}}}
+      W.trees.push({x,y,s:ts,ci:i,k:kk});}}}
   W.baseGrid=grid.slice();
   // elevation grid for 3D
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
@@ -4142,7 +4149,7 @@ function buildStatic(){
     // trees are built per 500 m tile (decided 13 okt) so that a tile out of view, past the fog or far from the shadow box costs
     // nothing: the whole forest was about 640 000 triangles drawn in full every frame, in the shadow map too, and in each live view
     const plant=(T,tg)=>{
-    const isBirch=t=>t.k?t.k==='birch':hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t));
+    const isBirch=t=>t.k?t.k==='birch':hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t)&&!TREE_SP[t.k]);
       const isPine=t=>t.k?t.k==='pine':hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
       if(birches.length){const leaf=R3.birchLeaf;
         const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.17,.26,1,6),mat(0xe9e6dc),birches.length),bd=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.2,1,6),mat(0x2b2a28),birches.length*3),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),leaf,birches.length*4);
@@ -4152,6 +4159,21 @@ function buildStatic(){
              the crown runs from about half the trunk to some 13 m (at size 1) */
           for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=k?g0+H*(.56+k*.11):g0+H+1.2*s2;dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?3.4:3)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);cr.setColorAt(i*4+k,(R3.tmpC||(R3.tmpC=new THREE.Color())).setRGB(hash2(Math.round(t.x),Math.round(t.y),53),0,0));}});/* the red channel is the tree's own value for its autumn colour */
         tg.add(tr);tg.add(bd);tg.add(cr);}
+      /* the other broadleaf trees (decided 17 okt, Magnus): the same leaf material as the birch, told apart in the season shader by the green
+         channel of each tuft's colour. Per kind: trunk colour, trunk thickness, trunk height (at size 1), stems, and the crown's tufts as
+         [distance out, height as a part of the trunk, width, height] */
+      const BL={alder:{c:0x4a4440,r:.85,H:7,n:2,cr:[[0,1.05,2.4,3.2],[1.2,.75,2.4,2.8],[1.2,.55,2.2,2.4]]},
+        aspen:{c:0x9aa592,r:.8,H:9.5,n:1,cr:[[0,1.15,1.5,3.4],[.7,.85,1.6,3],[.7,.62,1.5,2.6]]},
+        oak:{c:0x4a3c30,r:1.7,H:5.5,n:1,cr:[[0,1.55,3.2,2.4],[2.4,1.2,3,2.2],[2.4,1.05,2.8,2],[1.6,1.35,2.6,2]]},
+        maple:{c:0x5a4a3c,r:1.2,H:5.5,n:1,cr:[[0,1.45,3,2.8],[1.8,1.05,2.8,2.6],[1.8,.85,2.4,2.2]]},
+        rowan:{c:0x6a6058,r:.7,H:3.6,n:1,cr:[[0,1.35,1.9,2],[1,1,1.7,1.7]]}};
+      for(const[kd,B]of Object.entries(BL)){const L=T.filter(t=>t.k===kd);if(!L.length)continue;const nc=B.cr.length,sp=TREE_SP[kd]/8;
+        const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.3,1,6),mat(B.c),L.length*B.n),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),R3.birchLeaf,L.length*nc);
+        L.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=B.H*s2,a0=hash2(Math.round(t.x),Math.round(t.y),54)*TAU;
+          for(let m=0;m<B.n;m++){const lean=m?.14:0;dummy.rotation.set(lean*Math.sin(a0),0,-lean*Math.cos(a0));dummy.position.set(t.x+(m?Math.cos(a0)*.8*s2:0),g0+H*.5,t.y+(m?Math.sin(a0)*.8*s2:0));dummy.scale.set(s2*B.r,H*(m?.85:1),s2*B.r);dummy.updateMatrix();tr.setMatrixAt(i*B.n+m,dummy.matrix);}
+          B.cr.forEach(([d,yf,w,h],k)=>{const a=a0+k*2.1;dummy.position.set(t.x+Math.cos(a)*d*s2,g0+H*yf,t.y+Math.sin(a)*d*s2);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);dummy.scale.set(w*s2,h*s2,w*s2*.92);dummy.updateMatrix();
+            cr.setMatrixAt(i*nc+k,dummy.matrix);cr.setColorAt(i*nc+k,(R3.tmpC||(R3.tmpC=new THREE.Color())).setRGB(hash2(Math.round(t.x),Math.round(t.y),53),sp,0));});});
+        tg.add(tr);tg.add(cr);}
       if(spr.length){const tm=new THREE.InstancedMesh(new THREE.ConeGeometry(2.7,11.5,7),R3.sprM,spr.length),tk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.32,1,5),mat(0x5a4636),spr.length);
         spr.forEach((t,i)=>{const s2=t.s*1.12,g0=groundY(t.x,t.y);dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+1.4*s2+5.75*s2,t.y);dummy.scale.set(s2,s2,s2);dummy.updateMatrix();tm.setMatrixAt(i,dummy.matrix);dummy.position.set(t.x,g0+1.1*s2,t.y);dummy.scale.set(s2,2.2*s2,s2);dummy.updateMatrix();tk.setMatrixAt(i,dummy.matrix);});tg.add(tm);tg.add(tk);}
       if(pines.length){const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.34,1,5),mat(0xa0603a),pines.length),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),R3.pineM,pines.length*3);
@@ -4288,8 +4310,8 @@ function cloudTick(){const C=R3.clouds;if(!C)return;C.g.visible=!FILM.on;if(FILM
   U.uFogC.value.copy(sc.fog.color);U.uFogN.value=sc.fog.near*3;U.uFogF.value=Math.min(sc.fog.far*2.5,2500);}
 /* the season in the shaders (seasons step 4): one set of uniforms shared by every material that changes with the season, so a
    new date only sets values. ground: grass turns straw and then dead brown, snow lies on level ground and melts last in shade and
-   on north slopes; conifer: snow on the upper faces of spruce and pine; birch: the crowns go light green, full green, yellow and
-   orange tree by tree (a random value per tree), then bare grey-brown twigs, smaller */
+   on north slopes; conifer: snow on the upper faces of spruce and pine; birch (all broadleaf): the crowns go light green, full green, then each kind its own
+   autumn tree by tree (a random value per tree), then bare grey-brown twigs, smaller */
 const SEASU={uSnow:{value:0},uGrass:{value:0},uBrown:{value:0},uLeaf:{value:1},uYoung:{value:0},uAutumn:{value:0}};
 const NOISE_GLSL=`float sHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
   float sNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sHash(i),sHash(i+vec2(1,0)),f.x),mix(sHash(i+vec2(0,1)),sHash(i+vec2(1,1)),f.x),f.y);}`;
@@ -4311,9 +4333,17 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
     conifer:`{vec3 n3=normalize(vSWN);float nz=sNoise(vSWP.xz/2.5+vSWP.y*.4);
       float sm=uSnow*(.5*smoothstep(.2,.5,n3.y+(nz-.5)*.5)+.55*smoothstep(3.0,5.5,vSLY));
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.9,.93,.96),clamp(sm,0.0,.7));}`,
-    birch:`{float r=vColor.r;vec3 c=mix(vec3(.5,.65,.28),vec3(.68,.82,.38),uYoung);
-      vec3 au=mix(vec3(.88,.72,.2),vec3(.86,.44,.15),smoothstep(.3,.7,r));au=mix(au,vec3(.72,.27,.16),step(.86,r));
-      c=mix(c,au,clamp(uAutumn*1.6-(1.0-r)*.6,0.0,1.0));c=mix(vec3(.42,.37,.33),c,smoothstep(.12,.45,uLeaf));
+    /* broadleaf autumn per kind (decided 17 okt, Magnus): birch golden yellow to yellow-brown and never red; aspen yellow to orange;
+       maple yellow, orange and clear red; rowan orange to red and first; oak yellow-brown to rust late, keeping its dry leaves;
+       alder olive and last, falling green. Each kind is shifted against the season's autumn curve, and each tree by its own value */
+    birch:`{float r=vColor.r;int sp=int(floor(vColor.g*8.0+.5));vec3 g0=mix(vec3(.5,.65,.28),vec3(.68,.82,.38),uYoung),a1=vec3(.9,.76,.22),a2=vec3(.84,.66,.2),a3=vec3(.7,.55,.24);float sh=0.0,keep=0.0;
+      if(sp==1){g0*=vec3(.78,.86,.8);a1=vec3(.5,.56,.26);a2=vec3(.46,.5,.24);a3=a2;sh=-.75;}
+      else if(sp==2){g0*=vec3(.94,1.0,.9);a1=vec3(.96,.8,.2);a2=vec3(.94,.58,.15);a3=vec3(.84,.36,.14);sh=.05;}
+      else if(sp==3){g0*=vec3(.8,.86,.74);a1=vec3(.72,.62,.26);a2=vec3(.62,.44,.2);a3=vec3(.52,.34,.18);sh=-.4;keep=1.0;}
+      else if(sp==4){g0*=vec3(.95,1.0,.85);a1=vec3(.96,.74,.15);a2=vec3(.93,.44,.1);a3=vec3(.82,.16,.1);sh=.18;}
+      else if(sp==5){a1=vec3(.9,.52,.15);a2=vec3(.84,.3,.12);a3=vec3(.72,.18,.12);sh=.35;}
+      vec3 au=mix(a1,a2,smoothstep(.35,.75,r));au=mix(au,a3,smoothstep(.75,.95,r));
+      vec3 c=mix(g0,au,clamp(uAutumn*1.6-(1.0-r)*.6+sh,0.0,1.0));c=mix(vec3(.42,.37,.33),c,smoothstep(.12-keep*.25,.45-keep*.3,uLeaf));
       diffuseColor.rgb=c;}`};
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
