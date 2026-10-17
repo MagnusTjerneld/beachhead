@@ -657,7 +657,7 @@ function elevAt(x,y,s,V){
     if(ps&&f>0&&!same){const rw=Math.max(40,Math.abs(z1.h-z2.h)*4.5);const eR=lerp((z1.h+z2.h)/2+(n-.5)*3,e,sm(Z.s/rw));e=lerp(e,eR,f);}
     if(same)e+=13*sm((15-Z.s)/15)*(1-f);
   }else e+=0;
-  const lowCoast=old?B=>{const db=angDiff(a,B.a);if(db<B.w+4){const t=sm((1-d)/.15),side=sm((B.w+4-db)/4);e=lerp(e,lerp(.4,e,t),side);}}:B=>{const px=x-B.x,py=y-B.y,li=-(px*B.nx+py*B.ny),lt=Math.abs(px*B.ny-py*B.nx);if(li<-15||lt>B.w+40)return;const t=sm(li/90),side=sm((B.w+40-lt)/40);e=lerp(e,lerp(.4,e,t),side);};
+  const lowCoast=old?B=>{const db=angDiff(a,B.a);if(db<B.w+4){const t=sm((1-d)/.15),side=sm((B.w+4-db)/4);e=lerp(e,lerp(.4,e,t),side);}}:B=>{const px=x-B.x,py=y-B.y,li=-(px*B.nx+py*B.ny),lt=Math.abs(px*B.ny-py*B.nx);if(li<-80||lt>B.w+40)return;/* up to 80 m out (fixed 17 okt, issue 3: on ö 7227 the coast bulged more than 15 m past the beach's line, and a 4 m rim with a cliff to the water closed the beach but for a 20 m gap) */const t=sm(li/90),side=sm((B.w+40-lt)/40);e=lerp(e,lerp(.4,e,t),side);};
   if(V.beach)lowCoast(V.beach);if(V.cove)lowCoast(V.cove);
   if(hOld&&H&&dh<H.w+6&&d>H.depth-.14){const t=sm((H.depth-d)/.12),side=sm((H.w+6-dh)/3);e=lerp(e,lerp(1.1,e,t),side);}
   if(!hOld&&H&&!H.std&&hl<110&&hi>-20&&hi<200){const t=sm((hi-120)/70),side=sm((110-hl)/31);e=lerp(e,lerp(1.1,e,t),side);}
@@ -875,7 +875,7 @@ function buildWorldTry(seed,tryK){
     const i=gy*GW+gx,e=eg[i];
     if(e<=0){grid[i]=e<-3.2?DEEP:SHAL;continue;}
     let cliff=false;
-    for(let oy=-1;oy<=1&&!cliff;oy++)for(let ox=-1;ox<=1;ox++){if(!ox&&!oy)continue;const nx=gx+ox,ny=gy+oy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const lim=ox&&oy?4.5:3.2;if(Math.abs(e-eg[ny*GW+nx])>lim){cliff=true;break;}}
+    for(let oy=-1;oy<=1&&!cliff;oy++)for(let ox=-1;ox<=1;ox++){if(!ox&&!oy)continue;const nx=gx+ox,ny=gy+oy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const lim=ox&&oy?4.5:3.2;if(Math.abs(e-Math.max(0,eg[ny*GW+nx]))>lim){cliff=true;break;}}/* water counts at its surface, which is what a hovercraft drives on (fixed 17 okt, issue 3: a low beach above deep water was cliff) */
     grid[i]=cliff?ROCK:e<1.8?BEACH:LAND;
   }
   const W={seed:s,V,grid,eg,road:new Uint8Array(GW*GH),roads:[],walls:[],trees:[],labels:[],barriers:[]};
