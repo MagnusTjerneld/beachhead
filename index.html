@@ -4449,13 +4449,15 @@ function mkWaterMat(){
           float lip=smoothstep(0.02,0.3,dep);
           float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
           outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);
-          /* ice (seasons step 4): a band out from the shore where the water is shallow, widest in sheltered coves, with a ragged edge
+          /* ice (seasons step 4): a band out from the shore where the water is shallow, and the coast's indents frozen over (17 okt), with a ragged edge
              and a darker thin rim; Birka's channel stays open with broken floes in it; drifting floes on the open water in spring */
+          /* and the coast's indents freeze over whatever their depth, up to a closing radius of about 110 m in the deepest winter */
           if(uIce>0.001||uFloe>0.001){float iN=sNoise(vWPos.xz/18.0)*1.1+sNoise(vWPos.xz/5.0)*.45,iceD=uIce*(1.1+iN*1.5);
+            float cR=texture2D(uDepth,uv).g*200.0,iceR=uIce*110.0*(.75+iN*.35),rawC=smoothstep(iceR,iceR-14.0,cR)*step(.02,dep)*step(cR,199.0);
             float cd=1e4;for(int i=0;i<23;i++){if(i>=uChanN-1)break;vec2 a=uChan[i],b=uChan[i+1],ab=b-a;float t=clamp(dot(vWPos.xz-a,ab)/max(dot(ab,ab),1.0),0.0,1.0);cd=min(cd,length(vWPos.xz-a-ab*t));}
-            float open=smoothstep(14.0,22.0,cd),raw=smoothstep(iceD,iceD-.3,dep)*step(.02,dep),ice=raw*open;
+            float open=smoothstep(14.0,22.0,cd),raw=max(smoothstep(iceD,iceD-.3,dep)*step(.02,dep),rawC),ice=raw*open;
             vec3 iceC=mix(vec3(.78,.83,.86),vec3(.9,.93,.95),sNoise(vWPos.xz/3.0))*uIceL;
-            float rim=raw*(1.0-smoothstep(iceD-.3,iceD-.12,dep))*.5;
+            float rim=max(raw*(1.0-smoothstep(iceD-.3,iceD-.12,dep))*(1.0-rawC),rawC*smoothstep(iceR-14.0,iceR-5.0,cR))*.5;
             float bits=raw*(1.0-open)*step(.62,sNoise(vWPos.xz/2.2));
             float floe=uFloe*(1.0-raw)*smoothstep(5.5,2.5,dep)*step(.8,sNoise((vWPos.xz+uTime*vec2(.25,.1))/7.0));
             float k=max(max(ice,bits),floe);outgoingLight=mix(outgoingLight,iceC*(1.0-rim*.45),k);diffuseColor.a=max(diffuseColor.a,k);}}}}`);};
@@ -4464,7 +4466,17 @@ function mkWaterMat(){
 // depth of the seabed for the foam: the terrain grid packed into a texture (8 m above to 8 m below the surface)
 function setWaterDepth(){
   const W=WORLD,nx=W.SX+1,ny=W.SY+1,U=R3.water.material.userData.U,data=new Uint8Array(nx*ny*4);
-  for(let k=0;k<nx*ny;k++){const v=Math.round(clamp((W.ev[k]+8)/16,0,1)*255);data[k*4]=v;data[k*4+1]=v;data[k*4+2]=v;data[k*4+3]=255;}
+  /* ice fills the coast's indents first (decided 17 okt, Magnus): for each point of water, the smallest radius R at which a rounding of
+     the coastline (a morphological closing of the land, skerries included) covers it. A bay 100 m wide is covered at R = 50, a sound
+     between the island and a holm at half its width, a straight coast never. Packed into the green channel as R/200 (255: never) */
+  const land=new Uint8Array(nx*ny),st=WW/W.SX,dg=st*Math.SQRT2,CR=new Float32Array(nx*ny).fill(1e9);
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,x=i*st,y=j*st;land[k]=W.ev[k]>0||(W.isletMask&&W.isletMask[cellIdx(x,y)])?1:0;}
+  const cham=src=>{const D=new Float32Array(nx*ny);for(let k=0;k<nx*ny;k++)D[k]=src(k)?0:1e9;
+    for(let dir=0;dir<2;dir++){const j0=dir?ny-1:0,j1=dir?-1:ny,dj=dir?-1:1,i0=dir?nx-1:0,i1=dir?-1:nx,di=dir?-1:1;
+      for(let j=j0;j!==j1;j+=dj)for(let i=i0;i!==i1;i+=di){const k=j*nx+i;for(const[oi,oj,c]of[[-di,0,st],[0,-dj,st],[-di,-dj,dg],[di,-dj,dg]]){const ii=i+oi,jj=j+oj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(D[q]+c<D[k])D[k]=D[q]+c;}}}return D;};
+  const dLand=cham(k=>land[k]);
+  for(const R of[12,20,30,40,55,70,85,100,120,140,165,195]){const dOut=cham(k=>dLand[k]>R);for(let k=0;k<nx*ny;k++)if(!land[k]&&CR[k]>R&&dOut[k]>R)CR[k]=R;}
+  for(let k=0;k<nx*ny;k++){const v=Math.round(clamp((W.ev[k]+8)/16,0,1)*255);data[k*4]=v;data[k*4+1]=CR[k]>200?255:Math.round(CR[k]/200*255);data[k*4+2]=v;data[k*4+3]=255;}
   if(U.uDepth.value)U.uDepth.value.dispose();
   const tx=new THREE.DataTexture(data,nx,ny,THREE.RGBAFormat);tx.magFilter=THREE.LinearFilter;tx.minFilter=THREE.LinearFilter;tx.generateMipmaps=false;tx.wrapS=tx.wrapT=THREE.ClampToEdgeWrapping;tx.needsUpdate=true;
   U.uDepth.value=tx;U.uHasDepth.value=1;U.uGrid.value.set(W.SX,W.SY);
