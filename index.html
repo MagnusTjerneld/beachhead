@@ -4531,7 +4531,7 @@ function updateSky(){
        the background colour, and the fog, which is what the far sea turns into, a little darker and bluer; most on a clear day, less
        in haze, under cloud and towards night */
     const hz=(1-n)*(1-.55*(SE.haze||0))*(1-.45*cloudCover(G.seed||0)),sea=R3.seaHor||(R3.seaHor=new THREE.Color());
-    sea.copy(sc.background).multiplyScalar(1-.18*hz);sea.b=Math.min(1,sea.b+.025*hz);sc.fog.color.copy(sea);
+    sea.copy(sc.background).multiplyScalar(1-.18*hz).lerp(cA.setHex(0x3a6a82),.3*hz*(1-SE.gray*.6));sc.fog.color.copy(sea);/* towards a deep sea blue, less in the grey half of the year */
     U.uHor.value.copy(sc.background).lerp(cA.setRGB(1,1,1),.12*hz);U.uSea.value.copy(sea);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
     U.uSunDir.value.copy(sunDir);
     U.uSunCol.value.copy(R3.sun.color).lerp(cB.setHex(0xffffff),.25);U.uSunVis.value=clamp((U.uSunDir.value.y+.06)/.12,0,1);
