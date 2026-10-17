@@ -52,4 +52,15 @@ const hp0=m.hp;m.x=mn.x;m.y=mn.y;mn.cells=[];{const gx=Math.floor(mn.x/10),gy=Ma
  b.prog=.4;M=B.taskMarks();ok(M.find(m=>m.g==='bomb').p===.4,'with its progress');
  G.kroks[0].orders=[{type:'lift',unit:v}];M=B.taskMarks();ok(M.some(m=>m.g==='hook'&&m.unit===v),'a unit KROK is to lift carries a hook mark');
  e.orders=[];G.kroks[0].orders=[];ok(B.taskMarks().length===0,'no orders, no marks');}
+// BÄVER starts its work when it gets there (fixed 17 okt): it used to stop 3 m short of the end of its path, which left it 1.5 to 3 m
+// from its spot at a barrier, or just outside the reach of a building whose cell it cannot enter, waiting for ever
+{const tries=[],seeds=[7341,4204,9052];for(const sd0 of seeds){const SC={...B.SHAPE_CFG};B.SHAPE_CFG.force=null;B.SHAPE_CFG.rough=1;B.newGame(sd0);Object.assign(B.SHAPE_CFG,SC);
+  for(const b0 of B.G.barriers.slice(0,2))tries.push({sd0,kind:'clear',id:b0.id});for(const st of B.G.structs.slice(0,3))tries.push({sd0,kind:'demolish',id:st.id});}
+ let bad=[];for(const t of tries){const SC={...B.SHAPE_CFG};B.SHAPE_CFG.force=null;B.SHAPE_CFG.rough=1;B.newGame(t.sd0);Object.assign(B.SHAPE_CFG,SC);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;
+  for(const b of G.barriers)if(t.kind!=='clear'){b.cleared=true;for(const c of b.cells)B.W.grid[c]=B.W.baseGrid[c];}
+  const e=G.units.find(u=>u.kind==='eng');e.orders=[];let tg,o,go;
+  if(t.kind==='clear'){tg=G.barriers.find(x=>x.id===t.id);const sd=tg.sides.find(x=>x.z!==tg.far)||tg.sides[0];e.x=sd.x;e.y=sd.y;o={type:'clear',barrier:tg,post:'def'};}
+  else{tg=G.structs.find(x=>x.id===t.id);let p=null;for(let k=0;k<64&&!p;k++){const a=k/64*6.283,x=tg.x+Math.cos(a)*90,y=tg.y+Math.sin(a)*90,c=Math.floor(y/10)*220+Math.floor(x/10);if(land(B.W,x,y)&&B.W.zid[c]===B.W.zid[tg.cell])p={x,y};}if(!p)continue;e.x=p.x;e.y=p.y;o={type:'demolish',s:tg,post:'def'};}
+  B.giveOrder(e,o,false);let i=0;for(;i<20*60;i++){B.step(.05);if(tg.prog>0||tg.cleared||tg.dead)break;}if(i>=20*60)bad.push(t.sd0+' '+t.id+' ('+e.state+')');}
+ ok(!bad.length,'BÄVER starts blowing the barrier or pulling down the building once there ('+tries.length+' tries'+(bad.length?'; stuck: '+bad.join(', '):'')+')');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

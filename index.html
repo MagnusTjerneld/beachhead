@@ -91,7 +91,6 @@ button:disabled{opacity:.45;cursor:default}
 #cHud{pointer-events:none}
 .zoom{position:absolute;right:8px;bottom:8px;display:flex;gap:4px;z-index:2}
 .zoom button{background:rgba(17,26,34,.85);color:var(--ink);border:1px solid var(--line);border-radius:3px;min-width:30px;height:28px;font-weight:700;font-size:14px;padding:0 8px}
-#subSlot .zoom{display:none}
 .vlabel{position:absolute;left:8px;top:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;background:rgba(17,26,34,.82);color:var(--ink);padding:3px 7px;border-radius:2px;pointer-events:none;z-index:2}
 #subSlot{aspect-ratio:4/3;flex:none}
 .sgrip{cursor:col-resize;position:relative;touch-action:none;outline:none}
@@ -323,7 +322,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Du börjar med BÄVER, KROK och 500 material och väljer själv vad varvet ska bygga först. Det som byggs skrivs ut i byggbädden på däck, och den nya enheten startar där. En enhet vid Birka kan återvinnas för 80 % av byggkostnaden (knappen Återvinn, två klick, eller i hjulet på enheten), med MUS ombord; KROK återvinns inte. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger GETING, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Vill du välja ställe: högerklicka på Birka eller en tagen verkstad eller ett fältvarv och välj Service här. HÖK laddar sina robotar där, och en HÖK som cirklar över en verkstad laddar också. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
       <li><span class="em">HÖK är ögonen.</span> Bunkrar, luftvärn, infanteri och pansarvärn är kamouflerade och syns bara från luften, eller på 60 meters håll från marken. Infanteri och pansarvärn i bebyggelse syns även från luften först på 40 m, så en HÖK som spanar på dem åt VARG går ned till cirka 36 m. Skogen döljer dem inte från luften just nu. Den som skjuter syns av alla inom synhåll så länge mynningsflamman lyser, och alltid av den den skjuter på, hur långt bort den än står. HÖK tål 60. Kulsprutan (80 m) biter på infanteri, de fyra målsökande robotarna (120 m, eller 170 m mot ett mål som en annan enhet har ögon på just nu) på lätt pansar och byggnader och med halv verkan på bunkrar, luftvärn och stridsvagnar, men pansar tar HÖK bara när du beordrar det. En bunker skjuter mot flyg på 130 m, längre än robotens 120, så HÖK som anfaller en bunker tar eld. Luftvärnet når längre än HÖK ser, så det upptäcks först när det skjuter. Det är en lätt lastbil med automatkanon: farligt på avstånd, men lätt att slå ut för den som når fram. Små mål är svårare att träffa (GETING hälften så ofta som HÖK, KROK något oftare). Ett dolt luftvärn sparar sin position och skjuter inte på en GETING som inte har sett det. Efter en strid, eller när VARG kommer nära, packar det ihop och kör 60 till 120 m till en ny plats; under flytten syns det och kan inte skjuta. Där det stod blir kvar en blekande markering som glöms efter 40 s. På Defensiv, Dold och Observera flyger HÖK och GETING runt kända hot och stannar utanför om målpunkten ligger inom deras räckhåll; på Offensiv flyger de rakt fram, och HÖK står kvar under eld tills den är halvt skadad.</li>
-      <li><span class="em">GETING är spanaren och den billiga stöten.</span> Ersätter GETING (16 okt). Kostar 60, byggs på 10 sekunder, ser 120 m, batteri för tio minuter och tål nästan ingenting. Den flyger lågt: robotskyttar och bunkrar märker den först på 45 m och luftvärnets radar på 110 m, så den ser luftvärnet strax innan luftvärnet ser den. GETING har kort radio: den fungerar bara inom 250 m från Birka, ett fordon (BÄVER eller VARG) eller en HÖK som själv är inom ledningsnätet, och sjökortet visar nätet när en GETING är vald. En waypoint längre ut stannar vid gränsen, tappar den länken vänder den tillbaka, och flyger du den själv stannar den vid gränsen. Ger du en GETING ordern Utforska (knappen Utforska, eller i hjulet: fritt eller bara zonen du pekar på) utforskar den inom nätet på egen hand: den flyger till närmaste ospanade mark, håller sig utanför räckhåll för kända hot, laddar vid fartyget och fortsätter tills ön är spanad. Behöver en VARG spaning mot ett kamouflerat mål går en GETING före HÖK. Utforska ger du också i hjulet. Den bär en inbyggd sprängladdning: peka på ett pansarvärn, en robotskytt, infanteri, ett lätt pansarfordon eller ett luftvärn med en GETING vald och välj Anfall med GETING i hjulet. Den flyger dit och dyker in i målet, eller ned i marken så nära trupperna som möjligt, och förbrukas. Laddningen räcker inte mot bunker eller stridsvagn. På Offensiv anfaller den själv det den ser och kan slå ut; på Defensiv och Dold spanar den bara. Du kan flyga den själv för att spana, men anfallet sköter den alltid själv. Pansarvärn och robotskytt kan inte skjuta på den; luftvärnet håller elden mot en GETING som spanar men skjuter på en som dyker.</li>
+      <li><span class="em">GETING är spanaren och den billiga stöten.</span> Ersätter GETING (16 okt). Kostar 60, byggs på 10 sekunder, ser 120 m, batteri för tio minuter och tål nästan ingenting. Den flyger lågt: robotskyttar och bunkrar märker den först på 45 m och luftvärnets radar på 110 m, så den ser luftvärnet strax innan luftvärnet ser den. GETING har kort radio: den fungerar bara inom 550 m från Birka eller 300 m från ett fordon (BÄVER eller VARG), en HÖK eller en tagen punkt som själv är inom ledningsnätet, och sjökortet visar nätet när en GETING är vald. Den flyger genom nätet runt dess luckor i stället för rakt ut ur det, och når nätet inte hela vägen flyger den så nära det går. En waypoint längre ut stannar vid gränsen, tappar den länken vänder den tillbaka, och flyger du den själv stannar den vid gränsen. Ger du en GETING ordern Utforska (knappen Utforska, eller i hjulet: fritt eller bara zonen du pekar på) utforskar den inom nätet på egen hand: den flyger till närmaste ospanade mark, håller sig utanför räckhåll för kända hot, laddar vid fartyget och fortsätter tills ön är spanad. Behöver en VARG spaning mot ett kamouflerat mål går en GETING före HÖK. Utforska ger du också i hjulet. Den bär en inbyggd sprängladdning: peka på ett pansarvärn, en robotskytt, infanteri, ett lätt pansarfordon eller ett luftvärn med en GETING vald och välj Anfall med GETING i hjulet. Den flyger dit och dyker in i målet, eller ned i marken så nära trupperna som möjligt, och förbrukas. Laddningen räcker inte mot bunker eller stridsvagn. På Offensiv anfaller den själv det den ser och kan slå ut; på Defensiv och Dold spanar den bara. Du kan flyga den själv för att spana, men anfallet sköter den alltid själv. Pansarvärn och robotskytt kan inte skjuta på den; luftvärnet håller elden mot en GETING som spanar men skjuter på en som dyker.</li>
       <li><span class="em">Strider:</span> fiendens kanoner måste vrida sig mot målet innan de kan skjuta, bunkrar långsammast. Skicka flera VARG mot samma mål: de samlas först utanför målets räckhåll, var och en på sin egen bäring, och går in samtidigt när alla är på plats. De sprider sig runt målet, utanför räckhåll för andra kända vapen, och rör sig medan de skjuter, så att målet inte hinner med alla. Skift+högerklick på nästa mål köar det som en waypoint; när det sista har fallit tar gruppen det som är inom räckhåll en stund. Anfallsorder ritas röda på sjökortet.</li>
       <li><span class="em">VARG är slagkraften,</span> en svävare som tar sig över vatten och land, lika snabbt på vattnet som på land. Ser 120 m själv, längre med HÖK i wingen. Når 140 m, lika långt som fiendens stridsvagnar, bunkrar, lätta pansar och robotskyttar (mot mark), men bara mot mål som någon ser. Inget markförsvar går att skjuta ut från ett avstånd där det inte kan svara; bara pansarvärnet når längre. Anfaller den ett kamouflerat mål som ingen ser skickar den efter en ledig HÖK som spanar från utanför luftvärnets räckvidd, och väntar själv utom räckhåll tills målet syns. Finns ingen ledig HÖK får du en knapp för att skicka en. Tål 150. Under eld räknar den på om striden lönar sig: under 30 % stannar den om skyttarna är nästan slagna och den väntas klara sig, annars retirerar den; mellan 30 och 60 % drar den sig ur i förtid om den tydligt förlorar. På reträtt skjuter den medan den kör: först på den som skjuter på den, annars på närmaste fiende den ser och når (inte på Dold). VARG i samma wing stöttar varandra: beskjuts en, kör de andra fram tills skytten är inom räckhåll och bekämpar den, och återgår till sin order när skytten är slagen eller tyst. Infanteriet har granatgevär som når 150 m, laddar om på sex sekunder och hör VARG på 220 m, så det skjuter ofta först. Det är svagt mot flyg (bara granatgeväret, som sällan träffar), så HÖK är svaret på infanteri. Robotskyttarna skjuter även mot mark med halv verkan. Pansarvärnets robot når 170 m, längre än VARG. Fienden skyddar sitt luftvärn och sina robotskyttar (utom kring R1) med dolda pansarvärnslag på flanken, så luftvärnet går inte att plocka på avstånd. Spana fram dem och slå dem med HÖK: pansarvärnet kan inte skjuta mot flyg, men HÖK måste in under luftvärnet för att nå dem.</li>
       <li><span class="em">MUS är fjärrspanaren.</span> Varje VARG bär en MUS, en liten fjärrstyrd terrängbil utan egen vilja. Välj VARG och tryck X (eller knappen MUS): den sätts ut och du kör den med W A S D; E släpper den och den står kvar. Kör du in den i en annan VARG som saknar MUS tar den VARG:en över den. Enhetskorten visar det som förbrukas som ikoner: HÖK:s robotar och VARG:ens MUS (ombord, ute i gult eller saknas). Den fungerar inom 200 m från sin VARG och stannar vid gränsen. Den ser 70 m, även kamouflage och trupp i skog, hittar minor inom 30 m, utlöser dem inte och kör rakt genom ett hittat minfält, som är spärrat för andra fordon. F spränger laddningen: allt inom 8 m förstörs, även en stridsvagn eller bunker, och skadan avtar ut till 12 m. Rörliga förband ser den på 35 m och skjuter med gevär, fasta ställningar på 40 m men träffar sällan något så litet. Kör tillbaka till sin VARG kommer den ombord igen. En förbrukad eller förlorad MUS ersätts vid Birka, en tagen verkstad eller ett fältvarv: 30 material och 15 sekunder.</li>
@@ -331,7 +330,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
       <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. Minorna är nedgrävda och syns inte från luften. Bara BÄVER hittar dem, med sin detektor på 48 m; en VARG märker dem först när den kör på en och tar svår skada. Skicka BÄVER före genom trånga passager. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
       <li><span class="em">Fienden</span> har bunkrar, luftvärn (bara mot luftmål), robotskyttar med bärbart luftvärn (120 m, kamouflerade, spridda över hela ön utom vid stranden; två robotar i följd och sedan cirka 20 s omladdning medan laget byter plats; ser du dem först med HÖK går de att undvika, VARG slår ut dem lätt), infanteri, pansarvärn, lätt pansar och stridsvagnar. Rörliga förband rycker ut när något i närheten anfalls.</li>
-      <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer.</li>
+      <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer. Det gäller också när sjökortet är den lilla vyn; båda vyerna följer samma zoom och mittpunkt.</li>
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
@@ -344,6 +343,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen skyddar den. Det du skjuter på blir gruppens mål i 8 s efter senaste skottet: följarna bekämpar det när det är inom räckhåll, och HÖK på Offensiv anfaller det. V och H tar i första hand gruppens egna VARG och HÖK. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. KROK har två hållningar. Defensiv (standard) håller den vid liv: den flyger inte in i kända hot, sätter bara ned på en säkrad plats och drar sig tillbaka under halva skrovet. Offensiv följer dina egna order även in i hot och okänt område och avbryter inte. Båda väljer den säkraste kända vägen. När BÄVER själv ber om transport landar KROK bara på en säkrad plats: spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, GETING först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
+      <li><span class="em">Hotbild och räckvidd:</span> med en enhet vald tonas varje känd fiendes räckvidd mot just den enheten på sjökortet: mot mark för VARG, BÄVER och MUS, mot flyg för HÖK, GETING och KROK. Det är zonerna enhetens vägval håller sig ifrån. Pekar du på en fiende visas dess räckvidd mot mark (heldragen) och mot flyg (streckad), pekar du på en egen enhet dess vapenräckvidd och sikt.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
@@ -1263,9 +1263,12 @@ function buildWorldTry(seed,tryK){
     // the wall itself: columns of five courses along the line between the two zones, about 1.5 m apart, broken at the passes;
     // across is the direction between the two zones' centres as the zones are warped
     const sd=(x,y,a,b)=>{const w=warp(x,y,V.seed),A=V.zones[a],B=V.zones[b];return Math.hypot(w.x-B.x,w.y-B.y)-Math.hypot(w.x-A.x,w.y-A.y);};
+    /* the wall stops at the crest of the coast, where vehicles cannot get past it anyway (decided 17 okt, Magnus, ö 4204: it ran over
+       the crest, down the granite slope and into the water): no wall on the coast slope or over the water in the game's grid */
+    const wallNeed=(x,y)=>{const t=W.baseGrid[cellIdx(x,y)];return t!==DEEP&&t!==SHAL&&!(W.hall&&W.hall[vk(x,y)]);};
     const CO=[{n:3,w:.9,r:.6,v:.18},{n:2,w:.45,r:.5,v:.14},{n:2,w:.25,r:.42,v:.1},{n:1,w:0,r:.34,v:.08}],st2=WW/SX;
     for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>st2*1.5||!isWall(rP[k]))continue;const x0=(k%nx)*WW/SX,y0=((k/nx)|0)*WH/SY;
-      for(let a=0;a<6;a++)for(let b=0;b<6;b++){const x=x0-st2/2+(a+.5)*st2/6,y=y0-st2/2+(b+.5)*st2/6,B=bank(x,y);if(!B||B.Z.s>.65||B.f>.05||!clear(x,y))continue;
+      for(let a=0;a<6;a++)for(let b=0;b<6;b++){const x=x0-st2/2+(a+.5)*st2/6,y=y0-st2/2+(b+.5)*st2/6,B=bank(x,y);if(!B||B.Z.s>.65||B.f>.05||!clear(x,y)||!wallNeed(x,y))continue;
         const gx=(sd(x+1,y,B.Z.i1,B.Z.i2)-sd(x-1,y,B.Z.i1,B.Z.i2)),gy=(sd(x,y+1,B.Z.i1,B.Z.i2)-sd(x,y-1,B.Z.i1,B.Z.i2)),gl=Math.hypot(gx,gy)||1,ax=gx/gl,ay=gy/gl;
         let o=0;CO.forEach((c,ci)=>{const r=c.r+Rr()*c.v;for(let n=0;n<c.n;n++){const off=c.n>1?-c.w+2*c.w*n/(c.n-1):0;RS.push({x:x+ax*off+(Rr()-.5)*.4,y:y+ay*off+(Rr()-.5)*.4,o:o+r*.25,r:r*(.92+Rr()*.16),a:Rr()*6.28,m:1});}o+=r*1.05;});
         if(Rr()<.05)RS.push({x:x+ax*(Rr()<.5?-2:2),y:y+ay*(Rr()<.5?-2:2),o:-.1,r:.5+Rr()*.3,a:Rr()*6.28,m:1});}}
@@ -2147,6 +2150,9 @@ function orderPt(o){if(o.type==='explore')return o.tgt||{x:o.ux||CARRIER.x,y:o.u
 /* ground and air reach differ for some defenders: range is against ground, airRange (when set) against aircraft */
 const airR=e=>e.airRange||e.range;
 const rVs=(e,t)=>t&&t.kind==='krok'&&e.kRange?e.kRange:t&&t.air?airR(e):e.range;
+/* how far e reaches u: against ground for a ground unit, against aircraft for an aircraft (KROK by the AA's longer reach on it, a
+   GETING only within the reach where it is seen); 0 when e cannot fire on it */
+function reachVs(e,u){if(u.air){if(!e.canAir)return 0;return u.sig?Math.min(airR(e),e.radar||u.sig):rVs(e,u);}return e.canGround?e.range:0;}
 function airThreatR(u,e){return u.kind==='krok'?rVs(e,u)+25:u.sig?Math.min(airR(e)+25,(e.radar||u.sig)+20):airR(e)+25;}
 /* spotting for ground units: a point inside air vision of the target but outside every known air threat, on our side of it */
 /* how close an aircraft must be to see e: troops in cover (airCover) only show from the air within HIDE_AIR */
@@ -2180,10 +2186,10 @@ function requestSpot(u,e){
 function safeOrbR(u,x,y,R,post){if(post==='off')return R;let c=1e9;for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;c=Math.min(c,Math.hypot(x-e.lx,y-e.ly)-airThreatR(u,e));}return clamp(Math.min(R,c-4),5,R);}
 /* SPARV exploring: the nearest unknown ground (water costs extra), never a point inside the reach of a known threat to it */
 function exploreTarget(u,o){
-  const K=G.known,g=WORLD.baseGrid,Z=o.zone,zid=WORLD.zid,RL=radioRelays();let best=null,bs=1e9,land=0,kn=0;
+  const K=G.known,g=WORLD.baseGrid,Z=o.zone,zid=WORLD.zid,NR=netReach(u.x,u.y);let best=null,bs=1e9,land=0,kn=0;
   for(let gy=1;gy<GH;gy+=3)for(let gx=1;gx<GW;gx+=3){const i=gy*GW+gx,t=g[i];if(Z!=null&&zid[i]!==Z)continue;const isL=t!==DEEP&&t!==SHAL;if(isL){land++;if(K[i])kn++;}if(K[i])continue;
     const x=gx*CELL+5,y=gy*CELL+5,sc=Math.hypot(x-u.x,y-u.y)+(isL?0:250);if(sc>=bs)continue;
-    if((o.bad||[]).some(b=>Math.hypot(b.x-x,b.y-y)<40))continue;if(airDanger(u,x,y))continue;if(!linkAt(x,y,RL).ok)continue;bs=sc;best={x,y};}
+    if((o.bad||[]).some(b=>Math.hypot(b.x-x,b.y-y)<40))continue;if(airDanger(u,x,y))continue;if(!NR||!NR[i])continue;bs=sc;best={x,y};}
   if(Z!=null)o.pct=land?kn/land:1;else G.landPct=land?kn/land:1;o.left=land-kn;return best;}
 /* a zone is named by the chart square at its middle */
 function zoneSq(z){const W=WORLD;if(!W.zMid)W.zMid={};if(!W.zMid[z]){let sx=0,sy=0,n=0;for(let i=0;i<W.zid.length;i++)if(W.zid[i]===z){const c=cellCenter(i);sx+=c.x;sy+=c.y;n++;}W.zMid[z]=n?{x:sx/n,y:sy/n}:{x:CX,y:CY};}return sq(W.zMid[z].x,W.zMid[z].y);}
@@ -2196,30 +2202,45 @@ function safePoint(u,x,y){if(!airDanger(u,x,y))return null;
 function airPath(u,tx,ty,o){
   const post=o.type==='rtb'?'def':o.post;
   const th=post==='off'?[]:G.enemies.filter(e=>!e.dead&&e.seen&&e.canAir&&!(o.type==='attack'&&o.enemy===e));
-  if(!th.length)return[{x:tx,y:ty}];
+  /* a GETING keeps inside the radio net all the way: its way round the net's gaps is planned with the threats (decided 17 okt, issue 16) */
+  const net=u.kind==='scout'&&G.ctrl!==u.id&&o.type!=='rtb'?netReach(u.x,u.y):null;
+  if(!th.length&&!net)return[{x:tx,y:ty}];
   const dz=new Uint8Array(GW*GH);
   for(const e of th){const r=airThreatR(u,e);const x0=Math.max(0,Math.floor((e.lx-r)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+r)/CELL)),y0=Math.max(0,Math.floor((e.ly-r)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+r)/CELL));
     for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++)if(Math.hypot(gx*CELL+5-e.lx,gy*CELL+5-e.ly)<r)dz[gy*GW+gx]=1;}
   const a={x:u.x,y:u.y},b={x:tx,y:ty};
-  const segOK=(p,q)=>{const d=Math.hypot(q.x-p.x,q.y-p.y),n=Math.max(1,Math.ceil(d/5));for(let k=0;k<=n;k++){const x=p.x+(q.x-p.x)*k/n,y=p.y+(q.y-p.y)*k/n;if(dz[cellIdx(x,y)]&&Math.hypot(x-a.x,y-a.y)>35&&Math.hypot(x-b.x,y-b.y)>35)return false;}return true;};
+  const segOK=(p,q)=>{const d=Math.hypot(q.x-p.x,q.y-p.y),n=Math.max(1,Math.ceil(d/5));for(let k=0;k<=n;k++){const x=p.x+(q.x-p.x)*k/n,y=p.y+(q.y-p.y)*k/n;const c=cellIdx(x,y);if(net&&!net[c]&&Math.hypot(x-a.x,y-a.y)>25&&Math.hypot(x-b.x,y-b.y)>25)return false;if(dz[c]&&Math.hypot(x-a.x,y-a.y)>35&&Math.hypot(x-b.x,y-b.y)>35)return false;}return true;};
   if(segOK(a,b))return[b];
-  const cells=astarCells(cellIdx(a.x,a.y),cellIdx(b.x,b.y),()=>true,i=>dz[i]?30:1,.8);
+  const cells=astarCells(cellIdx(a.x,a.y),cellIdx(b.x,b.y),net?i=>net[i]||Math.hypot(cellCenter(i).x-b.x,cellCenter(i).y-b.y)<25:()=>true,i=>dz[i]?30:1,.8);
   if(!cells||!cells.length)return[b];
   const pts=[a,...cells.map(cellCenter)];pts[pts.length-1]=b;
   const out=[];let i=0;while(i<pts.length-1){let j=pts.length-1;while(j>i+1&&!segOK(pts[i],pts[j]))j--;out.push(pts[j]);i=j;}
   return out;
 }
-/* GETING (SPARV until 16 okt) flies on a short radio link: it works only within RADIO.r of Birka, a ground vehicle (BÄVER, VARG) or a
-   HÖK (decided 16 okt), each of which must itself be inside the command net, so a HÖK off the coast outside it relays nothing. Not
-   other GETINGs, and no chains: the relay has to reach Birka's net on its own. */
-const RADIO={r:250};
-function radioRelays(){const L=[{x:CARRIER.x,y:CARRIER.y}];for(const v of G.units)if(!v.dead&&!v.carried&&(v.kind==='tank'||v.kind==='eng'||v.kind==='drone')&&inNet(v.x,v.y))L.push(v);return L;}
-function linkAt(x,y,L){L=L||radioRelays();let best=null,bd=1e9;for(const q of L){const d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;best=q;}}return{ok:bd<=RADIO.r,d:bd,relay:best};}
+/* GETING (SPARV until 16 okt) flies on a short radio link: it works only within reach of Birka, a ground vehicle (BÄVER, VARG), a
+   HÖK (decided 16 okt) or a taken point (decided 17 okt, issue 16), each of which must itself be inside the command net, so a HÖK off
+   the coast outside it relays nothing. Not other GETINGs, and no chains: the relay has to reach Birka's net on its own. Birka's big
+   mast reaches 550 m, halfway into the beach zone on every island measured (the median is 372 m, the farthest 535); the others 300 m
+   (both decided 17 okt, Magnus; all were 250, which did not even reach the beach on ö 4204 and 7227) */
+const RADIO={r:300,birka:550};
+function radioRelays(){const L=[{x:CARRIER.x,y:CARRIER.y,r:RADIO.birka}];for(const v of G.units)if(!v.dead&&!v.carried&&(v.kind==='tank'||v.kind==='eng'||v.kind==='drone')&&inNet(v.x,v.y))L.push({x:v.x,y:v.y,r:RADIO.r});
+  for(const q of G.relays)if(q.captured)L.push({x:q.x,y:q.y,r:RADIO.r});return L;}
+/* the link at (x,y): d is the distance past the edge of the nearest relay's reach (negative inside), f the share of its reach used */
+function linkAt(x,y,L){L=L||radioRelays();let best=null,bd=1e9,dd=0;for(const q of L){const d=Math.hypot(q.x-x,q.y-y);if(d-q.r<bd){bd=d-q.r;dd=d;best=q;}}return{ok:bd<=0,d:bd,dist:dd,f:best?dd/best.r:9,relay:best};}
+/* the cells inside the radio net, renewed at most every half second; and from a point, the part of the net a GETING can fly to
+   without leaving it (decided 17 okt, issue 16: it flies through the net, round its gaps, instead of straight out of it) */
+const NETM={t:-1,g:null,m:null};
+function netMask(){const key=RADIO.r+'/'+RADIO.birka;if(NETM.g===G&&NETM.m&&NETM.k===key&&G.time>=NETM.t&&G.time-NETM.t<.5)return NETM.m;const L=radioRelays(),m=new Uint8Array(GW*GH);
+  for(const q of L){const x0=Math.max(0,Math.floor((q.x-q.r)/CELL)),x1=Math.min(GW-1,Math.floor((q.x+q.r)/CELL)),y0=Math.max(0,Math.floor((q.y-q.r)/CELL)),y1=Math.min(GH-1,Math.floor((q.y+q.r)/CELL));
+    for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++)if(Math.hypot(gx*CELL+5-q.x,gy*CELL+5-q.y)<=q.r-6)m[gy*GW+gx]=1;}
+  NETM.t=G.time;NETM.g=G;NETM.k=key;NETM.m=m;return m;}
+function netReach(x,y){const m=netMask();let s=cellIdx(x,y);if(!m[s]){s=nearestPass(s,i=>m[i]);if(s<0)return null;}
+  const r=new Uint8Array(GW*GH),q=[s];r[s]=1;for(let h=0;h<q.length;h++){const c=q[h],cx=c%GW,cy=(c/GW)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!r[n]&&m[n]){r[n]=1;q.push(n);}}}return r;}
 /* how weak a remote unit's link is, 0 to 1, for noise in its picture and sound (presentation only, decided 16 okt): GETING by its radio
    link, MUS by its tether to its VARG; it starts at 70 % of the reach and is full at 98 % */
-function sigNoise(u){if(!u||u.dead)return 0;let f=0;if(u.kind==='scout')f=linkAt(u.x,u.y).d/RADIO.r;else if(u.kind==='mus'&&!u.carried){const v=unitById(u.owner);if(v&&!v.dead)f=Math.hypot(u.x-v.x,u.y-v.y)/ROVER.link;}return clamp((f-.7)/.28,0,1);}
+function sigNoise(u){if(!u||u.dead)return 0;let f=0;if(u.kind==='scout')f=linkAt(u.x,u.y).f;else if(u.kind==='mus'&&!u.carried){const v=unitById(u.owner);if(v&&!v.dead)f=Math.hypot(u.x-v.x,u.y-v.y)/ROVER.link;}return clamp((f-.7)/.28,0,1);}
 /* the nearest point to (x,y) that is still inside the radio net */
-function linkClamp(x,y){const L=radioRelays(),k=linkAt(x,y,L);if(k.ok)return{x,y,moved:false};const r=k.relay,d=k.d||1;return{x:r.x+(x-r.x)/d*(RADIO.r-12),y:r.y+(y-r.y)/d*(RADIO.r-12),moved:true};}
+function linkClamp(x,y){const L=radioRelays(),k=linkAt(x,y,L);if(k.ok)return{x,y,moved:false};const r=k.relay,d=k.dist||1;return{x:r.x+(x-r.x)/d*(r.r-12),y:r.y+(y-r.y)/d*(r.r-12),moved:true};}
 function move(u,dt){
   const o=u.orders[0];
   // a SPARV that has lost its link turns back towards the nearest relay until it has it again
@@ -2242,7 +2263,9 @@ function move(u,dt){
     return;
   }
   let tx,ty,arr;
-  if(u.kind==='scout'&&(o.type==='move'||o.type==='obs')&&!o.linkChk){o.linkChk=1;let p=linkClamp(o.x,o.y);if(p.moved){if(o.post!=='off'&&airDanger(u,p.x,p.y)){const q=safePoint(u,p.x,p.y);if(q&&linkAt(q.x,q.y).ok)p=q;}/* the edge of the net may fall on known air defence */o.x=p.x;o.y=p.y;say(u,'Punkten ligger utanför radioräckvidd. Stannar vid gränsen.');}}
+  if(u.kind==='scout'&&(o.type==='move'||o.type==='obs')&&!o.linkChk){o.linkChk=1;let p=linkClamp(o.x,o.y);if(p.moved){if(o.post!=='off'&&airDanger(u,p.x,p.y)){const q=safePoint(u,p.x,p.y);if(q&&linkAt(q.x,q.y).ok)p=q;}/* the edge of the net may fall on known air defence */o.x=p.x;o.y=p.y;say(u,'Punkten ligger utanför radioräckvidd. Stannar vid gränsen.');}
+    /* inside the net but on a part of it the GETING cannot reach without leaving it: it goes as near as the net allows */
+    const NR=netReach(u.x,u.y);if(NR&&!NR[cellIdx(o.x,o.y)]){const c=nearestPass(cellIdx(o.x,o.y),i=>NR[i]);if(c>=0){const q=cellCenter(c);o.x=q.x;o.y=q.y;say(u,'Radionätet når inte hela vägen dit. Flyger så nära det går.');}}}
   if(o.type==='move'){tx=o.x;ty=o.y;arr=u.air?14:10;u.state=(u.fighting&&u.target&&!u.target.isStruct?'Bekämpar '+ename(u.target)+' under förflyttning mot ':'På väg till ')+sq(tx,ty)+' · '+POST[o.post].toLowerCase();}
   else if(o.type==='explore'){o.ux=u.x;o.uy=u.y;
     if(o.tgt&&(G.known[cellIdx(o.tgt.x,o.tgt.y)]||airDanger(u,o.tgt.x,o.tgt.y)||G.time>o.tgtT)){if(G.time>o.tgtT&&!G.known[cellIdx(o.tgt.x,o.tgt.y)])(o.bad||(o.bad=[])).push(o.tgt);o.tgt=null;u.path=null;}
@@ -2345,7 +2368,11 @@ function move(u,dt){
   let p=u.path[0];
   while(u.path.length>1&&Math.hypot(p.x-u.x,p.y-u.y)<4){u.path.shift();p=u.path[0];}
   const pd=Math.hypot(p.x-u.x,p.y-u.y);
-  if(u.path.length===1&&pd<3){if(o.type==='move'){u.orders.shift();u.path=null;}else u.path=null;return;}
+  /* BÄVER's work orders: short of the order's own arrival radius the last leg is driven to its very end (fixed 17 okt: it stopped 3 m
+     short of the path's end, so BÄVER stood 1.5 to 3 m from its spot at a barrier, or 16.6 m from a shed whose cell it cannot enter
+     with 16 m to reach, and never started the work). Other units keep stopping 3 m short, where they stood before */
+  const work=u.kind==='eng'&&(o.type==='clear'||o.type==='demolish'||o.type==='capture'||o.type==='demine'||o.type==='repair');
+  if(u.path.length===1&&pd<(work&&d>arr?.5:3)){if(o.type==='move'){u.orders.shift();u.path=null;}else u.path=null;return;}
   const a=Math.atan2(p.y-u.y,p.x-u.x);
   u.heading=turnTo(u.heading,a,(u.air?3:2.6)*dt);
   let sp=u.speed;
@@ -3281,7 +3308,7 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   ctx.restore();}
 function drawMap(ctx,w,h,small){
   const s0=fitS(w,h),VB=viewBox();let s=s0,ox=w/2-VB.cx*s,oy=h/2-VB.cy*s;
-  if(!small&&(mv.z>1.001||mv.free)){s=s0*mv.z;const hw=w/(2*s),hh=h/(2*s);mv.cx=WW>2*hw?clamp(mv.cx,hw,WW-hw):WW/2;mv.cy=WH>2*hh?clamp(mv.cy,hh,WH-hh):WH/2;ox=w/2-mv.cx*s;oy=h/2-mv.cy*s;}
+  if(mv.z>1.001||mv.free){s=s0*mv.z;const hw=w/(2*s),hh=h/(2*s);mv.cx=WW>2*hw?clamp(mv.cx,hw,WW-hw):WW/2;mv.cy=WH>2*hh?clamp(mv.cy,hh,WH-hh):WH/2;ox=w/2-mv.cx*s;oy=h/2-mv.cy*s;}
   const k=1/s;
   mapStatic(ctx,w,h,s,ox,oy,k);/* paper, chart, roads, marks, villas, jetties and walls: drawn once per view, then copied */
   ctx.save();ctx.translate(ox,oy);ctx.scale(s,s);ctx.lineJoin='round';
@@ -3334,7 +3361,7 @@ function drawMap(ctx,w,h,small){
       for(const c of N.C){o.beginPath();o.arc(c.x,c.y,c.r,0,TAU);o.stroke();}
       o.globalCompositeOperation='destination-out';o.fillStyle='#000';o.beginPath();for(const c of N.C){o.moveTo(c.x+c.r,c.y);o.arc(c.x,c.y,c.r,0,TAU);}o.fill();o.globalCompositeOperation='source-over';}
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(oc,0,0);ctx.restore();}
-  if(!small&&selUnits().some(v=>v.kind==='scout')){const L=radioRelays();ctx.save();ctx.fillStyle='rgba(40,120,200,.07)';ctx.beginPath();for(const q of L){ctx.moveTo(q.x+RADIO.r,q.y);ctx.arc(q.x,q.y,RADIO.r,0,TAU);}ctx.fill();ctx.setLineDash([6*k,5*k]);ctx.strokeStyle='rgba(40,110,190,.45)';ctx.lineWidth=1.2*k;for(const q of L){ctx.beginPath();ctx.arc(q.x,q.y,RADIO.r,0,TAU);ctx.stroke();}ctx.restore();}
+  if(!small&&selUnits().some(v=>v.kind==='scout')){const L=radioRelays();ctx.save();ctx.fillStyle='rgba(40,120,200,.07)';ctx.beginPath();for(const q of L){ctx.moveTo(q.x+q.r,q.y);ctx.arc(q.x,q.y,q.r,0,TAU);}ctx.fill();ctx.setLineDash([6*k,5*k]);ctx.strokeStyle='rgba(40,110,190,.45)';ctx.lineWidth=1.2*k;for(const q of L){ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,TAU);ctx.stroke();}ctx.restore();}
   for(const m of G.mines||[]){if(!m.found||m.cleared)continue;ctx.save();ctx.lineWidth=2.4*k;ctx.fillStyle='rgba(242,194,0,.32)';ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,TAU);ctx.fill();
     ctx.setLineDash([4*k,4*k]);ctx.strokeStyle='#161616';ctx.stroke();ctx.lineDashOffset=4*k;ctx.strokeStyle='#f2c200';ctx.stroke();ctx.restore();
     ctx.fillStyle='#4a3a00';ctx.font=`700 ${9.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('MINOR '+m.id,m.x,m.y-m.r-3*k);
@@ -3342,7 +3369,7 @@ function drawMap(ctx,w,h,small){
   if(G.unlockFx&&G.time-G.unlockFx.t<5){const b=G.barriers.find(x=>x.id===G.unlockFx.b),a=(G.time-G.unlockFx.t)/5;if(b){ctx.strokeStyle=`rgba(43,117,80,${1-a})`;ctx.lineWidth=4*k;ctx.beginPath();ctx.arc(b.x,b.y,20+a*260,0,TAU);ctx.stroke();
     ctx.fillStyle=`rgba(43,117,80,${Math.min(1,2-2*a)})`;ctx.font=`700 ${12*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('SEKTOR ÖPPNAD',b.x,b.y-30*k);}}
   // buildings
-  const zoomed=!small&&mv.z>=1.9,f=Math.max(1,k*1.05);
+  const zoomed=mv.z>=1.9,f=Math.max(1,k*1.05);
   for(const st of G.structs){
     if(st.dead||!isKnown(st.x,st.y))continue;
     ctx.save();ctx.translate(st.x,st.y);ctx.globalAlpha=st.hp<st.maxhp?.55+.45*st.hp/st.maxhp:1;
@@ -3367,6 +3394,13 @@ function drawMap(ctx,w,h,small){
     if(zoomed){ctx.fillStyle='rgba(138,101,16,.95)';ctx.font=`700 ${8.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('+'+wr.value,wr.x,wr.y+6*f);}
   }
   ctx.globalAlpha=1;
+  /* the threat picture (decided 17 okt, Magnus): with a unit selected, every known enemy's reach against that unit is shaded, so the
+     zones its routes keep out of are on the chart: against ground for VARG, BÄVER and MUS, against aircraft for HÖK, GETING and KROK
+     (KROK by the AA's longer reach on the big helicopter, GETING only within the reach where it is seen) */
+  {const su=unitById(G.sel)||selUnits()[0];if(su&&!su.dead){ctx.save();ctx.fillStyle='rgba(194,38,111,.07)';ctx.strokeStyle='rgba(194,38,111,.38)';ctx.lineWidth=1*k;ctx.setLineDash([3*k,4*k]);
+    for(const e of G.enemies){if(!e.seen||e.dead)continue;const r=reachVs(e,su);if(!r)continue;ctx.globalAlpha=e.visibleNow?1:e.stale!=null?Math.max(.2,1-(G.time-e.stale)/STALE_FORGET):.7;
+      ctx.beginPath();ctx.arc(e.lx,e.ly,r,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.restore();}}
   // enemies
   for(const e of G.enemies){
     if(!e.seen||e.dead)continue;
@@ -3380,6 +3414,18 @@ function drawMap(ctx,w,h,small){
     if(e.hp<e.maxhp){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x-9*k,y+11*k,18*k,3*k);ctx.fillStyle=MAG;ctx.fillRect(x-9*k,y+11*k,18*k*e.hp/e.maxhp,3*k);}
     ctx.globalAlpha=1;
   }
+  /* pointing at a unit on the chart shows its reach (decided 17 okt, Magnus): an enemy's against ground (solid) and against aircraft
+     (dashed), one of ours its weapon's reach (solid) and how far it sees (dashed) */
+  if(HOV.el===mapC&&HOV.pk){const pk=HOV.pk,ring=(x,y,r,col,dash,txt,dy)=>{ctx.strokeStyle=col;ctx.lineWidth=2*k;ctx.setLineDash(dash?[6*k,4*k]:[]);ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.stroke();ctx.setLineDash([]);
+      ctx.font=`700 ${8.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.lineWidth=3*k;ctx.strokeStyle=PAPER;ctx.strokeText(txt,x,y-r-2*k+(dy||0)*k);ctx.fillStyle=col;ctx.fillText(txt,x,y-r-2*k+(dy||0)*k);};
+    ctx.save();
+    if(pk.enemy&&pk.enemy.seen&&!pk.enemy.dead){const e=pk.enemy,x=e.lx,y=e.ly,ar=e.canAir?airR(e):0;
+      if(e.canGround)ring(x,y,e.range,MAG,false,'mark '+e.range+' m');
+      if(ar&&(!e.canGround||ar!==e.range))ring(x,y,ar,MAG,true,'flyg '+ar+' m',ar===e.range?-10:0);
+      if(e.kRange)ring(x,y,e.kRange,MAG,true,'KROK '+e.kRange+' m');}
+    else if(pk.unit&&!pk.unit.dead){const u=pk.unit;if(u.range)ring(u.x,u.y,u.range,u.ink||NAVY,false,'vapen '+Math.round(u.range)+' m');
+      if(u.vision&&u.vision!==u.range)ring(u.x,u.y,u.vision,u.ink||NAVY,true,'sikt '+Math.round(u.vision)+' m');}
+    ctx.restore();}
   drawMarks2D(ctx,k);
   // order legs, styled per posture
   for(const u of G.units){
@@ -5047,7 +5093,7 @@ function onDown(e){
   const kind=viewKind(e.currentTarget);
   if(G.over)return;
   if(!$('wheel').hidden){closeWheel();ptr=null;return;}
-  if(e.button===2&&kind==='map'&&isMain('map')){if(ptr)clearTimeout(ptr.lp);ptr=null;if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}rpan={id:e.pointerId,sx:e.offsetX,sy:e.offsetY,cx:mv.cx,cy:mv.cy,moved:false};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}
+  if(e.button===2&&kind==='map'){if(ptr)clearTimeout(ptr.lp);ptr=null;if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}rpan={id:e.pointerId,sx:e.offsetX,sy:e.offsetY,cx:mv.cx,cy:mv.cy,moved:false};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}
   if(kind==='map'){pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pts.size===2){if(ptr)clearTimeout(ptr.lp);ptr=null;G.box=null;G.drag=null;const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:mv.z,wm:{x:(mx-mapX.ox)/mapX.s,y:(my-mapX.oy)/mapX.s}};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}}
   if(e.button===2)return;
@@ -5098,7 +5144,7 @@ function onUp(e){
 for(const el of[mapC,glC]){
   el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);
   el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;G.joy=null;pts.delete(e.pointerId);pinch=null;});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on)return;const kind=viewKind(el);if(kind==='map'&&isMain('map'))return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
   el.addEventListener('pointermove',e=>{HOV.el=el;HOV.x=e.offsetX;HOV.y=e.offsetY;const t=performance.now();if(t-HOV.t>70){HOV.t=t;HOV.pk=G&&!TITLE.on?pick(viewKind(el),e.offsetX,e.offsetY):null;}});
   el.addEventListener('pointerleave',()=>{if(HOV.el===el){HOV.el=null;HOV.pk=null;}});
 }
@@ -5108,7 +5154,7 @@ document.addEventListener('pointerlockchange',()=>{G.mlook=document.pointerLockE
 document.addEventListener('contextmenu',e=>{if(!TITLE.on&&e.target.closest&&e.target.closest('#paneMap,#paneCam,#feeds,#roster,.wheel'))e.preventDefault();});
 document.addEventListener('mousemove',e=>{if(!G.mlook||!G.ctrl)return;const u=unitById(G.ctrl);if(u&&u.kind==='drone'){u.heading=angWrap(u.heading+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.6,.4);return;}if(!u||u.kind!=='tank')return;u.turret=angWrap(u.turret+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.3,.35);});
 window.addEventListener('mouseup',()=>{G.firing=false;});
-mapC.addEventListener('wheel',e=>{if(!isMain('map'))return;e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0015));},{passive:false});
+mapC.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0015));},{passive:false});
 $('zIn').addEventListener('click',()=>zoomAt(size.map.w/2,size.map.h/2,1.5));
 $('zOut').addEventListener('click',()=>zoomAt(size.map.w/2,size.map.h/2,1/1.5));
 $('zFit').addEventListener('click',()=>{mv.z=1;mv.free=false;mv.cx=viewBox().cx;mv.cy=viewBox().cy;});
