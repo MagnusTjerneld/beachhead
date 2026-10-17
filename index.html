@@ -4467,10 +4467,15 @@ function mkWaterMat(){
 function setWaterDepth(){
   const W=WORLD,nx=W.SX+1,ny=W.SY+1,U=R3.water.material.userData.U,data=new Uint8Array(nx*ny*4);
   /* ice fills the coast's indents first (decided 17 okt, Magnus): for each point of water, the smallest radius R at which a rounding of
-     the coastline (a morphological closing of the land, skerries included) covers it. A bay 100 m wide is covered at R = 50, a sound
+     the coastline (a morphological closing of the land, small holms and skerries left out) covers it. A bay 100 m wide is covered at R = 50, a sound
      between the island and a holm at half its width, a straight coast never. Packed into the green channel as R/200 (255: never) */
   const land=new Uint8Array(nx*ny),st=WW/W.SX,dg=st*Math.SQRT2,CR=new Float32Array(nx*ny).fill(1e9);
-  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,x=i*st,y=j*st;land[k]=W.ev[k]>0||(W.isletMask&&W.isletMask[cellIdx(x,y)])?1:0;}
+  for(let k=0;k<nx*ny;k++)land[k]=W.ev[k]>0?1:0;
+  /* small holms and the skerries do not count (fixed 17 okt, Magnus: the ice reached out in a wedge to a little holm): only land
+     of about a hectare or more, so ice closes bays and sounds of the island and the bigger holms, never a bridge to a rock */
+  {const seen=new Uint8Array(nx*ny);for(let k0=0;k0<nx*ny;k0++){if(!land[k0]||seen[k0])continue;const C=[k0];seen[k0]=1;
+    for(let h=0;h<C.length;h++){const k=C[h],i=k%nx,j=(k/nx)|0;for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const ii=i+di,jj=j+dj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(land[q]&&!seen[q]){seen[q]=1;C.push(q);}}}
+    if(C.length*st*st<10000)for(const k of C)land[k]=0;}}
   const cham=src=>{const D=new Float32Array(nx*ny);for(let k=0;k<nx*ny;k++)D[k]=src(k)?0:1e9;
     for(let dir=0;dir<2;dir++){const j0=dir?ny-1:0,j1=dir?-1:ny,dj=dir?-1:1,i0=dir?nx-1:0,i1=dir?-1:nx,di=dir?-1:1;
       for(let j=j0;j!==j1;j+=dj)for(let i=i0;i!==i1;i+=di){const k=j*nx+i;for(const[oi,oj,c]of[[-di,0,st],[0,-dj,st],[-di,-dj,dg],[di,-dj,dg]]){const ii=i+oi,jj=j+oj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(D[q]+c<D[k])D[k]=D[q]+c;}}}return D;};
