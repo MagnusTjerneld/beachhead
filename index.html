@@ -342,6 +342,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen skyddar den. Det du skjuter på blir gruppens mål i 8 s efter senaste skottet: följarna bekämpar det när det är inom räckhåll, och HÖK på Offensiv anfaller det. V och H tar i första hand gruppens egna VARG och HÖK. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. KROK har två hållningar. Defensiv (standard) håller den vid liv: den flyger inte in i kända hot, sätter bara ned på en säkrad plats och drar sig tillbaka under halva skrovet. Offensiv följer dina egna order även in i hot och okänt område och avbryter inte. Båda väljer den säkraste kända vägen. När BÄVER själv ber om transport landar KROK bara på en säkrad plats: spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, GETING först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
+      <li><span class="em">Hotbild och räckvidd:</span> med en enhet vald tonas varje känd fiendes räckvidd mot just den enheten på sjökortet: mot mark för VARG, BÄVER och MUS, mot flyg för HÖK, GETING och KROK. Det är zonerna enhetens vägval håller sig ifrån. Pekar du på en fiende visas dess räckvidd mot mark (heldragen) och mot flyg (streckad), pekar du på en egen enhet dess vapenräckvidd och sikt.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, kön syns under enhetens namn och varje order kan tas bort.</li>
@@ -2148,6 +2149,9 @@ function orderPt(o){if(o.type==='explore')return o.tgt||{x:o.ux||CARRIER.x,y:o.u
 /* ground and air reach differ for some defenders: range is against ground, airRange (when set) against aircraft */
 const airR=e=>e.airRange||e.range;
 const rVs=(e,t)=>t&&t.kind==='krok'&&e.kRange?e.kRange:t&&t.air?airR(e):e.range;
+/* how far e reaches u: against ground for a ground unit, against aircraft for an aircraft (KROK by the AA's longer reach on it, a
+   GETING only within the reach where it is seen); 0 when e cannot fire on it */
+function reachVs(e,u){if(u.air){if(!e.canAir)return 0;return u.sig?Math.min(airR(e),e.radar||u.sig):rVs(e,u);}return e.canGround?e.range:0;}
 function airThreatR(u,e){return u.kind==='krok'?rVs(e,u)+25:u.sig?Math.min(airR(e)+25,(e.radar||u.sig)+20):airR(e)+25;}
 /* spotting for ground units: a point inside air vision of the target but outside every known air threat, on our side of it */
 /* how close an aircraft must be to see e: troops in cover (airCover) only show from the air within HIDE_AIR */
@@ -3389,6 +3393,13 @@ function drawMap(ctx,w,h,small){
     if(zoomed){ctx.fillStyle='rgba(138,101,16,.95)';ctx.font=`700 ${8.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('+'+wr.value,wr.x,wr.y+6*f);}
   }
   ctx.globalAlpha=1;
+  /* the threat picture (decided 17 okt, Magnus): with a unit selected, every known enemy's reach against that unit is shaded, so the
+     zones its routes keep out of are on the chart: against ground for VARG, BÄVER and MUS, against aircraft for HÖK, GETING and KROK
+     (KROK by the AA's longer reach on the big helicopter, GETING only within the reach where it is seen) */
+  {const su=unitById(G.sel)||selUnits()[0];if(su&&!su.dead){ctx.save();ctx.fillStyle='rgba(194,38,111,.07)';ctx.strokeStyle='rgba(194,38,111,.38)';ctx.lineWidth=1*k;ctx.setLineDash([3*k,4*k]);
+    for(const e of G.enemies){if(!e.seen||e.dead)continue;const r=reachVs(e,su);if(!r)continue;ctx.globalAlpha=e.visibleNow?1:e.stale!=null?Math.max(.2,1-(G.time-e.stale)/STALE_FORGET):.7;
+      ctx.beginPath();ctx.arc(e.lx,e.ly,r,0,TAU);ctx.fill();ctx.stroke();}
+    ctx.restore();}}
   // enemies
   for(const e of G.enemies){
     if(!e.seen||e.dead)continue;
@@ -3402,6 +3413,18 @@ function drawMap(ctx,w,h,small){
     if(e.hp<e.maxhp){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x-9*k,y+11*k,18*k,3*k);ctx.fillStyle=MAG;ctx.fillRect(x-9*k,y+11*k,18*k*e.hp/e.maxhp,3*k);}
     ctx.globalAlpha=1;
   }
+  /* pointing at a unit on the chart shows its reach (decided 17 okt, Magnus): an enemy's against ground (solid) and against aircraft
+     (dashed), one of ours its weapon's reach (solid) and how far it sees (dashed) */
+  if(HOV.el===mapC&&HOV.pk){const pk=HOV.pk,ring=(x,y,r,col,dash,txt,dy)=>{ctx.strokeStyle=col;ctx.lineWidth=2*k;ctx.setLineDash(dash?[6*k,4*k]:[]);ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.stroke();ctx.setLineDash([]);
+      ctx.font=`700 ${8.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.lineWidth=3*k;ctx.strokeStyle=PAPER;ctx.strokeText(txt,x,y-r-2*k+(dy||0)*k);ctx.fillStyle=col;ctx.fillText(txt,x,y-r-2*k+(dy||0)*k);};
+    ctx.save();
+    if(pk.enemy&&pk.enemy.seen&&!pk.enemy.dead){const e=pk.enemy,x=e.lx,y=e.ly,ar=e.canAir?airR(e):0;
+      if(e.canGround)ring(x,y,e.range,MAG,false,'mark '+e.range+' m');
+      if(ar&&(!e.canGround||ar!==e.range))ring(x,y,ar,MAG,true,'flyg '+ar+' m',ar===e.range?-10:0);
+      if(e.kRange)ring(x,y,e.kRange,MAG,true,'KROK '+e.kRange+' m');}
+    else if(pk.unit&&!pk.unit.dead){const u=pk.unit;if(u.range)ring(u.x,u.y,u.range,u.ink||NAVY,false,'vapen '+Math.round(u.range)+' m');
+      if(u.vision&&u.vision!==u.range)ring(u.x,u.y,u.vision,u.ink||NAVY,true,'sikt '+Math.round(u.vision)+' m');}
+    ctx.restore();}
   drawMarks2D(ctx,k);
   // order legs, styled per posture
   for(const u of G.units){
