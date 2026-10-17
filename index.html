@@ -90,7 +90,6 @@ button:disabled{opacity:.45;cursor:default}
 #cHud{pointer-events:none}
 .zoom{position:absolute;right:8px;bottom:8px;display:flex;gap:4px;z-index:2}
 .zoom button{background:rgba(17,26,34,.85);color:var(--ink);border:1px solid var(--line);border-radius:3px;min-width:30px;height:28px;font-weight:700;font-size:14px;padding:0 8px}
-#subSlot .zoom{display:none}
 .vlabel{position:absolute;left:8px;top:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;background:rgba(17,26,34,.82);color:var(--ink);padding:3px 7px;border-radius:2px;pointer-events:none;z-index:2}
 #subSlot{aspect-ratio:4/3;flex:none}
 .sgrip{cursor:col-resize;position:relative;touch-action:none;outline:none}
@@ -330,7 +329,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Låsta sektorer:</span> det som ligger bakom en oröjd spärr är streckat på sjökortet och märkt LÅSER SEKTOR. Dit når ingen försörjning: fordon som lyfts över spärren får ingen service, KROK bärgar inget där och en tagen verkstad eller ett fältvarv där fungerar inte förrän spärren är sprängd. Lufttransport tar dig in, men bara BÄVER öppnar vägen.</li>
       <li><span class="em">Minor:</span> fienden har minerat vägar genom trånga passager. Minorna är nedgrävda och syns inte från luften. Bara BÄVER hittar dem, med sin detektor på 48 m; en VARG märker dem först när den kör på en och tar svår skada. Skicka BÄVER före genom trånga passager. Ett upptäckt fält är gult på sjökortet, spärrar marken och röjs av BÄVER.</li>
       <li><span class="em">Fienden</span> har bunkrar, luftvärn (bara mot luftmål), robotskyttar med bärbart luftvärn (120 m, kamouflerade, spridda över hela ön utom vid stranden; två robotar i följd och sedan cirka 20 s omladdning medan laget byter plats; ser du dem först med HÖK går de att undvika, VARG slår ut dem lätt), infanteri, pansarvärn, lätt pansar och stridsvagnar. Rörliga förband rycker ut när något i närheten anfalls.</li>
-      <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer.</li>
+      <li><span class="em">Order:</span> välj enhet, klicka på kartan eller i kameran. Dra från enheten eller dess sista punkt för att lägga till waypoints. Högerklicka för orderhjulet. Dra med höger musknapp nedtryckt för att panorera sjökortet, scrolla för att zooma, "Hela" återställer. Det gäller också när sjökortet är den lilla vyn; båda vyerna följer samma zoom och mittpunkt.</li>
       <li><span class="em">Hållning per punkt:</span> Offensiv bekämpar allt, Defensiv svarar på eld, Dold undviker vägar och kända fiender, Observera stannar och rapporterar.</li>
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
@@ -1262,9 +1261,12 @@ function buildWorldTry(seed,tryK){
     // the wall itself: columns of five courses along the line between the two zones, about 1.5 m apart, broken at the passes;
     // across is the direction between the two zones' centres as the zones are warped
     const sd=(x,y,a,b)=>{const w=warp(x,y,V.seed),A=V.zones[a],B=V.zones[b];return Math.hypot(w.x-B.x,w.y-B.y)-Math.hypot(w.x-A.x,w.y-A.y);};
+    /* the wall stops at the crest of the coast, where vehicles cannot get past it anyway (decided 17 okt, Magnus, ö 4204: it ran over
+       the crest, down the granite slope and into the water): no wall on the coast slope or over the water in the game's grid */
+    const wallNeed=(x,y)=>{const t=W.baseGrid[cellIdx(x,y)];return t!==DEEP&&t!==SHAL&&!(W.hall&&W.hall[vk(x,y)]);};
     const CO=[{n:3,w:.9,r:.6,v:.18},{n:2,w:.45,r:.5,v:.14},{n:2,w:.25,r:.42,v:.1},{n:1,w:0,r:.34,v:.08}],st2=WW/SX;
     for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>st2*1.5||!isWall(rP[k]))continue;const x0=(k%nx)*WW/SX,y0=((k/nx)|0)*WH/SY;
-      for(let a=0;a<6;a++)for(let b=0;b<6;b++){const x=x0-st2/2+(a+.5)*st2/6,y=y0-st2/2+(b+.5)*st2/6,B=bank(x,y);if(!B||B.Z.s>.65||B.f>.05||!clear(x,y))continue;
+      for(let a=0;a<6;a++)for(let b=0;b<6;b++){const x=x0-st2/2+(a+.5)*st2/6,y=y0-st2/2+(b+.5)*st2/6,B=bank(x,y);if(!B||B.Z.s>.65||B.f>.05||!clear(x,y)||!wallNeed(x,y))continue;
         const gx=(sd(x+1,y,B.Z.i1,B.Z.i2)-sd(x-1,y,B.Z.i1,B.Z.i2)),gy=(sd(x,y+1,B.Z.i1,B.Z.i2)-sd(x,y-1,B.Z.i1,B.Z.i2)),gl=Math.hypot(gx,gy)||1,ax=gx/gl,ay=gy/gl;
         let o=0;CO.forEach((c,ci)=>{const r=c.r+Rr()*c.v;for(let n=0;n<c.n;n++){const off=c.n>1?-c.w+2*c.w*n/(c.n-1):0;RS.push({x:x+ax*off+(Rr()-.5)*.4,y:y+ay*off+(Rr()-.5)*.4,o:o+r*.25,r:r*(.92+Rr()*.16),a:Rr()*6.28,m:1});}o+=r*1.05;});
         if(Rr()<.05)RS.push({x:x+ax*(Rr()<.5?-2:2),y:y+ay*(Rr()<.5?-2:2),o:-.1,r:.5+Rr()*.3,a:Rr()*6.28,m:1});}}
@@ -3280,7 +3282,7 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   ctx.restore();}
 function drawMap(ctx,w,h,small){
   const s0=fitS(w,h),VB=viewBox();let s=s0,ox=w/2-VB.cx*s,oy=h/2-VB.cy*s;
-  if(!small&&(mv.z>1.001||mv.free)){s=s0*mv.z;const hw=w/(2*s),hh=h/(2*s);mv.cx=WW>2*hw?clamp(mv.cx,hw,WW-hw):WW/2;mv.cy=WH>2*hh?clamp(mv.cy,hh,WH-hh):WH/2;ox=w/2-mv.cx*s;oy=h/2-mv.cy*s;}
+  if(mv.z>1.001||mv.free){s=s0*mv.z;const hw=w/(2*s),hh=h/(2*s);mv.cx=WW>2*hw?clamp(mv.cx,hw,WW-hw):WW/2;mv.cy=WH>2*hh?clamp(mv.cy,hh,WH-hh):WH/2;ox=w/2-mv.cx*s;oy=h/2-mv.cy*s;}
   const k=1/s;
   mapStatic(ctx,w,h,s,ox,oy,k);/* paper, chart, roads, marks, villas, jetties and walls: drawn once per view, then copied */
   ctx.save();ctx.translate(ox,oy);ctx.scale(s,s);ctx.lineJoin='round';
@@ -3341,7 +3343,7 @@ function drawMap(ctx,w,h,small){
   if(G.unlockFx&&G.time-G.unlockFx.t<5){const b=G.barriers.find(x=>x.id===G.unlockFx.b),a=(G.time-G.unlockFx.t)/5;if(b){ctx.strokeStyle=`rgba(43,117,80,${1-a})`;ctx.lineWidth=4*k;ctx.beginPath();ctx.arc(b.x,b.y,20+a*260,0,TAU);ctx.stroke();
     ctx.fillStyle=`rgba(43,117,80,${Math.min(1,2-2*a)})`;ctx.font=`700 ${12*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('SEKTOR ÖPPNAD',b.x,b.y-30*k);}}
   // buildings
-  const zoomed=!small&&mv.z>=1.9,f=Math.max(1,k*1.05);
+  const zoomed=mv.z>=1.9,f=Math.max(1,k*1.05);
   for(const st of G.structs){
     if(st.dead||!isKnown(st.x,st.y))continue;
     ctx.save();ctx.translate(st.x,st.y);ctx.globalAlpha=st.hp<st.maxhp?.55+.45*st.hp/st.maxhp:1;
@@ -5046,7 +5048,7 @@ function onDown(e){
   const kind=viewKind(e.currentTarget);
   if(G.over)return;
   if(!$('wheel').hidden){closeWheel();ptr=null;return;}
-  if(e.button===2&&kind==='map'&&isMain('map')){if(ptr)clearTimeout(ptr.lp);ptr=null;if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}rpan={id:e.pointerId,sx:e.offsetX,sy:e.offsetY,cx:mv.cx,cy:mv.cy,moved:false};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}
+  if(e.button===2&&kind==='map'){if(ptr)clearTimeout(ptr.lp);ptr=null;if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;mv.cy=v.cy;}rpan={id:e.pointerId,sx:e.offsetX,sy:e.offsetY,cx:mv.cx,cy:mv.cy,moved:false};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}
   if(kind==='map'){pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pts.size===2){if(ptr)clearTimeout(ptr.lp);ptr=null;G.box=null;G.drag=null;const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:mv.z,wm:{x:(mx-mapX.ox)/mapX.s,y:(my-mapX.oy)/mapX.s}};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}}
   if(e.button===2)return;
@@ -5097,7 +5099,7 @@ function onUp(e){
 for(const el of[mapC,glC]){
   el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);
   el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;G.joy=null;pts.delete(e.pointerId);pinch=null;});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on)return;const kind=viewKind(el);if(kind==='map'&&isMain('map'))return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
   el.addEventListener('pointermove',e=>{HOV.el=el;HOV.x=e.offsetX;HOV.y=e.offsetY;const t=performance.now();if(t-HOV.t>70){HOV.t=t;HOV.pk=G&&!TITLE.on?pick(viewKind(el),e.offsetX,e.offsetY):null;}});
   el.addEventListener('pointerleave',()=>{if(HOV.el===el){HOV.el=null;HOV.pk=null;}});
 }
@@ -5107,7 +5109,7 @@ document.addEventListener('pointerlockchange',()=>{G.mlook=document.pointerLockE
 document.addEventListener('contextmenu',e=>{if(!TITLE.on&&e.target.closest&&e.target.closest('#paneMap,#paneCam,#feeds,#roster,.wheel'))e.preventDefault();});
 document.addEventListener('mousemove',e=>{if(!G.mlook||!G.ctrl)return;const u=unitById(G.ctrl);if(u&&u.kind==='drone'){u.heading=angWrap(u.heading+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.6,.4);return;}if(!u||u.kind!=='tank')return;u.turret=angWrap(u.turret+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.3,.35);});
 window.addEventListener('mouseup',()=>{G.firing=false;});
-mapC.addEventListener('wheel',e=>{if(!isMain('map'))return;e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0015));},{passive:false});
+mapC.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0015));},{passive:false});
 $('zIn').addEventListener('click',()=>zoomAt(size.map.w/2,size.map.h/2,1.5));
 $('zOut').addEventListener('click',()=>zoomAt(size.map.w/2,size.map.h/2,1/1.5));
 $('zFit').addEventListener('click',()=>{mv.z=1;mv.free=false;mv.cx=viewBox().cx;mv.cy=viewBox().cy;});
