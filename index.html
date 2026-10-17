@@ -5326,7 +5326,7 @@ confirmBtn('bBench',()=>{setMenu(false);benchStart();});
 /* the trailer from the settings, in the page itself (a page in a frame cannot always be reopened with ?trailer): the same start as a
    visit with ?trailer, on Sorkholmen; the game's own music is cut off, the film plays its own edit. Back to the game is a reload. */
 function trailerStart(){if(BENCH.on||FILM.on)return;setMenu(false);if(MUS.g)MUS.g.disconnect();clearTimeout(MUS.timer);MUS.timer=null;
-  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
+  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */TITLE.phase='press';showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
 confirmBtn('bTrailer',trailerStart);
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
 const niSeed=$('niSeed'),niTime=$('niTime'),niDate=$('niDate'),niName=$('niName'),niDoc=$('niDoc');
@@ -6019,7 +6019,7 @@ function titleDrag(ev){const M=TITLE.man;if(!M||!M.active)return;const dx=ev.cli
 function titleLetGo(){const M=TITLE.man;if(!M||!M.active)return;M.active=false;M.relT=TITLE.t;M.dragged=M.moved>4;$('title').style.cursor='';}
 
 function titleTick(dtr){
-  if(!TITLE.on)return;
+  if(!TITLE.on||FILM.on)return;/* the film draws its own logo: from the settings the intro had run, and this drew the logo whole over the film's and lit the menu (17 okt) */
   if(TITLE.phase!=='press'){TITLE.logoT=Math.max(TITLE.logoT,(performance.now()-TITLE.t0)/1000+TITLE.skip);drawLogo(TITLE.logoT);if(TITLE.logoT>2.6&&$('tMenu').hidden){$('tMenu').hidden=false;}}
 }
 function titleWake(skip){
