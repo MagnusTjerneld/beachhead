@@ -6115,7 +6115,7 @@ const FILM_MUS=[{at:0,src:0,len:fk(13)},{at:fk(13),src:fk(65),len:213.6-fk(65)}]
    ramps, 'tail' lets the outgoing part ring on for len under the incoming one, which comes in full on the downbeat, and 'x' is an
    equal-power crossfade over len that ends on the downbeat (the incoming part starts len earlier in the source). The downbeats stay
    where they are in every case, since the cuts follow fk(). */
-const FILM_XF={kind:'cut',len:FILM_BAR/4};
+const FILM_XF={kind:'x',len:FILM_BAR/4};
 function filmMusic(c,dest,t0,vol,buf,xf){xf=xf||FILM_XF;const L=xf.len,n=64,ep=f=>Float32Array.from({length:n},(_,k)=>f(k/(n-1)*PI/2)*vol);
   return FILM_MUS.map((m,i)=>{const s=c.createBufferSource();s.buffer=buf;const g=c.createGain();s.connect(g);g.connect(dest);let a=t0+m.at,src=m.src,len=m.len;
     if(!i)g.gain.setValueAtTime(vol,a);else if(xf.kind==='x'){a-=L;src-=L;len+=L;g.gain.setValueCurveAtTime(ep(Math.sin),a,L);}else{g.gain.setValueAtTime(0,a);g.gain.linearRampToValueAtTime(vol,a+.012);}
