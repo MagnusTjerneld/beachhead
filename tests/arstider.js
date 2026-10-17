@@ -5,7 +5,7 @@
 //   node tests/arstider.js 9052 ut/arstider                 another island; the files are named <ut>_strimlor.png and <ut>_<season>.png
 //   node tests/arstider.js 2024 ut --cam 471,150,704 --look 836,0,713 --klocka 13:00 --moln 15 --bredd 3402
 //   --datum var=04-22,sommar=07-02,host=10-16,vinter=02-15     other days
-// About 15 s an image at full size in swiftshader; three.js r128 from tests/node_modules/three (npm install in tests) or THREE_JS.
+// BH_HTML=<file> renders another copy of the game (a mockup). About 15 s an image at full size in swiftshader; three.js r128 from tests/node_modules/three (npm install in tests) or THREE_JS.
 const fs=require('fs'),path=require('path'),{execSync}=require('child_process');
 const {chromium}=require(execSync('npm root -g').toString().trim()+'/playwright');
 const arg=process.argv.slice(2),pos=arg.filter((a,i)=>!a.startsWith('--')&&!(i>0&&arg[i-1].startsWith('--'))),opt=k=>{const i=arg.indexOf('--'+k);return i>=0?arg[i+1]:null;};
@@ -22,7 +22,7 @@ const doyOf=(m,d)=>Math.round((Date.UTC(2032,m-1,d)-Date.UTC(2032,0,1))/864e5)+1
   // the camera pane is about 0.87 by 0.93 of the window: size the window so the picture comes out bredd wide
   const p=await b.newPage({viewport:{width:Math.round(bredd/.8723),height:Math.round(bredd/.8723*.564)}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
-  await p.goto('file://'+path.join(__dirname,'..','index.html')+'?seed='+seed+'&nointro&photo',{waitUntil:'commit',timeout:120000});
+  await p.goto('file://'+(process.env.BH_HTML||path.join(__dirname,'..','index.html'))+'?seed='+seed+'&nointro&photo',{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
   const imgs=[];for(const s of SEAS){const[m,d]=DAYS[s].split('-').map(Number);const o={doy:doyOf(m,d),tod:hh+mm/60,moln,png:true,cam,look};
     await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice */
