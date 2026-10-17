@@ -317,7 +317,7 @@ button:disabled{opacity:.45;cursor:default}
     <h2><small>Prototyp 2 · testbana Kustfästet</small>Uppdrag Arkipelag</h2>
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
-      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
+      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter, bergsryggar och grova gränsmurar av sten, och förbundna av pass. Klippor, ryggar och murar kan inte köras över. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
       <li><span class="em">Hamnen och Birka:</span> hamnen är punkten H vid kajen. Den är låst tills dess vakter (bunkrar och luftvärn nära kajen) är utslagna, och tas sedan av BÄVER med Ta, som de andra punkterna. Den krävs inte för seger, men det är bara genom hamnen ni får tillgång till det som dockningen låser upp. När den är tagen går HMS Birka själv in i cirka 10 knop längs en väg som alltid är fri (streckad på sjökortet) och förtöjer. Fordon på däck och KROK följer med, och varvet, servicen och KROK arbetar sedan från hamnen, mycket närmare ön.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Du börjar med BÄVER, KROK och 500 material och väljer själv vad varvet ska bygga först. Det som byggs skrivs ut i byggbädden på däck, och den nya enheten startar där. En enhet vid Birka kan återvinnas för 80 % av byggkostnaden (knappen Återvinn, två klick, eller i hjulet på enheten), med MUS ombord; KROK återvinns inte. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger GETING, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Vill du välja ställe: högerklicka på Birka eller en tagen verkstad eller ett fältvarv och välj Service här. HÖK laddar sina robotar där, och en HÖK som cirklar över en verkstad laddar också. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
@@ -1214,6 +1214,70 @@ function buildWorldTry(seed,tryK){
      mouth of ö 5915's harbour, where a strip of full height is left between the lowered quay ground and the water (17 okt). It is
      brought down to its highest neighbour; only the picture changes, the game's grid is computed separately */
   const despike=()=>{const e0=ev.slice();for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){const k=j*nx+i;let m=-1e9;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++)if(di||dj)m=Math.max(m,e0[k+dj*nx+di]);if(e0[k]-m>3)ev[k]=m;}};despike();
+  /* the ridges between zones of the same level (decided 17 okt, Magnus): the even 13 m bank looked made, so it is drawn as one of
+     two things that both read as a barrier. Through farmland, and on some other stretches, a boundary wall about 3 m high in five
+     courses of blocks, in a strip of scattered blocks and bushes; elsewhere a granite ridge with steep stepped flanks, bare rock on
+     the faces, a block field along the foot and juniper and pine on top. One kind per pair of zones. Only the picture changes: the
+     game's grid above is computed from elevAt, so the same cells are closed and the passes are where they were.
+     W.ridgeV: 1 on the granite ridge, 2 in the wall's strip. Fields also get a few field islets (åkerholmar), low knolls with
+     bushes, stones and broadleaf trees, as decoration only */
+  /* drawn after the decoration is placed (see ridges() below), since the houses and the jetties are placed on the heights the
+     game had before, and they stand in the grid as obstacles: so the grid stays exactly as it was */
+  const ridges=()=>{const N=nx*ny,rS=new Float32Array(N).fill(-1),rB=new Float32Array(N),rF=new Float32Array(N),rP=new Int32Array(N).fill(-1),rv=new Uint8Array(N);W.ridgeV=rv;
+    const Rr=rng(s*977+3),f01=(v,a,b)=>clamp((v-a)/(b-a),0,1),ss=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+    // the same bank as elevAt adds: zones of the same level, outside a pass
+    const bank=(x,y)=>{const Z=zoneAt(x,y,V),z1=V.zones[Z.i1],z2=V.zones[Z.i2];if(z1.water||z2.water||Math.abs(z1.h-z2.h)>=1)return null;
+      const ps=V.passMap.get(pairKey(Z.i1,Z.i2));const f=ps?sm((ps.w+25-Math.hypot(x-ps.x,y-ps.y))/25):0;
+      return{Z,f,rb:13*sm((15-Z.s)/15)*(1-f),pk:Z.i1<Z.i2?Z.i1*64+Z.i2:Z.i2*64+Z.i1};};
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(ev[k]<=0)continue;const b=bank(i*WW/SX,j*WH/SY);if(!b||b.Z.s>24)continue;rS[k]=b.Z.s;rB[k]=b.rb;rF[k]=b.f;rP[k]=b.pk;}
+    // which pairs get a wall: the share of the ridge that runs within 30 m of field or pasture, or a third of the rest by lot
+    const cnt={},open={};for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>6||rF[k]>.5)continue;const p=rP[k];cnt[p]=(cnt[p]||0)+1;
+      const ci=cellIdx((k%nx)*WW/SX,((k/nx)|0)*WH/SY);let o=false;for(let oy=-3;oy<=3&&!o;oy++)for(let ox=-3;ox<=3;ox++){const q=ci+oy*GW+ox;if(q>=0&&q<GW*GH&&(mark[q]===M_AKER||mark[q]===M_HAGE)){o=true;break;}}if(o)open[p]=(open[p]||0)+1;}
+    const isWall=p=>(open[p]||0)/(cnt[p]||1)>.2||hash2(p,7,s+963)<.33;
+    const RS=[],BU=[],JU=[];W.ridgeStones=RS;W.bushes=BU;W.junipers=JU;
+    const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
+    const bush=(x,y,sz)=>BU.push({x,y,s:sz,a:Rr()*6.28,sp:Rr()<.45?0:Rr()<.5?5:3,r:Rr()});
+    const Dd=W.decor||{},HS=[...(Dd.villas||[]),...(Dd.cabins||[]),...(Dd.sheds||[]),...(Dd.light?[Dd.light]:[]),...(Dd.jetties||[])];
+    const clear=(x,y)=>{const ci=cellIdx(x,y);return !W.road[ci]&&!(W.lane&&W.lane[ci])&&relays.every(r=>Math.hypot(r.x-x,r.y-y)>30)&&STR.every(q=>Math.hypot(q.x-x,q.y-y)>18)&&HS.every(q=>Math.hypot(q.x-x,q.y-y)>12);};
+    for(let k=0;k<N;k++){if(rP[k]<0)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY,sv=rS[k];
+      if(isWall(rP[k])){ev[k]-=rB[k];if(sv<16&&rF[k]<.5)rv[k]=2;continue;}
+      // the granite ridge: about 9 to 15 m high, steep flanks broken into benches of about two metres, a rounded top with knolls
+      const w=Math.min(14.5,15*(.75+.3*f01(fbm(x*1.3,y*1.3,s+951),.33,.67))),q=clamp(1-sv/w,0,1),H=13*(.75+.4*f01(fbm(x*.9,y*.9,s+950),.33,.67));
+      const flank=ss(q/.38),top=.82+.18*ss((q-.38)/.62)+.12*(fbm(x*4,y*4,s+952)-.5),base=H*flank*top,st=2.1,kk=base/st,fr=kk-Math.floor(kk);
+      const nb=lerp(base,(Math.floor(kk)+ss((fr-.45)/.55))*st,.85*flank);ev[k]=ev[k]-rB[k]+Math.max(0,nb)*(1-rF[k]);
+      if(sv<w+6&&rF[k]<.5)rv[k]=1;
+      // the block field along the foot, on both sides
+      if(rF[k]<.4&&sv>w-1.5&&sv<w+4&&clear(x,y))for(let n=0;n<3;n++)if(Rr()<.55)RS.push({x:x+(Rr()-.5)*7.5,y:y+(Rr()-.5)*7.5,o:-.2,r:.5+Rr()*Rr()*1.3,a:Rr()*6.28});}
+    // the wall itself: columns of five courses along the line between the two zones, about 1.5 m apart, broken at the passes;
+    // across is the direction between the two zones' centres as the zones are warped
+    const sd=(x,y,a,b)=>{const w=warp(x,y,V.seed),A=V.zones[a],B=V.zones[b];return Math.hypot(w.x-B.x,w.y-B.y)-Math.hypot(w.x-A.x,w.y-A.y);};
+    const CO=[{n:3,w:.9,r:.6,v:.18},{n:2,w:.45,r:.5,v:.14},{n:2,w:.25,r:.42,v:.1},{n:1,w:0,r:.34,v:.08}],st2=WW/SX;
+    for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>st2*1.5||!isWall(rP[k]))continue;const x0=(k%nx)*WW/SX,y0=((k/nx)|0)*WH/SY;
+      for(let a=0;a<6;a++)for(let b=0;b<6;b++){const x=x0-st2/2+(a+.5)*st2/6,y=y0-st2/2+(b+.5)*st2/6,B=bank(x,y);if(!B||B.Z.s>.65||B.f>.05||!clear(x,y))continue;
+        const gx=(sd(x+1,y,B.Z.i1,B.Z.i2)-sd(x-1,y,B.Z.i1,B.Z.i2)),gy=(sd(x,y+1,B.Z.i1,B.Z.i2)-sd(x,y-1,B.Z.i1,B.Z.i2)),gl=Math.hypot(gx,gy)||1,ax=gx/gl,ay=gy/gl;
+        let o=0;CO.forEach((c,ci)=>{const r=c.r+Rr()*c.v;for(let n=0;n<c.n;n++){const off=c.n>1?-c.w+2*c.w*n/(c.n-1):0;RS.push({x:x+ax*off+(Rr()-.5)*.4,y:y+ay*off+(Rr()-.5)*.4,o:o+r*.25,r:r*(.92+Rr()*.16),a:Rr()*6.28,m:1});}o+=r*1.05;});
+        if(Rr()<.05)RS.push({x:x+ax*(Rr()<.5?-2:2),y:y+ay*(Rr()<.5?-2:2),o:-.1,r:.5+Rr()*.3,a:Rr()*6.28,m:1});}}
+    // the wall's strip: scattered blocks and bush clumps 3 to 9 m out, a broadleaf tree now and then; the strip's own trees go
+    W.trees=W.trees.filter(t=>{const v=rv[vk(t.x,t.y)];return !v||(v===2&&rS[vk(t.x,t.y)]>4&&Rr()<.4);});
+    for(let k=0;k<N;k++){if(rv[k]!==2)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(rS[k]<2.5||rS[k]>10||!clear(x,y))continue;
+      if(Rr()<.35)RS.push({x:x+(Rr()-.5)*7,y:y+(Rr()-.5)*7,o:-.2,r:.4+Rr()*Rr()*.9,a:Rr()*6.28});
+      if(Rr()<.3){const n=1+Math.floor(Rr()*4);for(let q=0;q<n;q++)bush(x+(Rr()-.5)*7,y+(Rr()-.5)*7,1+Rr()*1.2);}
+      if(Rr()<.06)W.trees.push({x:x+(Rr()-.5)*6,y:y+(Rr()-.5)*6,s:.75+Rr()*.3,ci:cellIdx(x,y),k:Rr()<.5?'oak':'birch'});}
+    // the granite ridge's own growth: juniper and pine on the benches and the top, never on the bare faces
+    for(let k=0;k<N;k++){if(rv[k]!==1)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(!clear(x,y))continue;
+      const i=k%nx,j=(k/nx)|0;let g=0;if(i<SX)g=Math.max(g,Math.abs(ev[k]-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(ev[k]-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(ev[k]-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(ev[k]-ev[k-nx]));if(g>2.6)continue;
+      for(let q=0;q<4;q++){const u=Rr(),px=x+(Rr()-.5)*6,py=y+(Rr()-.5)*6;if(u<.45)JU.push({x:px,y:py,s:.8+Rr()*.9,a:Rr()*6.28});else if(u<.58)W.trees.push({x:px,y:py,s:.55+Rr()*.35,ci:cellIdx(px,py),k:'pine'});else if(u<.64)bush(px,py,.9+Rr()*.8);}}
+    // field islets: on fields of at least half a hectare, 25 m in from the edge and clear of the farm, at most three an island
+    {const dF=cellDist(c=>mark[c]!==M_AKER,8);let n=0;const isl=[];
+      for(let c=0;c<GW*GH&&n<3;c++){if(mark[c]!==M_AKER||dF[c]<2.5||hash2(c,3,s+970)>.05)continue;const p=cellCenter(c);
+        if(!clear(p.x,p.y)||(W.farms||[]).some(f=>Math.hypot(f.x-p.x,f.y-p.y)<60)||HS.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<45)||isl.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<120))continue;isl.push(p);n++;}
+      W.fieldIslets=isl;
+      for(const p of isl){const L=15+Rr()*8,Wd=8+Rr()*4,an=Rr()*3.14,ca=Math.cos(an),sa=Math.sin(an),H=2.5+Rr()*1.2;
+        for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,dx=i*WW/SX-p.x,dy=j*WH/SY-p.y,u=(dx*ca+dy*sa)/L,v=(-dx*sa+dy*ca)/Wd,r=Math.hypot(u,v);if(r<1.4)ev[k]+=H*ss((1.4-r)/1.4);}
+        W.trees=W.trees.filter(t=>Math.hypot(t.x-p.x,t.y-p.y)>L*1.3);
+        for(let q=0;q<55;q++){const a=Rr()*6.28,d=Math.sqrt(Rr()),x=p.x+(Math.cos(a)*ca-Math.sin(a)*sa*Wd/L)*d*L*1.1,y=p.y+(Math.cos(a)*sa+Math.sin(a)*ca*Wd/L)*d*L*1.1;
+          if(q<14)RS.push({x,y,o:-.35,r:.5+Rr()*.9,a:Rr()*6.28});else bush(x,y,1.2+Rr()*1.4);}
+        const nt=4+Math.floor(Rr()*5);for(let q=0;q<nt;q++){const x=p.x+(Rr()-.5)*L*.9*ca,y=p.y+(Rr()-.5)*L*.9*sa;W.trees.push({x:x+(Rr()-.5)*4,y:y+(Rr()-.5)*4,s:.8+Rr()*.35,ci:cellIdx(x,y),k:Rr()<.5?'oak':Rr()<.6?'birch':'maple'});}}}};
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
   /* the closed coast slopes as granite instead of standing as a cliff (decided 17 okt, Magnus: it looked like Dover, not Sandhamn).
      Only the ground one sees and stands on changes: the game's grid above is computed from the old heights, so the same coast is
@@ -1402,6 +1466,15 @@ function buildWorldTry(seed,tryK){
   }
   if(W.coastStones&&W.decor){const D=W.decor,sd=(px,py,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1,t=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);return Math.hypot(px-a.x-vx*t,py-a.y-vy*t);};
     W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));}
+  // the ridges and the field islets, now that the houses stand where they would without them (see the note at ridges)
+  {const ev0=ev.slice();ridges();
+    // the ground class and the square diagonals again where the ground changed
+    const ch=new Uint8Array(nx*ny);for(let k=0;k<nx*ny;k++)if(ev[k]!==ev0[k]){const i=k%nx,j=(k/nx)|0;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){const ii=i+di,jj=j+dj;if(ii>=0&&jj>=0&&ii<nx&&jj<ny)ch[jj*nx+ii]=1;}}
+    for(let k=0;k<nx*ny;k++){if(!ch[k]||(W.hall&&W.hall[k]))continue;const i=k%nx,j=(k/nx)|0,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
+    for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const k=j*nx+i;if(!ch[k])continue;const a=ev[k],b=ev[k+1],c=ev[k+nx],d=ev[k+nx+1];W.diag[j*SX+i]=Math.abs(a-d)<Math.abs(b-c)?1:0;}
+  // the ridges' stones, bushes and junipers stand on the finished ground; anything that ended up in the water goes
+  {const gh=(x,y)=>{const fx=clamp(x/WW*SX,0,SX-.001),fy=clamp(y/WH*SY,0,SY-.001),i=Math.floor(fx),j=Math.floor(fy),u=fx-i,v=fy-j,k=j*nx+i;return lerp(lerp(ev[k],ev[k+1],u),lerp(ev[k+nx],ev[k+nx+1],u),v);};
+    for(const L of['ridgeStones','bushes','junipers']){W[L]=(W[L]||[]).filter(q=>(q.h=gh(q.x,q.y))>.3);if(L==='ridgeStones')for(const q of W[L])q.h+=q.o;}}}
   W._cs=s;W._cv=V;/* the chart picture is built once, for the world that is kept (buildChart) */
   W.treeAll=W.trees;defenseDress(W);
   /* the decoration below writes islets and villas into the grid; a new plan sees the grid as the first one did */
@@ -3815,6 +3888,26 @@ function mkDecor(D,st){
     S.forEach((q,i)=>{const sy=q.r*.65;d.position.set(q.x,q.h+q.r*.2,q.y);d.rotation.set(0,q.a,0);d.scale.set(q.r*1.15,sy,q.r);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.45+hash2(i,3,77)*.15;m.setColorAt(i,cl.setRGB(v+.03,v,v-.02));
       if(q.g){d.position.y+=sy*.72;d.scale.set(q.r*.7,sy*.36,q.r*.62);d.updateMatrix();w.setMatrixAt(gi++,d.matrix);}});
     m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);if(w){w.frustumCulled=false;st.add(w);}}}
+  /* the ridges (17 okt): the wall's blocks with moss on their upper faces and snow on top in winter, the loose blocks of the strips
+     and the foot of the granite ridge, broadleaf bushes that turn with the season (hazel as birch, dog rose as rowan, sloe as oak)
+     and dark junipers that hold snow */
+  {const RS=WORLD.ridgeStones||[],BU=WORLD.bushes||[],JU=WORLD.junipers||[],d=new THREE.Object3D(),cl=new THREE.Color();
+    if(!R3.ridgeG){const sg=sd=>{const g=new THREE.IcosahedronGeometry(1,0),p=g.attributes.position,rr=rng(sd),key={};for(let i=0;i<p.count;i++){const kk=Math.round(p.getX(i)*9)+','+Math.round(p.getY(i)*9)+','+Math.round(p.getZ(i)*9);if(key[kk]===undefined)key[kk]=.82+rr()*.32;const f=key[kk];p.setXYZ(i,p.getX(i)*f,Math.max(p.getY(i)*f,-.3),p.getZ(i)*f);}
+        g.computeVertexNormals();const n=g.attributes.normal,c=new Float32Array(p.count*3);for(let i=0;i<p.count;i++){const mz=clamp((n.getY(i)-.2)*1.6,0,1)*clamp(p.getY(i)*2+.4,0,1);c.set([lerp(1,.8,mz),lerp(1,.9,mz),lerp(1,.58,mz)],i*3);}g.setAttribute('color',new THREE.BufferAttribute(c,3));return g;};
+      const bg=sd=>{const rr=rng(sd),pos=[];for(let j=0;j<5;j++){const g=new THREE.IcosahedronGeometry(1,0).toNonIndexed(),a=g.attributes.position.array,an=rr()*6.28,dd=Math.sqrt(rr())*.7,cx=Math.cos(an)*dd,cz=Math.sin(an)*dd,cy=.45+rr()*.3+(1-dd)*.3,r=.45+rr()*.3;
+          for(let i=0;i<a.length;i+=3)pos.push(cx+a[i]*r,Math.max(0,cy+a[i+1]*r*.85),cz+a[i+2]*r);g.dispose();}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g;};
+      const jg=new THREE.ConeGeometry(.5,1,6);jg.translate(0,.5,0);
+      R3.ridgeG={st:[sg(101),sg(207),sg(331)],bu:bg(55),ju:jg,stM:seasonMat(new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true}),'conifer','wall'),
+        buM:seasonMat(new THREE.MeshLambertMaterial({color:0x7fa548,flatShading:true}),'birch','bush'),juM:seasonMat(new THREE.MeshLambertMaterial({color:0x2c4630,flatShading:true}),'conifer','jun')};}
+    const G=R3.ridgeG;
+    G.st.forEach((g,t)=>{const L=RS.filter((q,i)=>i%3===t);if(!L.length)return;const m=new THREE.InstancedMesh(g,G.stM,L.length);
+      L.forEach((q,i)=>{d.position.set(q.x,q.h,q.y);d.rotation.set((hash2(i,t,5)-.5)*.4,q.a,0);d.scale.set(q.r*1.1,q.r*.72,q.r*.95);d.updateMatrix();m.setMatrixAt(i,d.matrix);
+        const v=.42+hash2(i,t,77)*.16,pk=hash2(i,t,78)*.05;m.setColorAt(i,cl.setRGB(v+pk,v,v-.01));});
+      m.instanceColor.needsUpdate=true;m.castShadow=m.receiveShadow=true;m.frustumCulled=false;st.add(m);});
+    if(BU.length){const m=new THREE.InstancedMesh(G.bu,G.buM,BU.length);BU.forEach((b,i)=>{d.position.set(b.x,b.h-.15,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*1.3,b.s*.95,b.s*1.15);d.updateMatrix();m.setMatrixAt(i,d.matrix);m.setColorAt(i,cl.setRGB(b.r,b.sp/8,0));});
+      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);}
+    if(JU.length){const m=new THREE.InstancedMesh(G.ju,G.juM,JU.length);JU.forEach((b,i)=>{d.position.set(b.x,b.h-.1,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*.9,b.s*2.2,b.s*.9);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.85+hash2(i,9,3)*.3;m.setColorAt(i,cl.setRGB(v,v,v));});
+      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);}}
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
   R3.baks=[];(D.baks||[]).forEach((b,i)=>{const g=mkDaymark(b);st.add(g);R3.baks.push({b,...g.userData.lamp,ch:LIGHT_CH[[6,2,0][i%3]],ph:hash2(Math.round(b.x),Math.round(b.y),23)*6});});
@@ -4200,6 +4293,10 @@ function buildStatic(){
       if(mk===M_AKER)c=[.55,.58,.33];else if(mk===M_HAGE)c=[.47,.56,.3];else if(mk===M_HALL)c=[lerp(granite[0],c[0],.35),lerp(granite[1],c[1],.35),lerp(granite[2],c[2],.35)];else if(W.skog&&W.skog[ci]===2)c=[c[0]*.86,c[1]*.88,c[2]*.86];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
     // the sloping granite of the closed coast: grey-pink rock with dark lichen in patches, not the pale beach colour
     if(W.hall&&W.hall[k]&&e>0){const l2=hash2(i>>1,j>>1,W.seed+19),ln=clamp((fbm(x*3,y*3,W.seed+903)-.42)*4,0,1)*.7;c=[lerp(.55,.4,ln)-l2*.05,lerp(.53,.42,ln)-l2*.04,lerp(.51,.37,ln)-l2*.03];}
+    // the ridges (17 okt): the granite ridge's faces grey with lichen and its benches heath; the wall's strip unmown rough grass
+    if(W.ridgeV&&W.ridgeV[k]&&e>0&&!(W.hall&&W.hall[k])){const hv=hash2(i,j,W.seed+961)*.05;
+      if(W.ridgeV[k]===1){if(t===ROCK){const ln=clamp((fbm(x*3,y*3,W.seed+960)-.42)*4,0,1)*.7;c=[lerp(.5,.36,ln)-hv,lerp(.48,.38,ln)-hv,lerp(.46,.33,ln)-hv];}else c=[.36+hv,.43+hv,.25+hv*.5];}
+      else c=[lerp(c[0],.4,.6)+hv,lerp(c[1],.47,.6)+hv,lerp(c[2],.26,.6)];}
     col[k*3]=c[0]+n;col[k*3+1]=c[1]+n;col[k*3+2]=c[2]+n*.6;
   }
   let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(W.diag&&W.diag[j*SX+i]){idx[p++]=a;idx[p++]=c;idx[p++]=d;idx[p++]=a;idx[p++]=d;idx[p++]=b;}else{idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}}
