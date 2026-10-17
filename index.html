@@ -5124,7 +5124,8 @@ $('bHelp').addEventListener('click',()=>{G.paused=true;$('intro').hidden=false;$
 $('bStart').addEventListener('click',()=>{audInit();const first=TITLE.on;startGame();if(first)opStart(true);});
 /* a click in the film itself (not on a button or the help) hides the logo and every control so the film can run clean in full
    screen, and the next click brings them back (decided 13 okt); the very first click still starts the intro */
-$('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
+$('title').addEventListener('pointerdown',titleGrab);$('title').addEventListener('pointermove',titleDrag);for(const e of['pointerup','pointercancel'])$('title').addEventListener(e,titleLetGo);
+$('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.man&&TITLE.man.dragged){TITLE.man.dragged=false;return;}/* the end of a drag, not a click */if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStart(true);});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
@@ -5739,7 +5740,25 @@ function titleCam(dtr){
     // the HÖK itself may never leave the frame, so the limit gives way only at the frame's edge
     TITLE.vy=H.y+clamp(angWrap(TITLE.vy+TITLE.vyv*dt-H.y),-(CAMMAX.keep+6)*dg,(CAMMAX.keep+6)*dg);TITLE.vp=clamp(TITLE.vp+TITLE.vpv*dt,H.p-CAMMAX.keep*dg,H.p+CAMMAX.keep*dg);
     const L=tmpV2.set(c.x+Math.cos(TITLE.vy)*Math.cos(TITLE.vp)*100,c.y+Math.sin(TITLE.vp)*100,c.z+Math.sin(TITLE.vy)*Math.cos(TITLE.vp)*100);R3.cam.lookAt(L);R3.lookAt.copy(L);}
+  titleManual(dtr,m);
 }
+/* turning the camera round the HÖK by hand (decided 17 okt, Magnus): with a mouse button held down the viewer drags the camera round
+   the HÖK, the angle kept relative to its heading so it follows the turns; let go and the director takes over again. The director
+   goes on underneath all the while, and the hand's angle is blended in round the HÖK (bearing, elevation and distance), in a third
+   of a second when grabbed and back over about three seconds when let go, so the camera swings back to the director's shot */
+function titleManual(dtr,m){const M=TITLE.man;if(!M)return;const dt=Math.min(dtr,.25);M.w=clamp(M.w+(M.active?dt/.35:-dt/2.8),0,1);if(M.w<=0)return;
+  const w=sm(M.w),c=R3.cam.position,h=m.position,dx=c.x-h.x,dy=c.y-h.y,dz=c.z-h.z,rd=Math.hypot(dx,dy,dz)||1,yd=Math.atan2(dz,dx),pd=Math.asin(clamp(dy/rd,-1,1));
+  const y=yd+angWrap(TITLE.hd+M.yaw-yd)*w,pt=lerp(pd,M.pitch,w),r=lerp(rd,M.r,w),L=R3.lookAt;
+  c.set(h.x+Math.cos(y)*Math.cos(pt)*r,h.y+Math.sin(pt)*r,h.z+Math.sin(y)*Math.cos(pt)*r);{const f=camFloor(c.x,c.z)+2;if(c.y<f)c.y=f;}
+  const t=tmpV2.set(lerp(L.x,h.x,w),lerp(L.y,h.y,w),lerp(L.z,h.z,w));R3.cam.lookAt(t);R3.lookAt.copy(t);}
+function titleGrab(ev){if(!TITLE.on||FILM.on||!TITLE.drone||ev.button!==0||ev.target.closest('button,a,input,.tmenu,#intro'))return;
+  const M=TITLE.man||(TITLE.man={w:0,yaw:0,pitch:.3,r:40});
+  if(M.w<=0){const c=R3.cam.position,h=TITLE.drone.position,d=Math.hypot(c.x-h.x,c.y-h.y,c.z-h.z)||1;M.yaw=angWrap(Math.atan2(c.z-h.z,c.x-h.x)-TITLE.hd);M.pitch=Math.asin(clamp((c.y-h.y)/d,-1,1));M.r=clamp(d,22,70);}
+  M.active=true;M.x=ev.clientX;M.y=ev.clientY;M.moved=0;$('title').style.cursor='grabbing';try{$('title').setPointerCapture(ev.pointerId);}catch(_){}}
+function titleDrag(ev){const M=TITLE.man;if(!M||!M.active)return;const dx=ev.clientX-M.x,dy=ev.clientY-M.y;M.x=ev.clientX;M.y=ev.clientY;M.moved+=Math.abs(dx)+Math.abs(dy);
+  M.yaw=angWrap(M.yaw+dx*.006);M.pitch=clamp(M.pitch+dy*.005,-.12,1.3);}
+function titleLetGo(){const M=TITLE.man;if(!M||!M.active)return;M.active=false;M.dragged=M.moved>4;$('title').style.cursor='';}
+
 function titleTick(dtr){
   if(!TITLE.on)return;
   if(TITLE.phase!=='press'){TITLE.logoT=Math.max(TITLE.logoT,(performance.now()-TITLE.t0)/1000+TITLE.skip);drawLogo(TITLE.logoT);if(TITLE.logoT>2.6&&$('tMenu').hidden){$('tMenu').hidden=false;}}
@@ -5750,7 +5769,7 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.man=null;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
