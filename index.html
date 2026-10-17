@@ -4300,13 +4300,14 @@ function lerpHex(a,b,t,out){return out.set(cA.setHex(a)).lerp(cB.setHex(b),t);}
 /* sky dome: gradient from the fog colour at the horizon to the zenith, sun disc and glow, moon and stars at night */
 function mkSky(){
   const m=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false,
-    uniforms:{uHor:{value:new THREE.Color(0xa9bbc4)},uZen:{value:new THREE.Color(0x5f8cc0)},uSunDir:{value:new THREE.Vector3(0,1,0)},uSunCol:{value:new THREE.Color(0xfff0d4)},uSunVis:{value:1},
+    uniforms:{uHor:{value:new THREE.Color(0xa9bbc4)},uSea:{value:new THREE.Color(0x98abb4)},uZen:{value:new THREE.Color(0x5f8cc0)},uSunDir:{value:new THREE.Vector3(0,1,0)},uSunCol:{value:new THREE.Color(0xfff0d4)},uSunVis:{value:1},
       uMoonDir:{value:new THREE.Vector3(0,1,0)},uMoonVis:{value:0},uNight:{value:0}},
     vertexShader:'varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader:`uniform vec3 uHor,uZen,uSunCol;uniform vec3 uSunDir,uMoonDir;uniform float uSunVis,uMoonVis,uNight;varying vec3 vD;
+    fragmentShader:`uniform vec3 uHor,uSea,uZen,uSunCol;uniform vec3 uSunDir,uMoonDir;uniform float uSunVis,uMoonVis,uNight;varying vec3 vD;
       float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}
       void main(){vec3 d=normalize(vD);float y=d.y;
-        vec3 col=mix(uHor,uZen,pow(clamp(y,0.0,1.0),0.5));
+        /* below the horizon the far sea's own tone, above it the sky with a thin brighter band along the horizon (17 okt) */
+        vec3 col=mix(uHor,uZen,pow(clamp(y,0.0,1.0),0.5));col=mix(col,uHor*1.04,exp(-max(y,0.0)*55.0)*0.55);col=mix(uSea,col,smoothstep(-0.004,0.0015,y));
         float cs=max(dot(d,uSunDir),0.0),low=1.0-clamp(uSunDir.y*2.5,0.0,1.0);
         col+=uSunCol*(pow(cs,900.0)*0.9+pow(cs,60.0)*0.28+pow(cs,6.0)*0.16*low*exp(-abs(y)*5.0))*uSunVis;
         col+=uSunCol*smoothstep(0.99955,0.99975,cs)*1.4*uSunVis*step(-0.02,y);
@@ -4526,11 +4527,16 @@ function updateSky(){
     R3.dark=clamp((6-Math.asin(clamp(up,-1,1))*180/PI)/18,0,1);R3.lit=clamp((R3.dark-.25)/.28,0,1);}
   // sky dome and water: horizon is the fog colour, zenith deepens towards blue by day and ink at night
   if(R3.sky){const U=R3.sky.material.uniforms,tt=(h-6)/12,az=tt*PI,el=Math.sin(tt*PI)*1.05;
-    U.uHor.value.copy(sc.background);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
+    /* a visible horizon (decided 17 okt, Magnus: sky and sea cannot be the same colour): the sky at the horizon a little lighter than
+       the background colour, and the fog, which is what the far sea turns into, a little darker and bluer; most on a clear day, less
+       in haze, under cloud and towards night */
+    const hz=(1-n)*(1-.55*(SE.haze||0))*(1-.45*cloudCover(G.seed||0)),sea=R3.seaHor||(R3.seaHor=new THREE.Color());
+    sea.copy(sc.background).multiplyScalar(1-.18*hz);sea.b=Math.min(1,sea.b+.025*hz);sc.fog.color.copy(sea);
+    U.uHor.value.copy(sc.background).lerp(cA.setRGB(1,1,1),.12*hz);U.uSea.value.copy(sea);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
     U.uSunDir.value.copy(sunDir);
     U.uSunCol.value.copy(R3.sun.color).lerp(cB.setHex(0xffffff),.25);U.uSunVis.value=clamp((U.uSunDir.value.y+.06)/.12,0,1);
     U.uMoonDir.value.set(-.45,.78,-.42).normalize();U.uMoonVis.value=clamp((n-.55)/.3,0,1);U.uNight.value=n;
-    const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sc.background);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
+    const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sea);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
   /* the light stands 450 m from the point looked at along the sun's direction, counted from that point's own height (fixed 17 okt:
      it was counted from the sea, so a camera looking at something high up, the HÖK in the air, got a lower sun and longer shadows) */
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
