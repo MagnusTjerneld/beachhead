@@ -4514,7 +4514,9 @@ function updateSky(){
     U.uSunCol.value.copy(R3.sun.color).lerp(cB.setHex(0xffffff),.25);U.uSunVis.value=clamp((U.uSunDir.value.y+.06)/.12,0,1);
     U.uMoonDir.value.set(-.45,.78,-.42).normalize();U.uMoonVis.value=clamp((n-.55)/.3,0,1);U.uNight.value=n;
     const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sc.background);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
-  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
+  /* the light stands 450 m from the point looked at along the sun's direction, counted from that point's own height (fixed 17 okt:
+     it was counted from the sea, so a camera looking at something high up, the HÖK in the air, got a lower sun and longer shadows) */
+  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
   const d=R3.dark;R3.lampMat.emissive.setRGB(.15+.85*d,.14+.8*d,.1+.62*d);R3.winMat.emissive.setRGB(.95*d,.66*d,.3*d);if(R3.shipWin)R3.shipWin.emissive.setRGB(.95*d,.66*d,.3*d);if(R3.winMats)R3.winMats.forEach((m,b)=>{const L=winLevel(b,d);m.emissive.setRGB(.95*L,.66*L,.3*L);});
   // headlights: nearest vehicles to the camera focus
   const fx=f.x,fz=f.z,dd=o=>(o.x-fx)*(o.x-fx)+(o.y-fz)*(o.y-fz);
@@ -5986,7 +5988,7 @@ function filmSunEl(h){const T=FILM_SUN;let i=0;while(i<T.length-2&&T[i+1][0]<=h)
 function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);if(R3.night>=.6)return;
   const el=FILM.sunEl??filmSunEl(h),hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,le=Math.max(el,.055),c=Math.cos(le);
   vDir.set(hx/hl*c,Math.sin(le),hz/hl*c);/* (shading: never below 3 degrees) */R3.sun.intensity*=lerp(1,1.45,up);R3.hemi.intensity*=lerp(1,.8,up);
-  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);
+  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);
   if(R3.sky){const U=R3.sky.material.uniforms,ce=Math.cos(el);U.uSunDir.value.set(hx/hl*ce,Math.sin(el),hz/hl*ce);U.uSunVis.value=clamp((el+.03)/.06,0,1);}}
 
 /* ---- Spara video: the film rendered frame by frame on the viewer's own machine, 1920x1080 at 60 frames a second, with the
