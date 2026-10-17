@@ -1210,6 +1210,10 @@ function buildWorldTry(seed,tryK){
   // elevation grid for 3D
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)ev[j*nx+i]=elevAt(i*WW/SX,j*WH/SY,s,V);
+  /* a vertex more than 3 m above all eight neighbours is a sliver thinner than the grid, not a hill: it drew a 20 m spike at the
+     mouth of ö 5915's harbour, where a strip of full height is left between the lowered quay ground and the water (17 okt). It is
+     brought down to its highest neighbour; only the picture changes, the game's grid is computed separately */
+  const despike=()=>{const e0=ev.slice();for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){const k=j*nx+i;let m=-1e9;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++)if(di||dj)m=Math.max(m,e0[k+dj*nx+di]);if(e0[k]-m>3)ev[k]=m;}};despike();
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
   /* the closed coast slopes as granite instead of standing as a cliff (decided 17 okt, Magnus: it looked like Dover, not Sandhamn).
      Only the ground one sees and stands on changes: the game's grid above is computed from the old heights, so the same coast is
@@ -1250,6 +1254,7 @@ function buildWorldTry(seed,tryK){
     const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
     for(let c=0;c<GW*GH;c++){const p=cellCenter(c),k=vk(p.x,p.y);if(hall[k]&&e0[k]-ev[k]>2.5&&mark[c]){mark[c]=M_HALL;W.skog[c]=0;}}
     W.trees=W.trees.filter(t=>{const k=vk(t.x,t.y);if(!hall[k]||e0[k]-ev[k]<=2.5)return true;if(hash2(Math.round(t.x),Math.round(t.y),s+71)>=.25)return false;t.k='pine';t.s*=.7;return true;});}
+  despike();/* again after the coast slope, which can leave a lone high vertex where it lowers the ground round it */
   W.SX=SX;W.SY=SY;W.ev=ev;W.vcls=vcls;
   // each grid square is split along the diagonal whose ends differ least in height (1 = a-d, 0 = b-c): contours such as the waterline then follow the slope instead of a sawtooth
   {const dg=new Uint8Array(SX*SY);for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=ev[j*nx+i],b=ev[j*nx+i+1],c=ev[(j+1)*nx+i],d=ev[(j+1)*nx+i+1];dg[j*SX+i]=Math.abs(a-d)<Math.abs(b-c)?1:0;}W.diag=dg;}
