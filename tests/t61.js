@@ -2,6 +2,7 @@
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};
+const bigRadio=()=>{const o=[B.RADIO.r,B.RADIO.birka];B.RADIO.r=B.RADIO.birka=5000;return()=>{B.RADIO.r=o[0];B.RADIO.birka=o[1];};};
 const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;};
 // 1. HÖK on escort is called in against an enemy, kills it and returns to the escort
 {B.newGame(7341);const G=B.G;G.running=true;quiet(G);const L=G.relays[0];
@@ -61,28 +62,42 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  ok(sc&&!sc.mission&&!sc.orders.length,'a new SPARV waits for the captain\'s order');ok(sc.maxFuel>=600,'ten minutes of battery');
  B.giveOrder(sc,{type:'explore',post:'def'},false,'mission');ok(sc.mission&&sc.mission.type==='explore','explore given as a mission');
  const aa=G.enemies.find(e=>e.kind==='aa');aa.seen=true;aa.lx=aa.x;aa.ly=aa.y;let minD=1e9;
- const r0=B.RADIO.r;B.RADIO.r=5000;for(let i=0;i<20*120;i++){B.step(.05);if(!sc.dead)minD=Math.min(minD,Math.hypot(sc.x-aa.x,sc.y-aa.y));}B.RADIO.r=r0;
+ const back=bigRadio();for(let i=0;i<20*120;i++){B.step(.05);if(!sc.dead)minD=Math.min(minD,Math.hypot(sc.x-aa.x,sc.y-aa.y));}back();
  ok(!sc.dead&&G.landPct>.1,'without the radio limit: explored '+Math.round(G.landPct*100)+' % of the island in two minutes');ok(minD>110,'never inside the AA radar ('+Math.round(minD)+' m)');
  const t=G.enemies.find(e=>e.kind==='turret'&&!e.dead);t.seen=true;t.lx=t.x;t.ly=t.y;t.visibleNow=false;const v=G.units.find(u=>u.kind==='tank');v.x=t.x+140;v.y=t.y;
  B.requestSpot(v,t);ok(sc.orders[0]&&sc.orders[0].spotFor===t,'the SPARV is sent to spot, not the HÖK');}
 // SPARV explores one zone when told to, reports when it is done and waits for orders
 {B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const sc=B.makeUnit('scout',B.W.landing.x,B.W.landing.y);G.units.push(sc);
  const z=B.W.zid[Math.floor(B.W.landing.y/10)*220+Math.floor(B.W.landing.x/10)];ok(z>=0,'landing zone '+z);
- const v=G.units.find(u=>u.kind==='tank');v.x=B.W.landing.x;v.y=B.W.landing.y;v.orders=[];B.RADIO.r=5000;
+ const v=G.units.find(u=>u.kind==='tank');v.x=B.W.landing.x;v.y=B.W.landing.y;v.orders=[];const back=bigRadio();
  B.giveOrder(sc,{type:'explore',zone:z,post:'def'},false,'mission');let out=0;
  for(let i=0;i<20*240&&sc.mission;i++){B.step(.05);const zz=B.W.zid[Math.floor(sc.y/10)*220+Math.floor(sc.x/10)];if(i%20===0&&zz!==z&&zz>=0)out++;}
  ok(!sc.mission&&G.log.some(l=>/Zonen vid .* är spanad/.test(l.text)),'zone done and reported, SPARV waits');
- B.RADIO.r=250;let unk=0,tot=0;for(let gy=1;gy<220;gy+=3)for(let gx=1;gx<220;gx+=3){const i=gy*220+gx;if(B.W.zid[i]===z){tot++;if(!G.known[i])unk++;}}ok(unk===0,'nothing left unknown in the zone ('+tot+' sample cells)');}
+ back();let unk=0,tot=0;for(let gy=1;gy<220;gy+=3)for(let gx=1;gx<220;gx+=3){const i=gy*220+gx;if(B.W.zid[i]===z){tot++;if(!G.known[i])unk++;}}ok(unk===0,'nothing left unknown in the zone ('+tot+' sample cells)');}
 // SPARV radio link: only within reach of Birka or a heavy unit; it stays inside the net while exploring and turns back when the link is lost
 {B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const sc=B.makeUnit('scout',B.W.landing.x,B.W.landing.y);G.units.push(sc);
  const v=G.units.find(u=>u.kind==='tank');v.x=B.W.landing.x;v.y=B.W.landing.y;v.orders=[];for(const u of G.units)if(u!==sc&&u!==v&&u.kind!=='eng'){u.x=1100;u.y=1950;u.orders=[];}
  B.giveOrder(sc,{type:'explore',post:'def'},false,'mission');let worst=0;for(let i=0;i<20*90;i++){B.step(.05);worst=Math.max(worst,B.linkAt(sc.x,sc.y).d);}
- ok(worst<=B.RADIO.r+8,'exploring SPARV stays inside the radio net (farthest '+Math.round(worst)+' m from a relay)');
+ ok(worst<=8,'exploring SPARV stays inside the radio net (at most '+Math.round(worst)+' m past the edge)');
  B.giveOrder(sc,{type:'move',x:B.W.landing.x+900,y:B.W.landing.y-900,post:'def'},false);for(let i=0;i<20*40;i++)B.step(.05);
- ok(B.linkAt(sc.x,sc.y).d<=B.RADIO.r+8,'a waypoint beyond the net stops at its edge');
- for(const u of G.units)if(u.kind==='eng'){u.x=1100;u.y=1950;}const L0=B.linkAt(1100,1100);sc.x=L0.relay.x+(1100-L0.relay.x)*(B.RADIO.r+150)/L0.d;sc.y=L0.relay.y+(1100-L0.relay.y)*(B.RADIO.r+150)/L0.d;const d0=B.linkAt(sc.x,sc.y).d;for(let i=0;i<20*20;i++)B.step(.05);
- ok(d0>B.RADIO.r&&B.linkAt(sc.x,sc.y).d<=B.RADIO.r+8,'link lost: it turns back until it has the link again');
+ ok(B.linkAt(sc.x,sc.y).d<=8,'a waypoint beyond the net stops at its edge');
+ for(const u of G.units)if(u.kind==='eng'){u.x=1100;u.y=1950;}const L0=B.linkAt(1100,1100);sc.x=L0.relay.x+(1100-L0.relay.x)*(L0.relay.r+150)/L0.dist;sc.y=L0.relay.y+(1100-L0.relay.y)*(L0.relay.r+150)/L0.dist;const d0=B.linkAt(sc.x,sc.y).d;for(let i=0;i<20*20;i++)B.step(.05);
+ ok(d0>0&&B.linkAt(sc.x,sc.y).d<=8,'link lost: it turns back until it has the link again');
  const h=G.units.find(u=>u.kind==='drone');h.x=200;h.y=200;ok(!B.linkAt(210,210).ok,'a HÖK does not carry the link');}
+// GETING radio (decided 17 okt, issue 16): Birka's mast reaches 550 m and the relays 300 m, a taken point relays too, and a GETING flies
+// through the net round a gap instead of straight out of it
+{B.newGame(7341);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;const C=B.CARRIER;
+ ok(B.RADIO.birka===550&&B.RADIO.r===300,'Birka reaches '+B.RADIO.birka+' m, the relays '+B.RADIO.r+' m');
+ for(const u of G.units){u.x=C.x;u.y=C.y;u.orders=[];}
+ const L=B.W.landing;ok(B.linkAt(L.x,L.y).ok,'Birka alone reaches the landing beach');
+ const R1=G.relays.slice().sort((p,q)=>Math.hypot(q.x-C.x,q.y-C.y)-Math.hypot(p.x-C.x,p.y-C.y))[0],dR=Math.hypot(R1.x-C.x,R1.y-C.y),P={x:R1.x+(R1.x-C.x)/dR*250,y:R1.y+(R1.y-C.y)/dR*250},far=B.linkAt(P.x,P.y);
+ R1.captured=true;ok(!far.ok&&B.linkAt(P.x,P.y).ok,'a taken point ('+R1.id+') carries the link 250 m out');R1.captured=false;
+ const sx=C.x<1100?1:-1,sy=C.y>1100?-1:1,a1={x:C.x+sx*800,y:C.y},a2={x:C.x+sx*800,y:C.y+sy*580};
+ const v1=B.makeUnit('tank',a1.x,a1.y),v2=B.makeUnit('tank',a2.x,a2.y);for(const v of[v1,v2]){v.hold=true;v.speed=0;G.units.push(v);}
+ const sc=B.makeUnit('scout',C.x,C.y);G.units.push(sc);B.step(.05);
+ const mid={x:C.x+sx*480,y:C.y+sy*348};ok(!B.linkAt(mid.x,mid.y).ok,'the straight line from Birka to the far VARG leaves the net');
+ B.giveOrder(sc,{type:'move',x:a2.x,y:a2.y,post:'def'},false);let worst=-1e9;for(let i=0;i<20*120;i++){B.step(.05);worst=Math.max(worst,B.linkAt(sc.x,sc.y).d);if(Math.hypot(sc.x-a2.x,sc.y-a2.y)<20)break;}
+ ok(Math.hypot(sc.x-a2.x,sc.y-a2.y)<20&&worst<=8,'the GETING gets there through the net ('+Math.round(Math.hypot(sc.x-a2.x,sc.y-a2.y))+' m left, at most '+Math.round(worst)+' m past the edge)');}
 // command net: Birka reaches 800 m, a taken point 500 m, the radio mast the whole island; outside it no new orders and nothing reported
 {B.newGame(7341);const G=B.G;G.running=true;const v=G.units.find(u=>u.kind==='tank'),R2=G.relays[1];ok(R2.type==='radar','R2 is always the radio mast (radar station)');
  v.x=R2.x;v.y=R2.y;v.orders=[];ok(!B.inNet(v.x,v.y),'R2 lies outside the first net');G.selIds=[v.id];G.sel=v.id;B.groupOrder({world:{x:v.x+50,y:v.y}},false);ok(!v.orders.length,'no new order outside the net');
