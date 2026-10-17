@@ -317,7 +317,7 @@ button:disabled{opacity:.45;cursor:default}
     <h2><small>Prototyp 2 · testbana Kustfästet</small>Uppdrag Arkipelag</h2>
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
-      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter och bergsryggar och förbundna av pass. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
+      <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter, bergsryggar och grova gränsmurar av sten, och förbundna av pass. Klippor, ryggar och murar kan inte köras över. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
       <li><span class="em">Hamnen och Birka:</span> hamnen är punkten H vid kajen. Den är låst tills dess vakter (bunkrar och luftvärn nära kajen) är utslagna, och tas sedan av BÄVER med Ta, som de andra punkterna. Den krävs inte för seger, men det är bara genom hamnen ni får tillgång till det som dockningen låser upp. När den är tagen går HMS Birka själv in i cirka 10 knop längs en väg som alltid är fri (streckad på sjökortet) och förtöjer. Fordon på däck och KROK följer med, och varvet, servicen och KROK arbetar sedan från hamnen, mycket närmare ön.</li>
       <li><span class="em">Fienden planerar sitt försvar.</span> Den räknar ut var ni kan komma i land och vilka pass vägen till ledningscentralen måste gå genom, och väljer en doktrin: framskjutet försvar vid stränderna, djupförsvar med två linjer, en fästning kring ledningscentralen eller rörligt försvar med en stark reserv. Spärrar och minfält hamnar där trafiken blir störst, och varje hinder bevakas av en bunker. Budgeten räcker sällan överallt: det finns ofta pass som lämnats öppna. Spana för att hitta dem. Ledningscentralen är alltid försvarad.</li>
       <li><span class="em">Uppdrag:</span> du är kapten på HMS Birka, en flytande varvspråm som skriver ut och bygger autonoma enheter. Du börjar med BÄVER, KROK och 500 material och väljer själv vad varvet ska bygga först. Det som byggs skrivs ut i byggbädden på däck, och den nya enheten startar där. En enhet vid Birka kan återvinnas för 80 % av byggkostnaden (knappen Återvinn, två klick, eller i hjulet på enheten), med MUS ombord; KROK återvinns inte. Ta ledningscentralen i kärnan (LC på sjökortet). Övriga punkter är frivilliga men ger något: en verkstad laddar flygande enheter och reparerar fordon, en radarstation spanar 320 m runt sig och visar kamouflerade mål inom 220 m, ett fältvarv bygger GETING, HÖK och VARG (långsammare än fartyget och bara när ingen fiende är inom 150 m) och laddar och reparerar i halv takt. Enheter som behöver service åker till närmaste ställe där ingen fiende är inom 150 m. Vill du välja ställe: högerklicka på Birka eller en tagen verkstad eller ett fältvarv och välj Service här. HÖK laddar sina robotar där, och en HÖK som cirklar över en verkstad laddar också. Tar du ett fältvarv skickar fienden sina rörliga förband dit. Allt bortom spärrarna ligger under luftvärn, så varken drönare eller KROK klarar sig där förrän markstyrkan slagit ut det. Valda flygande enheter visar på kartan var batteriet tvingar dem hem.</li>
@@ -378,6 +378,12 @@ button:disabled{opacity:.45;cursor:default}
 'use strict';
 const WW=2200,WH=2200,CELL=10,GW=WW/CELL,GH=WH/CELL,TS=2,TW=WW/TS,TH=WH/TS;
 const DEEP=0,SHAL=1,BEACH=2,LAND=3,ROCK=4,WALL=5;
+/* the land plan (markkarta, W.mark): what each land cell is used for. Häll is bare rock, strand the open shore, skog forest land,
+   åker a field, hage pasture and farmyard with single trees. The forest density per cell (W.skog: 0 open, 1 sparse, 2 dense) is what
+   the game will read for cover and for vehicles once the forest gets its rules (decided 16 okt) */
+const M_HALL=1,M_STRAND=2,M_SKOG=3,M_AKER=4,M_HAGE=5;
+/* broadleaf kinds as the season shader knows them (the leaf colour's green channel is the code / 8) */
+const TREE_SP={birch:0,alder:1,aspen:2,oak:3,maple:4,rowan:5};
 const PI=Math.PI,TAU=PI*2;
 const CX=WW/2,CY=WH/2,CARRIER={x:WW/2,y:WH-300,a:-PI/2};
 const hasDOM=typeof document!=='undefined'&&!!document.getElementById&&!!document.getElementById('app');
@@ -929,6 +935,18 @@ function buildWorldTry(seed,tryK){
      threat analysis: every way in from the sea and the traffic each pass would carry towards what matters; a defended region
      whose line of passes it blocks by doctrine and budget; cracks where it judges traffic lowest; covering fire on every obstacle */
   const covePt=V.cove?snapZ(inl(V.cove,15,.97),null,TIER.beach):null;
+  /* the land plan, part one: what the ground itself decides (decided 16 okt). Ridges and the edges of cliffs are bare rock, the low
+     granite along the water is open shore, the rest is forest land; the farms further down cut their fields and pasture out of it.
+     It is made before the defence so that the defence can read it once the forest gets its rules */
+  const cellDist=(src,cap)=>{const D=new Uint8Array(GW*GH).fill(cap),q=[];for(let i=0;i<GW*GH;i++)if(src(i)){D[i]=0;q.push(i);}
+    for(let h=0;h<q.length;h++){const c=q[h],x=c%GW,y=(c/GW)|0;if(D[c]+1>=cap)continue;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(D[n]>D[c]+1){D[n]=D[c]+1;q.push(n);}}}return D;};
+  const dWet=cellDist(i=>grid[i]===DEEP||grid[i]===SHAL,40),dRock=cellDist(i=>grid[i]===ROCK,12);
+  const mark=new Uint8Array(GW*GH);W.mark=mark;
+  for(let i=0;i<GW*GH;i++){const t=grid[i];if(t===BEACH){mark[i]=M_STRAND;continue;}if(t!==LAND)continue;
+    const c=cellCenter(i),z=zid[i],hn=fbm(c.x*2.3,c.y*2.3,s+411);
+    // above the zone's own level is a ridge, unless it is the ramp up to a pass
+    const up=z>=0&&!Z[z].water&&!pass.some(p=>Math.hypot(p.x-c.x,p.y-c.y)<p.w+45)?eg[i]-Z[z].h:0;
+    mark[i]=up>3+hn*4||(dRock[i]<=1&&hn>.52)?M_HALL:dWet[i]<=1||eg[i]<2.6?M_STRAND:M_SKOG;}
   /* the plan is a function of its own random sequence (decided 16 okt): the island is built once with the base defence, which the
      buildings, trees and decoration below are placed around, and W._replan(doc,k) plans another doctrine on the same geography */
   const planDefense=(Rp,first,doc)=>{W.barriers=[];
@@ -1093,7 +1111,7 @@ function buildWorldTry(seed,tryK){
   const STR=[],DEB=[];W.structs=STR;W.debris=DEB;
   const pr3=bfs(r3z,pad),onRoute=i=>pd[i]+pr3[i]===pd[r3z];W.route=lz.filter(onRoute);
   const zoneVal=i=>i===r3z?.8:i===r2z?1.3:onRoute(i)?.6:1.8;
-  const spotOK=(x,y,zi,loose,beach)=>{
+  const spotOK=(x,y,zi,loose,beach,sep)=>{
     const c=cellIdx(x,y),t=grid[c];if(!reach[c]||W.road[c])return false;
     if(beach?t!==BEACH:loose?(t!==LAND&&t!==BEACH):t!==LAND)return false;
     if(zi!=null&&zid[c]!==zi)return false;
@@ -1101,20 +1119,57 @@ function buildWorldTry(seed,tryK){
     if(!loose)for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const n=(gy+oy)*GW+gx+ox;if((grid[n]!==LAND&&grid[n]!==BEACH)||W.road[n]||Math.abs(eg[n]-eg[c])>2.4)return false;}
     if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<(loose?38:60)))return false;
     if(E.some(e=>Math.hypot(e.x-x,e.y-y)<22))return false;
-    if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<22)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<14))return false;
+    if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<(sep||22))||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<14))return false;
     if(!loose&&pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+30))return false;
     if(W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<55))return false;
     if(Math.hypot(landing.x-x,landing.y-y)<(beach?18:40))return false;
     return true;};
   const findSpot=(a,r0,r1,zi,loose,beach)=>{for(let t=0;t<80;t++){const ang=R()*TAU,rr=r0+R()*(r1-r0),x=a.x+Math.cos(ang)*rr,y=a.y+Math.sin(ang)*rr;if(spotOK(x,y,zi,loose,beach)){const c=cellCenter(cellIdx(x,y));return loose?{x,y}:c;}}return null;};
   const r5=v=>Math.round(v/5)*5;
-  const addS=(kind,p,m)=>STR.push({id:'B'+(STR.length+1),kind,x:p.x,y:p.y,cell:cellIdx(p.x,p.y),a:Math.floor(R()*4)*PI/2+(R()-.5)*.3,value:r5(STRUCT[kind].value*m)});
+  const addS=(kind,p,m)=>STR.push({id:'B'+(STR.length+1),kind,x:p.x,y:p.y,cell:cellIdx(p.x,p.y),a:p.a!=null?p.a:Math.floor(R()*4)*PI/2+(R()-.5)*.3,value:r5(STRUCT[kind].value*m)});
+  /* the land plan, part two: a zone's buildings are one farm (a depot yard in the two core zones), not loose houses (decided 16 okt).
+     The site is drawn among the good ones: flat ground off the bare rock, a short drive from the road and, for a farm, near the
+     water but not on it. The buildings stand round a yard square to the road, the main house on the far side with its long side
+     to the road; a lane runs from the yard to the road, and fields and pasture are cleared round a farm. A radio mast stands on the
+     highest ground of its zone instead */
+  const dRoad=cellDist(i=>W.road[i],30);W.farms=[];W.lanes=[];W.lane=new Uint8Array(GW*GH);
+  const flatAt=(x,y,e0,r)=>{for(let k=0;k<8;k++){const q=cellIdx(x+Math.cos(k*PI/4)*r,y+Math.sin(k*PI/4)*r),t=grid[q];if((t!==LAND&&t!==BEACH)||Math.abs(eg[q]-e0)>2.2)return false;}return true;};
+  const roadNear=(x,y)=>{const c0=cellIdx(x,y),gx0=c0%GW,gy0=(c0/GW)|0;let best=null,bd=1e9;for(let oy=-25;oy<=25;oy++)for(let ox=-25;ox<=25;ox++){const gx=gx0+ox,gy=gy0+oy;if(gx<0||gy<0||gx>=GW||gy>=GH||!W.road[gy*GW+gx])continue;const d=ox*ox+oy*oy;if(d<bd){bd=d;best=cellCenter(gy*GW+gx);}}return best;};
+  const farmSite=(i,core,anchor)=>{let best=null,bs=-1e9;for(let gy=1;gy<GH-1;gy+=2)for(let gx=1;gx<GW-1;gx+=2){const c=gy*GW+gx;if(zid[c]!==i||grid[c]!==LAND||mark[c]===M_HALL||dRoad[c]>=25)continue;
+      const p=cellCenter(c);if(!spotOK(p.x,p.y,i,false,false)||!flatAt(p.x,p.y,eg[c],16)||!flatAt(p.x,p.y,eg[c],30))continue;const dr=dRoad[c]*CELL,dw=dWet[c]*CELL;
+      const sc=core?-Math.abs(dr-30)/25-Math.hypot(p.x-anchor.x,p.y-anchor.y)/50+R()*.6:-Math.abs(dr-55)/30-Math.abs(Math.min(dw,250)-90)/90-(E.some(e=>Math.hypot(e.x-p.x,e.y-p.y)<45)?1.5:0)+R()*1.2;
+      if(sc>bs){bs=sc;best=p;}}return best;};
+  // yard slots: along the axis to the road (u), across it (v), and 1 where the long side faces the road
+  const FARM=[[-22,0,1],[-5,18,0],[-5,-18,0],[12,22,0],[12,-22,0],[-38,0,1]],YARD=[[-12,-12,1],[-12,12,1],[12,-12,1],[12,12,1],[-34,0,0]];
+  const layOut=(site,kinds,i,m,core)=>{const rp=roadNear(site.x,site.y),a=rp?Math.atan2(rp.y-site.y,rp.x-site.x):R()*TAU,ca=Math.cos(a),sa=Math.sin(a),L=core?YARD:FARM;let si=0,nb=0;
+    for(const kind of kinds){let p=null;
+      for(;si<L.length&&!p;si++){const[u,v,lng]=L[si];for(const f of[1,1.15,1.3]){const x=site.x+(ca*u-sa*v)*f,y=site.y+(sa*u+ca*v)*f;if(spotOK(x,y,i,false,false,16)){p={x,y,a:a+(lng?PI/2:0)+(R()-.5)*.06};break;}}}
+      if(!p){const q=findSpot(site,20,70,i,false,false);if(q)p={x:q.x,y:q.y,a:a+Math.floor(R()*2)*PI/2+(R()-.5)*.06};}
+      if(!p||(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85)))continue;addS(kind,p,m);nb++;}
+    if(!nb)return;W.farms.push({x:site.x,y:site.y,a,core,z:i});
+    // the lane: the shortest way over open land from the yard to the road, round the buildings; not a road for the units
+    if(rp&&Math.hypot(rp.x-site.x,rp.y-site.y)>14){const own=new Set(STR.map(q=>q.cell)),cells=astarCells(cellIdx(site.x,site.y),cellIdx(rp.x,rp.y),passLand,c=>own.has(c)?30:1);
+      if(cells&&cells.length&&cells.length<26){let pts=[{x:site.x,y:site.y},...cells.map(cellCenter)];pts[pts.length-1]={x:rp.x,y:rp.y};pts=chaikin(chaikin(pts));W.lanes.push(pts);
+        for(const q of pts){const gx=Math.floor(q.x/CELL),gy=Math.floor(q.y/CELL);for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const c=(gy+oy)*GW+gx+ox;if(c>=0&&c<GW*GH&&Math.hypot((gx+ox)*CELL+5-q.x,(gy+oy)*CELL+5-q.y)<6)W.lane[c]=1;}}}}
+    if(core)return;
+    // fields round the farm: the yard is pasture with a few big trees, then fields, and pasture again at the edge; the edge
+    // follows a noise so that no two farms are round, and stops at bare rock, the shore and a change of level
+    const r0=55+nb*8+R()*45,ax=R()*PI,cx=Math.cos(ax),sx=Math.sin(ax),c0=cellIdx(site.x,site.y),e0=eg[c0],seen=new Set([c0]),q=[c0];
+    for(let h=0;h<q.length;h++){const c=q[h],p=cellCenter(c),dx=p.x-site.x,dy=p.y-site.y,d=Math.hypot(dx*cx+dy*sx,(dy*cx-dx*sx)*1.5),lim=r0*(.45+1.3*fbm(p.x*1.6,p.y*1.6,s+601));if(d>lim)continue;
+      if(mark[c]===M_SKOG||mark[c]===M_HAGE)mark[c]=d<28||d>lim*.8?M_HAGE:M_AKER;
+      const x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;
+        if(seen.has(n)||zid[n]!==i||grid[n]!==LAND||mark[n]===M_HALL||Math.abs(eg[n]-e0)>3)continue;seen.add(n);q.push(n);}}};
   for(const i of lz){
     const m=zoneVal(i),core=i===r2z||i===r3z,anchor=zc[i];if(!anchor)continue;
     const n=i===land?2:core?3:onRoute(i)?2:4+(R()<.5?1:0);
     const pool=core?['depot','house','mast','fuel']:safe.has(i)?['shed','house','shed','mast']:['house','depot','shed','fuel'];
-    let base=null;
-    for(let k=0;k<n;k++){const kind=k===0&&core?'depot':pool[Math.floor(R()*pool.length)];const p=findSpot(base||anchor,base?18:30,base?60:130,i,false,false);if(!p)continue;if(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85))continue;if(!base)base=p;addS(kind,p,m);}
+    const kinds=[];for(let k=0;k<n;k++)kinds.push(k===0&&core?'depot':pool[Math.floor(R()*pool.length)]);
+    const ORD={depot:0,house:0,shed:1,fuel:2};const yard=kinds.filter(k=>k!=='mast').sort((a,b)=>ORD[a]-ORD[b]);
+    const site=yard.length?farmSite(i,core,anchor):null;
+    if(site)layOut(site,yard,i,m,core);
+    else for(const kind of yard){const p=findSpot(anchor,30,130,i,false,false);if(p&&!(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85)))addS(kind,p,m);}
+    for(const kind of kinds)if(kind==='mast'){let best=null,bs=-1e9;for(let gy=1;gy<GH-1;gy+=2)for(let gx=1;gx<GW-1;gx+=2){const c=gy*GW+gx;if(zid[c]!==i||grid[c]!==LAND)continue;const p=cellCenter(c);if(!spotOK(p.x,p.y,i,false,false))continue;const sc=eg[c]+R()*3;if(sc>bs){bs=sc;best=p;}}
+      if(best)addS('mast',best,m);}
     const nc=2;for(let k=0;k<nc;k++){const p=findSpot(anchor,20,150,i,true,false);if(p)DEB.push({x:p.x,y:p.y,kind:'crate',value:r5(20*m)});}
   }
   for(const zi of[r2z,r3z]){const g=E.find(e=>(e.kind==='turret'||e.kind==='aa')&&zid[cellIdx(e.x,e.y)]===zi);if(g){const p=findSpot(g,26,46,zi,false,false);if(p&&!relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85))addS('fuel',p,zoneVal(zi));}}
@@ -1124,15 +1179,146 @@ function buildWorldTry(seed,tryK){
   lab(landing,'Strand',1);if(harborPt&&!(V.harbor&&V.harbor.std))lab(harborPt,'Hamn',1);/* the standard harbour is point H and carries its own label */
   if(covePt)lab(covePt,'Vik',1);
   W._pass=pass.map(p=>({x:p.x,y:p.y,a:p.a,b:p.b}));
-  // trees
-  for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i])continue;const c=cellCenter(i);const fd=fbm(c.x*1.7,c.y*1.7,s+313),dense=fd>.56,pr=dense?Math.min(.95,.5+(fd-.56)*4):.1;
-    for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>pr)continue;const nT=dense?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
-    for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;W.trees.push({x,y,s:(dense?.85:.75)+hash2(gx+qq,gy,s+80)*.6,ci:i});}}}
+  /* the land plan, part three: the forest. Small glades open in the forest land; per zone a share of what is left is dense forest,
+     drawn between 30 and 60 %, so that no zone is all thicket or all open, and the same noise as before decides where in the zone.
+     Trees follow the plan: dense and sparse forest, low pines on bare rock, a few trees on the shore, single big trees in pasture
+     and none on fields, and the kind of tree follows the ground */
+  const Rf=rng(s*191+17),skog=new Uint8Array(GW*GH);W.skog=skog;
+  {const byZ=new Map();for(let i=0;i<GW*GH;i++){if(mark[i]!==M_SKOG)continue;const c=cellCenter(i);if(fbm(c.x*2,c.y*2,s+707)>.69){mark[i]=M_HAGE;continue;}
+      let L=byZ.get(zid[i]);if(!L)byZ.set(zid[i],L=[]);L.push([i,fbm(c.x*1.2,c.y*1.2,s+313)]);}
+    for(const[,L]of byZ){const nd=Math.round(L.length*(.3+Rf()*.3));L.sort((a,b)=>b[1]-a[1]);L.forEach(([i],k)=>{skog[i]=k<nd?2:1;});}}
+  // per kind of ground: chance per pass, most trees in a cell, smallest size and its spread
+  const TREE={[M_HALL]:[.13,1,.6,.25],[M_STRAND]:[.05,1,.7,.4],[M_HAGE]:[.08,1,.95,.45]};
+  for(let gy=1;gy<GH-1;gy++)for(let gx=1;gx<GW-1;gx++){const i=gy*GW+gx;if(grid[i]!==LAND||W.road[i]||W.lane[i])continue;const c=cellCenter(i),mk=mark[i],dense=skog[i]===2;
+    const T=mk===M_SKOG?(dense?[.85,3,.85,.6]:[.3,1,.75,.6]):TREE[mk];if(!T)continue;
+    for(let pass=0;pass<2;pass++){if(hash2(gx,gy,s+77+pass*50)>T[0])continue;const nT=T[1]>1?1+Math.floor(hash2(gx,gy,s+81+pass*50)*2.6):1;
+    for(let q2=0;q2<nT;q2++){const qq=q2+pass*5,x=c.x+(hash2(gx*7+qq,gy,s+78)-.5)*9.5,y=c.y+(hash2(gx,gy*7+qq,s+79)-.5)*9.5;if(relays.some(r=>Math.hypot(r.x-x,r.y-y)<28))continue;if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<15)||DEB.some(q=>Math.hypot(q.x-x,q.y-y)<8))continue;
+      /* the kind of tree follows the ground, tuned so that an island comes out near Stockholm county's productive forest (Riksskogstaxeringen):
+         about 48 % spruce, 32 % pine and 20 % broadleaf. Pine on bare rock and the dry shore, broadleaf by the water and in pasture,
+         spruce in the dense forest on the better ground inland */
+      const h=hash2(gx*3+qq,gy*5+pass,s+91),coast=dWet[i]<5,k=mk===M_HALL?(h<.9?'pine':'birch'):mk===M_STRAND?(h<.5?'pine':'birch'):mk===M_HAGE?(h<.6?'birch':h<.8?'pine':'spruce'):
+        dense?(coast?(h<.36?'pine':h<.6?'birch':'spruce'):(h<.27?'pine':h<.44?'birch':'spruce')):(h<.42?'pine':h<.7?'birch':'spruce');
+      /* which broadleaf (decided 17 okt, Magnus): alder by the water, oak and maple in pasture and round the farms, aspen and rowan in the
+         edges and the sparse forest, birch everywhere else; about 9 % birch, 3 % alder, 3 % aspen, 2 % oak, 2 % maple and 1 % rowan of all trees */
+      let kk=k;if(k==='birch'){const h2=hash2(gx*7+qq,gy*3+pass,s+93);
+        kk=dWet[i]<=5&&mk!==M_HALL?(h2<.62?'alder':h2<.84?'birch':h2<.92?'aspen':'rowan'):mk===M_HAGE?(h2<.35?'oak':h2<.6?'maple':h2<.7?'rowan':'birch'):mk===M_HALL||mk===M_STRAND?(h2<.15?'rowan':h2<.3?'aspen':'birch'):
+          dense?(h2<.16?'aspen':h2<.26?'maple':h2<.35?'oak':h2<.38?'rowan':'birch'):(h2<.18?'aspen':h2<.3?'oak':h2<.42?'maple':h2<.5?'rowan':'birch');}
+      // trees are lower where the wind comes in: about 60 % of full height at the water, full height 100 m in; the tallest spruce stops near 17 m
+      let ts=(T[2]+hash2(gx+qq,gy,s+80)*T[3])*(.6+.4*clamp(dWet[i]/10,0,1));if(k==='spruce')ts=Math.min(ts,1.18);
+      W.trees.push({x,y,s:ts,ci:i,k:kk});}}}
   W.baseGrid=grid.slice();
   // elevation grid for 3D
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)ev[j*nx+i]=elevAt(i*WW/SX,j*WH/SY,s,V);
+  /* a vertex more than 3 m above all eight neighbours is a sliver thinner than the grid, not a hill: it drew a 20 m spike at the
+     mouth of ö 5915's harbour, where a strip of full height is left between the lowered quay ground and the water (17 okt). It is
+     brought down to its highest neighbour; only the picture changes, the game's grid is computed separately */
+  const despike=()=>{const e0=ev.slice();for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){const k=j*nx+i;let m=-1e9;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++)if(di||dj)m=Math.max(m,e0[k+dj*nx+di]);if(e0[k]-m>3)ev[k]=m;}};despike();
+  /* the ridges between zones of the same level (decided 17 okt, Magnus): the even 13 m bank looked made, so it is drawn as one of
+     two things that both read as a barrier. Through farmland, and on some other stretches, a boundary wall about 3 m high in five
+     courses of blocks, in a strip of scattered blocks and bushes; elsewhere a granite ridge with steep stepped flanks, bare rock on
+     the faces, a block field along the foot and juniper and pine on top. One kind per pair of zones. Only the picture changes: the
+     game's grid above is computed from elevAt, so the same cells are closed and the passes are where they were.
+     W.ridgeV: 1 on the granite ridge, 2 in the wall's strip. Fields also get a few field islets (åkerholmar), low knolls with
+     bushes, stones and broadleaf trees, as decoration only */
+  /* drawn after the decoration is placed (see ridges() below), since the houses and the jetties are placed on the heights the
+     game had before, and they stand in the grid as obstacles: so the grid stays exactly as it was */
+  const ridges=()=>{const N=nx*ny,rS=new Float32Array(N).fill(-1),rB=new Float32Array(N),rF=new Float32Array(N),rP=new Int32Array(N).fill(-1),rv=new Uint8Array(N);W.ridgeV=rv;
+    const Rr=rng(s*977+3),f01=(v,a,b)=>clamp((v-a)/(b-a),0,1),ss=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+    // the same bank as elevAt adds: zones of the same level, outside a pass
+    const bank=(x,y)=>{const Z=zoneAt(x,y,V),z1=V.zones[Z.i1],z2=V.zones[Z.i2];if(z1.water||z2.water||Math.abs(z1.h-z2.h)>=1)return null;
+      const ps=V.passMap.get(pairKey(Z.i1,Z.i2));const f=ps?sm((ps.w+25-Math.hypot(x-ps.x,y-ps.y))/25):0;
+      return{Z,f,rb:13*sm((15-Z.s)/15)*(1-f),pk:Z.i1<Z.i2?Z.i1*64+Z.i2:Z.i2*64+Z.i1};};
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(ev[k]<=0)continue;const b=bank(i*WW/SX,j*WH/SY);if(!b||b.Z.s>24)continue;rS[k]=b.Z.s;rB[k]=b.rb;rF[k]=b.f;rP[k]=b.pk;}
+    // which pairs get a wall: the share of the ridge that runs within 30 m of field or pasture, or a third of the rest by lot
+    const cnt={},open={};for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>6||rF[k]>.5)continue;const p=rP[k];cnt[p]=(cnt[p]||0)+1;
+      const ci=cellIdx((k%nx)*WW/SX,((k/nx)|0)*WH/SY);let o=false;for(let oy=-3;oy<=3&&!o;oy++)for(let ox=-3;ox<=3;ox++){const q=ci+oy*GW+ox;if(q>=0&&q<GW*GH&&(mark[q]===M_AKER||mark[q]===M_HAGE)){o=true;break;}}if(o)open[p]=(open[p]||0)+1;}
+    const isWall=p=>(open[p]||0)/(cnt[p]||1)>.2||hash2(p,7,s+963)<.33;
+    const RS=[],BU=[],JU=[];W.ridgeStones=RS;W.bushes=BU;W.junipers=JU;
+    const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
+    const bush=(x,y,sz)=>BU.push({x,y,s:sz,a:Rr()*6.28,sp:Rr()<.45?0:Rr()<.5?5:3,r:Rr()});
+    const Dd=W.decor||{},HS=[...(Dd.villas||[]),...(Dd.cabins||[]),...(Dd.sheds||[]),...(Dd.light?[Dd.light]:[]),...(Dd.jetties||[])];
+    const clear=(x,y)=>{const ci=cellIdx(x,y);return !W.road[ci]&&!(W.lane&&W.lane[ci])&&relays.every(r=>Math.hypot(r.x-x,r.y-y)>30)&&STR.every(q=>Math.hypot(q.x-x,q.y-y)>18)&&HS.every(q=>Math.hypot(q.x-x,q.y-y)>12);};
+    for(let k=0;k<N;k++){if(rP[k]<0)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY,sv=rS[k];
+      if(isWall(rP[k])){ev[k]-=rB[k];if(sv<16&&rF[k]<.5)rv[k]=2;continue;}
+      // the granite ridge: about 9 to 15 m high, steep flanks broken into benches of about two metres, a rounded top with knolls
+      const w=Math.min(14.5,15*(.75+.3*f01(fbm(x*1.3,y*1.3,s+951),.33,.67))),q=clamp(1-sv/w,0,1),H=13*(.75+.4*f01(fbm(x*.9,y*.9,s+950),.33,.67));
+      const flank=ss(q/.38),top=.82+.18*ss((q-.38)/.62)+.12*(fbm(x*4,y*4,s+952)-.5),base=H*flank*top,st=2.1,kk=base/st,fr=kk-Math.floor(kk);
+      const nb=lerp(base,(Math.floor(kk)+ss((fr-.45)/.55))*st,.85*flank);ev[k]=ev[k]-rB[k]+Math.max(0,nb)*(1-rF[k]);
+      if(sv<w+6&&rF[k]<.5)rv[k]=1;
+      // the block field along the foot, on both sides
+      if(rF[k]<.4&&sv>w-1.5&&sv<w+4&&clear(x,y))for(let n=0;n<3;n++)if(Rr()<.55)RS.push({x:x+(Rr()-.5)*7.5,y:y+(Rr()-.5)*7.5,o:-.2,r:.5+Rr()*Rr()*1.3,a:Rr()*6.28});}
+    // the wall itself: columns of five courses along the line between the two zones, about 1.5 m apart, broken at the passes;
+    // across is the direction between the two zones' centres as the zones are warped
+    const sd=(x,y,a,b)=>{const w=warp(x,y,V.seed),A=V.zones[a],B=V.zones[b];return Math.hypot(w.x-B.x,w.y-B.y)-Math.hypot(w.x-A.x,w.y-A.y);};
+    const CO=[{n:3,w:.9,r:.6,v:.18},{n:2,w:.45,r:.5,v:.14},{n:2,w:.25,r:.42,v:.1},{n:1,w:0,r:.34,v:.08}],st2=WW/SX;
+    for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>st2*1.5||!isWall(rP[k]))continue;const x0=(k%nx)*WW/SX,y0=((k/nx)|0)*WH/SY;
+      for(let a=0;a<6;a++)for(let b=0;b<6;b++){const x=x0-st2/2+(a+.5)*st2/6,y=y0-st2/2+(b+.5)*st2/6,B=bank(x,y);if(!B||B.Z.s>.65||B.f>.05||!clear(x,y))continue;
+        const gx=(sd(x+1,y,B.Z.i1,B.Z.i2)-sd(x-1,y,B.Z.i1,B.Z.i2)),gy=(sd(x,y+1,B.Z.i1,B.Z.i2)-sd(x,y-1,B.Z.i1,B.Z.i2)),gl=Math.hypot(gx,gy)||1,ax=gx/gl,ay=gy/gl;
+        let o=0;CO.forEach((c,ci)=>{const r=c.r+Rr()*c.v;for(let n=0;n<c.n;n++){const off=c.n>1?-c.w+2*c.w*n/(c.n-1):0;RS.push({x:x+ax*off+(Rr()-.5)*.4,y:y+ay*off+(Rr()-.5)*.4,o:o+r*.25,r:r*(.92+Rr()*.16),a:Rr()*6.28,m:1});}o+=r*1.05;});
+        if(Rr()<.05)RS.push({x:x+ax*(Rr()<.5?-2:2),y:y+ay*(Rr()<.5?-2:2),o:-.1,r:.5+Rr()*.3,a:Rr()*6.28,m:1});}}
+    // the wall's strip: scattered blocks and bush clumps 3 to 9 m out, a broadleaf tree now and then; the strip's own trees go
+    W.trees=W.trees.filter(t=>{const v=rv[vk(t.x,t.y)];return !v||(v===2&&rS[vk(t.x,t.y)]>4&&Rr()<.4);});
+    for(let k=0;k<N;k++){if(rv[k]!==2)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(rS[k]<2.5||rS[k]>10||!clear(x,y))continue;
+      if(Rr()<.35)RS.push({x:x+(Rr()-.5)*7,y:y+(Rr()-.5)*7,o:-.2,r:.4+Rr()*Rr()*.9,a:Rr()*6.28});
+      if(Rr()<.3){const n=1+Math.floor(Rr()*4);for(let q=0;q<n;q++)bush(x+(Rr()-.5)*7,y+(Rr()-.5)*7,1+Rr()*1.2);}
+      if(Rr()<.06)W.trees.push({x:x+(Rr()-.5)*6,y:y+(Rr()-.5)*6,s:.75+Rr()*.3,ci:cellIdx(x,y),k:Rr()<.5?'oak':'birch'});}
+    // the granite ridge's own growth: juniper and pine on the benches and the top, never on the bare faces
+    for(let k=0;k<N;k++){if(rv[k]!==1)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(!clear(x,y))continue;
+      const i=k%nx,j=(k/nx)|0;let g=0;if(i<SX)g=Math.max(g,Math.abs(ev[k]-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(ev[k]-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(ev[k]-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(ev[k]-ev[k-nx]));if(g>2.6)continue;
+      for(let q=0;q<4;q++){const u=Rr(),px=x+(Rr()-.5)*6,py=y+(Rr()-.5)*6;if(u<.45)JU.push({x:px,y:py,s:.8+Rr()*.9,a:Rr()*6.28});else if(u<.58)W.trees.push({x:px,y:py,s:.55+Rr()*.35,ci:cellIdx(px,py),k:'pine'});else if(u<.64)bush(px,py,.9+Rr()*.8);}}
+    // field islets: on fields of at least half a hectare, 25 m in from the edge and clear of the farm, at most three an island
+    {const dF=cellDist(c=>mark[c]!==M_AKER,8);let n=0;const isl=[];
+      for(let c=0;c<GW*GH&&n<3;c++){if(mark[c]!==M_AKER||dF[c]<2.5||hash2(c,3,s+970)>.05)continue;const p=cellCenter(c);
+        if(!clear(p.x,p.y)||(W.farms||[]).some(f=>Math.hypot(f.x-p.x,f.y-p.y)<60)||HS.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<45)||isl.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<120))continue;isl.push(p);n++;}
+      W.fieldIslets=isl;
+      for(const p of isl){const L=15+Rr()*8,Wd=8+Rr()*4,an=Rr()*3.14,ca=Math.cos(an),sa=Math.sin(an),H=2.5+Rr()*1.2;
+        for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,dx=i*WW/SX-p.x,dy=j*WH/SY-p.y,u=(dx*ca+dy*sa)/L,v=(-dx*sa+dy*ca)/Wd,r=Math.hypot(u,v);if(r<1.4)ev[k]+=H*ss((1.4-r)/1.4);}
+        W.trees=W.trees.filter(t=>Math.hypot(t.x-p.x,t.y-p.y)>L*1.3);
+        for(let q=0;q<55;q++){const a=Rr()*6.28,d=Math.sqrt(Rr()),x=p.x+(Math.cos(a)*ca-Math.sin(a)*sa*Wd/L)*d*L*1.1,y=p.y+(Math.cos(a)*sa+Math.sin(a)*ca*Wd/L)*d*L*1.1;
+          if(q<14)RS.push({x,y,o:-.35,r:.5+Rr()*.9,a:Rr()*6.28});else bush(x,y,1.2+Rr()*1.4);}
+        const nt=4+Math.floor(Rr()*5);for(let q=0;q<nt;q++){const x=p.x+(Rr()-.5)*L*.9*ca,y=p.y+(Rr()-.5)*L*.9*sa;W.trees.push({x:x+(Rr()-.5)*4,y:y+(Rr()-.5)*4,s:.8+Rr()*.35,ci:cellIdx(x,y),k:Rr()<.5?'oak':Rr()<.6?'birch':'maple'});}}}};
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
+  /* the closed coast slopes as granite instead of standing as a cliff (decided 17 okt, Magnus: it looked like Dover, not Sandhamn).
+     Only the ground one sees and stands on changes: the game's grid above is computed from the old heights, so the same coast is
+     closed and the same beach, harbour and cove are the ways in. On the vertex grid, the distance to the coastline (chamfer) carries
+     the coast's height Hc. Where Hc is over 3 m the ground follows a profile from a new waterline up to Hc, at about 30 % on average,
+     flatter at the water and steeper at the top (t^1.6), with a noise for slabs; the waterline moves out up to 30 m on the highest
+     coast (none under 6 m), never at the harbour or on Birka's way in, and the ground round buildings and points is kept. A slope
+     shows as granite (W.hall), loses most of its trees, and closed coast gets a boulder beach along the new waterline */
+  {const N=nx*ny,stp=WW/SX,dg=stp*Math.SQRT2,dL=new Float32Array(N).fill(1e9),dW=new Float32Array(N).fill(1e9),hc=new Float32Array(N),hall=new Uint8Array(N),e0=ev.slice();W.hall=hall;
+    for(let k=0;k<N;k++){if(ev[k]>0){dL[k]=0;hc[k]=ev[k];}else dW[k]=0;}
+    const cham=(D,keep)=>{for(let dir=0;dir<2;dir++){const j0=dir?ny-1:0,j1=dir?-1:ny,dj=dir?-1:1,i0=dir?nx-1:0,i1=dir?-1:nx,di=dir?-1:1;
+      for(let j=j0;j!==j1;j+=dj)for(let i=i0;i!==i1;i+=di){const k=j*nx+i;if(keep(k))continue;for(const[oi,oj,c]of[[-di,0,stp],[0,-dj,stp],[-di,-dj,dg],[di,-dj,dg]]){const ii=i+oi,jj=j+oj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(D[q]+c<D[k]){D[k]=D[q]+c;hc[k]=hc[q];}}}}};
+    cham(dL,k=>ev[k]>0);/* water: distance to land and the height of that land */
+    for(let k=0;k<N;k++)if(ev[k]<=0)dW[k]=0;cham(dW,k=>ev[k]<=0);/* land: distance to water, and the coast height the water carried */
+    const keep=[...STR.map(q=>[q.x,q.y,22,42]),...relays.map(q=>[q.x,q.y,30,55]),...(W.harbor?[[W.harbor.x,W.harbor.y,HARB.L+60,HARB.L+90]]:[]),[landing.x,landing.y,60,90]];
+    const kept=(x,y)=>{let f=1;for(const[qx,qy,r0,r1]of keep){const d=Math.hypot(qx-x,qy-y);if(d<r1)f=Math.min(f,sm((d-r0)/(r1-r0)));}return f;};
+    const Rs=rng(s*313+11),stones=[];W.coastStones=stones;
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,x=i*WW/SX,y=j*WH/SY,H=hc[k];if(H<3)continue;
+      const O=clamp((H-6)*2.5,0,30),L=H/.3,sl=ev[k]>0?dW[k]+O:O-dL[k];if(sl<0||sl>L)continue;
+      const t=sl/L,nz=(fbm(x*2.5,y*2.5,s+900)-.5)*4*t*(1-t)*1.2,pr=H*Math.pow(t,1.6)-.3+nz;
+      if(ev[k]>0){const f=kept(x,y);if(f<=0||pr>ev[k]-.3)continue;ev[k]=Math.max(.35,lerp(ev[k],pr,f));if(e0[k]-ev[k]>.8)hall[k]=1;}
+      else{if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+90)continue;if(nearPath(x,y,25))continue;if(pr<=ev[k])continue;ev[k]=pr;hall[k]=1;}}
+    /* stones round the coast, spread as on a real shore (decided 17 okt, Magnus: plenty on the edge, none in the water): a few up on
+       the granite, most along the waterline, and then thinner out over the shallows, some breaking the surface and some just under
+       it. Not on the landing beach, in the cove, the harbour or on Birka's way in; jetties and boats clear them further down */
+    {const far=(x,y)=>Math.hypot(x-landing.x,y-landing.y)>150&&!(covePt&&Math.hypot(x-covePt.x,y-covePt.y)<110)&&!(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+90)&&!nearPath(x,y,35);
+      const put=(x,y,h,r)=>stones.push({x:x+(Rs()-.5)*stp,y:y+(Rs()-.5)*stp,h,r,a:Rs()*6,g:h>-.3&&Rs()<.15});
+      for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,e=ev[k],x=i*WW/SX,y=j*WH/SY;
+        if(e>1.4){if(hall[k]&&e<6&&Rs()<.06&&far(x,y))put(x,y,e,.4+Rs()*Rs()*1.4);continue;}
+        if(dL[k]>70||hc[k]<2||e<-4||!far(x,y))continue;const cl=hc[k]>=6?1:.55;
+        if(e>-.7){for(let q=0;q<2;q++)if(Rs()<.38*cl)put(x,y,e,.5+Rs()*Rs()*2.6);}
+        else for(let q=0;q<3;q++)if(Rs()<(.08+.45*(1+e/4))*cl)put(x,y,e,Math.min(3.4,-e/.85*(.7+Rs()*.7)));/* sized to the depth: about half break the surface */
+        }
+      // a few big single boulders further out, 10 to 60 m off, breaking the surface
+      for(let k=0;k<N;k++){const e=ev[k];if(e>-.7||e<-5||dL[k]<10||dL[k]>60||hc[k]<4)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(Rs()<.07&&far(x,y))put(x,y,e,Math.min(5,-e/.85+.2+Rs()*.8));}}
+    for(let k=0;k<N;k++)if(hall[k]){const i=k%nx,j=(k/nx)|0;let g=0;if(i<SX)g=Math.max(g,Math.abs(ev[k]-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(ev[k]-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(ev[k]-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(ev[k]-ev[k-nx]));vcls[k]=ev[k]<=0?(ev[k]<-3.2?DEEP:SHAL):g>2.6?ROCK:BEACH;}
+    // the granite slope is bare rock in the land plan, and keeps a quarter of its trees, low pines
+    const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
+    for(let c=0;c<GW*GH;c++){const p=cellCenter(c),k=vk(p.x,p.y);if(hall[k]&&e0[k]-ev[k]>2.5&&mark[c]){mark[c]=M_HALL;W.skog[c]=0;}}
+    W.trees=W.trees.filter(t=>{const k=vk(t.x,t.y);if(!hall[k]||e0[k]-ev[k]<=2.5)return true;if(hash2(Math.round(t.x),Math.round(t.y),s+71)>=.25)return false;t.k='pine';t.s*=.7;return true;});}
+  despike();/* again after the coast slope, which can leave a lone high vertex where it lowers the ground round it */
   W.SX=SX;W.SY=SY;W.ev=ev;W.vcls=vcls;
   // each grid square is split along the diagonal whose ends differ least in height (1 = a-d, 0 = b-c): contours such as the waterline then follow the slope instead of a sawtooth
   {const dg=new Uint8Array(SX*SY);for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=ev[j*nx+i],b=ev[j*nx+i+1],c=ev[(j+1)*nx+i],d=ev[(j+1)*nx+i+1];dg[j*SX+i]=Math.abs(a-d)<Math.abs(b-c)?1:0;}W.diag=dg;}
@@ -1161,38 +1347,88 @@ function buildWorldTry(seed,tryK){
     for(let gy=2;gy<GH-2;gy++)for(let gx=2;gx<GW-2;gx++){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;let nx=0,ny=0,nw=0;
       for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++){if(wet((gy+oy)*GW+gx+ox)){nx+=ox;ny+=oy;nw++;}}
       if(nw<5||nw>17)continue;const nl=Math.hypot(nx,ny);if(nl<1)continue;const c=cellCenter(i),n={x:nx/nl,y:ny/nl};
-      const top=elevAt(c.x-n.x*10,c.y-n.y*10,s,V);if(top>7||top<.5)continue;if(!away(c.x,c.y,260))continue;if(W.harbor&&Math.hypot(c.x-W.harbor.x,c.y-W.harbor.y)<HARB.L+110)continue;cand.push({x:c.x,y:c.y,n,top});}
+      const top=heightAt(c.x-n.x*10,c.y-n.y*10);if(top>7||top<.5)continue;if(!away(c.x,c.y,260))continue;if(W.harbor&&Math.hypot(c.x-W.harbor.x,c.y-W.harbor.y)<HARB.L+110)continue;cand.push({x:c.x,y:c.y,n,top});}
+    /* the coast points move out to the waterline one sees: on the sloping granite of a high coast it lies up to 30 m outside the
+       grid's coastline, and a jetty starts there (decided 17 okt) */
+    for(let k=cand.length-1;k>=0;k--){const c=cand[k];let t=0;while(t<=34&&heightAt(c.x+c.n.x*t,c.y+c.n.y*t)>.35)t+=2;if(t>34)cand.splice(k,1);else{c.x+=c.n.x*t;c.y+=c.n.y*t;}}
     for(let k=cand.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[cand[k],cand[j]]=[cand[j],cand[k]];}
-    const clearRun=(p,n,L)=>{for(let t=6;t<=L+4;t+=3)if(!wet(cellIdx(p.x+n.x*t,p.y+n.y*t)))return false;return true;};
+    const clearRun=(p,n,L)=>{for(let t=6;t<=L+4;t+=3){const x=p.x+n.x*t,y=p.y+n.y*t;if(!wet(cellIdx(x,y))||heightAt(x,y)>-.3)return false;}return true;};
     for(const c of cand){if(D.jetties.length>=16)break;if(D.jetties.some(j=>Math.hypot(j.x-c.x,j.y-c.y)<110))continue;const L=14+Rd()*10;if(!clearRun(c,c.n,L))continue;
       const a=Math.atan2(c.n.y,c.n.x),j={x:c.x,y:c.y,a,len:L,top:c.top};D.jetties.push(j);
-      {const bx=c.x-c.n.x*9,by=c.y-c.n.y*9,bc=cellIdx(bx,by);if(Rd()<.55&&(G0[bc]===LAND||G0[bc]===BEACH)&&!W.road[bc])(D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:elevAt(bx,by,s,V)});}
+      {const bx=c.x-c.n.x*9,by=c.y-c.n.y*9,bc=cellIdx(bx,by);if(Rd()<.55&&(G0[bc]===LAND||G0[bc]===BEACH)&&!W.road[bc])(D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:heightAt(bx,by)});}
       if(Rd()<.6){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L*.45),y:c.y+c.n.y*(L*.45)};D.boats.push({x:e.x+c.n.y*2.6*side,y:e.y-c.n.x*2.6*side,a:a+PI/2,kind:'eka'});}
       if(Rd()<.75){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L-3),y:c.y+c.n.y*(L-3)};D.boats.push({x:e.x-c.n.y*3.6*side,y:e.y+c.n.x*3.6*side,a:a+(Rd()<.5?0:PI),kind:Rd()<.4?'sail':'motor'});}}
-    if(cand.length){let best=null,bd=-1;for(const c of cand){const d=Math.hypot(c.x-CARRIER.x,c.y-CARRIER.y)+Math.hypot(c.x-CX,c.y-CY)*.6;if(d>bd&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>40)){bd=d;best=c;}}
+    /* lights and houses at least 200 m apart (decided 17 okt, Magnus: nobody wants a green light shining straight into the house):
+       the lighthouse keeps away from the farms and boathouses placed before it, villas and cottages from the lighthouse, and the
+       sector lights and daymarks from every house */
+    const farHouses=(x,y,noSheds)=>[STR,noSheds?[]:D.sheds||[],D.villas||[],D.cabins||[]].every(L=>L.every(q=>Math.hypot(q.x-x,q.y-y)>=200));
+    // the lighthouse goes before the boathouses: a boathouse within 200 m of it is not built
+    if(cand.length){let best=null,bd=-1;for(const c of cand){if(!farHouses(c.x-c.n.x*8,c.y-c.n.y*8,true))continue;const d=Math.hypot(c.x-CARRIER.x,c.y-CARRIER.y)+Math.hypot(c.x-CX,c.y-CY)*.6;if(d>bd&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>40)){bd=d;best=c;}}
       if(best){// a lighthouse stands on the highest ground of its stretch of coast, never on the shore under a cliff
-        let bx=best.x-best.n.x*8,by=best.y-best.n.y*8,bh=elevAt(bx,by,s,V);
+        let bx=best.x-best.n.x*8,by=best.y-best.n.y*8,bh=heightAt(bx,by);
+        /* on bare rock by the water rather than the highest ground in the forest (decided 16 okt: on ö 2316 it stood in dense forest):
+           at most 50 m from the water, and bare rock or open shore counts as if it were 4 or 2 m higher */
+        const lhB=i=>mark[i]===M_HALL?4:mark[i]===M_STRAND?2:0;let bs=bh+lhB(cellIdx(bx,by));
         for(let r=10;r<=140;r+=6){const nk=Math.max(10,Math.round(r/3));for(let k=0;k<nk;k++){const a=k/nk*TAU,x=best.x+Math.cos(a)*r,y=best.y+Math.sin(a)*r;if(x<20||y<20||x>WW-20||y>WH-20)continue;
-          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||!away(x,y,260))continue;const h=elevAt(x,y,s,V);if(h<=bh+.2)continue;
+          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||dWet[ci]>5||!away(x,y,260)||!farHouses(x,y,true))continue;const h=heightAt(x,y),sc=h+lhB(ci);if(sc<=bs+.2)continue;
           if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<22)||E.some(e=>Math.hypot(e.x-x,e.y-y)<26)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<20)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<14))continue;
-          let flat=true;for(let m=0;m<6&&flat;m++){const q2=elevAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5,s,V);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;}}
-        D.light={x:bx,y:by,h:bh};W.trees=W.trees.filter(t=>Math.hypot(t.x-bx,t.y-by)>7);}}
-    const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const q=cellIdx(x+Math.cos(a/12*TAU)*r,y+Math.sin(a/12*TAU)*r);if(!wet(q))return true;}return false;};
+          let flat=true;for(let m=0;m<6&&flat;m++){const q2=heightAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;bs=sc;}}
+        D.light={x:bx,y:by,h:bh};if(D.sheds)D.sheds=D.sheds.filter(q=>Math.hypot(q.x-bx,q.y-by)>=200);
+        // the light station: bare rock round the tower, pasture out to 50 m, and the forest thinning in towards it from 55 m
+        for(let gy=Math.floor((by-50)/CELL);gy<=Math.floor((by+50)/CELL);gy++)for(let gx=Math.floor((bx-50)/CELL);gx<=Math.floor((bx+50)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx,d=Math.hypot(gx*CELL+5-bx,gy*CELL+5-by);
+          if(d>50||!mark[i]||mark[i]===M_AKER)continue;mark[i]=d<25?M_HALL:M_HAGE;W.skog[i]=0;}
+        W.trees=W.trees.filter(t=>{const d=Math.hypot(t.x-bx,t.y-by);return d>55||(d>30&&hash2(Math.round(t.x),Math.round(t.y),s+97)<(d-30)/25);});}}
+    // no coast far enough from the houses: the lighthouse stands out on the biggest skerry instead, as many real ones do
+    if(!D.light){const o=(W.islets||[]).filter(o=>(o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>6&&farHouses(o.x,o.y,true)&&away(o.x,o.y,260)).sort((a,b)=>b.r-a.r)[0];
+      if(o){D.light={x:o.x,y:o.y,h:o.parts[0].h*.9,islet:true};o.trees=0;if(D.sheds)D.sheds=D.sheds.filter(q=>Math.hypot(q.x-o.x,q.y-o.y)>=200);}}
+    const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const px=x+Math.cos(a/12*TAU)*r,py=y+Math.sin(a/12*TAU)*r;if(!wet(cellIdx(px,py))||heightAt(px,py)>-.3)return true;}return false;};
     for(let t=0;t<400&&D.boats.length<D.jetties.length*.75+7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r=45+Rd()*90,x=c.x+c.n.x*r+(Rd()-.5)*60,y=c.y+c.n.y*r+(Rd()-.5)*60;
       if(!wet(cellIdx(x,y))||coastNear(x,y,25)||!away(x,y,280)||D.boats.some(b=>Math.hypot(b.x-x,b.y-y)<45)||nearPath(x,y,60))continue;D.boats.push({x,y,a:Rd()*TAU,kind:Rd()<.5?'sail':'motor',anchored:true});}
     // archipelago villas, classic and modern, looking out over the water
     D.villas=[];{const STY=['klassisk','klassisk','rod','modern','svart'];const nV=5+Math.floor(Rd()*4);
       for(const c of cand){if(D.villas.length>=nV)break;const dd=20+Rd()*10,x=c.x-c.n.x*dd,y=c.y-c.n.y*dd,ci=cellIdx(x,y);if(G0[ci]!==LAND||W.road[ci])continue;
-        const h=elevAt(x,y,s,V);if(h>8||h<.5||!away(x,y,280))continue;if(D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<130)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<30)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<18))continue;
-        if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<30)||E.some(e=>Math.hypot(e.x-x,e.y-y)<45))continue;
-        let flat=true;for(const[ox,oy]of[[8,6],[-8,6],[8,-6],[-8,-6]]){if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.6)flat=false;}if(!flat)continue;
+        const h=heightAt(x,y);if(h>8||h<.5||!away(x,y,280))continue;if(D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<130)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<30)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<18))continue;
+        if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<30)||E.some(e=>Math.hypot(e.x-x,e.y-y)<45)||(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200))continue;
+        let flat=true;for(const[ox,oy]of[[8,6],[-8,6],[8,-6],[-8,-6]]){if(Math.abs(heightAt(x+ox,y+oy)-h)>1.6)flat=false;}if(!flat)continue;
         const v={x,y,a:Math.atan2(c.n.y,c.n.x),h,style:STY[Math.floor(Rd()*STY.length)],col:Math.floor(Rd()*4)};D.villas.push(v);
         for(let gy=Math.floor((y-9)/CELL);gy<=Math.floor((y+9)/CELL);gy++)for(let gx=Math.floor((x-9)/CELL);gx<=Math.floor((x+9)/CELL);gx++){const i=gy*GW+gx;if(i<0||i>=GW*GH||W.road[i])continue;if(Math.hypot(gx*CELL+5-x,gy*CELL+5-y)>7.5)continue;if(G0[i]===LAND){G0[i]=WALL;grid[i]=WALL;}}}
       W.trees=W.trees.filter(t=>D.villas.every(v=>Math.hypot(t.x-v.x,t.y-v.y)>15));}
+    /* torp and summer cottages (decided 16 okt, Magnus): scenery only, no salvage and no cover, but they burn, light their windows
+       and stand in the grid as small obstacles. A torp stands in a glade or by the road at the forest edge, facing the road, with a
+       little pasture round it; cottages stand two to five together on low ground by the water (never above a cliff), facing it, often with a jetty of their own */
+    D.cabins=[];{const C=D.cabins,farms=W.farms||[];
+      const fits=(x,y)=>{const ci=cellIdx(x,y),gx=ci%GW,gy=(ci/GW)|0;if(gx<2||gy<2||gx>=GW-2||gy>=GH-2||G0[ci]!==LAND||W.road[ci]||(W.lane&&W.lane[ci])||W.isletMask[ci]||!away(x,y,220))return false;
+        /* never next to a cliff or another obstacle: a house there can close the only way up from the shore (fixed 16 okt) */
+        for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const t=G0[ci+oy*GW+ox];if(t===ROCK||t===WALL)return false;}
+        if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+70)return false;if(pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+35)||W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<60))return false;
+        if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<28)||E.some(e=>Math.hypot(e.x-x,e.y-y)<40)||D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<45)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<16)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<14)||C.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
+        if(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200)return false;const h=heightAt(x,y);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(heightAt(x+ox,y+oy)-h)>1.2)return false;return h;};
+      /* five kinds of house (decided 16 okt, Magnus: at least five, and not only red with white corners), each with its own colours;
+         a torp is mostly the old red cottage, by the water anything goes */
+      const pick=(W8)=>{let r=Rd()*W8.reduce((a,b)=>a+b[1],0);for(const[k,w]of W8){r-=w;if(r<=0)return k;}return W8[0][0];};
+      const TYP_T=[['torp',3],['sextio',1]],TYP_S=[['torp',.6],['sextio',1.2],['ahus',.6],['modern',.6],['veranda',1]];
+      // torp
+      {const tc=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(!((mark[i]===M_HAGE)||(mark[i]===M_SKOG&&dRoad[i]>=2&&dRoad[i]<=3)))continue;const c=cellCenter(i);if(farms.some(f=>Math.hypot(f.x-c.x,f.y-c.y)<110))continue;tc.push(c);}
+        for(let k=tc.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[tc[k],tc[j]]=[tc[j],tc[k]];}
+        const nT=6+Math.floor(Rd()*6);let n=0;for(const c of tc){if(n>=nT)break;const x=c.x+(Rd()-.5)*6,y=c.y+(Rd()-.5)*6;if(C.some(q=>q.kind==='torp'&&Math.hypot(q.x-x,q.y-y)<100))continue;const h=fits(x,y);if(h===false)continue;
+          const rp=roadNear(x,y),a=(rp&&Math.hypot(rp.x-x,rp.y-y)<80?Math.atan2(rp.y-y,rp.x-x)+PI/2:Rd()*TAU)+(Rd()-.5)*.1;C.push({x,y,a,h,kind:'torp',type:pick(TYP_T),pal:Math.floor(Rd()*12)});n++;
+          for(let gy=Math.floor((y-15)/CELL);gy<=Math.floor((y+15)/CELL);gy++)for(let gx=Math.floor((x-15)/CELL);gx<=Math.floor((x+15)/CELL);gx++){const i=gy*GW+gx;if(i>=0&&i<GW*GH&&mark[i]===M_SKOG&&Math.hypot(gx*CELL+5-x,gy*CELL+5-y)<15)mark[i]=M_HAGE;}}}
+      // summer cottages in small groups by the water, from the same low coast points as the jetties (where the shore is under 7 m)
+      {const nG=4+Math.floor(Rd()*3),groups=[];
+        for(const c of cand){if(groups.length>=nG)break;if(groups.some(g=>Math.hypot(g.x-c.x,g.y-c.y)<180)||farms.some(f=>Math.hypot(f.x-c.x,f.y-c.y)<130))continue;
+          const want=2+Math.floor(Rd()*4),mine=[];
+          for(let t=0;t<40&&mine.length<want;t++){const din=12+Rd()*30,dl=(Rd()-.5)*80,x=c.x-c.n.x*din-c.n.y*dl,y=c.y-c.n.y*din+c.n.x*dl,ci=cellIdx(x,y);if(dWet[ci]<1||dWet[ci]>5)continue;
+            const h=fits(x,y);if(h===false||h>8||h>c.top+5)continue;const v={x,y,a:Math.atan2(c.n.y,c.n.x)+PI/2+(Rd()-.5)*.3,h,kind:'stuga',type:'',pal:0};v.type=pick(TYP_S);v.pal=Math.floor(Rd()*12);C.push(v);mine.push(v);}
+          if(!mine.length)continue;groups.push(c);
+          // a jetty of the group's own where the shore allows
+          if(Rd()<.7&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>60)&&C.every(v=>Math.hypot(v.x-c.x,v.y-c.y)>10)){const L=10+Rd()*8;if(clearRun(c,c.n,L)){const a=Math.atan2(c.n.y,c.n.x);D.jetties.push({x:c.x,y:c.y,a,len:L,top:c.top});
+            if(Rd()<.6){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L-3),y:c.y+c.n.y*(L-3)};D.boats.push({x:e.x-c.n.y*3.6*side,y:e.y+c.n.x*3.6*side,a:a+(Rd()<.5?0:PI),kind:Rd()<.5?'eka':'motor'});}}}}}
+      for(const c of C){const i=cellIdx(c.x,c.y);if(G0[i]===LAND&&!W.road[i]){G0[i]=WALL;grid[i]=WALL;}}
+      W.trees=W.trees.filter(t=>C.every(c=>Math.hypot(t.x-c.x,t.y-c.y)>(c.kind==='torp'?10:8)));}
     // small sector lights (prickfyrar): four per island, two red and two green, well spread; on skerries first, then on low points of the coast
     // a daymark (båk) on one or two of the bigger skerries, placed before the sector lights so they keep away from it (fixed 16 okt: a sector
     // light stood on the same skerry as a daymark, the two drawn into each other)
-    D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7)D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
+    D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7&&farHouses(o.x,o.y)&&!(D.light&&D.light.islet&&Math.hypot(D.light.x-o.x,D.light.y-o.y)<1))D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
     /* on the coast a light stands on level ground at the terrain's own height (fixed 16 okt: on ö 1504 a green one stood at the cliff
        top's height right at the edge and hung out over the drop): from the coast point it looks up to 9 m further in, still by the water, for a spot where
        the ground within 2 m is level to under a metre, and sits at the lowest of it; with no such spot the site is skipped. Skerries
@@ -1202,20 +1438,21 @@ function buildWorldTry(seed,tryK){
       for(let a=0;a<8;a++){const h=heightAt(x+Math.cos(a*PI/4)*2.2,y+Math.sin(a*PI/4)*2.2);lo=Math.min(lo,h);hi=Math.max(hi,h);}if(lo>.3&&hi-lo<.8&&shore(x,y))return{x,y,h:lo};if(!q.nx&&!q.ny)break;}return null;};
     D.secs=[];{const sites=[];for(const o of (W.islets||[]))if(o.kind!=='grynna'&&o.kind!=='stenar')sites.push({x:o.x,y:o.y,h:o.parts[0].h*.85,islet:true});
       for(let k=0;k<cand.length;k+=3){const c=cand[k];sites.push({x:c.x-c.n.x*3,y:c.y-c.n.y*3,nx:c.n.x,ny:c.n.y});}
-      for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
+      for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
         D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}
       if(D.secs.length<4){const more=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;if(!(wet(i+2)||wet(i-2)||wet(i+2*GW)||wet(i-2*GW)))continue;const c=cellCenter(i);more.push({x:c.x,y:c.y});}
         for(let k=more.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[more[k],more[j]]=[more[j],more[k]];}
-        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
-    // a light stands in the open (decided 16 okt, Magnus): no trees within 20 m of any light, the lighthouse or a sector light (one
+        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
+    // a light stands in the open (decided 16 okt, Magnus): no trees within 25 m of any light, the lighthouse or a sector light (one
     // on ö 1504 stood hidden in the forest)
-    {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>20));}
+    {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>25));
+      for(const z of D.secs){const i=cellIdx(z.x,z.y);if(mark[i]===M_SKOG||mark[i]===M_HAGE){mark[i]=M_HALL;W.skog[i]=0;}}}
     // hidden shoals (grund under ytan) out in open water, each marked by a cardinal mark on its safe-water side
     D.shoals=[];for(let t=0;t<600&&D.shoals.length<7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r0=8+Rd()*16,dd=60+Rd()*230,x=c.x+c.n.x*dd+(Rd()-.5)*80,y=c.y+c.n.y*dd+(Rd()-.5)*80;
-      if(!wet(cellIdx(x,y))||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
+      if(!wet(cellIdx(x,y))||heightAt(x,y)>-1||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
       const sh={x,y,r:r0,rot:Rd()*PI,el:.5+Rd()*.5};D.shoals.push(sh);
       const dirs=[['N',0,-1],['S',0,1],['E',1,0],['W',-1,0]];const sea={x:x-CX,y:y-CY};dirs.sort((a2,b2)=>(b2[1]*sea.x+b2[2]*sea.y)-(a2[1]*sea.x+a2[2]*sea.y));const pick=dirs[Rd()<.7?0:1];
-      const mx=x+pick[1]*(r0+12),my=y+pick[2]*(r0+12);if(wet(cellIdx(mx,my)))D.marks.push({x:mx,y:my,type:pick[0]});}
+      const mx=x+pick[1]*(r0+12),my=y+pick[2]*(r0+12);if(wet(cellIdx(mx,my))&&heightAt(mx,my)<-.5)D.marks.push({x:mx,y:my,type:pick[0]});}
     /* stones breaking the surface on most shoals (decided 12 okt: grund och grynnor are common): none on about a third of them,
        otherwise one to five of different sizes within the shoal, some barely awash. Scenery only, with their own random stream
        so that the rest of the decor is unchanged. */
@@ -1227,6 +1464,17 @@ function buildWorldTry(seed,tryK){
       for(const dd of std?[30,80]:[70,110]){const base0=std?{x:V.harbor.x,y:V.harbor.y}:harborPt,m={x:base0.x+out.x*dd,y:base0.y+out.y*dd},h={x:-out.x,y:-out.y},left={x:h.y,y:-h.x},wd=std?HARB.hw+14:24;/* outside the mouth and wider than Birka */
         const r={x:m.x+left.x*wd,y:m.y+left.y*wd},g={x:m.x-left.x*wd,y:m.y-left.y*wd};if(wet(cellIdx(r.x,r.y))&&wet(cellIdx(g.x,g.y))){D.marks.push({...r,type:'red'},{...g,type:'green'});}}}
   }
+  if(W.coastStones&&W.decor){const D=W.decor,sd=(px,py,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1,t=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);return Math.hypot(px-a.x-vx*t,py-a.y-vy*t);};
+    W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));}
+  // the ridges and the field islets, now that the houses stand where they would without them (see the note at ridges)
+  {const ev0=ev.slice();ridges();
+    // the ground class and the square diagonals again where the ground changed
+    const ch=new Uint8Array(nx*ny);for(let k=0;k<nx*ny;k++)if(ev[k]!==ev0[k]){const i=k%nx,j=(k/nx)|0;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){const ii=i+di,jj=j+dj;if(ii>=0&&jj>=0&&ii<nx&&jj<ny)ch[jj*nx+ii]=1;}}
+    for(let k=0;k<nx*ny;k++){if(!ch[k]||(W.hall&&W.hall[k]))continue;const i=k%nx,j=(k/nx)|0,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
+    for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const k=j*nx+i;if(!ch[k])continue;const a=ev[k],b=ev[k+1],c=ev[k+nx],d=ev[k+nx+1];W.diag[j*SX+i]=Math.abs(a-d)<Math.abs(b-c)?1:0;}
+  // the ridges' stones, bushes and junipers stand on the finished ground; anything that ended up in the water goes
+  {const gh=(x,y)=>{const fx=clamp(x/WW*SX,0,SX-.001),fy=clamp(y/WH*SY,0,SY-.001),i=Math.floor(fx),j=Math.floor(fy),u=fx-i,v=fy-j,k=j*nx+i;return lerp(lerp(ev[k],ev[k+1],u),lerp(ev[k+nx],ev[k+nx+1],u),v);};
+    for(const L of['ridgeStones','bushes','junipers']){W[L]=(W[L]||[]).filter(q=>(q.h=gh(q.x,q.y))>.3);if(L==='ridgeStones')for(const q of W[L])q.h+=q.o;}}}
   W._cs=s;W._cv=V;/* the chart picture is built once, for the world that is kept (buildChart) */
   W.treeAll=W.trees;defenseDress(W);
   /* the decoration below writes islets and villas into the grid; a new plan sees the grid as the first one did */
@@ -1391,6 +1639,9 @@ function resTick(now,ms){const D=DYNRES;if(!R3||!D.on||document.hidden||!(ms>0&&
 /* draw distance (decided 13 okt): Lång is the old look; Medel and Kort pull the fog in to 75 and 55 %. Tree tiles past the fog,
    outside the view or far from the shadow box are not drawn, so a shorter distance saves geometry; the archipelago backdrop and
    the sky stay */
+/* photo mode (&photo in the address, decided 17 okt): for stills and the seasons picture (tests/arstider.js), not for play. The fog
+   lies 2.8 times further out, the sun's shadows cover 1.6 km with an 8192 map instead of 300 m, and no labels float over the land */
+const PHOTO=(()=>{try{return new URLSearchParams(location.search).has('photo');}catch(_){return false;}})();
 const SIKT={k:'lang'},SIKT_K={lang:1,medel:.75,kort:.55},SIKT_N={lang:'lång',medel:'medel',kort:'kort'};try{const v=localStorage.getItem('bh.sikt');if(SIKT_K[v])SIKT.k=v;}catch(_){}
 let TC=null;
 function treeCull(cam,main){const T=R3&&R3.treeTiles;if(!T)return;if(!TC)TC={fr:new THREE.Frustum(),pm:new THREE.Matrix4(),sp:new THREE.Sphere()};
@@ -2165,13 +2416,13 @@ let canopyW=null,canopyA=null;
 function canopyTop(x,y){
   if(canopyW!==WORLD){canopyW=WORLD;canopyA=new Float32Array(GW*GH);const put=(px,py,h)=>{const i=cellIdx(px,py),t=groundY(px,py)+h;if(t>canopyA[i])canopyA[i]=t;};
     for(const t of WORLD.trees||[])put(t.x,t.y,14.5*t.s);for(const st of WORLD.structs||[])put(st.x,st.y,10);for(const r of WORLD.relays||[])put(r.x,r.y,16);
-    const D=WORLD.decor;if(D){if(D.light)put(D.light.x,D.light.y,18);for(const v of D.villas||[])put(v.x,v.y,10);}}
+    const D=WORLD.decor;if(D){if(D.light)put(D.light.x,D.light.y,18);for(const v of D.villas||[])put(v.x,v.y,10);for(const c of D.cabins||[])put(c.x,c.y,7);}}
   const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);let m=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=gx+dx,ny=gy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const v=canopyA[ny*GW+nx];if(v>m)m=v;}return m;}
 const flyAlt=(x,y,base,margin)=>{const g=groundY(x,y);return Math.max(g+base,canopyTop(x,y)+margin);};
 function hOf(o){const g=groundY(o.x,o.y);if(o.kind==='mus')return g+.6;if(o.kind==='krok')return flyAlt(o.x,o.y,28,6);if(o.air)return flyAlt(o.x,o.y,o.kind==='scout'?12:24,o.kind==='scout'?4:6);if(o.isStruct)return g+3;if(o.kind==='inf'||o.kind==='at'||o.kind==='rb')return g+1.2;return g+2.7;}
 function launch(a,t,x2,y2,h2,ws,side,hit,dmg,w){
   const W=WSPEC[ws],dx=x2-a.x,dy=y2-a.y,d=Math.hypot(dx,dy)||1,ang=a.turret!=null&&a.kind==='tank'?a.turret:a.aim!=null&&!a.mobile?a.aim:Math.atan2(dy,dx);
-  const mx=a.x+Math.cos(ang)*3.4,my=a.y+Math.sin(ang)*3.4,h1=hOf(a)+(a.kind==='tank'?.3:0);
+  const mx=a.x+Math.cos(ang)*3.4,my=a.y+Math.sin(ang)*3.4,h1=hOf(a)+(a.kind==='tank'?-.2:0)/* the gun of a VARG at 0.8 scale */;
   G.fx.push({k:'shot',x1:mx,y1:my,h1,x2,y2,h2,t:0,ttl:Math.max(.05,Math.hypot(x2-mx,y2-my)/W.v),ws,side,a,tg:t,hit,dmg,w,done:false});
   G.fx.push({k:'flash',x:mx,y:my,h:h1,t:0,ttl:ws==='mg'||ws==='e_rifle'?.05:.09,big:ws==='cannon'||ws==='e_shell',ws,side});
 }
@@ -2202,11 +2453,12 @@ function resolveShot(f){
 function segDist(px,py,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,l2=vx*vx+vy*vy||1,t=clamp(((px-ax)*vx+(py-ay)*vy)/l2,0,1);return Math.hypot(px-ax-vx*t,py-ay-vy*t);}
 function decorHit(x,y,r){const D=WORLD.decor;if(!D)return;
   (D.villas||[]).forEach((h,i)=>{if(G.ddead.v&&G.ddead.v[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+6){(G.ddead.v||(G.ddead.v={}))[i]=G.time;startFire(h.x,h.y,150,1.5,Math.max(0,h.h));}});
+  (D.cabins||[]).forEach((h,i)=>{if(G.ddead.c&&G.ddead.c[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+4){(G.ddead.c||(G.ddead.c={}))[i]=G.time;startFire(h.x,h.y,110,1,Math.max(0,h.h));}});
   (D.sheds||[]).forEach((h,i)=>{if(G.ddead.s&&G.ddead.s[i]!=null)return;if(Math.hypot(h.x-x,h.y-y)<r+3){(G.ddead.s||(G.ddead.s={}))[i]=G.time;startFire(h.x,h.y,90,.8,Math.max(0,h.h));}});
   D.boats.forEach((b,i)=>{if(G.ddead.b[i]||b.off)return;if(Math.hypot(b.x-x,b.y-y)<r+3.5){G.ddead.b[i]=G.time;startFire(b.x,b.y,25,.6,0);G.fx.push({k:'boom',x:b.x,y:b.y,t:0,ttl:.9,small:true});}});
   D.jetties.forEach((j,i)=>{if(G.ddead.j[i])return;const ex=j.x+Math.cos(j.a)*(j.len+2),ey=j.y+Math.sin(j.a)*(j.len+2);if(segDist(x,y,j.x,j.y,ex,ey)<r+1.6){G.ddead.j[i]=G.time;G.fx.push({k:'puff',x,y,h:1,t:0,ttl:1.4,c:0x8a7356,s:2.6,hit:false,ws:'cannon'});}});}
 function startFire(x,y,dur,size,h){G.fires.push({x,y,t0:G.time,dur,size,h:h||0,acc:0});}
-const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i]&&!b.off)out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});return out;};
+const decorTargets=()=>{const D=WORLD.decor,out=[];if(!D)return out;D.boats.forEach((b,i)=>{if(!G.ddead.b[i]&&!b.off)out.push({x:b.x,y:b.y,h:1});});D.jetties.forEach((j,i)=>{if(!G.ddead.j[i])out.push({x:j.x+Math.cos(j.a)*j.len*.6,y:j.y+Math.sin(j.a)*j.len*.6,h:1});});(D.sheds||[]).forEach((h,i)=>{if(!(G.ddead.s&&G.ddead.s[i]!=null))out.push({x:h.x,y:h.y,h:2});});(D.villas||[]).forEach((h,i)=>{if(!(G.ddead.v&&G.ddead.v[i]!=null))out.push({x:h.x,y:h.y,h:4});});(D.cabins||[]).forEach((h,i)=>{if(!(G.ddead.c&&G.ddead.c[i]!=null))out.push({x:h.x,y:h.y,h:3});});return out;};
 /* vehicles that leave a wreck of themselves and burn on (see blowApart) */
 const WRECK_KINDS={own:new Set(['tank','eng','mus']),enemy:new Set(['tank','light','aa'])};
 function addWreck(x,y,value,own,kind){const w={id:'w'+(G.nextW++),x,y,value,own,kind,claimed:false,rot:Math.random()*TAU,t0:G.time};G.wrecks.push(w);return w;}
@@ -2928,7 +3180,7 @@ function drawBatteryLimit(ctx,u,route,k){
 /* the parts of the chart that only change with the view, the island or a destroyed villa or jetty, kept as a picture per canvas:
    redrawing them every frame was most of the chart's cost (hundreds of small paths, the whole sheet), now it is one copy */
 function mapStatic(ctx,w,h,s,ox,oy,k){const cv=ctx.canvas,T=ctx.getTransform(),dd=G.ddead,
-    key=s+'|'+ox+'|'+oy+'|'+w+'|'+h+'|'+T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+(dd.v?Object.keys(dd.v).length:0)+'|'+(dd.j?Object.keys(dd.j).length:0);
+    key=s+'|'+ox+'|'+oy+'|'+w+'|'+h+'|'+T.a+'|'+T.b+'|'+T.c+'|'+T.d+'|'+T.e+'|'+T.f+'|'+cv.width+'|'+cv.height+'|'+(dd.v?Object.keys(dd.v).length:0)+'|'+(dd.j?Object.keys(dd.j).length:0)+'|'+(dd.c?Object.keys(dd.c).length:0);
   let C=cv._mapStatic;if(!C){C=cv._mapStatic=document.createElement('canvas');}
   if(C._key!==key||C._world!==WORLD||C._doc!==WORLD.doc){C._key=key;C._world=WORLD;C._doc=WORLD.doc;if(C.width!==cv.width||C.height!==cv.height){C.width=cv.width;C.height=cv.height;}
     const c=C.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,C.width,C.height);c.setTransform(T);mapStaticDraw(c,w,h,s,ox,oy,k);}
@@ -2952,6 +3204,8 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   // roads: chart double line
   ctx.lineCap='round';ctx.lineJoin='round';
   for(const pass of[[5.5,'#6e5536'],[3,'#fbf3d6']]){ctx.lineWidth=pass[0]*Math.max(k,1.6);ctx.strokeStyle=pass[1];for(const rd of WORLD.roads){ctx.beginPath();ctx.moveTo(rd[0].x,rd[0].y);for(const p of rd)ctx.lineTo(p.x,p.y);ctx.stroke();}}
+  // farm lanes: a single thin line, as a track on a chart
+  ctx.lineWidth=1.3*Math.max(k,1.6);ctx.strokeStyle='#6e5536';for(const rd of WORLD.lanes||[]){ctx.beginPath();ctx.moveTo(rd[0].x,rd[0].y);for(const p of rd)ctx.lineTo(p.x,p.y);ctx.stroke();}
   // hidden shoals: light tint and dotted danger line, as on a real chart
   if(WORLD.decor&&WORLD.decor.shoals){ctx.save();ctx.setLineDash([1.5*k,2.5*k]);ctx.strokeStyle='rgba(38,56,79,.8)';ctx.lineWidth=1*k;ctx.fillStyle='rgba(150,200,225,.55)';
     for(const q of WORLD.decor.shoals){ctx.beginPath();ctx.ellipse(q.x,q.y,q.r,q.r*q.el,q.rot,0,TAU);ctx.fill();ctx.stroke();}ctx.setLineDash([]);
@@ -2964,6 +3218,7 @@ function mapStaticDraw(ctx,w,h,s,ox,oy,k){
   if(WORLD.islets){ctx.lineJoin='round';for(const o of WORLD.islets)for(const pp of o.parts){ctx.fillStyle=o.kind==='grynna'?'#cdbf9a':'#d9c79a';ctx.strokeStyle='#26384f';ctx.lineWidth=(o.kind==='grynna'?1:1.4)*k;ctx.beginPath();
     const c=Math.cos(pp.rot),sn=Math.sin(pp.rot);for(let q=0;q<18;q++){const aa=q/18*TAU,w=1+.12*Math.sin(aa*3+o.seed)+.06*Math.sin(aa*5+o.seed*.3),ex=Math.cos(aa)*pp.rx*w,ez=Math.sin(aa)*pp.rz*w;ctx.lineTo(o.x+pp.dx+ex*c-ez*sn,o.y+pp.dy+ex*sn+ez*c);}ctx.closePath();ctx.fill();ctx.stroke();}}
   if(WORLD.decor&&WORLD.decor.villas){ctx.fillStyle='#3c3a34';for(const[vi,v]of WORLD.decor.villas.entries()){if(G.ddead.v&&G.ddead.v[vi]!=null)continue;ctx.save();ctx.translate(v.x,v.y);ctx.rotate(v.a);ctx.fillRect(-6,-4.5,12,9);ctx.restore();}}
+  if(WORLD.decor&&WORLD.decor.cabins){ctx.fillStyle='#3c3a34';for(const[ci,c]of WORLD.decor.cabins.entries()){if(G.ddead.c&&G.ddead.c[ci]!=null)continue;ctx.save();ctx.translate(c.x,c.y);const T=CABIN[c.type]||CABIN.torp;ctx.rotate(c.a);ctx.fillRect(-T.L/2,-T.W/2,T.L,T.W);ctx.restore();}}
   // archipelago marks: piers, spar buoys, lighthouse
   if(WORLD.decor){const D=WORLD.decor;ctx.strokeStyle='#3c3a34';ctx.lineWidth=Math.max(1.4,1.6*k);ctx.lineCap='butt';
     for(const[ji,j]of D.jetties.entries()){if(G.ddead.j[ji]!=null)continue;ctx.beginPath();ctx.moveTo(j.x,j.y);ctx.lineTo(j.x+Math.cos(j.a)*j.len,j.y+Math.sin(j.a)*j.len);ctx.stroke();}
@@ -3358,7 +3613,9 @@ function mkUnitMesh(u){
     const hook=mesh(box(1,1,1),mat(0x2a2a2a),0,-6,0);hook.visible=false;g.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-3,0);cable.visible=false;g.add(cable);g.userData.cable=cable;
   }
-  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);return r;}
+  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
+    /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
+    if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
 function mkEnemyMesh(e){
   const g=new THREE.Group();
@@ -3432,7 +3689,7 @@ function mkEnemyMesh(e){
     g.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));g.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
     const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;g.add(b);g.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));
     g.add(mesh(cyl(.025,.025,2,4),DK,-1.4,3.8,.9));}
-  {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa')contactShadow(r,.02);return r;}
+  {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa'){contactShadow(r,.02);r.scale.setScalar(.8);}/* ground vehicles at 0.8, like ours */return r;}
 }
 function roofOn(g,len,w,y,c){for(const sz of[-1,1]){const r=mesh(box(len,.4,w*.6),mat(c),0,y,sz*w*.24);r.rotation.x=sz*.55;g.add(r);}}
 const FALU=0x8e2b1f,TRIM=0xf0ece0;
@@ -3456,7 +3713,12 @@ function mkIslets(list,st){
       geo.computeVertexNormals();const cc=cols[o.kind]||cols.kobbe;
       const m=new THREE.Mesh(geo,mat(cc[Math.floor(rnd()*2)]));m.scale.set(pp.rx,pp.h,pp.rz);m.rotation.y=-pp.rot;m.position.set(o.x+pp.dx,o.kind==='grynna'?-.15:-.35,o.y+pp.dy);st.add(m);
       if((o.kind==='kobbe'||o.kind==='hall')&&pp===o.parts[0]&&pp.rx>8){const cap=new THREE.Mesh(geo,moss);cap.scale.set(pp.rx*.5,pp.h*.3,pp.rz*.45);cap.position.set(o.x+pp.dx+(rnd()-.5)*pp.rx*.3,pp.h*.78,o.y+pp.dy);cap.rotation.y=-pp.rot;st.add(cap);}}
-    if(o.kind!=='grynna'){const lic=mat(0xd4862e);for(const pp of o.parts){const n2=Math.floor(pp.rx/3);for(let k=0;k<n2;k++){const aa=rnd()*TAU,d=rnd()*.7,yy=pp.h*(1-d*d)*.92;const sp=mesh(R3.sphere,lic,o.x+pp.dx+Math.cos(aa)*d*pp.rx*.8,yy,o.y+pp.dy+Math.sin(aa)*d*pp.rz*.8);sp.scale.set(.6+rnd()*1.6,.08,.5+rnd()*1.3);st.add(sp);}}}
+    // loose stones on the rock, small and a few bigger (decided 17 okt, Magnus: the flat yellow lichen discs read as nothing)
+    if(o.kind!=='grynna'){const GULL=mat(0xeceae2),SM=[mat(0x8a847e),mat(0x76706b),mat(0x9a928a)],SG=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0));
+      for(const pp of o.parts){const n2=Math.floor(pp.rx/1.2);for(let k=0;k<n2;k++){const aa=rnd()*TAU,d=.4+rnd()*.45,yy=-.35+pp.h*Math.pow(1-d*d,.8)*.95,r0=.4+rnd()*rnd()*2.2;
+        const sn=mesh(SG,SM[Math.floor(rnd()*3)],o.x+pp.dx+Math.cos(aa)*d*pp.rx*.8,yy+r0*.5,o.y+pp.dy+Math.sin(aa)*d*pp.rz*.8);const sy=r0*(.55+rnd()*.3);sn.scale.set(r0*(1+rnd()*.4),sy,r0);sn.rotation.set(rnd()*3,rnd()*3,0);st.add(sn);
+        // a gull's perch: about a third of the stones white on top (decided 17 okt, Magnus)
+        if(rnd()<.33){const w=mesh(SG,GULL,sn.position.x,sn.position.y+sy*.72,sn.position.z);w.scale.set(r0*.62,sy*.38,r0*.6);w.rotation.y=sn.rotation.y;st.add(w);}}}}
     const P=o.parts[0];for(let k=0;k<o.trees;k++){const aa=rnd()*TAU,d=rnd()*Math.min(P.rx,P.rz)*.45,s2=.55+rnd()*.5;const tr=mesh(new THREE.ConeGeometry(2.2,7.5,6),mat(0x3d5a31),o.x+Math.cos(aa)*d,P.h*.85+3.4*s2,o.y+Math.sin(aa)*d);tr.scale.setScalar(s2);st.add(tr);}}
 }
 /* light characters as on the chart: alternating on and off durations in seconds */
@@ -3580,9 +3842,75 @@ function fairwayRoute(W){const N=240,pts=[],half=N/2;
   for(let i=0;i<half;i++){const y=lerp(FAIR.y0,FAIR.y1,i/(half-1));pts.push({x:fairX(W,y)+FAIR.lane,z:y});}
   for(let i=0;i<half;i++){const y=lerp(FAIR.y1,FAIR.y0,i/(half-1));pts.push({x:fairX(W,y)-FAIR.lane,z:y});}
   const len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}return{pts,len,L:len[N],N,off:0};}
+/* torp and summer cottages (decided 16 okt): five kinds of house, drawn as a few instanced meshes rather than a group each: all
+   painted boxes in one mesh coloured per box, doors in one, windows in one per lighting group. Local +x along the house, the
+   front (door, big windows) faces -z: the road for a torp, the water for a cottage. A burnt one sinks like a villa.
+   Per kind: length, depth and wall height, and its palettes as [walls, trim, roof] */
+const CABIN={
+  torp:{L:7,W:5,H:2.8,pal:[[FALU,TRIM,0x38383c],[0xc8963e,TRIM,0x6e3a2e],[0xa9a59a,TRIM,0x38383c],[FALU,0x34342f,0x6e3a2e]]},
+  sextio:{L:8,W:5.5,H:2.4,pal:[[0x6b4a32,TRIM,0x2e2e30],[0x3f5a3a,TRIM,0x4a4038],[0xc9a24a,0x2e2e30,0x2e2e30],[0x8a8f8c,TRIM,0x4a4038]]},
+  ahus:{L:6,W:7,H:0,pal:[[0xb08a5a,TRIM,0x2e2e30],[TRIM,0x2e2e30,0x6e3a2e],[0x6b4a32,TRIM,0x3f4a3a]]},
+  modern:{L:9,W:5,H:3.1,pal:[[0x2a2a2c,0x2a2a2c,0x2a2a2c],[0x55585a,0x2a2a2c,0x3a3a3c],[0xa8885e,0x2a2a2c,0x2a2a2c]]},
+  veranda:{L:7,W:5.5,H:3.6,pal:[[0x9ec4d8,TRIM,0x8a4a3a],[0xb8cfa0,TRIM,0x38383c],[0xe6cf7a,TRIM,0x8a4a3a],[0xefece4,0x3f5a3a,0x38383c]]}};
+// the boxes of one house: [mesh (p painted, d dark, w window), colour (0 walls, 1 trim, 2 roof, 3 wood), x,y,z, sx,sy,sz, rx,rz]
+function cabinParts(c){const T=CABIN[c.type]||CABIN.torp,L=T.L,W=T.W,H=T.H,o=[],P=(m,k,x,y,z,sx,sy,sz,rx,rz)=>o.push([m,k,x,y,z,sx,sy,sz,rx||0,rz||0]);
+  const gable=(pitch,over)=>{for(const sz of[-1,1])P('p',2,0,H+W*Math.tan(pitch)*.22+.15,sz*W*.24,L+over,.32,W*.6,sz*pitch,0);};
+  const corners=()=>{for(const sx of[-1,1])for(const sz of[-1,1])P('p',1,sx*L/2,H/2,sz*W/2,.2,H,.2);};
+  const win=(x,y,z,w,h)=>{P('p',1,x,y,z,w+.3,h+.3,.1);P('w',0,x,y,z+Math.sign(z)*.05,w,h,.12);};
+  if(c.type==='ahus'){const th=1.05,a=6.8;for(const sx of[-1,1])P('p',2,sx*a/2*Math.cos(th),a/2*Math.sin(th),0,a,.32,W+.4,0,-sx*th);
+    for(let k=0;k<3;k++)P('p',0,0,.95+k*1.9,0,L*.86*(1-k*.3),1.9,W-.3);
+    P('w',0,0,2.4,-W/2+.1,2,2.6,.12);P('d',0,-1.6,.95,-W/2+.1,.9,1.9,.12);P('p',3,0,.15,-W/2-1,L*.8,.3,2);return o;}
+  P('p',0,0,H/2,0,L,H,W);
+  if(c.type==='torp'){gable(.55,.6);corners();win(-L*.2,H*.55,-W/2-.04,.9,.9);win(0,H*.55,W/2+.04,.9,.9);P('d',0,L*.25,.95,-W/2-.03,.9,1.9,.12);P('p',2,L*.2,H+W*.3,W*.12,.6,1.4,.6);}
+  else if(c.type==='sextio'){gable(.22,1.2);P('p',1,0,H-.1,-W/2-.08,L+.2,.25,.1);P('w',0,-L*.12,H*.52,-W/2-.05,2.6,1.2,.12);win(L*.32,H*.55,W/2+.04,.9,.8);P('d',0,L*.3,.95,-W/2-.03,.9,1.9,.12);P('p',3,-L*.1,.18,-W/2-1.1,L*.6,.3,2.2);}
+  else if(c.type==='modern'){P('p',2,0,H+.15,0,L+.6,.3,W+.8,.07,0);P('w',0,-L*.12,1.35,-W/2-.05,L*.55,2.2,.12);P('d',0,L*.32,1.05,-W/2-.03,1,2.1,.12);P('w',0,L*.2,H*.6,W/2+.05,1.6,.6,.12);P('p',3,-L*.12,.15,-W/2-1.2,L*.7,.3,2.4);}
+  else{gable(.7,.5);corners();win(-L*.25,H*.6,-W/2-.04,.9,1.2);win(L*.05,H*.6,-W/2-.04,.9,1.2);win(0,H*.6,W/2+.04,.9,1.2);P('d',0,L*.3,1.05,-W/2-.03,.9,2,.12);
+    P('p',3,0,.4,-W/2-1.2,L*.75,.25,2.4);for(const sx of[-1,1])P('p',1,sx*L*.36,1.4,-W/2-2.3,.18,2.2,.18);P('p',2,0,2.6,-W/2-1.25,L*.8,.15,2.7,-.18,0);}
+  return o;}
+function mkCabins(D,st){const C=D.cabins||[];R3.cabins=null;if(!C.length)return;
+  const U=new THREE.BoxGeometry(1,1,1),im=(m,n)=>{const o=new THREE.InstancedMesh(U,m,n);o.frustumCulled=false;st.add(o);return o;};
+  const parts=C.map(cabinParts);let nP=0,nD=0;const nW=WIN_OFF.map(()=>0);
+  parts.forEach((L,i)=>{for(const q of L)if(q[0]==='p')nP++;else if(q[0]==='d')nD++;else nW[winBucket(C[i].x,C[i].y)]++;});
+  const K={C,f:new Array(C.length).fill(-1),slots:[],paint:im(new THREE.MeshLambertMaterial({color:0xffffff}),nP),dark:im(mat(0x3a3430),Math.max(1,nD))};
+  const win=WIN_OFF.map((_,b)=>{if(!nW[b])return null;const i0=C.findIndex(c=>winBucket(c.x,c.y)===b);return im(winMatFor(C[i0].x,C[i0].y),nW[b]);}),wk=WIN_OFF.map(()=>0);let kp=0,kd=0;
+  const col=new THREE.Color(),d=new THREE.Object3D();
+  parts.forEach((L,i)=>{const c=C[i],T=CABIN[c.type]||CABIN.torp,pal=T.pal[c.pal%T.pal.length];K.slots[i]=L.map(q=>{
+    d.position.set(q[2],q[3],q[4]);d.rotation.set(q[8],0,q[9]);d.scale.set(q[5],q[6],q[7]);d.updateMatrix();const m=d.matrix.clone();
+    if(q[0]==='p'){const k=kp++;K.paint.setColorAt(k,col.set(q[1]===3?0x8a7356:pal[q[1]]));return[K.paint,k,m];}
+    if(q[0]==='d')return[K.dark,kd++,m];const b=winBucket(c.x,c.y);return[win[b],wk[b]++,m];});});
+  K.paint.instanceColor.needsUpdate=true;R3.cabins=K;for(let i=0;i<C.length;i++)cabinAt(i,1);}
+function cabinAt(i,f){const K=R3.cabins,c=K.C[i];if(K.f[i]===f)return;K.f[i]=f;
+  const d=new THREE.Object3D(),m=new THREE.Matrix4();d.position.set(c.x,Math.max(0,c.h),c.y);d.rotation.set(0,-c.a,0);d.scale.set(1,f,1);d.updateMatrix();
+  for(const[o,k,lm]of K.slots[i]){m.multiplyMatrices(d.matrix,lm);o.setMatrixAt(k,m);o.instanceMatrix.needsUpdate=true;}}
 function mkDecor(D,st){
   const wood=mat(0x8a7356),post=mat(0x5e4e3a);
   R3.villaM=[];for(const v of D.villas||[]){const m=mkVilla(v);st.add(m);R3.villaM.push(m);}
+  mkCabins(D,st);
+  // the boulder beach of the closed coast, one instanced mesh, a few stones white on top from the gulls
+  {const S=WORLD.coastStones||[];if(S.length){const g=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0)),m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({color:0xffffff}),S.length),G2=S.filter(q=>q.g),w=G2.length?new THREE.InstancedMesh(g,mat(0xeceae2),G2.length):null,d=new THREE.Object3D(),cl=new THREE.Color();let gi=0;
+    S.forEach((q,i)=>{const sy=q.r*.65;d.position.set(q.x,q.h+q.r*.2,q.y);d.rotation.set(0,q.a,0);d.scale.set(q.r*1.15,sy,q.r);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.45+hash2(i,3,77)*.15;m.setColorAt(i,cl.setRGB(v+.03,v,v-.02));
+      if(q.g){d.position.y+=sy*.72;d.scale.set(q.r*.7,sy*.36,q.r*.62);d.updateMatrix();w.setMatrixAt(gi++,d.matrix);}});
+    m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);if(w){w.frustumCulled=false;st.add(w);}}}
+  /* the ridges (17 okt): the wall's blocks with moss on their upper faces and snow on top in winter, the loose blocks of the strips
+     and the foot of the granite ridge, broadleaf bushes that turn with the season (hazel as birch, dog rose as rowan, sloe as oak)
+     and dark junipers that hold snow */
+  {const RS=WORLD.ridgeStones||[],BU=WORLD.bushes||[],JU=WORLD.junipers||[],d=new THREE.Object3D(),cl=new THREE.Color();
+    if(!R3.ridgeG){const sg=sd=>{const g=new THREE.IcosahedronGeometry(1,0),p=g.attributes.position,rr=rng(sd),key={};for(let i=0;i<p.count;i++){const kk=Math.round(p.getX(i)*9)+','+Math.round(p.getY(i)*9)+','+Math.round(p.getZ(i)*9);if(key[kk]===undefined)key[kk]=.82+rr()*.32;const f=key[kk];p.setXYZ(i,p.getX(i)*f,Math.max(p.getY(i)*f,-.3),p.getZ(i)*f);}
+        g.computeVertexNormals();const n=g.attributes.normal,c=new Float32Array(p.count*3);for(let i=0;i<p.count;i++){const mz=clamp((n.getY(i)-.2)*1.6,0,1)*clamp(p.getY(i)*2+.4,0,1);c.set([lerp(1,.8,mz),lerp(1,.9,mz),lerp(1,.58,mz)],i*3);}g.setAttribute('color',new THREE.BufferAttribute(c,3));return g;};
+      const bg=sd=>{const rr=rng(sd),pos=[];for(let j=0;j<5;j++){const g=new THREE.IcosahedronGeometry(1,0).toNonIndexed(),a=g.attributes.position.array,an=rr()*6.28,dd=Math.sqrt(rr())*.7,cx=Math.cos(an)*dd,cz=Math.sin(an)*dd,cy=.45+rr()*.3+(1-dd)*.3,r=.45+rr()*.3;
+          for(let i=0;i<a.length;i+=3)pos.push(cx+a[i]*r,Math.max(0,cy+a[i+1]*r*.85),cz+a[i+2]*r);g.dispose();}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g;};
+      const jg=new THREE.ConeGeometry(.5,1,6);jg.translate(0,.5,0);
+      R3.ridgeG={st:[sg(101),sg(207),sg(331)],bu:bg(55),ju:jg,stM:seasonMat(new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true}),'conifer','wall'),
+        buM:seasonMat(new THREE.MeshLambertMaterial({color:0x7fa548,flatShading:true}),'birch','bush'),juM:seasonMat(new THREE.MeshLambertMaterial({color:0x2c4630,flatShading:true}),'conifer','jun')};}
+    const G=R3.ridgeG;
+    G.st.forEach((g,t)=>{const L=RS.filter((q,i)=>i%3===t);if(!L.length)return;const m=new THREE.InstancedMesh(g,G.stM,L.length);
+      L.forEach((q,i)=>{d.position.set(q.x,q.h,q.y);d.rotation.set((hash2(i,t,5)-.5)*.4,q.a,0);d.scale.set(q.r*1.1,q.r*.72,q.r*.95);d.updateMatrix();m.setMatrixAt(i,d.matrix);
+        const v=.42+hash2(i,t,77)*.16,pk=hash2(i,t,78)*.05;m.setColorAt(i,cl.setRGB(v+pk,v,v-.01));});
+      m.instanceColor.needsUpdate=true;m.castShadow=m.receiveShadow=true;m.frustumCulled=false;st.add(m);});
+    if(BU.length){const m=new THREE.InstancedMesh(G.bu,G.buM,BU.length);BU.forEach((b,i)=>{d.position.set(b.x,b.h-.15,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*1.3,b.s*.95,b.s*1.15);d.updateMatrix();m.setMatrixAt(i,d.matrix);m.setColorAt(i,cl.setRGB(b.r,b.sp/8,0));});
+      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);}
+    if(JU.length){const m=new THREE.InstancedMesh(G.ju,G.juM,JU.length);JU.forEach((b,i)=>{d.position.set(b.x,b.h-.1,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*.9,b.s*2.2,b.s*.9);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.85+hash2(i,9,3)*.3;m.setColorAt(i,cl.setRGB(v,v,v));});
+      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);}}
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
   R3.baks=[];(D.baks||[]).forEach((b,i)=>{const g=mkDaymark(b);st.add(g);R3.baks.push({b,...g.userData.lamp,ch:LIGHT_CH[[6,2,0][i%3]],ph:hash2(Math.round(b.x),Math.round(b.y),23)*6});});
@@ -3804,7 +4132,7 @@ function init3D(){
   const cam=new THREE.PerspectiveCamera(58,1,.5,2600);
   const hemi=new THREE.HemisphereLight(0xe4edf2,0x4b4a3c,.85);scene.add(hemi);
   const sun=new THREE.DirectionalLight(0xfff0d4,.75);sun.position.set(-1,1.4,-.8);scene.add(sun,sun.target);
-  sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);{const c=sun.shadow.camera;c.left=-150;c.right=150;c.top=150;c.bottom=-150;c.near=10;c.far=1000;}sun.shadow.bias=-.0006;sun.shadow.normalBias=.4;
+  sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);{const c=sun.shadow.camera,P=PHOTO?800:150;if(PHOTO)sun.shadow.mapSize.set(8192,8192);c.left=-P;c.right=P;c.top=P;c.bottom=-P;c.near=10;c.far=PHOTO?2400:1000;}sun.shadow.bias=-.0006;sun.shadow.normalBias=.4;
   const spots=[],points=[];
   for(let i=0;i<6;i++){const L=new THREE.SpotLight(0xfff0d0,0,110,.52,.6,1.1);scene.add(L,L.target);spots.push(L);}
   const lhSpots=[];for(let i=0;i<2;i++){const L=new THREE.SpotLight(0xfff2d8,0,650,.1,.6,1);scene.add(L,L.target);lhSpots.push(L);}/* the lighthouse's two beams */
@@ -3962,7 +4290,16 @@ function buildStatic(){
     if(t<=SHAL){const d=clamp(-e/8,0,1);c=[lerp(.47,.24,d),lerp(.47,.32,d),lerp(.43,.32,d)];}
     else if(t===BEACH){const sw=clamp((90-Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y))/35,0,1);c=[lerp(granite[0],.78,sw),lerp(granite[1],.71,sw),lerp(granite[2],.54,sw)];}
     else if(t===ROCK){const dk=hash2(i,j,W.seed+11)*.1;c=[.57-dk,.53-dk,.51-dk];}
-    else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
+    else{const hh=clamp((e-1.6)/26,0,1);c=[lerp(.42,.37,hh),lerp(.53,.45,hh),lerp(.27,.27,hh)];
+      // the land plan shows on the ground: fields a pale hay green, pasture between, bare rock the granite, dense forest a darker floor
+      const ci=cellIdx(x,y),mk=W.mark?W.mark[ci]:0;
+      if(mk===M_AKER)c=[.55,.58,.33];else if(mk===M_HAGE)c=[.47,.56,.3];else if(mk===M_HALL)c=[lerp(granite[0],c[0],.35),lerp(granite[1],c[1],.35),lerp(granite[2],c[2],.35)];else if(W.skog&&W.skog[ci]===2)c=[c[0]*.86,c[1]*.88,c[2]*.86];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
+    // the sloping granite of the closed coast: grey-pink rock with dark lichen in patches, not the pale beach colour
+    if(W.hall&&W.hall[k]&&e>0){const l2=hash2(i>>1,j>>1,W.seed+19),ln=clamp((fbm(x*3,y*3,W.seed+903)-.42)*4,0,1)*.7;c=[lerp(.55,.4,ln)-l2*.05,lerp(.53,.42,ln)-l2*.04,lerp(.51,.37,ln)-l2*.03];}
+    // the ridges (17 okt): the granite ridge's faces grey with lichen and its benches heath; the wall's strip unmown rough grass
+    if(W.ridgeV&&W.ridgeV[k]&&e>0&&!(W.hall&&W.hall[k])){const hv=hash2(i,j,W.seed+961)*.05;
+      if(W.ridgeV[k]===1){if(t===ROCK){const ln=clamp((fbm(x*3,y*3,W.seed+960)-.42)*4,0,1)*.7;c=[lerp(.5,.36,ln)-hv,lerp(.48,.38,ln)-hv,lerp(.46,.33,ln)-hv];}else c=[.36+hv,.43+hv,.25+hv*.5];}
+      else c=[lerp(c[0],.4,.6)+hv,lerp(c[1],.47,.6)+hv,lerp(c[2],.26,.6)];}
     col[k*3]=c[0]+n;col[k*3+1]=c[1]+n;col[k*3+2]=c[2]+n*.6;
   }
   let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(W.diag&&W.diag[j*SX+i]){idx[p++]=a;idx[p++]=c;idx[p++]=d;idx[p++]=a;idx[p++]=d;idx[p++]=b;}else{idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}}
@@ -3972,26 +4309,43 @@ function buildStatic(){
   {const sb=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),new THREE.MeshPhongMaterial({color:new THREE.Color(.335,.39,.36),shininess:0,specular:0x000000}));sb.rotation.x=-PI/2;sb.position.set(WW/2,-6.3,WH/2);st.add(sb);R3.seabed=sb;}
   // road ribbons
   const rv=[];
-  for(const rd of W.roads)for(let i=0;i<rd.length-1;i++){const a=rd[i],b=rd[i+1],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,nxv=-dy/l*3.2,nyv=dx/l*3.2,ya=groundY(a.x,a.y)+.4,yb=groundY(b.x,b.y)+.4;
+  for(const[RL,hw]of[[W.roads,3.2],[W.lanes||[],1.7]])for(const rd of RL)for(let i=0;i<rd.length-1;i++){const a=rd[i],b=rd[i+1],dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1,nxv=-dy/l*hw,nyv=dx/l*hw,ya=groundY(a.x,a.y)+.4,yb=groundY(b.x,b.y)+.4;
     rv.push(a.x+nxv,ya,a.y+nyv, a.x-nxv,ya,a.y-nyv, b.x+nxv,yb,b.y+nyv, b.x+nxv,yb,b.y+nyv, a.x-nxv,ya,a.y-nyv, b.x-nxv,yb,b.y-nyv);}
   if(rv.length){const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rv),3));rg.computeVertexNormals();st.add(new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0x6b6156,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));}
   const dummy=new THREE.Object3D();
   if(W.walls.length){const wm=new THREE.InstancedMesh(new THREE.BoxGeometry(3.6,3.4,1.8),mat(0x8f8b80),W.walls.length);W.walls.forEach((wl,i)=>{dummy.position.set(wl.x,groundY(wl.x,wl.y)+1.5,wl.y);dummy.rotation.set(0,-wl.a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();wm.setMatrixAt(i,dummy.matrix);});st.add(wm);}
   if(W.trees.length){
     // spruce: dark cone; pine (tall, more common in the open and towards the shore): orange-brown trunk, a loose crown of three tufts
-    // birch (about 15 %): white trunk with dark bands, a larger and lighter crown that starts lower; its leaves have their own
+    // birch (about 20 %): white trunk with dark bands, a tall lighter crown that starts lower and reaches as high as the spruce; its leaves have their own
     // material (R3.birchLeaf) so seasons can recolour them or take them away
     // trees are built per 500 m tile (decided 13 okt) so that a tile out of view, past the fog or far from the shadow box costs
     // nothing: the whole forest was about 640 000 triangles drawn in full every frame, in the shadow map too, and in each live view
     const plant=(T,tg)=>{
-    const isBirch=t=>hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t));
-      const isPine=t=>hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
+    const isBirch=t=>t.k?t.k==='birch':hash2(Math.round(t.x*5),Math.round(t.y*5),47)<.15,birches=T.filter(isBirch),rest=T.filter(t=>!isBirch(t)&&!TREE_SP[t.k]);
+      const isPine=t=>t.k?t.k==='pine':hash2(Math.round(t.x*3),Math.round(t.y*3),41)<(t.s<1.1?.62:.38),pines=rest.filter(isPine),spr=rest.filter(t=>!isPine(t));
       if(birches.length){const leaf=R3.birchLeaf;
         const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.17,.26,1,6),mat(0xe9e6dc),birches.length),bd=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.2,1,6),mat(0x2b2a28),birches.length*3),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),leaf,birches.length*4);
         birches.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=8.6*s2,lean=(hash2(i,1,48)-.5)*.08;dummy.rotation.set(lean,0,lean*.7);dummy.position.set(t.x,g0+H/2,t.y);dummy.scale.set(s2,H,s2);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);
           for(let k=0;k<3;k++){const yy=g0+H*(.12+k*.17+hash2(i,k,49)*.06);dummy.rotation.set(0,0,0);dummy.position.set(t.x,yy,t.y);dummy.scale.set(s2*(1.05-yy/(g0+H)*.25),.22*s2,s2*(1.05-yy/(g0+H)*.25));dummy.updateMatrix();bd.setMatrixAt(i*3+k,dummy.matrix);}
-          for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=g0+H*(k?.52+k*.1:.92);dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?2.1:1.8)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);cr.setColorAt(i*4+k,(R3.tmpC||(R3.tmpC=new THREE.Color())).setRGB(hash2(Math.round(t.x),Math.round(t.y),53),0,0));}});/* the red channel is the tree's own value for its autumn colour */
+          /* a tall crown, not a taller trunk (decided 16 okt, Magnus): in the forest the birch reaches for the light as high as the spruce, so
+             the crown runs from about half the trunk to some 13 m (at size 1) */
+          for(let k=0;k<4;k++){const a=hash2(i,k,50)*TAU,d=(k?1.3:0)*s2,yy=k?g0+H*(.56+k*.11):g0+H+1.2*s2;dummy.position.set(t.x+Math.cos(a)*d,yy,t.y+Math.sin(a)*d);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);const w=(k?2.5:2.2)*s2;dummy.scale.set(w,(k?3.4:3)*s2,w*.92);dummy.updateMatrix();cr.setMatrixAt(i*4+k,dummy.matrix);cr.setColorAt(i*4+k,(R3.tmpC||(R3.tmpC=new THREE.Color())).setRGB(hash2(Math.round(t.x),Math.round(t.y),53),0,0));}});/* the red channel is the tree's own value for its autumn colour */
         tg.add(tr);tg.add(bd);tg.add(cr);}
+      /* the other broadleaf trees (decided 17 okt, Magnus): the same leaf material as the birch, told apart in the season shader by the green
+         channel of each tuft's colour. Per kind: trunk colour, trunk thickness, trunk height (at size 1), stems, and the crown's tufts as
+         [distance out, height as a part of the trunk, width, height] */
+      const BL={alder:{c:0x4a4440,r:.85,H:7,n:2,cr:[[0,1.05,2.4,3.2],[1.2,.75,2.4,2.8],[1.2,.55,2.2,2.4]]},
+        aspen:{c:0x9aa592,r:.8,H:9.5,n:1,cr:[[0,1.15,1.5,3.4],[.7,.85,1.6,3],[.7,.62,1.5,2.6]]},
+        oak:{c:0x4a3c30,r:1.7,H:5.5,n:1,cr:[[0,1.55,3.2,2.4],[2.4,1.2,3,2.2],[2.4,1.05,2.8,2],[1.6,1.35,2.6,2]]},
+        maple:{c:0x5a4a3c,r:1.2,H:5.5,n:1,cr:[[0,1.45,3,2.8],[1.8,1.05,2.8,2.6],[1.8,.85,2.4,2.2]]},
+        rowan:{c:0x6a6058,r:.7,H:3.6,n:1,cr:[[0,1.35,1.9,2],[1,1,1.7,1.7]]}};
+      for(const[kd,B]of Object.entries(BL)){const L=T.filter(t=>t.k===kd);if(!L.length)continue;const nc=B.cr.length,sp=TREE_SP[kd]/8;
+        const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.2,.3,1,6),mat(B.c),L.length*B.n),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),R3.birchLeaf,L.length*nc);
+        L.forEach((t,i)=>{const s2=t.s*1.05,g0=groundY(t.x,t.y),H=B.H*s2,a0=hash2(Math.round(t.x),Math.round(t.y),54)*TAU;
+          for(let m=0;m<B.n;m++){const lean=m?.14:0;dummy.rotation.set(lean*Math.sin(a0),0,-lean*Math.cos(a0));dummy.position.set(t.x+(m?Math.cos(a0)*.8*s2:0),g0+H*.5,t.y+(m?Math.sin(a0)*.8*s2:0));dummy.scale.set(s2*B.r,H*(m?.85:1),s2*B.r);dummy.updateMatrix();tr.setMatrixAt(i*B.n+m,dummy.matrix);}
+          B.cr.forEach(([d,yf,w,h],k)=>{const a=a0+k*2.1;dummy.position.set(t.x+Math.cos(a)*d*s2,g0+H*yf,t.y+Math.sin(a)*d*s2);dummy.rotation.set(hash2(i,k,51)*3,hash2(i,k,52)*3,0);dummy.scale.set(w*s2,h*s2,w*s2*.92);dummy.updateMatrix();
+            cr.setMatrixAt(i*nc+k,dummy.matrix);cr.setColorAt(i*nc+k,(R3.tmpC||(R3.tmpC=new THREE.Color())).setRGB(hash2(Math.round(t.x),Math.round(t.y),53),sp,0));});});
+        tg.add(tr);tg.add(cr);}
       if(spr.length){const tm=new THREE.InstancedMesh(new THREE.ConeGeometry(2.7,11.5,7),R3.sprM,spr.length),tk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.32,1,5),mat(0x5a4636),spr.length);
         spr.forEach((t,i)=>{const s2=t.s*1.12,g0=groundY(t.x,t.y);dummy.rotation.set(0,0,0);dummy.position.set(t.x,g0+1.4*s2+5.75*s2,t.y);dummy.scale.set(s2,s2,s2);dummy.updateMatrix();tm.setMatrixAt(i,dummy.matrix);dummy.position.set(t.x,g0+1.1*s2,t.y);dummy.scale.set(s2,2.2*s2,s2);dummy.updateMatrix();tk.setMatrixAt(i,dummy.matrix);});tg.add(tm);tg.add(tk);}
       if(pines.length){const tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.34,1,5),mat(0xa0603a),pines.length),cr=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),R3.pineM,pines.length*3);
@@ -4054,13 +4408,14 @@ function lerpHex(a,b,t,out){return out.set(cA.setHex(a)).lerp(cB.setHex(b),t);}
 /* sky dome: gradient from the fog colour at the horizon to the zenith, sun disc and glow, moon and stars at night */
 function mkSky(){
   const m=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false,
-    uniforms:{uHor:{value:new THREE.Color(0xa9bbc4)},uZen:{value:new THREE.Color(0x5f8cc0)},uSunDir:{value:new THREE.Vector3(0,1,0)},uSunCol:{value:new THREE.Color(0xfff0d4)},uSunVis:{value:1},
+    uniforms:{uHor:{value:new THREE.Color(0xa9bbc4)},uSea:{value:new THREE.Color(0x98abb4)},uZen:{value:new THREE.Color(0x5f8cc0)},uSunDir:{value:new THREE.Vector3(0,1,0)},uSunCol:{value:new THREE.Color(0xfff0d4)},uSunVis:{value:1},
       uMoonDir:{value:new THREE.Vector3(0,1,0)},uMoonVis:{value:0},uNight:{value:0}},
     vertexShader:'varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader:`uniform vec3 uHor,uZen,uSunCol;uniform vec3 uSunDir,uMoonDir;uniform float uSunVis,uMoonVis,uNight;varying vec3 vD;
+    fragmentShader:`uniform vec3 uHor,uSea,uZen,uSunCol;uniform vec3 uSunDir,uMoonDir;uniform float uSunVis,uMoonVis,uNight;varying vec3 vD;
       float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}
       void main(){vec3 d=normalize(vD);float y=d.y;
-        vec3 col=mix(uHor,uZen,pow(clamp(y,0.0,1.0),0.5));
+        /* below the horizon the far sea's own tone, above it the sky with a thin brighter band along the horizon (17 okt) */
+        vec3 col=mix(uHor,uZen,pow(clamp(y,0.0,1.0),0.5));col=mix(col,uHor*1.04,exp(-max(y,0.0)*55.0)*0.55);col=mix(uSea,col,smoothstep(-0.004,0.0015,y));
         float cs=max(dot(d,uSunDir),0.0),low=1.0-clamp(uSunDir.y*2.5,0.0,1.0);
         col+=uSunCol*(pow(cs,900.0)*0.9+pow(cs,60.0)*0.28+pow(cs,6.0)*0.16*low*exp(-abs(y)*5.0))*uSunVis;
         col+=uSunCol*smoothstep(0.99955,0.99975,cs)*1.4*uSunVis*step(-0.02,y);
@@ -4128,8 +4483,8 @@ function cloudTick(){const C=R3.clouds;if(!C)return;C.g.visible=!FILM.on;if(FILM
   U.uFogC.value.copy(sc.fog.color);U.uFogN.value=sc.fog.near*3;U.uFogF.value=Math.min(sc.fog.far*2.5,2500);}
 /* the season in the shaders (seasons step 4): one set of uniforms shared by every material that changes with the season, so a
    new date only sets values. ground: grass turns straw and then dead brown, snow lies on level ground and melts last in shade and
-   on north slopes; conifer: snow on the upper faces of spruce and pine; birch: the crowns go light green, full green, yellow and
-   orange tree by tree (a random value per tree), then bare grey-brown twigs, smaller */
+   on north slopes; conifer: snow on the upper faces of spruce and pine; birch (all broadleaf): the crowns go light green, full green, then each kind its own
+   autumn tree by tree (a random value per tree), then bare grey-brown twigs, smaller */
 const SEASU={uSnow:{value:0},uGrass:{value:0},uBrown:{value:0},uLeaf:{value:1},uYoung:{value:0},uAutumn:{value:0}};
 const NOISE_GLSL=`float sHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
   float sNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sHash(i),sHash(i+vec2(1,0)),f.x),mix(sHash(i+vec2(0,1)),sHash(i+vec2(1,1)),f.x),f.y);}`;
@@ -4151,9 +4506,17 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
     conifer:`{vec3 n3=normalize(vSWN);float nz=sNoise(vSWP.xz/2.5+vSWP.y*.4);
       float sm=uSnow*(.5*smoothstep(.2,.5,n3.y+(nz-.5)*.5)+.55*smoothstep(3.0,5.5,vSLY));
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.9,.93,.96),clamp(sm,0.0,.7));}`,
-    birch:`{float r=vColor.r;vec3 c=mix(vec3(.5,.65,.28),vec3(.68,.82,.38),uYoung);
-      vec3 au=mix(vec3(.88,.72,.2),vec3(.86,.44,.15),smoothstep(.3,.7,r));au=mix(au,vec3(.72,.27,.16),step(.86,r));
-      c=mix(c,au,clamp(uAutumn*1.6-(1.0-r)*.6,0.0,1.0));c=mix(vec3(.42,.37,.33),c,smoothstep(.12,.45,uLeaf));
+    /* broadleaf autumn per kind (decided 17 okt, Magnus): birch golden yellow to yellow-brown and never red; aspen yellow to orange;
+       maple yellow, orange and clear red; rowan orange to red and first; oak yellow-brown to rust late, keeping its dry leaves;
+       alder olive and last, falling green. Each kind is shifted against the season's autumn curve, and each tree by its own value */
+    birch:`{float r=vColor.r;int sp=int(floor(vColor.g*8.0+.5));vec3 g0=mix(vec3(.5,.65,.28),vec3(.68,.82,.38),uYoung),a1=vec3(.9,.76,.22),a2=vec3(.84,.66,.2),a3=vec3(.7,.55,.24);float sh=0.0,keep=0.0;
+      if(sp==1){g0*=vec3(.78,.86,.8);a1=vec3(.5,.56,.26);a2=vec3(.46,.5,.24);a3=a2;sh=-.75;}
+      else if(sp==2){g0*=vec3(.94,1.0,.9);a1=vec3(.96,.8,.2);a2=vec3(.94,.58,.15);a3=vec3(.84,.36,.14);sh=.05;}
+      else if(sp==3){g0*=vec3(.8,.86,.74);a1=vec3(.72,.62,.26);a2=vec3(.62,.44,.2);a3=vec3(.52,.34,.18);sh=-.4;keep=1.0;}
+      else if(sp==4){g0*=vec3(.95,1.0,.85);a1=vec3(.96,.74,.15);a2=vec3(.93,.44,.1);a3=vec3(.82,.16,.1);sh=.18;}
+      else if(sp==5){a1=vec3(.9,.52,.15);a2=vec3(.84,.3,.12);a3=vec3(.72,.18,.12);sh=.35;}
+      vec3 au=mix(a1,a2,smoothstep(.35,.75,r));au=mix(au,a3,smoothstep(.75,.95,r));
+      vec3 c=mix(g0,au,clamp(uAutumn*1.6-(1.0-r)*.6+sh,0.0,1.0));c=mix(vec3(.42,.37,.33),c,smoothstep(.12-keep*.25,.45-keep*.3,uLeaf));
       diffuseColor.rgb=c;}`};
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
@@ -4195,13 +4558,15 @@ function mkWaterMat(){
           float lip=smoothstep(0.02,0.3,dep);
           float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
           outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);
-          /* ice (seasons step 4): a band out from the shore where the water is shallow, widest in sheltered coves, with a ragged edge
+          /* ice (seasons step 4): a band out from the shore where the water is shallow, and the coast's indents frozen over (17 okt), with a ragged edge
              and a darker thin rim; Birka's channel stays open with broken floes in it; drifting floes on the open water in spring */
+          /* and the coast's indents freeze over whatever their depth, up to a closing radius of about 110 m in the deepest winter */
           if(uIce>0.001||uFloe>0.001){float iN=sNoise(vWPos.xz/18.0)*1.1+sNoise(vWPos.xz/5.0)*.45,iceD=uIce*(1.1+iN*1.5);
+            float cR=texture2D(uDepth,uv).g*200.0,iceR=uIce*110.0*(.75+iN*.35),rawC=smoothstep(iceR,iceR-14.0,cR)*step(.02,dep)*step(cR,199.0);
             float cd=1e4;for(int i=0;i<23;i++){if(i>=uChanN-1)break;vec2 a=uChan[i],b=uChan[i+1],ab=b-a;float t=clamp(dot(vWPos.xz-a,ab)/max(dot(ab,ab),1.0),0.0,1.0);cd=min(cd,length(vWPos.xz-a-ab*t));}
-            float open=smoothstep(14.0,22.0,cd),raw=smoothstep(iceD,iceD-.3,dep)*step(.02,dep),ice=raw*open;
+            float open=smoothstep(14.0,22.0,cd),raw=max(smoothstep(iceD,iceD-.3,dep)*step(.02,dep),rawC),ice=raw*open;
             vec3 iceC=mix(vec3(.78,.83,.86),vec3(.9,.93,.95),sNoise(vWPos.xz/3.0))*uIceL;
-            float rim=raw*(1.0-smoothstep(iceD-.3,iceD-.12,dep))*.5;
+            float rim=max(raw*(1.0-smoothstep(iceD-.3,iceD-.12,dep))*(1.0-rawC),rawC*smoothstep(iceR-14.0,iceR-5.0,cR))*.5;
             float bits=raw*(1.0-open)*step(.62,sNoise(vWPos.xz/2.2));
             float floe=uFloe*(1.0-raw)*smoothstep(5.5,2.5,dep)*step(.8,sNoise((vWPos.xz+uTime*vec2(.25,.1))/7.0));
             float k=max(max(ice,bits),floe);outgoingLight=mix(outgoingLight,iceC*(1.0-rim*.45),k);diffuseColor.a=max(diffuseColor.a,k);}}}}`);};
@@ -4210,7 +4575,22 @@ function mkWaterMat(){
 // depth of the seabed for the foam: the terrain grid packed into a texture (8 m above to 8 m below the surface)
 function setWaterDepth(){
   const W=WORLD,nx=W.SX+1,ny=W.SY+1,U=R3.water.material.userData.U,data=new Uint8Array(nx*ny*4);
-  for(let k=0;k<nx*ny;k++){const v=Math.round(clamp((W.ev[k]+8)/16,0,1)*255);data[k*4]=v;data[k*4+1]=v;data[k*4+2]=v;data[k*4+3]=255;}
+  /* ice fills the coast's indents first (decided 17 okt, Magnus): for each point of water, the smallest radius R at which a rounding of
+     the coastline (a morphological closing of the land, small holms and skerries left out) covers it. A bay 100 m wide is covered at R = 50, a sound
+     between the island and a holm at half its width, a straight coast never. Packed into the green channel as R/200 (255: never) */
+  const land=new Uint8Array(nx*ny),st=WW/W.SX,dg=st*Math.SQRT2,CR=new Float32Array(nx*ny).fill(1e9);
+  for(let k=0;k<nx*ny;k++)land[k]=W.ev[k]>0?1:0;
+  /* small holms and the skerries do not count (fixed 17 okt, Magnus: the ice reached out in a wedge to a little holm): only land
+     of about a hectare or more, so ice closes bays and sounds of the island and the bigger holms, never a bridge to a rock */
+  {const seen=new Uint8Array(nx*ny);for(let k0=0;k0<nx*ny;k0++){if(!land[k0]||seen[k0])continue;const C=[k0];seen[k0]=1;
+    for(let h=0;h<C.length;h++){const k=C[h],i=k%nx,j=(k/nx)|0;for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const ii=i+di,jj=j+dj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(land[q]&&!seen[q]){seen[q]=1;C.push(q);}}}
+    if(C.length*st*st<10000)for(const k of C)land[k]=0;}}
+  const cham=src=>{const D=new Float32Array(nx*ny);for(let k=0;k<nx*ny;k++)D[k]=src(k)?0:1e9;
+    for(let dir=0;dir<2;dir++){const j0=dir?ny-1:0,j1=dir?-1:ny,dj=dir?-1:1,i0=dir?nx-1:0,i1=dir?-1:nx,di=dir?-1:1;
+      for(let j=j0;j!==j1;j+=dj)for(let i=i0;i!==i1;i+=di){const k=j*nx+i;for(const[oi,oj,c]of[[-di,0,st],[0,-dj,st],[-di,-dj,dg],[di,-dj,dg]]){const ii=i+oi,jj=j+oj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(D[q]+c<D[k])D[k]=D[q]+c;}}}return D;};
+  const dLand=cham(k=>land[k]);
+  for(const R of[12,20,30,40,55,70,85,100,120,140,165,195]){const dOut=cham(k=>dLand[k]>R);for(let k=0;k<nx*ny;k++)if(!land[k]&&CR[k]>R&&dOut[k]>R)CR[k]=R;}
+  for(let k=0;k<nx*ny;k++){const v=Math.round(clamp((W.ev[k]+8)/16,0,1)*255);data[k*4]=v;data[k*4+1]=CR[k]>200?255:Math.round(CR[k]/200*255);data[k*4+2]=v;data[k*4+3]=255;}
   if(U.uDepth.value)U.uDepth.value.dispose();
   const tx=new THREE.DataTexture(data,nx,ny,THREE.RGBAFormat);tx.magFilter=THREE.LinearFilter;tx.minFilter=THREE.LinearFilter;tx.generateMipmaps=false;tx.wrapS=tx.wrapT=THREE.ClampToEdgeWrapping;tx.needsUpdate=true;
   U.uDepth.value=tx;U.uHasDepth.value=1;U.uGrid.value.set(W.SX,W.SY);
@@ -4231,7 +4611,7 @@ function updateSky(){
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
   {const kf=SIKT_K[SIKT.k]||1,mf=SE.haze*clamp(1-Math.abs(h-7.5)/3.5,0,1);/* autumn's morning mist: the fog comes closer, purely to look at */
-    sc.fog.near=lerp(240,150,n)*kf*(1-.6*mf);sc.fog.far=lerp(1000,720,n)*kf*(1-.4*mf);}
+    sc.fog.near=lerp(240,150,n)*kf*(1-.6*mf);sc.fog.far=lerp(1000,720,n)*kf*(1-.4*mf);if(PHOTO){sc.fog.near*=4;sc.fog.far*=2.8;}}
   {const WU=R3.water.material.userData.U;if(WU){R3.water.material.color.setHex(0x36677e).lerp(cA.setHex(0x52626a),SE.gray*.7);
     /* the ice is drawn unlit: its brightness follows the sky, and at night it takes the hue of the moonlit snow (sky light and moon)
        and stays near the snow's brightness, instead of a dark neutral grey that reads brown against the blue (decided 16 okt) */
@@ -4255,12 +4635,19 @@ function updateSky(){
     R3.dark=clamp((6-Math.asin(clamp(up,-1,1))*180/PI)/18,0,1);R3.lit=clamp((R3.dark-.25)/.28,0,1);}
   // sky dome and water: horizon is the fog colour, zenith deepens towards blue by day and ink at night
   if(R3.sky){const U=R3.sky.material.uniforms,tt=(h-6)/12,az=tt*PI,el=Math.sin(tt*PI)*1.05;
-    U.uHor.value.copy(sc.background);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
+    /* a visible horizon (decided 17 okt, Magnus: sky and sea cannot be the same colour): the sky at the horizon a little lighter than
+       the background colour, and the fog, which is what the far sea turns into, a little darker and bluer; most on a clear day, less
+       in haze, under cloud and towards night */
+    const hz=(1-n)*(1-.55*(SE.haze||0))*(1-.45*cloudCover(G.seed||0)),sea=R3.seaHor||(R3.seaHor=new THREE.Color());
+    sea.copy(sc.background).multiplyScalar(1-.18*hz).lerp(cA.setHex(0x3a6a82),.3*hz*(1-SE.gray*.6));sc.fog.color.copy(sea);/* towards a deep sea blue, less in the grey half of the year */
+    U.uHor.value.copy(sc.background).lerp(cA.setRGB(1,1,1),.12*hz);U.uSea.value.copy(sea);lerpHex(0x3f72b4,0x070e26,n,cA);U.uZen.value.copy(sc.background).lerp(cA,.62);
     U.uSunDir.value.copy(sunDir);
     U.uSunCol.value.copy(R3.sun.color).lerp(cB.setHex(0xffffff),.25);U.uSunVis.value=clamp((U.uSunDir.value.y+.06)/.12,0,1);
     U.uMoonDir.value.set(-.45,.78,-.42).normalize();U.uMoonVis.value=clamp((n-.55)/.3,0,1);U.uNight.value=n;
-    const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sc.background);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
-  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
+    const WU=R3.water.material.userData.U;if(WU){WU.uHor.value.copy(sea);lerpHex(0xe9f1f2,0x5d6f88,n,WU.uFoam.value);}}
+  /* the light stands 450 m from the point looked at along the sun's direction, counted from that point's own height (fixed 17 okt:
+     it was counted from the sea, so a camera looking at something high up, the HÖK in the air, got a lower sun and longer shadows) */
+  const f=R3.lookAt,SD=PHOTO?1100:450;R3.sun.position.set(f.x+vDir.x*SD,f.y+vDir.y*SD,f.z+vDir.z*SD);R3.sun.target.position.copy(f);R3.sun.target.updateMatrixWorld();
   const d=R3.dark;R3.lampMat.emissive.setRGB(.15+.85*d,.14+.8*d,.1+.62*d);R3.winMat.emissive.setRGB(.95*d,.66*d,.3*d);if(R3.shipWin)R3.shipWin.emissive.setRGB(.95*d,.66*d,.3*d);if(R3.winMats)R3.winMats.forEach((m,b)=>{const L=winLevel(b,d);m.emissive.setRGB(.95*L,.66*L,.3*L);});
   // headlights: nearest vehicles to the camera focus
   const fx=f.x,fz=f.z,dd=o=>(o.x-fx)*(o.x-fx)+(o.y-fz)*(o.y-fz);
@@ -4276,6 +4663,7 @@ function updateSky(){
     for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
     for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
     for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),d)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*d,36]);
+    for(const[ci,c]of((WORLD.decor&&WORLD.decor.cabins)||[]).entries())if(!(G.ddead.c&&G.ddead.c[ci]!=null)&&winLevel(winBucket(c.x,c.y),d)>.3)cand.push([3,c.x,Math.max(0,c.h)+3,c.y,0xffb860,.8*d,28]);
   }
   if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*d*R3.lit,70]);}
   for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
@@ -4358,6 +4746,7 @@ function sync3D(dtr){
   for(const b of G.barriers){const m=R3.bars.get(b.id);if(m)m.visible=!b.cleared;}
   syncTags();syncMarks(dtr);
   if(R3.villaM)R3.villaM.forEach((m,i)=>{const t0=G.ddead.v&&G.ddead.v[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.12,1-(G.time-t0)/70);});
+  if(R3.cabins)R3.cabins.C.forEach((c,i)=>{const t0=G.ddead.c&&G.ddead.c[i];cabinAt(i,t0==null?1:Math.max(.12,1-Math.floor((G.time-t0)*2)/120));});
   if(R3.shedM)R3.shedM.forEach((m,i)=>{const t0=G.ddead.s&&G.ddead.s[i];if(t0==null){m.scale.y=1;return;}m.scale.y=Math.max(.15,1-(G.time-t0)/40);});
   if(R3.boatM)R3.boatM.forEach((m,i)=>{const bb=WORLD.decor.boats[i];if(bb&&bb.off&&!FILM.on){m.visible=false;return;}const t0=G.ddead.b[i];if(t0==null&&!m.visible&&!m.userData.sunk)m.visible=true;if(t0==null){if(m.userData.sunk){m.userData.sunk=false;m.visible=true;}return;}const k2=clamp((G.time-t0)/7,0,1);m.userData.sunk=true;m.userData.y0=.15-3.2*k2;m.rotation.x=.5*k2;m.visible=k2<1;});
   if(R3.jetM)R3.jetM.forEach((g,i)=>{const dead=G.ddead.j[i]!=null;for(const c of g.children)if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.height===.3)c.visible=!dead;if(dead&&!g.userData.broke){g.userData.broke=true;g.children.forEach((c,k)=>{if(c.geometry&&c.geometry.parameters&&c.geometry.parameters.radiusTop===.14&&k%3===0)c.visible=false;});}if(!dead&&g.userData.broke){g.userData.broke=false;g.children.forEach(c=>c.visible=true);}});
@@ -4939,7 +5328,8 @@ $('bHelp').addEventListener('click',()=>{G.paused=true;$('intro').hidden=false;$
 $('bStart').addEventListener('click',()=>{audInit();const first=TITLE.on;startGame();if(first)opStart(true);});
 /* a click in the film itself (not on a button or the help) hides the logo and every control so the film can run clean in full
    screen, and the next click brings them back (decided 13 okt); the very first click still starts the intro */
-$('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
+$('title').addEventListener('pointerdown',titleGrab);$('title').addEventListener('pointermove',titleDrag);for(const e of['pointerup','pointercancel'])$('title').addEventListener(e,titleLetGo);
+$('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.man&&TITLE.man.dragged){TITLE.man.dragged=false;return;}/* the end of a drag, not a click */if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStart(true);});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
@@ -5016,7 +5406,7 @@ function syncMarks(dtr){if(!R3.marks)R3.marks=new Map();const want=taskMarks(),s
     if(Math.abs(o.p-m.p)>.01){o.p=m.p;const x=o.rc.getContext('2d');x.clearRect(0,0,128,128);x.lineWidth=9;x.strokeStyle='rgba(255,255,255,.25)';x.beginPath();x.arc(64,64,56,0,TAU);x.stroke();
       if(m.p>0){x.strokeStyle=MARK_COL[m.g];x.beginPath();x.arc(64,64,56,-PI/2,-PI/2+TAU*m.p);x.stroke();}o.rt.needsUpdate=true;}}
   for(const[k,o]of R3.marks)if(!seen.has(k)){R3.dyn.remove(o.grp);o.rt.dispose();o.ring.material.dispose();o.ic.material.dispose();o.ic.geometry.dispose();R3.marks.delete(k);}}
-function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map(),film=TITLE.on;/* the intro film shows no labels */
+function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map(),film=TITLE.on||PHOTO;/* the intro film shows no labels */
   if(!film)for(const b of G.barriers)if(!b.cleared)want.set('B'+b.id,{x:b.x,y:b.y,t:'SPÄRR '+b.id+(barrierGate(b)?' · LÅST':''),bg:'rgba(90,42,20,.9)',fg:'#ffd9a0'});
   if(!film)for(const m of G.mines||[])if(m.found&&!m.cleared)want.set('M'+m.id,{x:m.x,y:m.y,t:'MINOR '+m.id,bg:'rgba(242,194,0,.92)',fg:'#161616',ring:m.r});
   for(const[k,o]of R3.tags)if(!want.has(k)||o.txt!==want.get(k).t){R3.dyn.remove(o.g);o.sp.material.map.dispose();o.sp.material.dispose();R3.tags.delete(k);}
@@ -5554,7 +5944,25 @@ function titleCam(dtr){
     // the HÖK itself may never leave the frame, so the limit gives way only at the frame's edge
     TITLE.vy=H.y+clamp(angWrap(TITLE.vy+TITLE.vyv*dt-H.y),-(CAMMAX.keep+6)*dg,(CAMMAX.keep+6)*dg);TITLE.vp=clamp(TITLE.vp+TITLE.vpv*dt,H.p-CAMMAX.keep*dg,H.p+CAMMAX.keep*dg);
     const L=tmpV2.set(c.x+Math.cos(TITLE.vy)*Math.cos(TITLE.vp)*100,c.y+Math.sin(TITLE.vp)*100,c.z+Math.sin(TITLE.vy)*Math.cos(TITLE.vp)*100);R3.cam.lookAt(L);R3.lookAt.copy(L);}
+  titleManual(dtr,m);
 }
+/* turning the camera round the HÖK by hand (decided 17 okt, Magnus): with a mouse button held down the viewer drags the camera round
+   the HÖK, the angle kept relative to its heading so it follows the turns; let go and the director takes over again. The director
+   goes on underneath all the while, and the hand's angle is blended in round the HÖK (bearing, elevation and distance), in a third
+   of a second when grabbed, held three seconds after letting go and then back over about three seconds, so the camera swings back to the director's shot */
+function titleManual(dtr,m){const M=TITLE.man;if(!M)return;const dt=Math.min(dtr,.25);M.w=clamp(M.w+(M.active||TITLE.t-(M.relT??-1e9)<3?dt/.35:-dt/2.8),0,1);/* held 3 s after letting go (decided 17 okt) */if(M.w<=0)return;
+  const w=sm(M.w),c=R3.cam.position,h=m.position,dx=c.x-h.x,dy=c.y-h.y,dz=c.z-h.z,rd=Math.hypot(dx,dy,dz)||1,yd=Math.atan2(dz,dx),pd=Math.asin(clamp(dy/rd,-1,1));
+  const y=yd+angWrap(TITLE.hd+M.yaw-yd)*w,pt=lerp(pd,M.pitch,w),r=lerp(rd,M.r,w),L=R3.lookAt;
+  c.set(h.x+Math.cos(y)*Math.cos(pt)*r,h.y+Math.sin(pt)*r,h.z+Math.sin(y)*Math.cos(pt)*r);{const f=camFloor(c.x,c.z)+2;if(c.y<f)c.y=f;}
+  const t=tmpV2.set(lerp(L.x,h.x,w),lerp(L.y,h.y,w),lerp(L.z,h.z,w));R3.cam.lookAt(t);R3.lookAt.copy(t);}
+function titleGrab(ev){if(!TITLE.on||FILM.on||!TITLE.drone||ev.button!==0||ev.target.closest('button,a,input,.tmenu,#intro'))return;
+  const M=TITLE.man||(TITLE.man={w:0,yaw:0,pitch:.3,r:40});
+  if(M.w<=0){const c=R3.cam.position,h=TITLE.drone.position,d=Math.hypot(c.x-h.x,c.y-h.y,c.z-h.z)||1;M.yaw=angWrap(Math.atan2(c.z-h.z,c.x-h.x)-TITLE.hd);M.pitch=Math.asin(clamp((c.y-h.y)/d,-1,1));M.r=clamp(d,22,70);}
+  M.active=true;M.x=ev.clientX;M.y=ev.clientY;M.moved=0;$('title').style.cursor='grabbing';try{$('title').setPointerCapture(ev.pointerId);}catch(_){}}
+function titleDrag(ev){const M=TITLE.man;if(!M||!M.active)return;const dx=ev.clientX-M.x,dy=ev.clientY-M.y;M.x=ev.clientX;M.y=ev.clientY;M.moved+=Math.abs(dx)+Math.abs(dy);
+  M.yaw=angWrap(M.yaw+dx*.006);M.pitch=clamp(M.pitch+dy*.005,-.12,1.3);}
+function titleLetGo(){const M=TITLE.man;if(!M||!M.active)return;M.active=false;M.relT=TITLE.t;M.dragged=M.moved>4;$('title').style.cursor='';}
+
 function titleTick(dtr){
   if(!TITLE.on)return;
   if(TITLE.phase!=='press'){TITLE.logoT=Math.max(TITLE.logoT,(performance.now()-TITLE.t0)/1000+TITLE.skip);drawLogo(TITLE.logoT);if(TITLE.logoT>2.6&&$('tMenu').hidden){$('tMenu').hidden=false;}}
@@ -5565,7 +5973,7 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.man=null;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
   if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
@@ -5718,7 +6126,7 @@ function filmSunEl(h){const T=FILM_SUN;let i=0;while(i<T.length-2&&T[i+1][0]<=h)
 function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);if(R3.night>=.6)return;
   const el=FILM.sunEl??filmSunEl(h),hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,le=Math.max(el,.055),c=Math.cos(le);
   vDir.set(hx/hl*c,Math.sin(le),hz/hl*c);/* (shading: never below 3 degrees) */R3.sun.intensity*=lerp(1,1.45,up);R3.hemi.intensity*=lerp(1,.8,up);
-  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,vDir.y*450,f.z+vDir.z*450);
+  const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);
   if(R3.sky){const U=R3.sky.material.uniforms,ce=Math.cos(el);U.uSunDir.value.set(hx/hl*ce,Math.sin(el),hz/hl*ce);U.uSunVis.value=clamp((el+.03)/.06,0,1);}}
 
 /* ---- Spara video: the film rendered frame by frame on the viewer's own machine, 1920x1080 at 60 frames a second, with the
@@ -6259,7 +6667,7 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
   G.paused=true;if(o.doy!=null)G.doy=o.doy;if(o.tod!=null)G.tod=o.tod;if(o.moln!=null)CLOUD.force=o.moln/100;if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
   const L=WORLD.landing,P=(v,d)=>v?{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z}:d,c=P(o.cam),t=P(o.look);
   const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);};
-  put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL('image/jpeg',o.q||.85);};
+  put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL(o.png?'image/png':'image/jpeg',o.q||.85);};
 globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
 try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
