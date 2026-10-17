@@ -1436,20 +1436,27 @@ function buildWorldTry(seed,tryK){
     const shore=(x,y)=>{const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++){const X=gx+ox,Y=gy+oy;if(X>=0&&Y>=0&&X<GW&&Y<GH&&wet(Y*GW+X))return true;}return false;};
     const seat=q=>{if(q.islet)return q;for(let d=0;d<=9;d+=3){const x=q.x-(q.nx||0)*d,y=q.y-(q.ny||0)*d;let lo=heightAt(x,y),hi=lo;
       for(let a=0;a<8;a++){const h=heightAt(x+Math.cos(a*PI/4)*2.2,y+Math.sin(a*PI/4)*2.2);lo=Math.min(lo,h);hi=Math.max(hi,h);}if(lo>.3&&hi-lo<.8&&shore(x,y))return{x,y,h:lo};if(!q.nx&&!q.ny)break;}return null;};
-    /* the fairways (decided 17 okt, Magnus): two big fairways run east-west, one north of the island and one south of it. Marking
-       runs from the sea, in the east, in towards land (Sjöfartsverket: along the coast Strömstad to Haparanda, otherwise from the sea
-       in towards the harbours), so both are counted westbound with red to port: the island's north coast lies to port of the north
-       fairway and its lights are red, the south coast to starboard of the south fairway and green. North is -y. Which coast a light
-       stands on is the way it looks out, not where it stands (a light in a bay on the north side can look south): each of 72
-       directions gets the distance free of ground over a line from the lamp to 30 m up 400 m out, and the sector faces north or
-       south, turned up to 90 degrees toward where those add up most (so along the fairway at most); the side with the more open sector wins (issue 8: on ö 3818 a
-       sector aimed out from the centre faced the hill across a bay), straight north or south winning a tie */
+    /* the fairways (decided 17 okt, Magnus): two big fairways run along the island, one on each long side, along its length (the
+       main axis of its land, tilted at most 45 degrees from east-west, so a long island lying north-east gets them on the diagonal).
+       Marking runs from the sea, in the east, in towards land (Sjöfartsverket: along the coast Strömstad to Haparanda, otherwise
+       from the sea in towards the harbours), so both are counted westbound with red to port: the island's northern long side lies
+       to port of the northern fairway and its lights are red, the southern side to starboard of the southern fairway and green.
+       North is -y. Which side a light stands on is the way it looks out, not where it stands (a light in a bay on the north side can
+       look south): each of 72 directions gets the distance free of ground over a line from the lamp to 30 m up 400 m out, and the
+       sector faces straight out from the axis on one side or the other, turned up to 90 degrees toward where those add up most (so
+       along the fairway at most); the side with the more open sector wins (issue 8: on ö 3818 a sector aimed out from the centre
+       faced the hill across a bay), straight out winning a tie */
+    {let n=0,mx=0,my=0;const L0=[];for(let i=0;i<GW*GH;i++){const t=G0[i];if(t===DEEP||t===SHAL||W.isletMask[i])continue;const c=cellCenter(i);L0.push(c);mx+=c.x;my+=c.y;n++;}
+      mx/=n||1;my/=n||1;let sxx=0,syy=0,sxy=0;for(const c of L0){const dx=c.x-mx,dy=c.y-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy;}
+      let th=.5*Math.atan2(2*sxy,sxx-syy);if(th>PI/2)th-=PI;if(th<=-PI/2)th+=PI;/* the long axis, as an east-going direction */
+      th=clamp(th,-PI/4,PI/4);W.fairAxis={x:mx,y:my,a:th,nx:Math.sin(th),ny:-Math.cos(th)};}/* (nx,ny): out from the axis on the northern side */
+    const FA=W.fairAxis,aN=Math.atan2(FA.ny,FA.nx),kN=((Math.round(aN/(PI/36))%72)+72)%72;
     const secAim=q=>{const L=Math.max(0,q.h)+5.35,fr=[];
       for(let k=0;k<72;k++){const a=k*PI/36;let r=8;for(;r<=400;r+=8)if(heightAt(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r)>L+(30-L)*r/400)break;fr.push(r);}
       const win=k=>{let t=0;for(let o=-14;o<=14;o++)t+=fr[((k+o)%72+72)%72];return t;};
       const side=base=>{let best=base,bs=-1;for(let o=-18;o<=18;o++){const t=win(base+o)-Math.abs(o)*.01;if(t>bs){bs=t;best=base+o;}}return{k:best,t:bs};};
-      const N=side(54),S=side(18),north=N.t>S.t||(N.t===S.t&&q.y<CY);
-      return{a:(north?N.k:S.k)*PI/36,col:north?'red':'green'};};
+      const N=side(kN),S=side(kN+36),north=N.t>S.t||(N.t===S.t&&(q.x-FA.x)*FA.nx+(q.y-FA.y)*FA.ny>0);
+      return{a:((((north?N.k:S.k)%72)+72)%72)*PI/36,col:north?'red':'green'};};
     D.secs=[];{const sites=[];for(const o of (W.islets||[]))if(o.kind!=='grynna'&&o.kind!=='stenar')sites.push({x:o.x,y:o.y,h:o.parts[0].h*.85,islet:true});
       for(let k=0;k<cand.length;k+=3){const c=cand[k];sites.push({x:c.x-c.n.x*3,y:c.y-c.n.y*3,nx:c.n.x,ny:c.n.y});}
       for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
@@ -4194,7 +4201,7 @@ function surroundData(W){
   // life at night: lit windows in houses by the water on wooded islands, and flashing red and green sector lights on the skerries
   const wins=[],navs=[];
   for(const q of isl){if(q.forest>0&&q.o<.75){const n=Math.round((q.r/60)*(q.o<.3?1.6:1)*R()*1.6);for(let k=0;k<n;k++){const a=R()*TAU,f=.8+R()*.08,p=sIslePt(q,f,a);wins.push({x:p.x,y:p.y,h:sIsleH(q,f,a)+1.6,w:R()<.3?2:1});}}
-    if(q.o>.35&&q.r<45&&navs.length<12&&R()<.45){navs.push({x:q.x,y:q.y,h:q.h+3,col:q.y<CY?'green':'red',ch:Math.floor(R()*7),ph:R()*5});/* the far side of the fairways from the island's lights: north of the north fairway is its starboard side, green; south of the south one red */}}
+    if(q.o>.35&&q.r<45&&navs.length<12&&R()<.45){navs.push({x:q.x,y:q.y,h:q.h+3,col:(()=>{const F=W.fairAxis;return F?(q.x-F.x)*F.nx+(q.y-F.y)*F.ny>0:q.y<CY;})()?'green':'red',ch:Math.floor(R()*7),ph:R()*5});/* the far side of the fairways from the island's lights: beyond the northern fairway is its starboard side, green; beyond the southern one red */}}
   W.surround={t0,isl,wins,navs};return W.surround;}
 const sIsleW=(q,a)=>1+.2*Math.sin(2*a+q.p[0])+.11*Math.sin(5*a+q.p[1])+.06*Math.sin(11*a+q.p[2])+.03*Math.sin(23*a+q.p[3]);
 function sIslePt(q,f,a){const lr=q.r*f*sIsleW(q,a),lx=Math.cos(a)*lr,ly=Math.sin(a)*lr*q.el,c=Math.cos(q.rot),sn=Math.sin(q.rot);return{x:q.x+lx*c-ly*sn,y:q.y+lx*sn+ly*c};}
