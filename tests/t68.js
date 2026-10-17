@@ -1,6 +1,7 @@
 // faults found in the recorded test round on island 1490 (18 okt): KROK stopping short of a target near its last one or on the
 // moving ship (issue 21), a HÖK circling into a known bunker's reach after a move held outside it (issue 29), and a GETING at the
-// edge of its radio link losing and finding it every frame (issue 36), and HÖK hovering inside each other
+// edge of its radio link losing and finding it every frame (issue 36); then HÖK hovering inside each other, and a GETING with a
+// link through a relay but no contact (issue 35)
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(let i=0;i<40;i++)B.step(.05);return G;};
@@ -27,4 +28,10 @@ const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(
   for(const h of H)B.giveOrder(h,{type:'move',x:L.x,y:L.y+300,post:'def'});let mn=1e9;
   for(let i=0;i<40*20;i++){B.step(.05);if(i>20*20)for(let a=0;a<4;a++)for(let b=a+1;b<4;b++)mn=Math.min(mn,Math.hypot(H[a].x-H[b].x,H[a].y-H[b].y));}
   ok(mn>=13,'four HÖK circling the same point keep '+mn.toFixed(1)+' m apart at the least');}
+// 6. a GETING past the edge of the net but within link of a VARG inside it has contact through it (issue 35)
+{const G=setup(1490);G.netAll=false;for(const r of G.relays)r.captured=false;const C=B.CARRIER,ang=Math.atan2(925-C.y,585-C.x),at=d=>({x:C.x+Math.cos(ang)*d,y:C.y+Math.sin(ang)*d});
+  const v=B.makeUnit('tank',at(650).x,at(650).y);v.orders=[];v.hold=true;G.units.push(v);const g=B.makeUnit('scout',at(900).x,at(900).y);g.orders=[];G.units.push(g);
+  for(let i=0;i<3*20;i++){B.step(.05);g.x=at(900).x;g.y=at(900).y;}const out=!B.inNet(g.x,g.y);
+  ok(out&&!g.offNet,'a GETING 900 m from Birka, 250 m from a VARG in the net, has contact'+(out?'':' (test set-up: it was inside the net)'));
+  v.dead=true;for(let i=0;i<2*20;i++){B.step(.05);g.x=at(900).x;g.y=at(900).y;}ok(g.offNet,'and loses it when the VARG is gone');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);
