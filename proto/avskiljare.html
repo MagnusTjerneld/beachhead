@@ -90,15 +90,16 @@ function wall(z0,o){o=o||{};const H=o.h||1,gap=o.gap||0;let x=X0;const wob=x=>Ma
     const z=z0+wob(x);addStone(x,z-.28*H,s,s*.25);addStone(x+s*.5,z+.28*H,s*(.85+R()*.2),s*.25);
     if(!o.low){const s2=(.24+R()*.16)*H;addStone(x+s*.4,z+(R()-.5)*.25,s2,s*.25+s*.6+s2*.2);if(R()<.35)addStone(x+s*.9,z+(R()-.5)*.3,s2*.8,s*.9+s2*.3);}
     x+=s*(1.25+R()*.25);}}
-// a boundary wall: about two metres high and two and a half wide at the foot, three courses of big blocks that narrow
-// upward, with a few blocks tumbled out at the foot
+// a boundary wall: about three metres high and three wide at the foot, five courses of blocks that get smaller and fewer
+// upward (four across at the foot, one cap stone on top), with a few blocks tumbled out at the foot
+const GW=[{n:4,w:1.1,s:.8,v:.35},{n:3,w:.75,s:.66,v:.25},{n:2,w:.42,s:.55,v:.2},{n:2,w:.3,s:.46,v:.15},{n:1,w:0,s:.38,v:.12}];
 function gwall(z0){let x=X0;const wob=x=>Math.sin(x*.05+z0)*.8+Math.sin(x*.13)*.25;
-  while(x<X0+LEN){const s=.75+R()*.35,z=z0+wob(x);
-    addStone(x,z-.85,s,s*.2);addStone(x+s*.4,z,s*(.9+R()*.2),s*.25);addStone(x+s*.2,z+.85,s*(.85+R()*.25),s*.2);
-    const s2=.55+R()*.25;addStone(x+s*.5,z-.42,s2,s*.85+s2*.15);addStone(x+s*.3,z+.42,s2*(.9+R()*.2),s*.85+s2*.15);
-    const s3=.42+R()*.2;addStone(x+s*.6,z+(R()-.5)*.3,s3,s*.85+s2*.75+s3*.1);
-    if(R()<.12)addStone(x+s,z+(R()<.5?-1:1)*(1.6+R()*.8),s*.8,-.1);
-    x+=s*(1.25+R()*.2);}}
+  while(x<X0+LEN){const z=z0+wob(x);let y=0,s0=0;
+    GW.forEach((c,k)=>{const sz=c.s+R()*c.v;if(!k)s0=sz;
+      for(let i=0;i<c.n;i++){const off=c.n>1?-c.w+2*c.w*i/(c.n-1):0;addStone(x+(R()-.3)*sz*.5+k*.15,z+off+(R()-.5)*.12,sz*(.92+R()*.16),y+sz*.22);}
+      y+=sz*.62;});
+    if(R()<.12)addStone(x+s0,z+(R()<.5?-1:1)*(2+R()*.8),s0*.8,-.1);
+    x+=s0*(1.2+R()*.2);}}
 function fence(z0,side){for(let x=X0;x<X0+LEN;x+=3+R()*.4)posts.push({x,z:z0+side+Math.sin(x*.05+z0)*.8,y:hAt(x,z0)});}
 function bush(x,z,s,kind){bushes.push({x,z,s,kind,y:hAt(x,z)-.15,a:R()*PI*2});}
 function tree(x,z,s,kind){trees.push({x,z,s,kind,y:hAt(x,z)});}
