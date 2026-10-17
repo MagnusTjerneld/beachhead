@@ -3586,9 +3586,11 @@ function mkIslets(list,st){
       const m=new THREE.Mesh(geo,mat(cc[Math.floor(rnd()*2)]));m.scale.set(pp.rx,pp.h,pp.rz);m.rotation.y=-pp.rot;m.position.set(o.x+pp.dx,o.kind==='grynna'?-.15:-.35,o.y+pp.dy);st.add(m);
       if((o.kind==='kobbe'||o.kind==='hall')&&pp===o.parts[0]&&pp.rx>8){const cap=new THREE.Mesh(geo,moss);cap.scale.set(pp.rx*.5,pp.h*.3,pp.rz*.45);cap.position.set(o.x+pp.dx+(rnd()-.5)*pp.rx*.3,pp.h*.78,o.y+pp.dy);cap.rotation.y=-pp.rot;st.add(cap);}}
     // loose stones on the rock, small and a few bigger (decided 17 okt, Magnus: the flat yellow lichen discs read as nothing)
-    if(o.kind!=='grynna'){const SM=[mat(0x8a847e),mat(0x76706b),mat(0x9a928a)],SG=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0));
+    if(o.kind!=='grynna'){const GULL=mat(0xeceae2),SM=[mat(0x8a847e),mat(0x76706b),mat(0x9a928a)],SG=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0));
       for(const pp of o.parts){const n2=Math.floor(pp.rx/1.2);for(let k=0;k<n2;k++){const aa=rnd()*TAU,d=.4+rnd()*.45,yy=-.35+pp.h*Math.pow(1-d*d,.8)*.95,r0=.4+rnd()*rnd()*2.2;
-        const sn=mesh(SG,SM[Math.floor(rnd()*3)],o.x+pp.dx+Math.cos(aa)*d*pp.rx*.8,yy+r0*.5,o.y+pp.dy+Math.sin(aa)*d*pp.rz*.8);sn.scale.set(r0*(1+rnd()*.4),r0*(.55+rnd()*.3),r0);sn.rotation.set(rnd()*3,rnd()*3,rnd()*3);st.add(sn);}}}
+        const sn=mesh(SG,SM[Math.floor(rnd()*3)],o.x+pp.dx+Math.cos(aa)*d*pp.rx*.8,yy+r0*.5,o.y+pp.dy+Math.sin(aa)*d*pp.rz*.8);const sy=r0*(.55+rnd()*.3);sn.scale.set(r0*(1+rnd()*.4),sy,r0);sn.rotation.set(rnd()*3,rnd()*3,0);st.add(sn);
+        // a gull's perch: about a third of the stones white on top (decided 17 okt, Magnus)
+        if(rnd()<.33){const w=mesh(SG,GULL,sn.position.x,sn.position.y+sy*.72,sn.position.z);w.scale.set(r0*.62,sy*.38,r0*.6);w.rotation.y=sn.rotation.y;st.add(w);}}}}
     const P=o.parts[0];for(let k=0;k<o.trees;k++){const aa=rnd()*TAU,d=rnd()*Math.min(P.rx,P.rz)*.45,s2=.55+rnd()*.5;const tr=mesh(new THREE.ConeGeometry(2.2,7.5,6),mat(0x3d5a31),o.x+Math.cos(aa)*d,P.h*.85+3.4*s2,o.y+Math.sin(aa)*d);tr.scale.setScalar(s2);st.add(tr);}}
 }
 /* light characters as on the chart: alternating on and off durations in seconds */
