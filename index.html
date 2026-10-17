@@ -636,7 +636,7 @@ function shapeFor(seed,V,base){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let typ
       const e=8,gx=shapeD(S,px+e,py)-shapeD(S,px-e,py),gy=shapeD(S,px,py+e)-shapeD(S,px,py-e),gl=Math.hypot(gx,gy)||1,o=hole?.45:.25,rt=Rb()*PI;
       S.bumps.push({x:px+gx/gl*r*o,y:py+gy/gl*r*o,rx:r,ry:r*(.6+Rb()*.4),c:Math.cos(rt),s:Math.sin(rt),hole});}}
   return S;}
-function elevAt(x,y,s,V){
+function elevAt(x,y,s,V,noBank){
   if(x<24||y<24||x>WW-24||y>WH-24||nearShip(x,y))return -6;
   const d=islandD(x,y,V).d;
   /* beach, cove and harbor are coast points with an outward normal (n): li is the distance inland from the point, lt to the side */
@@ -655,7 +655,7 @@ function elevAt(x,y,s,V){
     let f=0;
     if(ps){const lat=Math.hypot(x-ps.x,y-ps.y);f=sm((ps.w+25-lat)/25);}
     if(ps&&f>0&&!same){const rw=Math.max(40,Math.abs(z1.h-z2.h)*4.5);const eR=lerp((z1.h+z2.h)/2+(n-.5)*3,e,sm(Z.s/rw));e=lerp(e,eR,f);}
-    if(same)e+=13*sm((15-Z.s)/15)*(1-f);
+    if(same&&!noBank)e+=13*sm((15-Z.s)/15)*(1-f);
   }else e+=0;
   const lowCoast=old?B=>{const db=angDiff(a,B.a);if(db<B.w+4){const t=sm((1-d)/.15),side=sm((B.w+4-db)/4);e=lerp(e,lerp(.4,e,t),side);}}:B=>{const px=x-B.x,py=y-B.y,li=-(px*B.nx+py*B.ny),lt=Math.abs(px*B.ny-py*B.nx);if(li<-80||lt>B.w+40)return;/* up to 80 m out (fixed 17 okt, issue 3: on ö 7227 the coast bulged more than 15 m past the beach's line, and a 4 m rim with a cliff to the water closed the beach but for a 20 m gap) */const t=sm(li/90),side=sm((B.w+40-lt)/40);e=lerp(e,lerp(.4,e,t),side);};
   if(V.beach)lowCoast(V.beach);if(V.cove)lowCoast(V.cove);
@@ -1229,7 +1229,10 @@ function buildWorldTry(seed,tryK){
     const bank=(x,y)=>{const Z=zoneAt(x,y,V),z1=V.zones[Z.i1],z2=V.zones[Z.i2];if(z1.water||z2.water||Math.abs(z1.h-z2.h)>=1)return null;
       const ps=V.passMap.get(pairKey(Z.i1,Z.i2));const f=ps?sm((ps.w+25-Math.hypot(x-ps.x,y-ps.y))/25):0;
       return{Z,f,rb:13*sm((15-Z.s)/15)*(1-f),pk:Z.i1<Z.i2?Z.i1*64+Z.i2:Z.i2*64+Z.i1};};
-    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(ev[k]<=0)continue;const b=bank(i*WW/SX,j*WH/SY);if(!b||b.Z.s>24)continue;rS[k]=b.Z.s;rB[k]=b.rb;rF[k]=b.f;rP[k]=b.pk;}
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(ev[k]<=0)continue;const x=i*WW/SX,y=j*WH/SY,b=bank(x,y);if(!b||b.Z.s>24)continue;rS[k]=b.Z.s;rF[k]=b.f;rP[k]=b.pk;
+      /* the bank as it is left in the ground, not as elevAt first adds it (fixed 17 okt): the beach, the cove and the harbour level it
+         out afterwards, and taking the full 13 m off there dug the landing beach on ö 7227 down to 10 m under water */
+      rB[k]=Math.max(0,elevAt(x,y,s,V)-elevAt(x,y,s,V,true));}
     // which pairs get a wall: the share of the ridge that runs within 30 m of field or pasture, or a third of the rest by lot
     const cnt={},open={};for(let k=0;k<N;k++){if(rP[k]<0||rS[k]>6||rF[k]>.5)continue;const p=rP[k];cnt[p]=(cnt[p]||0)+1;
       const ci=cellIdx((k%nx)*WW/SX,((k/nx)|0)*WH/SY);let o=false;for(let oy=-3;oy<=3&&!o;oy++)for(let ox=-3;ox<=3;ox++){const q=ci+oy*GW+ox;if(q>=0&&q<GW*GH&&(mark[q]===M_AKER||mark[q]===M_HAGE)){o=true;break;}}if(o)open[p]=(open[p]||0)+1;}
