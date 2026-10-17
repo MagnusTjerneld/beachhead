@@ -34,4 +34,8 @@ const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(
   for(let i=0;i<3*20;i++){B.step(.05);g.x=at(900).x;g.y=at(900).y;}const out=!B.inNet(g.x,g.y);
   ok(out&&!g.offNet,'a GETING 900 m from Birka, 250 m from a VARG in the net, has contact'+(out?'':' (test set-up: it was inside the net)'));
   v.dead=true;for(let i=0;i<2*20;i++){B.step(.05);g.x=at(900).x;g.y=at(900).y;}ok(g.offNet,'and loses it when the VARG is gone');}
+// 7. a VARG retreating with 5 % hull is not sent back in by an order to its group, but is by one to it alone (issue 25)
+{const G=setup(7341),a=B.makeUnit('tank',1000,1000),b=B.makeUnit('tank',1010,1000);G.units.push(a,b);b.hp=7;B.giveOrder(b,{type:'move',x:1500,y:1000,post:'def'});b.rtb=true;
+  B.setSel([a.id,b.id]);B.groupOrder({world:{x:800,y:1000}},false);ok(a.orders[0].x===800&&b.orders[0].x===1500&&b.rtb,'a group order moves the healthy VARG and leaves the retreating one');
+  B.setSel([b.id]);B.groupOrder({world:{x:800,y:1000}},false);ok(b.orders[0].x===800,'an order to the damaged VARG alone sends it');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);
