@@ -1211,6 +1211,34 @@ function buildWorldTry(seed,tryK){
   const SX=Math.round(WW/7.5),SY=Math.round(WH/7.5),nx=SX+1,ny=SY+1;const ev=new Float32Array(nx*ny),vcls=new Uint8Array(nx*ny);
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)ev[j*nx+i]=elevAt(i*WW/SX,j*WH/SY,s,V);
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
+  /* the closed coast slopes as granite instead of standing as a cliff (decided 17 okt, Magnus: it looked like Dover, not Sandhamn).
+     Only the ground one sees and stands on changes: the game's grid above is computed from the old heights, so the same coast is
+     closed and the same beach, harbour and cove are the ways in. On the vertex grid, the distance to the coastline (chamfer) carries
+     the coast's height Hc. Where Hc is over 3 m the ground follows a profile from a new waterline up to Hc, at about 30 % on average,
+     flatter at the water and steeper at the top (t^1.6), with a noise for slabs; the waterline moves out up to 30 m on the highest
+     coast (none under 6 m), never at the harbour or on Birka's way in, and the ground round buildings and points is kept. A slope
+     shows as granite (W.hall), loses most of its trees, and closed coast gets a boulder beach along the new waterline */
+  {const N=nx*ny,stp=WW/SX,dg=stp*Math.SQRT2,dL=new Float32Array(N).fill(1e9),dW=new Float32Array(N).fill(1e9),hc=new Float32Array(N),hall=new Uint8Array(N),e0=ev.slice();W.hall=hall;
+    for(let k=0;k<N;k++){if(ev[k]>0){dL[k]=0;hc[k]=ev[k];}else dW[k]=0;}
+    const cham=(D,keep)=>{for(let dir=0;dir<2;dir++){const j0=dir?ny-1:0,j1=dir?-1:ny,dj=dir?-1:1,i0=dir?nx-1:0,i1=dir?-1:nx,di=dir?-1:1;
+      for(let j=j0;j!==j1;j+=dj)for(let i=i0;i!==i1;i+=di){const k=j*nx+i;if(keep(k))continue;for(const[oi,oj,c]of[[-di,0,stp],[0,-dj,stp],[-di,-dj,dg],[di,-dj,dg]]){const ii=i+oi,jj=j+oj;if(ii<0||jj<0||ii>=nx||jj>=ny)continue;const q=jj*nx+ii;if(D[q]+c<D[k]){D[k]=D[q]+c;hc[k]=hc[q];}}}}};
+    cham(dL,k=>ev[k]>0);/* water: distance to land and the height of that land */
+    for(let k=0;k<N;k++)if(ev[k]<=0)dW[k]=0;cham(dW,k=>ev[k]<=0);/* land: distance to water, and the coast height the water carried */
+    const keep=[...STR.map(q=>[q.x,q.y,22,42]),...relays.map(q=>[q.x,q.y,30,55]),...(W.harbor?[[W.harbor.x,W.harbor.y,HARB.L+60,HARB.L+90]]:[]),[landing.x,landing.y,60,90]];
+    const kept=(x,y)=>{let f=1;for(const[qx,qy,r0,r1]of keep){const d=Math.hypot(qx-x,qy-y);if(d<r1)f=Math.min(f,sm((d-r0)/(r1-r0)));}return f;};
+    const Rs=rng(s*313+11),stones=[];W.coastStones=stones;
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,x=i*WW/SX,y=j*WH/SY,H=hc[k];if(H<3)continue;
+      const O=clamp((H-6)*2.5,0,30),L=H/.3,sl=ev[k]>0?dW[k]+O:O-dL[k];if(sl<0||sl>L)continue;
+      const t=sl/L,nz=(fbm(x*2.5,y*2.5,s+900)-.5)*4*t*(1-t)*1.2,pr=H*Math.pow(t,1.6)-.3+nz;
+      if(ev[k]>0){const f=kept(x,y);if(f<=0||pr>ev[k]-.3)continue;ev[k]=Math.max(.35,lerp(ev[k],pr,f));if(e0[k]-ev[k]>.8)hall[k]=1;}
+      else{if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+90)continue;if(nearPath(x,y,25))continue;if(pr<=ev[k])continue;ev[k]=pr;hall[k]=1;
+        // the boulder beach along the new waterline of the closed coast
+        if(H>=6&&pr>-1.2&&pr<1.8)for(let q=0;q<3;q++)if(Rs()<.7)stones.push({x:x+(Rs()-.5)*stp,y:y+(Rs()-.5)*stp,h:pr,r:.5+Rs()*Rs()*3,a:Rs()*6,g:Rs()<.15});}}
+    for(let k=0;k<N;k++)if(hall[k]){const i=k%nx,j=(k/nx)|0;let g=0;if(i<SX)g=Math.max(g,Math.abs(ev[k]-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(ev[k]-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(ev[k]-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(ev[k]-ev[k-nx]));vcls[k]=ev[k]<=0?(ev[k]<-3.2?DEEP:SHAL):g>2.6?ROCK:BEACH;}
+    // the granite slope is bare rock in the land plan, and keeps a quarter of its trees, low pines
+    const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
+    for(let c=0;c<GW*GH;c++){const p=cellCenter(c),k=vk(p.x,p.y);if(hall[k]&&e0[k]-ev[k]>2.5&&mark[c]){mark[c]=M_HALL;W.skog[c]=0;}}
+    W.trees=W.trees.filter(t=>{const k=vk(t.x,t.y);if(!hall[k]||e0[k]-ev[k]<=2.5)return true;if(hash2(Math.round(t.x),Math.round(t.y),s+71)>=.25)return false;t.k='pine';t.s*=.7;return true;});}
   W.SX=SX;W.SY=SY;W.ev=ev;W.vcls=vcls;
   // each grid square is split along the diagonal whose ends differ least in height (1 = a-d, 0 = b-c): contours such as the waterline then follow the slope instead of a sawtooth
   {const dg=new Uint8Array(SX*SY);for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=ev[j*nx+i],b=ev[j*nx+i+1],c=ev[(j+1)*nx+i],d=ev[(j+1)*nx+i+1];dg[j*SX+i]=Math.abs(a-d)<Math.abs(b-c)?1:0;}W.diag=dg;}
@@ -1239,12 +1267,15 @@ function buildWorldTry(seed,tryK){
     for(let gy=2;gy<GH-2;gy++)for(let gx=2;gx<GW-2;gx++){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;let nx=0,ny=0,nw=0;
       for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++){if(wet((gy+oy)*GW+gx+ox)){nx+=ox;ny+=oy;nw++;}}
       if(nw<5||nw>17)continue;const nl=Math.hypot(nx,ny);if(nl<1)continue;const c=cellCenter(i),n={x:nx/nl,y:ny/nl};
-      const top=elevAt(c.x-n.x*10,c.y-n.y*10,s,V);if(top>7||top<.5)continue;if(!away(c.x,c.y,260))continue;if(W.harbor&&Math.hypot(c.x-W.harbor.x,c.y-W.harbor.y)<HARB.L+110)continue;cand.push({x:c.x,y:c.y,n,top});}
+      const top=heightAt(c.x-n.x*10,c.y-n.y*10);if(top>7||top<.5)continue;if(!away(c.x,c.y,260))continue;if(W.harbor&&Math.hypot(c.x-W.harbor.x,c.y-W.harbor.y)<HARB.L+110)continue;cand.push({x:c.x,y:c.y,n,top});}
+    /* the coast points move out to the waterline one sees: on the sloping granite of a high coast it lies up to 30 m outside the
+       grid's coastline, and a jetty starts there (decided 17 okt) */
+    for(let k=cand.length-1;k>=0;k--){const c=cand[k];let t=0;while(t<=34&&heightAt(c.x+c.n.x*t,c.y+c.n.y*t)>.35)t+=2;if(t>34)cand.splice(k,1);else{c.x+=c.n.x*t;c.y+=c.n.y*t;}}
     for(let k=cand.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[cand[k],cand[j]]=[cand[j],cand[k]];}
-    const clearRun=(p,n,L)=>{for(let t=6;t<=L+4;t+=3)if(!wet(cellIdx(p.x+n.x*t,p.y+n.y*t)))return false;return true;};
+    const clearRun=(p,n,L)=>{for(let t=6;t<=L+4;t+=3){const x=p.x+n.x*t,y=p.y+n.y*t;if(!wet(cellIdx(x,y))||heightAt(x,y)>-.3)return false;}return true;};
     for(const c of cand){if(D.jetties.length>=16)break;if(D.jetties.some(j=>Math.hypot(j.x-c.x,j.y-c.y)<110))continue;const L=14+Rd()*10;if(!clearRun(c,c.n,L))continue;
       const a=Math.atan2(c.n.y,c.n.x),j={x:c.x,y:c.y,a,len:L,top:c.top};D.jetties.push(j);
-      {const bx=c.x-c.n.x*9,by=c.y-c.n.y*9,bc=cellIdx(bx,by);if(Rd()<.55&&(G0[bc]===LAND||G0[bc]===BEACH)&&!W.road[bc])(D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:elevAt(bx,by,s,V)});}
+      {const bx=c.x-c.n.x*9,by=c.y-c.n.y*9,bc=cellIdx(bx,by);if(Rd()<.55&&(G0[bc]===LAND||G0[bc]===BEACH)&&!W.road[bc])(D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:heightAt(bx,by)});}
       if(Rd()<.6){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L*.45),y:c.y+c.n.y*(L*.45)};D.boats.push({x:e.x+c.n.y*2.6*side,y:e.y-c.n.x*2.6*side,a:a+PI/2,kind:'eka'});}
       if(Rd()<.75){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L-3),y:c.y+c.n.y*(L-3)};D.boats.push({x:e.x-c.n.y*3.6*side,y:e.y+c.n.x*3.6*side,a:a+(Rd()<.5?0:PI),kind:Rd()<.4?'sail':'motor'});}}
     /* lights and houses at least 200 m apart (decided 17 okt, Magnus: nobody wants a green light shining straight into the house):
@@ -1254,14 +1285,14 @@ function buildWorldTry(seed,tryK){
     // the lighthouse goes before the boathouses: a boathouse within 200 m of it is not built
     if(cand.length){let best=null,bd=-1;for(const c of cand){if(!farHouses(c.x-c.n.x*8,c.y-c.n.y*8,true))continue;const d=Math.hypot(c.x-CARRIER.x,c.y-CARRIER.y)+Math.hypot(c.x-CX,c.y-CY)*.6;if(d>bd&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>40)){bd=d;best=c;}}
       if(best){// a lighthouse stands on the highest ground of its stretch of coast, never on the shore under a cliff
-        let bx=best.x-best.n.x*8,by=best.y-best.n.y*8,bh=elevAt(bx,by,s,V);
+        let bx=best.x-best.n.x*8,by=best.y-best.n.y*8,bh=heightAt(bx,by);
         /* on bare rock by the water rather than the highest ground in the forest (decided 16 okt: on ö 2316 it stood in dense forest):
            at most 50 m from the water, and bare rock or open shore counts as if it were 4 or 2 m higher */
         const lhB=i=>mark[i]===M_HALL?4:mark[i]===M_STRAND?2:0;let bs=bh+lhB(cellIdx(bx,by));
         for(let r=10;r<=140;r+=6){const nk=Math.max(10,Math.round(r/3));for(let k=0;k<nk;k++){const a=k/nk*TAU,x=best.x+Math.cos(a)*r,y=best.y+Math.sin(a)*r;if(x<20||y<20||x>WW-20||y>WH-20)continue;
-          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||dWet[ci]>5||!away(x,y,260)||!farHouses(x,y,true))continue;const h=elevAt(x,y,s,V),sc=h+lhB(ci);if(sc<=bs+.2)continue;
+          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||dWet[ci]>5||!away(x,y,260)||!farHouses(x,y,true))continue;const h=heightAt(x,y),sc=h+lhB(ci);if(sc<=bs+.2)continue;
           if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<22)||E.some(e=>Math.hypot(e.x-x,e.y-y)<26)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<20)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<14))continue;
-          let flat=true;for(let m=0;m<6&&flat;m++){const q2=elevAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5,s,V);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;bs=sc;}}
+          let flat=true;for(let m=0;m<6&&flat;m++){const q2=heightAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;bs=sc;}}
         D.light={x:bx,y:by,h:bh};if(D.sheds)D.sheds=D.sheds.filter(q=>Math.hypot(q.x-bx,q.y-by)>=200);
         // the light station: bare rock round the tower, pasture out to 50 m, and the forest thinning in towards it from 55 m
         for(let gy=Math.floor((by-50)/CELL);gy<=Math.floor((by+50)/CELL);gy++)for(let gx=Math.floor((bx-50)/CELL);gx<=Math.floor((bx+50)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx,d=Math.hypot(gx*CELL+5-bx,gy*CELL+5-by);
@@ -1270,15 +1301,15 @@ function buildWorldTry(seed,tryK){
     // no coast far enough from the houses: the lighthouse stands out on the biggest skerry instead, as many real ones do
     if(!D.light){const o=(W.islets||[]).filter(o=>(o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>6&&farHouses(o.x,o.y,true)&&away(o.x,o.y,260)).sort((a,b)=>b.r-a.r)[0];
       if(o){D.light={x:o.x,y:o.y,h:o.parts[0].h*.9,islet:true};o.trees=0;if(D.sheds)D.sheds=D.sheds.filter(q=>Math.hypot(q.x-o.x,q.y-o.y)>=200);}}
-    const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const q=cellIdx(x+Math.cos(a/12*TAU)*r,y+Math.sin(a/12*TAU)*r);if(!wet(q))return true;}return false;};
+    const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const px=x+Math.cos(a/12*TAU)*r,py=y+Math.sin(a/12*TAU)*r;if(!wet(cellIdx(px,py))||heightAt(px,py)>-.3)return true;}return false;};
     for(let t=0;t<400&&D.boats.length<D.jetties.length*.75+7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r=45+Rd()*90,x=c.x+c.n.x*r+(Rd()-.5)*60,y=c.y+c.n.y*r+(Rd()-.5)*60;
       if(!wet(cellIdx(x,y))||coastNear(x,y,25)||!away(x,y,280)||D.boats.some(b=>Math.hypot(b.x-x,b.y-y)<45)||nearPath(x,y,60))continue;D.boats.push({x,y,a:Rd()*TAU,kind:Rd()<.5?'sail':'motor',anchored:true});}
     // archipelago villas, classic and modern, looking out over the water
     D.villas=[];{const STY=['klassisk','klassisk','rod','modern','svart'];const nV=5+Math.floor(Rd()*4);
       for(const c of cand){if(D.villas.length>=nV)break;const dd=20+Rd()*10,x=c.x-c.n.x*dd,y=c.y-c.n.y*dd,ci=cellIdx(x,y);if(G0[ci]!==LAND||W.road[ci])continue;
-        const h=elevAt(x,y,s,V);if(h>8||h<.5||!away(x,y,280))continue;if(D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<130)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<30)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<18))continue;
+        const h=heightAt(x,y);if(h>8||h<.5||!away(x,y,280))continue;if(D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<130)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<30)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<18))continue;
         if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<30)||E.some(e=>Math.hypot(e.x-x,e.y-y)<45)||(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200))continue;
-        let flat=true;for(const[ox,oy]of[[8,6],[-8,6],[8,-6],[-8,-6]]){if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.6)flat=false;}if(!flat)continue;
+        let flat=true;for(const[ox,oy]of[[8,6],[-8,6],[8,-6],[-8,-6]]){if(Math.abs(heightAt(x+ox,y+oy)-h)>1.6)flat=false;}if(!flat)continue;
         const v={x,y,a:Math.atan2(c.n.y,c.n.x),h,style:STY[Math.floor(Rd()*STY.length)],col:Math.floor(Rd()*4)};D.villas.push(v);
         for(let gy=Math.floor((y-9)/CELL);gy<=Math.floor((y+9)/CELL);gy++)for(let gx=Math.floor((x-9)/CELL);gx<=Math.floor((x+9)/CELL);gx++){const i=gy*GW+gx;if(i<0||i>=GW*GH||W.road[i])continue;if(Math.hypot(gx*CELL+5-x,gy*CELL+5-y)>7.5)continue;if(G0[i]===LAND){G0[i]=WALL;grid[i]=WALL;}}}
       W.trees=W.trees.filter(t=>D.villas.every(v=>Math.hypot(t.x-v.x,t.y-v.y)>15));}
@@ -1291,7 +1322,7 @@ function buildWorldTry(seed,tryK){
         for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const t=G0[ci+oy*GW+ox];if(t===ROCK||t===WALL)return false;}
         if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+70)return false;if(pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+35)||W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<60))return false;
         if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<28)||E.some(e=>Math.hypot(e.x-x,e.y-y)<40)||D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<45)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<16)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<14)||C.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
-        if(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200)return false;const h=elevAt(x,y,s,V);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.2)return false;return h;};
+        if(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200)return false;const h=heightAt(x,y);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(heightAt(x+ox,y+oy)-h)>1.2)return false;return h;};
       /* five kinds of house (decided 16 okt, Magnus: at least five, and not only red with white corners), each with its own colours;
          a torp is mostly the old red cottage, by the water anything goes */
       const pick=(W8)=>{let r=Rd()*W8.reduce((a,b)=>a+b[1],0);for(const[k,w]of W8){r-=w;if(r<=0)return k;}return W8[0][0];};
@@ -1338,10 +1369,10 @@ function buildWorldTry(seed,tryK){
       for(const z of D.secs){const i=cellIdx(z.x,z.y);if(mark[i]===M_SKOG||mark[i]===M_HAGE){mark[i]=M_HALL;W.skog[i]=0;}}}
     // hidden shoals (grund under ytan) out in open water, each marked by a cardinal mark on its safe-water side
     D.shoals=[];for(let t=0;t<600&&D.shoals.length<7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r0=8+Rd()*16,dd=60+Rd()*230,x=c.x+c.n.x*dd+(Rd()-.5)*80,y=c.y+c.n.y*dd+(Rd()-.5)*80;
-      if(!wet(cellIdx(x,y))||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
+      if(!wet(cellIdx(x,y))||heightAt(x,y)>-1||coastNear(x,y,r0+25)||!away(x,y,260)||D.shoals.some(q=>Math.hypot(q.x-x,q.y-y)<200)||(W.islets||[]).some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r0+60)||nearPath(x,y,r0+90))continue;/* the harbour approach is always free of shoals */
       const sh={x,y,r:r0,rot:Rd()*PI,el:.5+Rd()*.5};D.shoals.push(sh);
       const dirs=[['N',0,-1],['S',0,1],['E',1,0],['W',-1,0]];const sea={x:x-CX,y:y-CY};dirs.sort((a2,b2)=>(b2[1]*sea.x+b2[2]*sea.y)-(a2[1]*sea.x+a2[2]*sea.y));const pick=dirs[Rd()<.7?0:1];
-      const mx=x+pick[1]*(r0+12),my=y+pick[2]*(r0+12);if(wet(cellIdx(mx,my)))D.marks.push({x:mx,y:my,type:pick[0]});}
+      const mx=x+pick[1]*(r0+12),my=y+pick[2]*(r0+12);if(wet(cellIdx(mx,my))&&heightAt(mx,my)<-.5)D.marks.push({x:mx,y:my,type:pick[0]});}
     /* stones breaking the surface on most shoals (decided 12 okt: grund och grynnor are common): none on about a third of them,
        otherwise one to five of different sizes within the shoal, some barely awash. Scenery only, with their own random stream
        so that the rest of the decor is unchanged. */
@@ -3758,6 +3789,11 @@ function mkDecor(D,st){
   const wood=mat(0x8a7356),post=mat(0x5e4e3a);
   R3.villaM=[];for(const v of D.villas||[]){const m=mkVilla(v);st.add(m);R3.villaM.push(m);}
   mkCabins(D,st);
+  // the boulder beach of the closed coast, one instanced mesh, a few stones white on top from the gulls
+  {const S=WORLD.coastStones||[];if(S.length){const g=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0)),m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({color:0xffffff}),S.length),G2=S.filter(q=>q.g),w=G2.length?new THREE.InstancedMesh(g,mat(0xeceae2),G2.length):null,d=new THREE.Object3D(),cl=new THREE.Color();let gi=0;
+    S.forEach((q,i)=>{const sy=q.r*.65;d.position.set(q.x,q.h+q.r*.2,q.y);d.rotation.set(0,q.a,0);d.scale.set(q.r*1.15,sy,q.r);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.45+hash2(i,3,77)*.15;m.setColorAt(i,cl.setRGB(v+.03,v,v-.02));
+      if(q.g){d.position.y+=sy*.72;d.scale.set(q.r*.7,sy*.36,q.r*.62);d.updateMatrix();w.setMatrixAt(gi++,d.matrix);}});
+    m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);if(w){w.frustumCulled=false;st.add(w);}}}
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
   R3.baks=[];(D.baks||[]).forEach((b,i)=>{const g=mkDaymark(b);st.add(g);R3.baks.push({b,...g.userData.lamp,ch:LIGHT_CH[[6,2,0][i%3]],ph:hash2(Math.round(b.x),Math.round(b.y),23)*6});});
@@ -4141,6 +4177,8 @@ function buildStatic(){
       // the land plan shows on the ground: fields a pale hay green, pasture between, bare rock the granite, dense forest a darker floor
       const ci=cellIdx(x,y),mk=W.mark?W.mark[ci]:0;
       if(mk===M_AKER)c=[.55,.58,.33];else if(mk===M_HAGE)c=[.47,.56,.3];else if(mk===M_HALL)c=[lerp(granite[0],c[0],.35),lerp(granite[1],c[1],.35),lerp(granite[2],c[2],.35)];else if(W.skog&&W.skog[ci]===2)c=[c[0]*.86,c[1]*.88,c[2]*.86];const sh=clamp((3.6-e)/1.8,0,1)*clamp((Math.hypot(x-WORLD.landing.x,y-WORLD.landing.y)-55)/35,0,1);if(sh>0)c=[lerp(c[0],granite[0],sh),lerp(c[1],granite[1],sh),lerp(c[2],granite[2],sh)];}
+    // the sloping granite of the closed coast: grey-pink rock with dark lichen in patches, not the pale beach colour
+    if(W.hall&&W.hall[k]&&e>0){const l2=hash2(i>>1,j>>1,W.seed+19),ln=clamp((fbm(x*3,y*3,W.seed+903)-.42)*4,0,1)*.7;c=[lerp(.6,.4,ln)-l2*.05,lerp(.55,.42,ln)-l2*.04,lerp(.52,.37,ln)-l2*.03];}
     col[k*3]=c[0]+n;col[k*3+1]=c[1]+n;col[k*3+2]=c[2]+n*.6;
   }
   let p=0;for(let j=0;j<SY;j++)for(let i=0;i<SX;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(W.diag&&W.diag[j*SX+i]){idx[p++]=a;idx[p++]=c;idx[p++]=d;idx[p++]=a;idx[p++]=d;idx[p++]=b;}else{idx[p++]=a;idx[p++]=c;idx[p++]=b;idx[p++]=b;idx[p++]=c;idx[p++]=d;}}
