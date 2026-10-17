@@ -39,6 +39,7 @@ html,body{height:100%;margin:0;overflow:hidden}
 @keyframes tpulse{50%{opacity:.35}}
 .tmenu{display:flex;gap:10px}
 .title.clean .tfront,.title.clean .tshade,.title.clean .tfull{display:none}
+.title.filmlogo .tshade{display:none}/* the trailer's logo is drawn as the intro draws it, with no shade over the picture (decided 17 okt) */
 .tfull{position:absolute;top:14px;right:14px;z-index:3;background:rgba(17,26,34,.7);backdrop-filter:blur(2px)}
 .tmenu .btn{min-width:150px;backdrop-filter:blur(2px)}
 .tfoot{position:absolute;bottom:18px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:rgba(238,241,234,.7);text-shadow:0 1px 2px #000}
@@ -3935,7 +3936,7 @@ function mkDecor(D,st){
   {const S=WORLD.coastStones||[];if(S.length){const g=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0)),m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({color:0xffffff}),S.length),G2=S.filter(q=>q.g),w=G2.length?new THREE.InstancedMesh(g,mat(0xeceae2),G2.length):null,d=new THREE.Object3D(),cl=new THREE.Color();let gi=0;
     S.forEach((q,i)=>{const sy=q.r*.65;d.position.set(q.x,q.h+q.r*.2,q.y);d.rotation.set(0,q.a,0);d.scale.set(q.r*1.15,sy,q.r);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.45+hash2(i,3,77)*.15;m.setColorAt(i,cl.setRGB(v+.03,v,v-.02));
       if(q.g){d.position.y+=sy*.72;d.scale.set(q.r*.7,sy*.36,q.r*.62);d.updateMatrix();w.setMatrixAt(gi++,d.matrix);}});
-    m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);if(w){w.frustumCulled=false;st.add(w);}}}
+    m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);if(w){w.frustumCulled=false;st.add(w);}(R3.looseM||(R3.looseM=[])).push([m,S]);if(w)R3.looseM.push([w,G2]);}}
   /* the ridges (17 okt): the wall's blocks with moss on their upper faces and snow on top in winter, the loose blocks of the strips
      and the foot of the granite ridge, broadleaf bushes that turn with the season (hazel as birch, dog rose as rowan, sloe as oak)
      and dark junipers that hold snow */
@@ -3951,11 +3952,11 @@ function mkDecor(D,st){
     G.st.forEach((g,t)=>{const L=RS.filter((q,i)=>i%3===t);if(!L.length)return;const m=new THREE.InstancedMesh(g,G.stM,L.length);
       L.forEach((q,i)=>{d.position.set(q.x,q.h,q.y);d.rotation.set((hash2(i,t,5)-.5)*.4,q.a,0);d.scale.set(q.r*1.1,q.r*.72,q.r*.95);d.updateMatrix();m.setMatrixAt(i,d.matrix);
         const v=.42+hash2(i,t,77)*.16,pk=hash2(i,t,78)*.05;m.setColorAt(i,cl.setRGB(v+pk,v,v-.01));});
-      m.instanceColor.needsUpdate=true;m.castShadow=m.receiveShadow=true;m.frustumCulled=false;st.add(m);});
+      m.instanceColor.needsUpdate=true;m.castShadow=m.receiveShadow=true;m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,L]);});
     if(BU.length){const m=new THREE.InstancedMesh(G.bu,G.buM,BU.length);BU.forEach((b,i)=>{d.position.set(b.x,b.h-.15,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*1.3,b.s*.95,b.s*1.15);d.updateMatrix();m.setMatrixAt(i,d.matrix);m.setColorAt(i,cl.setRGB(b.r,b.sp/8,0));});
-      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);}
+      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,BU]);}
     if(JU.length){const m=new THREE.InstancedMesh(G.ju,G.juM,JU.length);JU.forEach((b,i)=>{d.position.set(b.x,b.h-.1,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*.9,b.s*2.2,b.s*.9);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.85+hash2(i,9,3)*.3;m.setColorAt(i,cl.setRGB(v,v,v));});
-      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);}}
+      m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,JU]);}}
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
   R3.baks=[];(D.baks||[]).forEach((b,i)=>{const g=mkDaymark(b);st.add(g);R3.baks.push({b,...g.userData.lamp,ch:LIGHT_CH[[6,2,0][i%3]],ph:hash2(Math.round(b.x),Math.round(b.y),23)*6});});
@@ -4325,7 +4326,7 @@ function buildStatic(){
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
   for(const m of[R3.units,R3.enemies,R3.wrecks,R3.relays,R3.fx,R3.kroks,R3.structs])m.clear();R3.parts.length=0;
   while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);
-  R3.route=null;R3.tags=new Map();R3.marks=new Map();
+  R3.route=null;R3.tags=new Map();R3.marks=new Map();R3.looseM=[];
   const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1,ny=SY+1,st=new THREE.Group();
   const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),idx=new (nx*ny>65535?Uint32Array:Uint16Array)(SX*SY*6);// the grid has more than 65535 vertices: 16-bit indices would wrap and scramble the southern triangles
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
@@ -4368,7 +4369,7 @@ function buildStatic(){
       rv.push(A.lx,A.y,A.ly, B.lx,B.y,B.ly, A.rx,A.y,A.ry, B.lx,B.y,B.ly, B.rx,B.y,B.ry, A.rx,A.y,A.ry);}}/* wound to face up, for the normals below */
   if(rv.length){const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rv),3));{const nm=new Float32Array(rv.length);for(let i=1;i<nm.length;i+=3)nm[i]=1;rg.setAttribute('normal',new THREE.BufferAttribute(nm,3));}/* lit as level ground: per-triangle normals showed dark creases where a bend's triangles meet */st.add(new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0x6b6156,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));}
   const dummy=new THREE.Object3D();
-  if(W.walls.length){const wm=new THREE.InstancedMesh(new THREE.BoxGeometry(3.6,3.4,1.8),mat(0x8f8b80),W.walls.length);W.walls.forEach((wl,i)=>{dummy.position.set(wl.x,groundY(wl.x,wl.y)+1.5,wl.y);dummy.rotation.set(0,-wl.a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();wm.setMatrixAt(i,dummy.matrix);});st.add(wm);}
+  if(W.walls.length){const wm=new THREE.InstancedMesh(new THREE.BoxGeometry(3.6,3.4,1.8),mat(0x8f8b80),W.walls.length);W.walls.forEach((wl,i)=>{dummy.position.set(wl.x,groundY(wl.x,wl.y)+1.5,wl.y);dummy.rotation.set(0,-wl.a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();wm.setMatrixAt(i,dummy.matrix);});st.add(wm);(R3.looseM||(R3.looseM=[])).push([wm,W.walls]);}
   if(W.trees.length){
     // spruce: dark cone; pine (tall, more common in the open and towards the shore): orange-brown trunk, a loose crown of three tufts
     // birch (about 20 %): white trunk with dark bands, a tall lighter crown that starts lower and reaches as high as the spruce; its leaves have their own
@@ -5325,7 +5326,7 @@ confirmBtn('bBench',()=>{setMenu(false);benchStart();});
 /* the trailer from the settings, in the page itself (a page in a frame cannot always be reopened with ?trailer): the same start as a
    visit with ?trailer, on Sorkholmen; the game's own music is cut off, the film plays its own edit. Back to the game is a reload. */
 function trailerStart(){if(BENCH.on||FILM.on)return;setMenu(false);if(MUS.g)MUS.g.disconnect();clearTimeout(MUS.timer);MUS.timer=null;
-  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
+  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */TITLE.phase='press';showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
 confirmBtn('bTrailer',trailerStart);
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
 const niSeed=$('niSeed'),niTime=$('niTime'),niDate=$('niDate'),niName=$('niName'),niDoc=$('niDoc');
@@ -6018,7 +6019,7 @@ function titleDrag(ev){const M=TITLE.man;if(!M||!M.active)return;const dx=ev.cli
 function titleLetGo(){const M=TITLE.man;if(!M||!M.active)return;M.active=false;M.relT=TITLE.t;M.dragged=M.moved>4;$('title').style.cursor='';}
 
 function titleTick(dtr){
-  if(!TITLE.on)return;
+  if(!TITLE.on||FILM.on)return;/* the film draws its own logo: from the settings the intro had run, and this drew the logo whole over the film's and lit the menu (17 okt) */
   if(TITLE.phase!=='press'){TITLE.logoT=Math.max(TITLE.logoT,(performance.now()-TITLE.t0)/1000+TITLE.skip);drawLogo(TITLE.logoT);if(TITLE.logoT>2.6&&$('tMenu').hidden){$('tMenu').hidden=false;}}
 }
 function titleWake(skip){
@@ -6110,6 +6111,18 @@ window.addEventListener('keydown',e=>{if(!OP.on)return;e.preventDefault();e.stop
    every time. With &render the film runs on the frame clock instead (a fixed step per frame), for frame-by-frame capture. */
 const FILM_BAR=4*60/107.21,FILM_DB=.588,fk=k=>FILM_DB+k*FILM_BAR;
 const FILM_MUS=[{at:0,src:0,len:fk(13)},{at:fk(13),src:fk(65),len:213.6-fk(65)}],FILM_END=fk(13)+213.6-fk(65);
+/* the edit played on an audio context, the same for the live film and the saved video. The joins: 'cut' is a hard cut with 12 ms
+   ramps, 'tail' lets the outgoing part ring on for len under the incoming one, which comes in full on the downbeat, and 'x' is an
+   equal-power crossfade over len that ends on the downbeat (the incoming part starts len earlier in the source). The downbeats stay
+   where they are in every case, since the cuts follow fk(). */
+const FILM_XF={kind:'x',len:FILM_BAR/4};
+function filmMusic(c,dest,t0,vol,buf,xf){xf=xf||FILM_XF;const L=xf.len,n=64,ep=f=>Float32Array.from({length:n},(_,k)=>f(k/(n-1)*PI/2)*vol);
+  return FILM_MUS.map((m,i)=>{const s=c.createBufferSource();s.buffer=buf;const g=c.createGain();s.connect(g);g.connect(dest);let a=t0+m.at,src=m.src,len=m.len;
+    if(!i)g.gain.setValueAtTime(vol,a);else if(xf.kind==='x'){a-=L;src-=L;len+=L;g.gain.setValueCurveAtTime(ep(Math.sin),a,L);}else{g.gain.setValueAtTime(0,a);g.gain.linearRampToValueAtTime(vol,a+.012);}
+    if(i<FILM_MUS.length-1){if(xf.kind==='x')g.gain.setValueCurveAtTime(ep(Math.cos),a+len-L,L);
+      else if(xf.kind==='tail'){g.gain.setValueCurveAtTime(Float32Array.from({length:n},(_,k)=>(1-k/(n-1))**2*vol),a+len,L);len+=L;}
+      else{g.gain.setValueAtTime(vol,a+len-.012);g.gain.linearRampToValueAtTime(0,a+len+.004);}}
+    s.start(a,src,len+.02);return s;});}
 /* the effects, shared by the game and the trailer (decided 16 okt, Magnus: the trailer shows nothing the game does not): soft
    sprite particles, tracers, missiles and the point lights they ask for */
 const FX={parts:[],tr:[],ms:[],lts:[],tex:null};
@@ -6121,9 +6134,9 @@ function filmTodAt(t){const T=FILM_TOD;let i=0;while(i<T.length-2&&T[i+1][0]<=t)
 function filmSeed(s){let a=s>>>0;Math.random=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 
 function filmStart(){
-  const q=BOOTQ;FILM.on=true;FILM.clock=q.has('render')?'frame':'audio';globalThis.__FILM={FILM,R3:()=>R3,seek:filmSeek,EXP:FILM_EXP,exp:filmExport};
+  const q=BOOTQ;FILM.on=true;FILM.clock=q.has('render')?'frame':'audio';globalThis.__FILM={FILM,R3:()=>R3,seek:filmSeek,EXP:FILM_EXP,exp:filmExport,SHOTS:FILM_SHOTS,shotT:filmShotT,END:FILM_END,frame:filmFrame,compose:filmCompose,seed:filmSeed,clear:filmClear,warm:filmWarm,step:dt=>{sync3D(dt);filmCam(dt);},music:filmMusic,BAR:FILM_BAR,fk,W:()=>WORLD,G:()=>G,gy:groundY,hAt:heightAt,clearAt:filmClearAt,fGround};
   $('title').classList.add('clean');$('tPress').hidden=true;DYNRES.on=false;DYNRES.scale=1;applyRes();
-  FILM.b0={x:CARRIER.x,y:CARRIER.y,a:CARRIER.a};G.known.fill(1);G.knownV=(G.knownV||0)+1;document.querySelector('.tfoot').style.display='none';filmClearings(FILM_CLEAR);
+  FILM.b0={x:CARRIER.x,y:CARRIER.y,a:CARRIER.a};G.known.fill(1);G.knownV=(G.knownV||0)+1;document.querySelector('.tfoot').style.display='none';filmLighthouse();filmClearings();
   // a black veil for fades, and the play button
   const st=$('titleStage');const fd=document.createElement('div');fd.id='filmFade';fd.style.cssText='position:absolute;inset:0;background:#000;opacity:1;pointer-events:none;z-index:2';st.appendChild(fd);FILM.fade=fd;
   if(R3){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();filmShadowLight();}
@@ -6131,19 +6144,26 @@ function filmStart(){
   const b=$('tPress');b.textContent='SPELA TRAILERN';b.hidden=false;$('title').classList.remove('clean');for(const id of['tMenu','logoWrap'])$(id).hidden=true;
   FILM.t=fk(2);FILM.state='idle';FILM.fade.style.opacity=.35;filmSaveBtn(true);}
 /* set dressing: the trees are taken out of the meadow where the battle is staged, so a low camera sees the action and not
-   a trunk; the forest round it stays */
+   a trunk; the forest round it stays. A shot may also name lanes(), strips [x1,z1,x2,z2,width] worked out from the world, where
+   its actors go (decided 17 okt: the shots stood on fixed points and the island generator moved wrecks and walls in under them).
+   In the clearings and the lanes everything loose goes at the start of the film: trees, the loose blocks, bushes and junipers of the
+   ridges and fields, the stones of the shore, the old box walls and the wrecks. The courses of a boundary wall stay, since a gap
+   would show; a shot that meets one is moved instead (tests/trailerkoll.js finds them). */
 const FILM_BF={x:1365,z:712},FILM_CLEAR=[[1365,712,76],[1462,716,34],[1462,748,36]];
-function filmClearings(C){if(!R3||!R3.treeTiles)return;const m=new THREE.Matrix4(),zero=new THREE.Matrix4().makeScale(0,0,0),v=new THREE.Vector3();
-  for(const T of R3.treeTiles){T.g.updateMatrixWorld(true);T.g.traverse(o=>{if(!o.isInstancedMesh)return;let ch=false;for(let i=0;i<o.count;i++){o.getMatrixAt(i,m);v.setFromMatrixPosition(m).applyMatrix4(o.matrixWorld);
-    for(const c of C)if((v.x-c[0])**2+(v.z-c[1])**2<c[2]*c[2]){o.setMatrixAt(i,zero);ch=true;break;}}if(ch)o.instanceMatrix.needsUpdate=true;});}}
+function filmZones(){if(FILM.zones)return FILM.zones;const Z={c:FILM_CLEAR.slice(),l:[]};if(FILM.lh)Z.c.push([FILM.lh.x,FILM.lh.y,16]);for(const S of FILM_SHOTS)if(S.lanes)Z.l.push(...S.lanes());return FILM.zones=Z;}
+function filmClearAt(x,z,pad){const Z=filmZones(),p=pad||0;for(const c of Z.c)if((x-c[0])**2+(z-c[1])**2<(c[2]+p)**2)return true;
+  for(const [x1,z1,x2,z2,w] of Z.l){const vx=x2-x1,vz=z2-z1,t=clamp(((x-x1)*vx+(z-z1)*vz)/(vx*vx+vz*vz||1),0,1);if(Math.hypot(x-x1-vx*t,z-z1-vz*t)<w/2+p)return true;}return false;}
+function filmClearings(){if(!R3)return;FILM.zones=null;const m=new THREE.Matrix4(),zero=new THREE.Matrix4().makeScale(0,0,0),v=new THREE.Vector3();
+  for(const T of R3.treeTiles||[]){T.g.updateMatrixWorld(true);T.g.traverse(o=>{if(!o.isInstancedMesh)return;let ch=false;for(let i=0;i<o.count;i++){o.getMatrixAt(i,m);v.setFromMatrixPosition(m).applyMatrix4(o.matrixWorld);
+    if(filmClearAt(v.x,v.z)){o.setMatrixAt(i,zero);ch=true;}}if(ch)o.instanceMatrix.needsUpdate=true;});}
+  // the loose things: each instanced mesh with the list it was built from
+  for(const [o,L] of R3.looseM||[]){let ch=false;L.forEach((q,i)=>{if(!q.m&&filmClearAt(q.x,q.y,q.r||q.s||0)){o.setMatrixAt(i,zero);ch=true;}});if(ch)o.instanceMatrix.needsUpdate=true;}
+  G.wrecks=G.wrecks.filter(w=>!filmClearAt(w.x,w.y,w.kind==='hulk'?5:2));}
 /* the click (or Enter or space): load the score, warm every shot up behind the veil so no shader compiles mid-film, then play */
 function filmClick(){if(FILM.state!=='idle'&&FILM.state!=='done')return;audInit();const c=AUD.ctx;if(!c)return;FILM.state='load';$('tPress').textContent='LADDAR';
   const go=()=>{filmWarm();filmSeed(FILM.seed);for(const k in FILM.act)FILM.act[k].visible=false;filmClear();FILM.i=-1;
     filmSaveBtn(false);$('tPress').hidden=true;$('logoWrap').hidden=true;$('title').classList.add('clean');if(AUD.master)AUD.master.gain.value=0;/* the film has only its score */const t0=c.currentTime+.25;FILM.t0=t0;
-    const g=c.createGain();g.gain.value=.9;g.connect(c.destination);FILM.gain=g;FILM.src=[];
-    FILM_MUS.forEach((m,i)=>{const s=c.createBufferSource();s.buffer=MUS.buf;const gg=c.createGain();s.connect(gg);gg.connect(g);const a=t0+m.at;
-      gg.gain.setValueAtTime(i?0:1,a);if(i)gg.gain.linearRampToValueAtTime(1,a+.012);gg.gain.setValueAtTime(1,a+m.len-.012);if(i<FILM_MUS.length-1)gg.gain.linearRampToValueAtTime(0,a+m.len+.004);
-      s.start(a,m.src,m.len+.02);FILM.src.push(s);});
+    const g=c.createGain();g.gain.value=.9;g.connect(c.destination);FILM.gain=g;FILM.src=filmMusic(c,g,t0,1,MUS.buf);
     FILM.state='play';FILM.t=-.25;};
   const wait=()=>{if(MUS.buf)go();else if(MUS.failed){FILM.state='idle';$('tPress').textContent='MUSIKEN GICK INTE ATT LADDA';}else setTimeout(wait,100);};wait();}
 function filmWarm(){const keep=FILM.t;for(let i=0;i<FILM_SHOTS.length;i++){filmSeek(filmShotT(i)+.6);filmCam(.05);filmCam(.05);updateSky();filmLight();R3.renderer.compile(R3.scene,R3.cam);R3.renderer.render(R3.scene,R3.cam);}
@@ -6158,6 +6178,7 @@ function filmCam(dtr){
   const t=Math.max(0,FILM.t);G.tod=filmTodAt(t);
   if(FILM.state==='play'&&t>=FILM_END+1.5){FILM.state='done';$('tPress').textContent='SPELA IGEN';$('tPress').hidden=false;$('title').classList.remove('clean');filmSaveBtn(true);}
   let i=0;while(i<FILM_SHOTS.length-1&&t>=filmShotT(i+1))i++;const S=FILM_SHOTS[i],t0=filmShotT(i),dur=(i<FILM_SHOTS.length-1?filmShotT(i+1):FILM_END)-t0;
+  $('title').classList.toggle('filmlogo',FILM.on);
   if(i!==FILM.i){FILM.i=i;filmClear();FILM.S={first:true};FILM.useMovers=false;filmMapShow(false);if(S.birka!==false)filmBirka(null);G.harbor.secured=S.birka===false;
     if(S.id!=='logga'){$('logoWrap').hidden=true;if(FILM.state==='play')$('title').classList.add('clean');}}
   for(const k in FILM.act)FILM.act[k].visible=false;FILM.useMovers=false;FILM.fov=40;FILM.sunEl=null;FILM.fadeA=0;FILM.hideBeaver=i>=2&&i<24;
@@ -6177,7 +6198,9 @@ function filmCam(dtr){
    own light takes over. */
 const FILM_SUN=[[17.72,.2],[18,.16],[18.15,.11],[18.3,.05],[18.5,-.03],[18.8,-.1]];
 function filmSunEl(h){const T=FILM_SUN;let i=0;while(i<T.length-2&&T[i+1][0]<=h)i++;const a=T[i],b=T[i+1];return lerp(a[1],b[1],clamp((h-a[0])/(b[0]-a[0]),0,1));}
-function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);if(R3.night>=.6)return;
+function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);
+  {const P=R3.points[0];P.castShadow=FILM.fires.some(f=>Math.abs(P.position.x-f.x)<.01&&Math.abs(P.position.z-f.z)<.01);}/* only a fire casts (filmShadowLight) */
+  if(R3.night>=.6)return;
   const el=FILM.sunEl??filmSunEl(h),hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,le=Math.max(el,.055),c=Math.cos(le);
   vDir.set(hx/hl*c,Math.sin(le),hz/hl*c);/* (shading: never below 3 degrees) */R3.sun.intensity*=lerp(1,1.45,up);R3.hemi.intensity*=lerp(1,.8,up);
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);
@@ -6195,16 +6218,15 @@ function filmLoadMuxer(){return window.Mp4Muxer&&Mp4Muxer.Muxer?Promise.resolve(
   sc.onload=()=>window.Mp4Muxer&&Mp4Muxer.Muxer?ok():no(new Error('videokodaren saknar Muxer'));sc.onerror=()=>no(new Error('kunde inte hämtas'));document.head.appendChild(sc);});}
 /* the score as one buffer: the same edit as the live film, mixed down offline */
 async function filmScore(sr){const len=Math.ceil((FILM_END+1.5)*sr),oc=new OfflineAudioContext(2,len,sr);
-  FILM_MUS.forEach((m,i)=>{const s=oc.createBufferSource();s.buffer=MUS.buf;const g=oc.createGain();s.connect(g);g.connect(oc.destination);
-    g.gain.setValueAtTime(i?0:.9,m.at);if(i)g.gain.linearRampToValueAtTime(.9,m.at+.012);g.gain.setValueAtTime(.9,m.at+m.len-.012);if(i<FILM_MUS.length-1)g.gain.linearRampToValueAtTime(0,m.at+m.len+.004);s.start(m.at,m.src,m.len+.02);});
-  return oc.startRendering();}
+  filmMusic(oc,oc.destination,0,.9,MUS.buf);return oc.startRendering();}
 function filmCompose(ctx,W,H){ctx.drawImage(R3.renderer.domElement,0,0,W,H);
   if(FILM.map){let oc=FILM.mapCv;if(!oc||oc.width!==W||oc.height!==H){oc=FILM.mapCv=document.createElement('canvas');oc.width=W;oc.height=H;FILM.mapCx=oc.getContext('2d');}
     const mc=FILM.mapCx,k=W/FILM_MAP_W;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,W,H);mc.setTransform(k,0,0,k,0,0);drawMap(mc,FILM_MAP_W,720,false);ctx.drawImage(oc,0,0);}
-  if(!$('logoWrap').hidden){const k0=W/FILM_BASE_W,lg=$('logo'),lw=Math.min(.78*W,940*k0*1.25),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.12;
-    ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0;ctx.shadowOffsetY=10*k0;ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
-    const fs=Math.round(26*k0),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px ui-monospace,Menlo,Consolas,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
-    let cx=(W-tw)/2;const ty=y+lh+H*.025;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
+  /* the logo as the intro shows it on a 1920 wide screen (#logo, .tfront and .tsub): no darkening of the picture under it */
+  if(!$('logoWrap').hidden){const k0=W/FILM_BASE_W,lg=$('logo'),lw=Math.min(.78*W,940*k0),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.09;
+    ctx.save();ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0;ctx.shadowOffsetY=10*k0;ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
+    const fs=Math.round(15*k0),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px "Share Tech Mono",ui-monospace,Menlo,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
+    let cx=(W-tw)/2;const ty=y+lh+10*k0;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
   if(FILM.fadeA>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,FILM.fadeA)+')';ctx.fillRect(0,0,W,H);}}
 async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
   const say=t=>{const b=$('tPress');b.textContent=t;b.hidden=false;};
@@ -6285,10 +6307,18 @@ function fP(x,y,z,o){const P=FX.parts;if(P.length>900)return;const sp=new THREE.
   sp.position.set(x,y,z);sp.scale.setScalar(o.s0??1);R3.scene.add(sp);const v=o.v||[0,0,0];P.push({sp,vx:v[0],vy:v[1],vz:v[2],g:o.g||0,s0:o.s0??1,s1:o.s1??1,o:o.a??1,ttl:o.ttl??1,t:0,drag:o.drag||0,fade:o.fade||0});}
 function fLight(x,y,z,c,i,d,ttl){FX.lts.push({x,y,z,c,i,d,ttl,t:0});}
 /* the fire's own shadow (decided 16 okt): a burning wreck lit the ground all round it, under and behind the hull too, so it seemed
-   to float. The light sits 5.5 m up in the flames: just over a roof it threw shadows in long hard wedges across the meadow. In the trailer the first point light casts a shadow, and the nearest fire takes it; only the film's actors (the layer
-   FILM_SHL) are drawn into that shadow, not trees or terrain, so it costs little */
+   to float. The light sits 5.5 m up in the flames: just over a roof it threw shadows in long hard wedges across the meadow. In the trailer the first point light casts a shadow while it is a fire, and the nearest fire takes it. The layer
+   FILM_SHL was meant to keep all but the film's actors out of that shadow, but three r128 picks the casters by the main camera's
+   layers, so everything that casts a shadow is drawn into it (see filmShadowLight) */
 const FILM_SHL=5;
-function filmShadowLight(){const P=R3.points[0];P.castShadow=true;P.shadow.mapSize.set(512,512);P.shadow.camera.near=.3;P.shadow.camera.far=60;P.shadow.bias=-.004;P.shadow.camera.layers.set(FILM_SHL);}
+/* (17 okt) Two things three r128 does that the film did not count on: a Lambert material (trees, crowns, the lighthouse) multiplies
+   ALL its direct light by its shadows, and the shadow map picks its casters by the main camera's layers, so the layer below never
+   kept the trees out. With the point light's shadow range set to the light's distance every frame, everything beyond a fire's 50 m
+   lost the sun, the moon and the lighthouse's beams; and when the nearest point light was the lighthouse's own lantern, inside its
+   glass, the lantern housing shadowed everything. So the shadow is cast only while the first point light is a fire (filmLight),
+   and its range is held at 2 km. The film's trees were darker than the game's, and the lighthouse lit no trees. */
+function filmShadowLight(){const P=R3.points[0];P.castShadow=true;P.shadow.mapSize.set(512,512);P.shadow.camera.near=.3;P.shadow.camera.far=2000;
+  const um=Object.getPrototypeOf(P.shadow).updateMatrices;P.shadow.updateMatrices=function(l,f){const d=l.distance;l.distance=0;um.call(this,l,f);l.distance=d;};P.shadow.bias=-.004;P.shadow.camera.layers.set(FILM_SHL);}
 const fr=()=>Math.random()-.5;
 function fxFlash(x,y,z,s,c){fP(x,y,z,{s0:s,s1:s*1.4,a:1,ttl:.1,c:c||0xffd890,add:true});fP(x,y,z,{s0:s*2.4,s1:s*3,a:.45,ttl:.16,c:0xff9a40,add:true});fLight(x,y,z,c||0xffc070,5,45,.15);}
 function fxSmoke(x,y,z,s,col,ttl,rise){fP(x,y,z,{v:[fr()*1.5,rise??2,fr()*1.5],s0:s,s1:s*3.2,a:.55,ttl:ttl||3,c:col??0x3a3836,drag:.6});}
@@ -6300,7 +6330,8 @@ function fxGroundHit(x,y,z,s){const big=s>2,wet=heightAt(x,z)<0;
     if(big)fP(x,y+.5,z,{v:[0,7,0],g:12,s0:1.2,s1:3.4,a:.6,ttl:1,c:0xdfe6e8});return;}
   fxDust(x,y,z,s*.8);if(big){fxDust(x,y,z,s);fP(x,y+.6,z,{v:[fr(),5+Math.random()*2,fr()],g:6,s0:1.4,s1:4.2,a:.55,ttl:1.3,c:0x6e5f4a,drag:1.2});}
   for(let k=big?5:2;k>0;k--)fP(x+fr()*.6,y+.3,z+fr()*.6,{v:[fr()*2.4*s,3+Math.random()*3.5*s,fr()*2.4*s],g:22,s0:big?.45:.3,s1:big?.35:.22,a:.95,ttl:.45+Math.random()*.3,c:0x3e3326});}
-function fxBoom(x,y,z,s){s=s||1;fxFlash(x,y+1,z,6*s,0xfff0c0);fLight(x,y+3,z,0xffa040,8*s,120*s,.9);
+/* in the film the camera stands close, and a big blast's light turned the whole meadow a flat yellow white: there it is held to a third of a medium one's and reaches 60 m (17 okt) */
+function fxBoom(x,y,z,s){s=s||1;fxFlash(x,y+1,z,6*s,0xfff0c0);fLight(x,y+3,z,0xffa040,FILM.on?3.5*Math.min(s,1):8*s,FILM.on?60:120*s,.9);
   for(let i=0;i<16;i++)fP(x+fr()*2*s,y+1+Math.random()*2*s,z+fr()*2*s,{v:[fr()*12*s,3+Math.random()*9*s,fr()*12*s],g:4,s0:2*s,s1:5*s,a:.95,ttl:.5+Math.random()*.5,c:Math.random()<.5?0xff7a20:0xffb040,add:true,drag:2});
   for(let i=0;i<18;i++)fP(x+fr()*3*s,y+1+Math.random()*3*s,z+fr()*3*s,{v:[fr()*6*s,2+Math.random()*5*s,fr()*6*s],s0:2.5*s,s1:8*s,a:.7,ttl:2.5+Math.random()*2,c:0x2e2a28,drag:.9});
   for(let i=0;i<14;i++)fP(x,y+1.5,z,{v:[fr()*30*s,8+Math.random()*16*s,fr()*30*s],g:20,s0:.35,s1:.2,a:1,ttl:.7+Math.random()*.6,c:0xffd080,add:true});}
@@ -6337,6 +6368,7 @@ function fireEmit(f,dtr,x,y,z,sz){if(sz<=0)return;f.acc=(f.acc||0)+dtr*26*sz;whi
 /* the firefight goes on around every shot of it: tracers both ways across the meadow, ours yellow and theirs red, and now
    and then a blast further off */
 function filmBattle(dtr){const B=FILM_BF;FILM.amb=(FILM.amb||0)+dtr*7;while(FILM.amb>1){FILM.amb--;const ours=Math.random()<.55,ax=ours?B.x+70+fr()*40:B.x-90+fr()*30,az=B.z+fr()*90,bx=ours?B.x-80+fr()*40:B.x+60+fr()*40,bz=B.z+fr()*90;
+    const C=R3.cam.position,vx=bx-ax,vz=bz-az,f=clamp(((C.x-ax)*vx+(C.z-az)*vz)/(vx*vx+vz*vz||1),0,1);if(Math.hypot(C.x-ax-vx*f,C.z-az-vz*f)<16)continue;/* not past the lens */
     fxTracer({x:ax,y:fGround(ax,az)+2.5,z:az},{x:bx,y:fGround(bx,bz)+1.5+Math.random()*2,z:bz,hit:Math.random()<.3},460,ours?0xffd27a:0xff6a4a,.22);}
   FILM.ambB=(FILM.ambB??1.2)-dtr;if(FILM.ambB<=0){FILM.ambB=1.6+Math.random()*1.8;const x=B.x+fr()*200,z=B.z+fr()*160;fxBoom(x,fGround(x,z)+1,z,.7);}}
 /* the lights the frame adds to the game's pool of point lights (asked for by updateSky) */
@@ -6356,7 +6388,32 @@ function filmMapShow(on){if(FILM.mapOn===on)return;FILM.mapOn=on;FILM.map=on;
     for(const u of FILM.mapUnits||[]){const k=G.units.indexOf(u);if(k>=0)G.units.splice(k,1);}FILM.mapUnits=[];for(const e of G.enemies)e.seen=false;mv.z=1;mv.free=false;}
   fitPanes();}
 
+/* the trailer's lighthouse stands on the height behind the shore (decided 17 okt, Magnus: the generator put it down by the water,
+   and the shot over the forest toward it was lost). Only in the film: the game's own lighthouse stays where the island has it.
+   The highest fairly level land within 160 m of it, and the trees round it go with the clearings. */
+function filmLighthouse(){const L=WORLD.decor&&WORLD.decor.light,g=R3&&R3.lighthouse;FILM.lh=null;if(!L||!g)return;let best=null,bs=-1e9;
+  for(let dz=-160;dz<=160;dz+=5)for(let dx=-160;dx<=160;dx+=5){if(dx*dx+dz*dz>160*160)continue;const x=L.x+dx,z=L.y+dz,h=groundY(x,z);if(heightAt(x,z)<1)continue;
+    let sl=0;for(const [a,b] of[[4,0],[-4,0],[0,4],[0,-4]])sl=Math.max(sl,Math.abs(groundY(x+a,z+b)-h));if(sl>1.2)continue;const sc=h-sl*3-Math.hypot(dx,dz)*.01;if(sc>bs){bs=sc;best={x,y:z,h};}}
+  if(!best||best.h<L.h+4)return;FILM.lh=best;g.position.set(best.x,best.h,best.y);const B=R3.lhBeam;if(B){B.beam.position.set(best.x,best.h+14.4,best.y);B.flare.position.copy(B.beam.position);}}
+/* where the lighthouse shots end (decided 17 okt: the fixed point 95 m south of the lighthouse ended up in the crowns of a wood):
+   round the lighthouse at 60 to 140 m, 14 m over the lamp, the point from which the lamp and the foot of the tower are both seen
+   over the ground and past the crowns, with the camera clear of them there and on its slow drift back under the logo. The old
+   bearing (from the south, so the flight comes in over the forest) is preferred, then about 95 m out. */
+function filmLhView(){const L=FILM.lh||WORLD.decor.light;if(FILM.lhV&&FILM.lhV.L===L)return FILM.lhV;
+  const b=R3.lhBeam?R3.lhBeam.beam.position:{x:L.x,y:L.h+20,z:L.y},bp={x:b.x,y:b.y,z:b.z},foot={x:L.x,y:fGround(L.x,L.y)+2,z:L.y},T=WORLD.trees.filter(t=>Math.hypot(t.x-L.x,t.y-L.y)<200);
+  const crown=(x,y,z)=>{for(const t of T){const r=3*t.s+.5;if((x-t.x)**2+(z-t.y)**2<r*r){const g=groundY(t.x,t.y);if(y>g+2.5*t.s&&y<g+14*t.s)return true;}}return false;};
+  const seen=(a,q)=>{const d=Math.hypot(q.x-a.x,q.y-a.y,q.z-a.z);for(let s=3;s<d-5;s+=2){const f=s/d,x=a.x+(q.x-a.x)*f,y=a.y+(q.y-a.y)*f,z=a.z+(q.z-a.z)*f;if(groundY(x,z)>y-.5||crown(x,y,z))return false;}return true;};
+  let best=null,bs=-1e9;
+  for(let k=0;k<72;k++){const a=-PI/2+(k%2?1:-1)*Math.ceil(k/2)*5*PI/180,dx=Math.cos(a),dz=Math.sin(a);
+    for(let d=60;d<=140;d+=10){const p={x:L.x+dx*d,z:L.y+dz*d};p.y=Math.max(bp.y+14,groundY(p.x,p.z)+8);if(!seen(p,bp)||!seen(p,foot))continue;
+      let ok=true;for(let b=0;b<=24&&ok;b+=3)if(crown(p.x+dx*b,p.y+b*.27,p.z+dz*b)||groundY(p.x+dx*b,p.z+dz*b)>p.y+b*.27-6)ok=false;if(!ok)continue;
+      const sc=-Math.abs(angWrap(a+PI/2))*40-Math.abs(d-95)*.3;if(sc>bs){bs=sc;best={x:p.x,y:p.y,z:p.z,dx,dz};}}}
+  if(!best)best={x:L.x,y:bp.y+14,z:L.y-95,dx:0,dz:-1};
+  const sx=best.x+best.dx*260,sz=best.z+best.dz*260;
+  return FILM.lhV=Object.assign(best,{L,bp,sx,sz,sy:Math.max(60,groundY(sx,sz)+30)});}
 /* ================= the shots ================= */
+/* the enemy tank HÖK's rockets hit (shots 13 and 14), and MUS's way in on the bunker (shot 15) */
+const FILM_ET1=[[1300,752],[1332,734]],FILM_MUS_P=[[1450,792],[1396,742]];
 const FILM_SHOTS=[
 /* 1. out of black: low over the water toward Birka, the sun setting behind the island beyond her */
 {k:0,id:'birka',f(tau,dur,dtr,S){const B=FILM.b0,iv=fDir(B,WORLD.landing),pv={x:-iv.z,z:iv.x},u=tau/dur;
@@ -6387,7 +6444,9 @@ const FILM_SHOTS=[
   km.position.set(x,y,z);km.rotation.set(Math.sin(tau*.7)*.03,-hd,-.06);km.userData.cable.visible=true;km.userData.hook.visible=true;bm.position.set(x,y-8,z);bm.rotation.set(Math.sin(tau*1.1)*.04,-hd-.1*Math.sin(tau*.6),Math.sin(tau*.8)*.03);
   const cx=x-iv.x*26-pv.x*34,cz=z-iv.z*26-pv.z*34;fCam(cx,y-3,cz,x+iv.x*8,y-4,z+iv.z*8,.05);FILM.fov=40;}},
 /* 5. the landing: VARG come out of the water onto the beach past a low camera, BÄVER set down behind, Birka out at sea */
-{k:9,id:'strand',f(tau,dur,dtr,S){const B=FILM.b0,LD=WORLD.landing,iv=fDir(B,LD),pv={x:-iv.z,z:iv.x};
+{k:9,id:'strand',lanes(){const LD=WORLD.landing,iv=fDir(FILM.b0,LD),pv={x:-iv.z,z:iv.x},b={x:LD.x+iv.x*18-pv.x*34,z:LD.y+iv.z*18-pv.z*34};
+    return[[LD.x-iv.x*90,LD.y-iv.z*90,LD.x+iv.x*55,LD.y+iv.z*55,46],[b.x,b.z,b.x,b.z,20]];},
+  f(tau,dur,dtr,S){const B=FILM.b0,LD=WORLD.landing,iv=fDir(B,LD),pv={x:-iv.z,z:iv.x};
   const lane=[[-1,0,-14],[0,0,0],[1,-9,14]];
   lane.forEach(([i,back,lat],n)=>{const m=fVarg(n),d=lerp(-80,45,tau/dur)+back+(n===1?6:0),x=LD.x+iv.x*d+pv.x*lat,z=LD.y+iv.z*d+pv.z*lat,hd=Math.atan2(iv.z,iv.x),gy=groundY(x,z);
     if(m.userData.tur)m.userData.tur.rotation.y=0;
@@ -6406,19 +6465,20 @@ const FILM_SHOTS=[
   FILM.mapUnits.forEach((m,i)=>{const g=goals[i%goals.length],f=sm(clamp(u*1.15-i*.03,0,1));m.x=lerp(m.film.x,g[0],f*(m.kind==='eng'?.4:1));m.y=lerp(m.film.y,g[1],f*(m.kind==='eng'?.4:1));m.heading=Math.atan2(g[1]-m.film.y,g[0]-m.film.x);});
   mv.free=true;mv.z=lerp(2.1,2.7,sm(u));mv.cx=lerp(1560,1470,u);mv.cy=lerp(720,770,u);fCam(1500,60,700,1400,0,780,0);}},
 /* 7. contact: an enemy tank breaks out of the forest into the meadow, dust off its tracks, and fires */
-{k:13,id:'skogen',f(tau,dur,dtr,S){const m=fEnemy('et1','tank'),P=[[1262,782],[1322,741]],q=fPath(P,lerp(0,68,sm(clamp(tau/3.9,0,1))));fPlace(m,q.x,q.z,q.hd,0);
+{k:13,id:'skogen',lanes:()=>[[1262,782,1332,734,12]],f(tau,dur,dtr,S){const m=fEnemy('et1','tank'),P=[[1262,782],[1322,741]],q=fPath(P,lerp(0,68,sm(clamp(tau/3.9,0,1))));fPlace(m,q.x,q.z,q.hd,0);
   if(tau<3.9&&Math.random()<dtr*25)fxDust(q.x-Math.cos(q.hd)*4,fGround(q.x,q.z),q.z-Math.sin(q.hd)*4,1.6);
   if(tau>3.55&&!S.shot){S.shot=1;const c=Math.cos(q.hd),s=Math.sin(q.hd),y=fGround(q.x,q.z)+3.1;fxFlash(q.x+c*7.6,y,q.z+s*7.6,3.5);for(let k=0;k<8;k++)fP(q.x+c*8,y,q.z+s*8,{v:[c*(6+k*1.5)+fr()*2,.5+Math.random(),s*(6+k*1.5)+fr()*2],s0:1.2,s1:4.5,a:.35,ttl:1.6,c:0xa8a29a,drag:1.6});}
   const cx=1340,cz=721;fCam(cx-tau*.5,fGround(cx,cz)+1.1,cz+tau*.2,q.x,fGround(q.x,q.z)+2.6,q.z,tau>3.55?.25*Math.max(0,1-(tau-3.55)*2):.02);FILM.fov=32;}},
-/* 8. SPARV high over the battlefield, the camera circling it, the island and the long shadows below */
-{k:15,id:'sparv',f(tau,dur,dtr,S){const m=fUnit('sparv','scout'),x=1400+Math.sin(tau*.3)*3,z=700,y=62+Math.sin(tau*1.4)*.3;m.position.set(x,y,z);m.rotation.set(Math.sin(tau*1.1)*.05,-(-2.6+tau*.05),Math.sin(tau*.9)*.04);
-  const a=-.5+tau*.26,r=4.4;fCam(x+Math.cos(a)*r,y+1.6,z+Math.sin(a)*r,x-Math.cos(a)*8,y-4.5,z-Math.sin(a)*8,.02);FILM.fov=50;}},
-/* 9. two HÖK join up over the beach and fly into the low sun */
+/* 8. GETING high over the battlefield, the camera circling it slowly, the island and the long shadows below. From 11 m with a
+   long lens and a steady camera (decided 17 okt: at 4 m the drone's bobbing read as camera shake) */
+{k:15,id:'geting',f(tau,dur,dtr,S){const m=fUnit('geting','scout'),x=1400+Math.sin(tau*.3)*3,z=700,y=62+Math.sin(tau*1.4)*.1;m.position.set(x,y,z);m.rotation.set(Math.sin(tau*1.1)*.015,-(-2.6+tau*.05),Math.sin(tau*.9)*.012);
+  const a=-.5+tau*.12,r=11;fCam(x+Math.cos(a)*r,y+2.8,z+Math.sin(a)*r,x,y-.5,z,0);FILM.fov=30;}},
+/* 9. two HÖK join up over the beach and fly into the low sun, seen from about 20 m behind with a long lens and no shake */
 {k:17,id:'hokar',f(tau,dur,dtr,S){const B=FILM.b0,iv=fDir(B,WORLD.landing),pv={x:-iv.z,z:iv.x},hd=Math.atan2(iv.z,iv.x),d=lerp(-40,70,tau/dur);
   const h1=fUnit('hok1','drone'),h2=fUnit('hok2','drone',PAL[3][0]),L=WORLD.landing,x=L.x+iv.x*d,z=L.y+iv.z*d,y=36;
-  h1.position.set(x,y+Math.sin(tau*1.3)*.4,z);h1.rotation.set(-.05,-hd,0);
+  h1.position.set(x,y+Math.sin(tau*1.3)*.12,z);h1.rotation.set(-.05,-hd,0);
   const j=sm(clamp(tau/3.6,0,1)),ox=lerp(-24,-9,j),oy=lerp(10,1.5,j),ol=lerp(20,11,j);h2.position.set(x+iv.x*ox+pv.x*ol,y+oy,z+iv.z*ox+pv.z*ol);h2.rotation.set(lerp(-.35,-.08,j),-hd,0);
-  const cx=x-iv.x*9-pv.x*6,cz=z-iv.z*9-pv.z*6;fCam(cx,y+1.6,cz,x+iv.x*12+pv.x*6,y+.8,z+iv.z*12+pv.z*6,.06);FILM.fov=50;}},
+  const cx=x-iv.x*22-pv.x*9,cz=z-iv.z*22-pv.z*9;fCam(cx,y+1.6,cz,x+iv.x*4+pv.x*5,y+1.2,z+iv.z*4+pv.z*5,0);FILM.fov=38;FILM.sunEl=.05;/* the sun in the picture */}},
 /* 10. more of them: enemy armour rolls out of the trees past a camera at track height */
 {k:19,id:'fiender',f(tau,dur,dtr,S){const P=[[1278,748],[1420,716]],cx=1346,cz=745;
   [['et2','tank',0],['el1','light',-17],['et3','tank',-36]].forEach(([key,kind,back])=>{const m=fEnemy(key,kind),q=fPath(P,lerp(48,70,tau/dur)+back);fPlace(m,q.x,q.z,q.hd,0);if(Math.random()<dtr*22)fxDust(q.x-Math.cos(q.hd)*4,fGround(q.x,q.z),q.z-Math.sin(q.hd)*4,1.7);});
@@ -6435,22 +6495,26 @@ const FILM_SHOTS=[
     fxTracer(mp,{x:tx+fr()*10,y:fGround(tx,tz)+2,z:tz+fr()*10},520,0xffe0a0,.18);for(let k=0;k<10;k++){const a=k/10*TAU;fP(mp.x,fGround(mp.x,mp.z)+.4,mp.z,{v:[Math.cos(a)*8,1,Math.sin(a)*8],s0:1,s1:4,a:.5,ttl:1.2,c:0x8a7a62,drag:2});}}
   if(T)T.position.x=.2-(S.rk!=null?Math.max(0,.45-(tau-S.rk)*2.4):0);
   const c=Math.cos(hd),s=Math.sin(hd),cx=x+c*12+s*7,cz=z+s*12-c*7;fCam(cx,fGround(x,z)+2.6,cz,x+c*3,fGround(x,z)+3,z+s*3,(S.rk!=null&&tau-S.rk<.4)?.3:.02);FILM.fov=42;}},
-/* 13. HÖK rockets: the four leave the rails one by one and streak down on the AA truck */
-{k:23,id:'robotar',f(tau,dur,dtr,S){const h=fUnit('hok1','drone'),tx=1340,tz=690,hd=Math.atan2(tz-700,tx-1560),x=1560+Math.cos(hd)*tau*22,z=700+Math.sin(hd)*tau*22,y=48;
+/* 13. HÖK rockets: the four leave the rails one by one and streak down on the enemy tank in the meadow, which blows up in the
+   next shot (decided 17 okt: cause and effect; they used to fall on the AA truck, which was not there) */
+{k:23,id:'robotar',f(tau,dur,dtr,S){const h=fUnit('hok1','drone'),P=FILM_ET1,et=fEnemy('et1','tank'),q=fPath([[P[0][0]-18,P[0][1]+10],P[0],P[1]],tau*8);fPlace(et,q.x,q.z,q.hd,0);
+  const tx=P[0][0],tz=P[0][1],x0=tx+150,z0=tz-40,hd=Math.atan2(tz-z0,tx-x0),x=x0+Math.cos(hd)*tau*22,z=z0+Math.sin(hd)*tau*22,y=48;
   h.position.set(x,y,z);h.rotation.set(0,-hd,-.04);const R=h.userData.rockets||[];
   R.forEach((rk,i)=>{const tf=.15+i*.22;rk.visible=tau<tf;if(tau>=tf&&!(S['r'+i])){S['r'+i]=1;rk.visible=true;h.updateMatrixWorld();const p=new THREE.Vector3();rk.getWorldPosition(p);rk.visible=false;
-    fxMissile({x:p.x,y:p.y,z:p.z},{x:tx+fr()*14,y:fGround(tx,tz)+1,z:tz+fr()*14},1.6+i*.05,-4,i===3?1.2:.6);}});
-  const c=Math.cos(hd),s=Math.sin(hd);fCam(x-c*14-s*7,y+2.5,z-s*14+c*7,x+c*30,y-12,z+s*30,.05);FILM.fov=46;}},
-/* 14. a hit: an enemy tank on the move takes it, blows up and burns */
-{k:24,id:'traff',f(tau,dur,dtr,S){const m=fEnemy('et1','tank'),P=[[1300,752],[1332,734]],q=fPath(P,Math.min(tau,.7)*9);fPlace(m,q.x,q.z,q.hd,0);
+    fxMissile({x:p.x,y:p.y,z:p.z},{x:tx+fr()*4,y:fGround(tx,tz)+1.5,z:tz+fr()*4},dur+.7-tf,-4,0);}});
+  const c=Math.cos(hd),s=Math.sin(hd);fCam(x-c*14-s*7,y+2.5,z-s*14+c*7,lerp(x+c*30,tx,.35),lerp(y-12,fGround(tx,tz),.35),lerp(z+s*30,tz,.35),.03);FILM.fov=46;}},
+/* 14. a hit: the enemy tank on the move takes HÖK's rockets, blows up and burns */
+{k:24,id:'traff',lanes:()=>[[FILM_ET1[0][0]-18,FILM_ET1[0][1]+10,...FILM_ET1[1],12]],f(tau,dur,dtr,S){const m=fEnemy('et1','tank'),P=FILM_ET1,q=fPath(P,Math.min(tau,.7)*9);fPlace(m,q.x,q.z,q.hd,0);
+  if(S.first){const e=fPath(P,6.3),y=fGround(e.x,e.z);fxMissile({x:e.x+70,y:y+44,z:e.z-22},{x:e.x,y:y+1.5,z:e.z},.7,-2,0);fxMissile({x:e.x+64,y:y+46,z:e.z-30},{x:e.x+6,y:y+.5,z:e.z+5},.52,-2,.6);}
   if(tau>.7&&!S.b){S.b=1;const y=fGround(q.x,q.z);fxBoom(q.x,y+1,q.z,1.5);fxFire(q.x,y+2,q.z,1.2);}
   if(S.b)m.rotation.x+=Math.min(.12,(tau-.7)*.4);
   const cx=q.x+20,cz=q.z-30;fCam(cx,fGround(cx,cz)+2,cz,q.x,fGround(q.x,q.z)+3,q.z,S.b?Math.max(.03,.7-(tau-.7)):.02);FILM.fov=40;}},
-/* 15. MUS: the little rover races in on a bunker and the charge goes off */
-{k:25,id:'mus',f(tau,dur,dtr,S){const bk=fEnemy('bk1','turret'),bx=1392,bz=738;fPlace(bk,bx,bz,-2.4,0);const m=fUnit('mus','mus'),P=[[1452,690],[bx+4,bz-4]],q=fPath(P,Math.min(tau,1.45)*50);
+/* 15. MUS: the little rover races in on a bunker and the charge goes off. It comes in from the south-east: from the north-east
+   it went through the boundary wall (17 okt) */
+{k:25,id:'mus',lanes:()=>{const [a,b]=FILM_MUS_P,d=fDir({x:b[0],y:b[1]},{x:a[0],y:a[1]});return[[a[0]+d.x*14,a[1]+d.z*14,...b,22]];},f(tau,dur,dtr,S){const bk=fEnemy('bk1','turret'),bx=1392,bz=738;fPlace(bk,bx,bz,-2.4,0);const m=fUnit('mus','mus'),P=FILM_MUS_P,q=fPath(P,Math.min(tau,1.45)*50);
   if(!S.b)fPlace(m,q.x,q.z,q.hd,0);else m.visible=false;if(!S.b&&Math.random()<dtr*40)fxDust(q.x,fGround(q.x,q.z),q.z,.8);
   if(tau>1.45&&!S.b){S.b=1;fxBoom(bx,fGround(bx,bz)+1,bz,2);fxFire(bx,fGround(bx,bz)+2,bz,1);}
-  const c=Math.cos(q.hd),s=Math.sin(q.hd);if(!S.b)S.cp={x:q.x-c*7+s*1.5,z:q.z-s*7-c*1.5};const cp=S.cp;fCam(cp.x,fGround(cp.x,cp.z)+1.1,cp.z,bx,fGround(bx,bz)+2,bz,S.b?Math.max(.04,.8-(tau-1.45)*.8):.04);FILM.fov=50;}},
+  const c=Math.cos(q.hd),s=Math.sin(q.hd);if(!S.b||!S.cp)S.cp={x:q.x-c*7+s*1.5,z:q.z-s*7-c*1.5};const cp=S.cp;fCam(cp.x,fGround(cp.x,cp.z)+1.1,cp.z,bx,fGround(bx,bz)+2,bz,S.b?Math.max(.04,.8-(tau-1.45)*.8):.04);FILM.fov=50;}},
 /* 16. high and wide over the battle at dusk: tracers crossing, fires burning, a HÖK passing */
 {k:26,id:'oversikt',f(tau,dur,dtr,S){if(S.first){fxFire(1332,fGround(1332,734)+2,734,1.4);fxFire(1392,fGround(1392,738)+2,738,1);fxFire(1300,fGround(1300,700)+2,700,.9);}
   S.cd=(S.cd||0)-dtr;if(S.cd<=0){S.cd=.1;const a={x:1440+fr()*30,y:fGround(1440,705)+3,z:705+fr()*40},b={x:1300+fr()*50,y:fGround(1300,740)+2,z:740+fr()*50};fxTracer(a,b,380,Math.random()<.5?0xffd27a:0xff7a50,.6);}
@@ -6483,12 +6547,13 @@ const FILM_SHOTS=[
   const s=P.L-lerp(70,22,sm(tau/dur*.85+.15*tau/dur)),at=v=>{v=clamp(v,0,P.L);let i=0;while(i<P.pts.length-2&&P.len[i+1]<v)i++;const a=P.pts[i],b=P.pts[i+1],f=(v-P.len[i])/((P.len[i+1]-P.len[i])||1);return{x:lerp(a.x,b.x,f),y:lerp(a.y,b.y,f)};};
   const p=at(s),p1=at(s+15),a=Math.atan2(p1.y-p.y,p1.x-p.x);moveCarrier(p.x,p.y,lerp(a,H.dock.a,clamp(1-(P.L-s)/60,0,1)));
   const d=H.dock,qx=d.x+Math.cos(d.a+PI/2)*36+Math.cos(d.a)*20,qz=d.y+Math.sin(d.a+PI/2)*36+Math.sin(d.a)*20;fCam(qx,fGround(qx,qz)+3,qz,p.x,9,p.y,0);FILM.fov=46;}},
-/* 22. up and away over the dark island, the lighthouse ahead sweeping its beam */
-{k:36,id:'fyren',birka:false,f(tau,dur,dtr,S){const L=WORLD.decor.light,bp=R3.lhBeam?R3.lhBeam.beam.position:{x:L.x,y:L.h+20,z:L.y},u=tau/dur,e=sm(u);
-  const sx=870,sz=1380,ex=L.x+8,ez=L.y-95;fCam(lerp(sx,ex,e),lerp(60,bp.y+14,e),lerp(sz,ez,e),bp.x,lerp(bp.y-20,bp.y+14,e),bp.z,0);FILM.fov=44;}},
+/* 22. up and away over the dark island, the lighthouse ahead sweeping its beam. The flight ends where the lighthouse is seen
+   whole (filmLhView), and starts 260 m further back along the same bearing */
+{k:36,id:'fyren',birka:false,f(tau,dur,dtr,S){const V=filmLhView(),bp=V.bp,e=sm(tau/dur);
+  fCam(lerp(V.sx,V.x,e),lerp(V.sy,V.y,e),lerp(V.sz,V.z,e),bp.x,lerp(bp.y-20,bp.y+14,e),bp.z,0);FILM.fov=44;}},
 /* 23. the logo comes up over the lighthouse in the dark on the last hit, and the film goes to black */
-{k:40,id:'logga',birka:false,f(tau,dur,dtr,S){const L=WORLD.decor.light,bp=R3.lhBeam?R3.lhBeam.beam.position:{x:L.x,y:L.h+20,z:L.y};
-  fCam(L.x+8-tau*1.2,bp.y+14+tau*.4,L.y-95+tau*1.5,bp.x,bp.y+14+tau*.5,bp.z,0);FILM.fov=46;
+{k:40,id:'logga',birka:false,f(tau,dur,dtr,S){const V=filmLhView(),bp=V.bp;
+  fCam(V.x+V.dx*tau*1.5,V.y+tau*.4,V.z+V.dz*tau*1.5,bp.x,bp.y+14+tau*.5,bp.z,0);FILM.fov=46;
   const w=$('logoWrap');if(S.first){w.hidden=false;$('title').classList.remove('clean');for(const id of['tMenu','tPress','tFull'])$(id).hidden=true;}drawLogo(Math.max(0,tau-.05));
   FILM.fadeA=sm(clamp((tau-(dur-1.6))/1.4,0,1));if(tau>dur-.2){w.hidden=true;$('title').classList.add('clean');}}},
 ];
