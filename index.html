@@ -657,7 +657,7 @@ function elevAt(x,y,s,V,noBank){
     if(ps&&f>0&&!same){const rw=Math.max(40,Math.abs(z1.h-z2.h)*4.5);const eR=lerp((z1.h+z2.h)/2+(n-.5)*3,e,sm(Z.s/rw));e=lerp(e,eR,f);}
     if(same&&!noBank)e+=13*sm((15-Z.s)/15)*(1-f);
   }else e+=0;
-  const lowCoast=old?B=>{const db=angDiff(a,B.a);if(db<B.w+4){const t=sm((1-d)/.15),side=sm((B.w+4-db)/4);e=lerp(e,lerp(.4,e,t),side);}}:B=>{const px=x-B.x,py=y-B.y,li=-(px*B.nx+py*B.ny),lt=Math.abs(px*B.ny-py*B.nx);if(li<-80||lt>B.w+40)return;/* up to 80 m out (fixed 17 okt, issue 3: on ö 7227 the coast bulged more than 15 m past the beach's line, and a 4 m rim with a cliff to the water closed the beach but for a 20 m gap) */const t=sm(li/90),side=sm((B.w+40-lt)/40);e=lerp(e,lerp(.4,e,t),side);};
+  const lowCoast=old?B=>{const db=angDiff(a,B.a);if(db<B.w+4){const t=sm((1-d)/.15),side=sm((B.w+4-db)/4);e=lerp(e,lerp(.4,e,t),side);}}:B=>{const px=x-B.x,py=y-B.y,li=-(px*B.nx+py*B.ny),lt=Math.abs(px*B.ny-py*B.nx);if(li<-80||lt>B.w+40||(B.z!=null&&Z.i1!==B.z))return;/* only in its own zone (17 okt, Magnus): lowered across a zone border, it levelled the bank there and the beach led into the neighbouring zone without a pass *//* up to 80 m out (fixed 17 okt, issue 3: on ö 7227 the coast bulged more than 15 m past the beach's line, and a 4 m rim with a cliff to the water closed the beach but for a 20 m gap) */const t=sm(li/90),side=sm((B.w+40-lt)/40);e=lerp(e,lerp(.4,e,t),side);};
   if(V.beach)lowCoast(V.beach);if(V.cove)lowCoast(V.cove);
   if(hOld&&H&&dh<H.w+6&&d>H.depth-.14){const t=sm((H.depth-d)/.12),side=sm((H.w+6-dh)/3);e=lerp(e,lerp(1.1,e,t),side);}
   if(!hOld&&H&&!H.std&&hl<110&&hi>-20&&hi<200){const t=sm((hi-120)/70),side=sm((110-hl)/31);e=lerp(e,lerp(1.1,e,t),side);}
@@ -859,11 +859,11 @@ function buildWorldTry(seed,tryK){
   const passD=q=>{let m=1e9;for(const p of pass)m=Math.min(m,Math.hypot(p.x-q.x,p.y-q.y));return m;};
   const cptClear=(z,w,clr,ship)=>{if(isRound)return null;let best=null,bd=1e9;for(const c of coastCells.get(z)||[]){const dd=Math.hypot(c.x-Z[z].x,c.y-Z[z].y);if(dd>=bd||passD(c)<clr)continue;
       const n=outN(c.x,c.y),o={x:c.x,y:c.y,nx:n.x,ny:n.y,w};if(ship&&!shipSpot(o))continue;bd=dd;best=o;}return best;};
-  if(isRound)V.beach={...cpt(land,0),w:9+R()*5,a:Z[land].a};else{const w=90+R()*50;V.beach=cptClear(land,w,w+120,true)||cpt(land,w)||{x:Z[land].x,y:Z[land].y,nx:0,ny:1,w:100};}
+  if(isRound)V.beach={...cpt(land,0),w:9+R()*5,a:Z[land].a};else{const w=90+R()*50;V.beach=cptClear(land,w,w+120,true)||cpt(land,w)||{x:Z[land].x,y:Z[land].y,nx:0,ny:1,w:100};V.beach.z=land;}
   const hc=coastal.filter(i=>!Z[i].water&&i!==land&&pd[i]>=2&&safe.has(i));const hz=hc.length?hc[Math.floor(R()*hc.length)]:coastal.find(i=>!Z[i].water&&i!==land&&safe.has(i));
   if(hz!==undefined)V.harbor=isRound?{...cpt(hz,4.5),a:Z[hz].a,depth:.8}:cptClear(hz,45,240,false)||cpt(hz,45);
   if(V.harbor)V.harbor.std=!!(V.shape.rough||!isRound);
-  const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cptClear(ci,55,170,false)||cpt(ci,55);}
+  const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cptClear(ci,55,170,false)||cpt(ci,55);if(!isRound)V.cove.z=ci;}
   let sp=null;
   if(isRound){const ba=V.beach.a*PI/180;for(let f=1;f<2.2&&!sp;f+=.01){const x=CX+Math.cos(ba)*f*V.RX,y=CY+Math.sin(ba)*f*V.RY;if(clear(x,y))sp={x:x+Math.cos(ba)*20,y:y+Math.sin(ba)*20};}if(!sp)sp=polar(V.beach.a,1.4);}
   else sp=shipSpot(V.beach)||{x:V.beach.x+V.beach.nx*400,y:V.beach.y+V.beach.ny*400};
