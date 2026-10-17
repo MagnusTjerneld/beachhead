@@ -4325,8 +4325,8 @@ function buildStatic(){
       let nx=-(d1y+d2y),ny=d1x+d2x;const ln=Math.hypot(nx,ny);if(ln<1e-6){nx=-d1y;ny=d1x;}else{nx/=ln;ny/=ln;}
       const k=hw/Math.max(.5,nx*-d1y+ny*d1x),y=groundY(p.x,p.y)+.4;return{lx:p.x+nx*k,ly:p.y+ny*k,rx:p.x-nx*k,ry:p.y-ny*k,y};});
     for(let i=0;i<rd.length-1;i++){const A=E[i],B=E[i+1];
-      rv.push(A.lx,A.y,A.ly, A.rx,A.y,A.ry, B.lx,B.y,B.ly, B.lx,B.y,B.ly, A.rx,A.y,A.ry, B.rx,B.y,B.ry);}}
-  if(rv.length){const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rv),3));rg.computeVertexNormals();st.add(new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0x6b6156,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));}
+      rv.push(A.lx,A.y,A.ly, B.lx,B.y,B.ly, A.rx,A.y,A.ry, B.lx,B.y,B.ly, B.rx,B.y,B.ry, A.rx,A.y,A.ry);}}/* wound to face up, for the normals below */
+  if(rv.length){const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rv),3));{const nm=new Float32Array(rv.length);for(let i=1;i<nm.length;i+=3)nm[i]=1;rg.setAttribute('normal',new THREE.BufferAttribute(nm,3));}/* lit as level ground: per-triangle normals showed dark creases where a bend's triangles meet */st.add(new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0x6b6156,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));}
   const dummy=new THREE.Object3D();
   if(W.walls.length){const wm=new THREE.InstancedMesh(new THREE.BoxGeometry(3.6,3.4,1.8),mat(0x8f8b80),W.walls.length);W.walls.forEach((wl,i)=>{dummy.position.set(wl.x,groundY(wl.x,wl.y)+1.5,wl.y);dummy.rotation.set(0,-wl.a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();wm.setMatrixAt(i,dummy.matrix);});st.add(wm);}
   if(W.trees.length){
