@@ -14,26 +14,36 @@ const TYPES=[
   {k:'murbusk',n:'C Stenmur med buskage och träd'},
   {k:'stenrad',n:'D Låg stenrad, delvis raserad'},
   {k:'holme',n:'E Åkerholme: låg kulle med buskage'},
-  {k:'rygg',n:'F Bergrygg med häll, en och tall'}];
+  {k:'rygg',n:'F Bergrygg: branter, blockmark vid foten, en och tall'},
+  {k:'grans',n:'G Gränsmur i ett band av blockmark och buskage'},
+  {k:'grans0',n:'G2 Gränsmur ensam'}];
 const ZS=55,LEN=90,X0=-LEN/2; TYPES.forEach((t,i)=>t.z=i*ZS);
 // mound height for E and F
+const ss=v=>v<=0?0:v>=1?1:v*v*(3-2*v);
+// the ridge F: steep flanks (the north one steeper), a rounded top with knolls, the flanks broken into steps of
+// about two metres so they read as granite benches, ends falling off over 14 m
+function ryggH(x,dz){const ends=ss((LEN/2+4-Math.abs(x))/14),w=(dz<0?9:12)*(1+.18*Math.sin(x*.07+.8)),q=clamp(1-Math.abs(dz)/w,0,1);
+  const H=9*(1+.15*Math.sin(x*.05+2)),flank=ss(q/.38),top=.82+.18*ss((q-.38)/.62),knoll=1+.12*Math.sin(x*.23+1.3)*Math.sin(x*.13+dz*.3);
+  const base=H*flank*top*ends*knoll,st=2.1,k=base/st,fr=k-Math.floor(k),stepped=(Math.floor(k)+ss((fr-.45)/.55))*st;
+  return lerp(base,stepped,.9*flank);}
 function hAt(x,z){let h=0;
-  for(const t of TYPES){if(t.k!=='holme'&&t.k!=='rygg')continue;const dz=z-t.z,u=clamp(1-Math.abs(x)/(LEN/2+8),0,1),ends=u*u*(3-2*u);
+  for(const t of TYPES){if(t.k==='rygg'){h+=ryggH(x,z-t.z);continue;}if(t.k!=='holme')continue;const dz=z-t.z,u=clamp(1-Math.abs(x)/(LEN/2+8),0,1),ends=u*u*(3-2*u);
     const wid=t.k==='holme'?11:15,H=t.k==='holme'?2.6:7,w=wid*(1+.25*Math.sin(x*.07+i3(t)))*(.8+.2*ends);
     const q=clamp(1-Math.abs(dz)/w,0,1),prof=q*q*(3-2*q);
     const knoll=1+.25*Math.sin(x*.19+1.3)*Math.sin(x*.11+dz*.2);
     h+=H*prof*ends*knoll;}
   return h;}
 function i3(t){return t.z*.13;}
-function rockFrac(x,z){// exposed granite on the ridge F
-  const t=TYPES[5],dz=z-t.z;if(Math.abs(dz)>16||Math.abs(x)>LEN/2+6)return 0;
-  const h=hAt(x,z),n=Math.sin(x*.21+dz*.37)+Math.sin(x*.09-dz*.5)*.8+Math.sin(x*.43+dz*.13)*.4;
-  return clamp((n+h*.18-1.0)*1.4,0,1);}
+function rockFrac(x,z){// exposed granite on the ridge F: every steep face, and bare slabs on the top between the vegetation
+  const t=TYPES.find(t=>t.k==='rygg'),dz=z-t.z;if(Math.abs(dz)>18||Math.abs(x)>LEN/2+6)return 0;
+  const h=ryggH(x,dz),g=Math.hypot(ryggH(x+.5,dz)-ryggH(x-.5,dz),ryggH(x,dz+.5)-ryggH(x,dz-.5));
+  const n=Math.sin(x*.21+dz*.37)+Math.sin(x*.09-dz*.5)*.8+Math.sin(x*.43+dz*.13)*.4;
+  return Math.max(clamp((g-.45)*2.5,0,1)*(.75+.25*Math.sin(x*.6+dz)),h>3?clamp((n-.3)*1.2,0,1):0);}
 
 let renderer,scene,cam,sun;
 function mkGround(){const W=180,D=TYPES.length*ZS+60,S=1;const nx=Math.round(W/S),nz=Math.round(D/S);
   const g=new THREE.PlaneGeometry(W,D,nx,nz);g.rotateX(-PI/2);g.translate(0,0,(TYPES.length-1)*ZS/2);
-  const p=g.attributes.position,col=new Float32Array(p.count*3);const AKER=[.55,.58,.33],HAGE=[.47,.56,.3],GRAN=[.47,.46,.44],TALL=[.52,.6,.31];
+  const p=g.attributes.position,col=new Float32Array(p.count*3);const AKER=[.55,.58,.33],HAGE=[.47,.56,.3],GRAN=[.47,.46,.44],TALL=[.52,.6,.31],RUFF=[.4,.47,.26];
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,hAt(x,z));
     // strips: the land between two boundaries alternates field and pasture
     const band=Math.floor((z+ZS/2)/ZS);let c=(band%2?HAGE:AKER).slice();
@@ -41,9 +51,10 @@ function mkGround(){const W=180,D=TYPES.length*ZS+60,S=1;const nx=Math.round(W/S
     if(!(band%2)){const r=.5+.5*Math.sin(x*1.6);c=c.map(v=>v*(.96+.06*r));}
     // nearest boundary: an unmown strip along it, a bit taller and yellower grass
     const bi=Math.round(z/ZS),t=TYPES[clamp(bi,0,TYPES.length-1)],dz=Math.abs(z-t.z),inX=Math.abs(x)<LEN/2+2;
-    if(inX&&t.k!=='holme'&&t.k!=='rygg'){const k=clamp(1-(dz-1)/2.5,0,1);c=c.map((v,j)=>lerp(v,TALL[j]*.9,k));}
+    if(inX&&t.k==='grans'){const k=clamp(1-(dz-6)/2,0,1);c=c.map((v,j)=>lerp(v,RUFF[j]*(.9+.15*Math.sin(x*.7+z*1.3)),k));}
+    else if(inX&&t.k!=='holme'&&t.k!=='rygg'){const k=clamp(1-(dz-1)/2.5,0,1);c=c.map((v,j)=>lerp(v,TALL[j]*.9,k));}
     if(t.k==='holme'||t.k==='rygg'){const hh=hAt(x,z);if(hh>.2)c=c.map((v,j)=>lerp(v,[.42,.5,.27][j],clamp(hh/1.5,0,1)));}
-    const rf=rockFrac(x,z);if(rf>0)c=c.map((v,j)=>lerp(v,GRAN[j],rf));
+    const rf=rockFrac(x,z);if(rf>0){const v2=(.86+.2*Math.sin(x*.9+z*.4)*Math.sin(z*.7-x*.3))*(.9+.12*Math.sin(x*2.3+z*1.7))*(rf>.9?.9:1);c=c.map((v,j)=>lerp(v,GRAN[j]*v2,rf));}
     const n=.95+.1*R();col.set(c.map(v=>v*n),i*3);}
   g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();
   const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));m.receiveShadow=true;scene.add(m);}
@@ -57,7 +68,7 @@ function stoneGeo(seed,moss){const g=new THREE.IcosahedronGeometry(1,1),p=g.attr
   g.computeVertexNormals();const n=g.attributes.normal;
   for(let i=0;i<p.count;i++){const up=n.getY(i),y=p.getY(i);let c=[1,1,1];const lich=rng(Math.round(p.getX(i)*97+p.getZ(i)*131+seed))();
     if(lich>.7)c=[1.15,1.13,1.05];else if(lich<.15)c=[.85,.86,.8];
-    const mz=clamp((up-.15)*1.8,0,1)*moss*clamp(y*3+.3,0,1);c=c.map((v,j)=>lerp(v,[.72,.9,.36][j],mz));col.set(c,i*3);}
+    const mz=clamp((up-.15)*1.8,0,1)*moss*clamp(y*3+.3,0,1);c=c.map((v,j)=>lerp(v,[.8,.88,.56][j],mz));col.set(c,i*3);}
   g.setAttribute('color',new THREE.BufferAttribute(col,3));return g;}
 const STONEC=[[.5,.5,.48],[.44,.44,.42],[.54,.5,.47],[.4,.41,.4],[.56,.56,.53],[.5,.47,.45]];
 function bushGeo(seed,kind){// a bush: several squashed clumps merged; juniper is one tall narrow column of clumps
@@ -79,6 +90,15 @@ function wall(z0,o){o=o||{};const H=o.h||1,gap=o.gap||0;let x=X0;const wob=x=>Ma
     const z=z0+wob(x);addStone(x,z-.28*H,s,s*.25);addStone(x+s*.5,z+.28*H,s*(.85+R()*.2),s*.25);
     if(!o.low){const s2=(.24+R()*.16)*H;addStone(x+s*.4,z+(R()-.5)*.25,s2,s*.25+s*.6+s2*.2);if(R()<.35)addStone(x+s*.9,z+(R()-.5)*.3,s2*.8,s*.9+s2*.3);}
     x+=s*(1.25+R()*.25);}}
+// a boundary wall: about two metres high and two and a half wide at the foot, three courses of big blocks that narrow
+// upward, with a few blocks tumbled out at the foot
+function gwall(z0){let x=X0;const wob=x=>Math.sin(x*.05+z0)*.8+Math.sin(x*.13)*.25;
+  while(x<X0+LEN){const s=.75+R()*.35,z=z0+wob(x);
+    addStone(x,z-.85,s,s*.2);addStone(x+s*.4,z,s*(.9+R()*.2),s*.25);addStone(x+s*.2,z+.85,s*(.85+R()*.25),s*.2);
+    const s2=.55+R()*.25;addStone(x+s*.5,z-.42,s2,s*.85+s2*.15);addStone(x+s*.3,z+.42,s2*(.9+R()*.2),s*.85+s2*.15);
+    const s3=.42+R()*.2;addStone(x+s*.6,z+(R()-.5)*.3,s3,s*.85+s2*.75+s3*.1);
+    if(R()<.12)addStone(x+s,z+(R()<.5?-1:1)*(1.6+R()*.8),s*.8,-.1);
+    x+=s*(1.25+R()*.2);}}
 function fence(z0,side){for(let x=X0;x<X0+LEN;x+=3+R()*.4)posts.push({x,z:z0+side+Math.sin(x*.05+z0)*.8,y:hAt(x,z0)});}
 function bush(x,z,s,kind){bushes.push({x,z,s,kind,y:hAt(x,z)-.15,a:R()*PI*2});}
 function tree(x,z,s,kind){trees.push({x,z,s,kind,y:hAt(x,z)});}
@@ -97,9 +117,19 @@ function build(){
         for(let i=0;i<n;i++){const x=cx+(R()-.5)*7,zz=cz+(R()-.5)*4;if(hAt(x,zz)<.25)continue;bush(x,zz,1.1+R()*1.4,R()<.45?'hassel':R()<.5?'slan':'nypon');}}
       for(let i=0;i<7;i++){const x=X0+8+R()*(LEN-16),zz=z+(R()-.5)*6;tree(x,zz,.9+R()*.5,R()<.5?'ek':'bjork');}}
     if(t.k==='rygg'){
-      for(let i=0;i<500;i++){const x=X0+R()*LEN,zz=z+(R()-.5)*30;const h=hAt(x,zz);if(h<.3)continue;const rf=rockFrac(x,zz);
-        if(rf>.3){if(R()<.25)addStone(x,zz,.6+R()*1.1,-.45,R()<.5?0:2);continue;}
-        const u=R();if(u<.3)bush(x,zz,.9+R()*.9,'en');else if(u<.42)bush(x,zz,1+R()*1.2,R()<.5?'slan':'nypon');else if(u<.5&&h>1.5)tree(x,zz,.7+R()*.5,'tall');}}}
+      // block field along the foot on both sides: big boulders fallen off the faces, packed where the slope begins
+      for(const sd of [-1,1])for(let x=X0-4;x<X0+LEN+4;x+=.9+R()*1.1){let dz=sd;while(Math.abs(dz)<20&&ryggH(x,sd*Math.abs(dz))>.6)dz+=sd*.5;
+        const zz=z+dz+sd*(R()*3.5-.8);if(ryggH(x,zz-z)>2.5)continue;addStone(x,zz,.8+R()*R()*2.2,-.3,[0,1,3,5][Math.floor(R()*4)]);}
+      // on the ridge: junipers and pines where it is flat enough to hold soil, bushes in the hollows at the foot
+      for(let i=0;i<1400;i++){const x=X0+R()*LEN,zz=z+(R()-.5)*34,dz=zz-z,h=ryggH(x,dz);const rf=rockFrac(x,zz);if(rf>.35)continue;
+        if(h>1.2){const u=R();if(u<.4)bush(x,zz,.8+R()*.8,'en');else if(u<.5)tree(x,zz,.6+R()*.5,'tall');else if(u<.58)bush(x,zz,.9+R()*.8,'slan');}
+        else if(h>.05&&R()<.12)bush(x,zz,1+R()*1.1,R()<.5?'hassel':'nypon');}}
+    if(t.k==='grans'||t.k==='grans0'){gwall(z);
+      if(t.k==='grans'){// the blocked strip around the wall: scattered boulders, bush clumps, junipers and a few trees, about 6 m each side
+        for(let i=0;i<70;i++){const x=X0+R()*LEN,dz=(R()<.5?-1:1)*(1.8+R()*4.5);addStone(x,z+dz,.5+R()*R()*1.3,-.2);}
+        for(let c=0;c<9;c++){const cx=X0+3+R()*(LEN-6),sd=R()<.5?-1:1,n=2+Math.floor(R()*4);
+          for(let i=0;i<n;i++){const x=cx+(R()-.5)*6,dz=sd*(3+R()*3.5);bush(x,z+dz,1+R()*1.3,R()<.4?'hassel':R()<.5?'slan':R()<.5?'en':'nypon');}}
+        for(let x=X0+6;x<X0+LEN;x+=20+R()*20)tree(x,z+(R()<.5?-1:1)*(3.5+R()*2.5),.8+R()*.4,R()<.4?'ek':R()<.6?'bjork':'tall');}}}
 }
 function draw(){const d=new THREE.Object3D(),cl=new THREE.Color();
   // stones
