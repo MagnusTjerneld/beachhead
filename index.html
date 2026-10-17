@@ -3989,7 +3989,9 @@ function mkDecor(D,st){
     g.add(mesh(new THREE.ConeGeometry(1.75,1,14),WH,0,15.8,0));g.add(mesh(cyl(.08,.08,1,5),WH,0,16.6,0));g.add(mesh(new THREE.SphereGeometry(.18,8,6),WH,0,17.1,0));
     g.position.set(L.x,Math.max(0,L.h),L.y);st.add(g);R3.lighthouse=g;
     // two opposed beams sweeping round, only in the dark; a flare when a beam points at the camera
-    const bg=new THREE.ConeGeometry(16,170,20,8,true);bg.rotateZ(PI/2);bg.translate(85,0,0);{const P=bg.attributes.position,cl=new Float32Array(P.count*3);for(let i=0;i<P.count;i++){const t=clamp(P.getX(i)/170,0,1),f=Math.pow(1-t,1.6);cl[i*3]=f;cl[i*3+1]=f*.95;cl[i*3+2]=f*.8;}bg.setAttribute('color',new THREE.BufferAttribute(cl,3));}
+    /* 260 m long and fading more gently (17 okt, issue 10: since the lighthouse stands by the water, 15 to 20 m lower than on the island's
+       top, the 170 m beam barely showed from the intro's distance) */
+    const bg=new THREE.ConeGeometry(22,260,20,8,true);bg.rotateZ(PI/2);bg.translate(130,0,0);{const P=bg.attributes.position,cl=new Float32Array(P.count*3);for(let i=0;i<P.count;i++){const t=clamp(P.getX(i)/260,0,1),f=Math.pow(1-t,1.3);cl[i*3]=f;cl[i*3+1]=f*.95;cl[i*3+2]=f*.8;}bg.setAttribute('color',new THREE.BufferAttribute(cl,3));}
     /* the beam is light scattered in the night air: as bright as the length of air the eye looks through, strongest along the middle
        and nothing at the edges (where the surface is seen edge on), so it reads as a shaft of light and not a glass cone over what lies behind */
     const bm=new THREE.ShaderMaterial({uniforms:{uOp:{value:0}},vertexColors:true,transparent:true,depthWrite:false,side:THREE.DoubleSide,
@@ -4663,7 +4665,7 @@ function updateSky(){
   if(SE.snow>0)R3.hemi.groundColor.lerp(cA.setHex(0x9aa6c0),.55*SE.snow);/* snow lights up the night (and the shade by day) from below */
   lerpHex(A[5],B[5],t,R3.sun.color);R3.sun.intensity=lerp(A[6],B[6],t);
   const n=lerp(A[7],B[7],t);R3.night=n;{const WU=R3.water.material.userData.U;if(WU)WU.uTime.value=performance.now()/1000;}
-  {const kf=SIKT_K[SIKT.k]||1,mf=SE.haze*clamp(1-Math.abs(h-7.5)/3.5,0,1);/* autumn's morning mist: the fog comes closer, purely to look at */
+  {const kf=SIKT_K[SIKT.k]||1,mf=SE.haze*clamp(1-Math.abs(h-7.5)/3.5,0,1);R3.mist=mf;/* autumn's morning mist: the fog comes closer, purely to look at */
     sc.fog.near=lerp(240,150,n)*kf*(1-.6*mf);sc.fog.far=lerp(1000,720,n)*kf*(1-.4*mf);if(PHOTO){sc.fog.near*=4;sc.fog.far*=2.8;}}
   {const WU=R3.water.material.userData.U;if(WU){R3.water.material.color.setHex(0x36677e).lerp(cA.setHex(0x52626a),SE.gray*.7);
     /* the ice is drawn unlit: its brightness follows the sky, and at night it takes the hue of the moonlit snow (sky light and moon)
@@ -4821,7 +4823,7 @@ function sync3D(dtr){
   {const nn=R3.dark||0,cx=R3.cam.position.x,cz=R3.cam.position.z;
     const RTs=performance.now()/1000;
     const lit=R3.lit||0;
-    if(R3.lhBeam){const B=R3.lhBeam,ang=RTs*TAU/10;B.beam.rotation.y=-ang;B.mat.uniforms.uOp.value=.42*lit;B.beam.visible=B.flare.visible=lit>0;
+    if(R3.lhBeam){const B=R3.lhBeam,ang=RTs*TAU/10;B.beam.rotation.y=-ang;B.mat.uniforms.uOp.value=.42*lit*(1+1.4*(R3.mist||0));/* haze scatters more of the beam toward the eye (issue 10) */B.beam.visible=B.flare.visible=lit>0;
       // the two beams light what they reach: a spotlight along each, from the lantern
       R3.lhSpots.forEach((S,i)=>{const a2=ang+i*PI;S.position.copy(B.beam.position);S.target.position.set(B.beam.position.x+Math.cos(a2)*200,B.beam.position.y,B.beam.position.z+Math.sin(a2)*200);S.target.updateMatrixWorld();S.intensity=3*lit;});
       const dx=cx-B.beam.position.x,dz=cz-B.beam.position.z,ca=Math.atan2(dz,dx),hit=Math.max(Math.cos(ca-ang),Math.cos(ca-ang-PI));const fl=Math.pow(Math.max(0,hit),30);B.flare.scale.setScalar(2.5+fl*16*(.3+nn));B.flare.material.opacity=(.35+.65*fl)*lit;}
