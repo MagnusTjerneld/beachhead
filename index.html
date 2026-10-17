@@ -1247,21 +1247,29 @@ function buildWorldTry(seed,tryK){
       {const bx=c.x-c.n.x*9,by=c.y-c.n.y*9,bc=cellIdx(bx,by);if(Rd()<.55&&(G0[bc]===LAND||G0[bc]===BEACH)&&!W.road[bc])(D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:elevAt(bx,by,s,V)});}
       if(Rd()<.6){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L*.45),y:c.y+c.n.y*(L*.45)};D.boats.push({x:e.x+c.n.y*2.6*side,y:e.y-c.n.x*2.6*side,a:a+PI/2,kind:'eka'});}
       if(Rd()<.75){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L-3),y:c.y+c.n.y*(L-3)};D.boats.push({x:e.x-c.n.y*3.6*side,y:e.y+c.n.x*3.6*side,a:a+(Rd()<.5?0:PI),kind:Rd()<.4?'sail':'motor'});}}
-    if(cand.length){let best=null,bd=-1;for(const c of cand){const d=Math.hypot(c.x-CARRIER.x,c.y-CARRIER.y)+Math.hypot(c.x-CX,c.y-CY)*.6;if(d>bd&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>40)){bd=d;best=c;}}
+    /* lights and houses at least 200 m apart (decided 17 okt, Magnus: nobody wants a green light shining straight into the house):
+       the lighthouse keeps away from the farms and boathouses placed before it, villas and cottages from the lighthouse, and the
+       sector lights and daymarks from every house */
+    const farHouses=(x,y,noSheds)=>[STR,noSheds?[]:D.sheds||[],D.villas||[],D.cabins||[]].every(L=>L.every(q=>Math.hypot(q.x-x,q.y-y)>=200));
+    // the lighthouse goes before the boathouses: a boathouse within 200 m of it is not built
+    if(cand.length){let best=null,bd=-1;for(const c of cand){if(!farHouses(c.x-c.n.x*8,c.y-c.n.y*8,true))continue;const d=Math.hypot(c.x-CARRIER.x,c.y-CARRIER.y)+Math.hypot(c.x-CX,c.y-CY)*.6;if(d>bd&&D.jetties.every(j=>Math.hypot(j.x-c.x,j.y-c.y)>40)){bd=d;best=c;}}
       if(best){// a lighthouse stands on the highest ground of its stretch of coast, never on the shore under a cliff
         let bx=best.x-best.n.x*8,by=best.y-best.n.y*8,bh=elevAt(bx,by,s,V);
         /* on bare rock by the water rather than the highest ground in the forest (decided 16 okt: on ö 2316 it stood in dense forest):
            at most 50 m from the water, and bare rock or open shore counts as if it were 4 or 2 m higher */
         const lhB=i=>mark[i]===M_HALL?4:mark[i]===M_STRAND?2:0;let bs=bh+lhB(cellIdx(bx,by));
         for(let r=10;r<=140;r+=6){const nk=Math.max(10,Math.round(r/3));for(let k=0;k<nk;k++){const a=k/nk*TAU,x=best.x+Math.cos(a)*r,y=best.y+Math.sin(a)*r;if(x<20||y<20||x>WW-20||y>WH-20)continue;
-          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||dWet[ci]>5||!away(x,y,260))continue;const h=elevAt(x,y,s,V),sc=h+lhB(ci);if(sc<=bs+.2)continue;
+          const ci=cellIdx(x,y);if(wet(ci)||G0[ci]===WALL||W.road[ci]||W.isletMask[ci]||dWet[ci]>5||!away(x,y,260)||!farHouses(x,y,true))continue;const h=elevAt(x,y,s,V),sc=h+lhB(ci);if(sc<=bs+.2)continue;
           if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<22)||E.some(e=>Math.hypot(e.x-x,e.y-y)<26)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<20)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<14))continue;
           let flat=true;for(let m=0;m<6&&flat;m++){const q2=elevAt(x+Math.cos(m/6*TAU)*3.5,y+Math.sin(m/6*TAU)*3.5,s,V);if(h-q2>1.4)flat=false;}if(!flat)continue;bx=x;by=y;bh=h;bs=sc;}}
-        D.light={x:bx,y:by,h:bh};
+        D.light={x:bx,y:by,h:bh};if(D.sheds)D.sheds=D.sheds.filter(q=>Math.hypot(q.x-bx,q.y-by)>=200);
         // the light station: bare rock round the tower, pasture out to 50 m, and the forest thinning in towards it from 55 m
         for(let gy=Math.floor((by-50)/CELL);gy<=Math.floor((by+50)/CELL);gy++)for(let gx=Math.floor((bx-50)/CELL);gx<=Math.floor((bx+50)/CELL);gx++){if(gx<0||gy<0||gx>=GW||gy>=GH)continue;const i=gy*GW+gx,d=Math.hypot(gx*CELL+5-bx,gy*CELL+5-by);
           if(d>50||!mark[i]||mark[i]===M_AKER)continue;mark[i]=d<25?M_HALL:M_HAGE;W.skog[i]=0;}
         W.trees=W.trees.filter(t=>{const d=Math.hypot(t.x-bx,t.y-by);return d>55||(d>30&&hash2(Math.round(t.x),Math.round(t.y),s+97)<(d-30)/25);});}}
+    // no coast far enough from the houses: the lighthouse stands out on the biggest skerry instead, as many real ones do
+    if(!D.light){const o=(W.islets||[]).filter(o=>(o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>6&&farHouses(o.x,o.y,true)&&away(o.x,o.y,260)).sort((a,b)=>b.r-a.r)[0];
+      if(o){D.light={x:o.x,y:o.y,h:o.parts[0].h*.9,islet:true};o.trees=0;if(D.sheds)D.sheds=D.sheds.filter(q=>Math.hypot(q.x-o.x,q.y-o.y)>=200);}}
     const coastNear=(x,y,r)=>{for(let a=0;a<12;a++){const q=cellIdx(x+Math.cos(a/12*TAU)*r,y+Math.sin(a/12*TAU)*r);if(!wet(q))return true;}return false;};
     for(let t=0;t<400&&D.boats.length<D.jetties.length*.75+7;t++){const c=cand[Math.floor(Rd()*cand.length)];if(!c)break;const r=45+Rd()*90,x=c.x+c.n.x*r+(Rd()-.5)*60,y=c.y+c.n.y*r+(Rd()-.5)*60;
       if(!wet(cellIdx(x,y))||coastNear(x,y,25)||!away(x,y,280)||D.boats.some(b=>Math.hypot(b.x-x,b.y-y)<45)||nearPath(x,y,60))continue;D.boats.push({x,y,a:Rd()*TAU,kind:Rd()<.5?'sail':'motor',anchored:true});}
@@ -1269,7 +1277,7 @@ function buildWorldTry(seed,tryK){
     D.villas=[];{const STY=['klassisk','klassisk','rod','modern','svart'];const nV=5+Math.floor(Rd()*4);
       for(const c of cand){if(D.villas.length>=nV)break;const dd=20+Rd()*10,x=c.x-c.n.x*dd,y=c.y-c.n.y*dd,ci=cellIdx(x,y);if(G0[ci]!==LAND||W.road[ci])continue;
         const h=elevAt(x,y,s,V);if(h>8||h<.5||!away(x,y,280))continue;if(D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<130)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<30)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<18))continue;
-        if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<30)||E.some(e=>Math.hypot(e.x-x,e.y-y)<45))continue;
+        if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<30)||E.some(e=>Math.hypot(e.x-x,e.y-y)<45)||(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200))continue;
         let flat=true;for(const[ox,oy]of[[8,6],[-8,6],[8,-6],[-8,-6]]){if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.6)flat=false;}if(!flat)continue;
         const v={x,y,a:Math.atan2(c.n.y,c.n.x),h,style:STY[Math.floor(Rd()*STY.length)],col:Math.floor(Rd()*4)};D.villas.push(v);
         for(let gy=Math.floor((y-9)/CELL);gy<=Math.floor((y+9)/CELL);gy++)for(let gx=Math.floor((x-9)/CELL);gx<=Math.floor((x+9)/CELL);gx++){const i=gy*GW+gx;if(i<0||i>=GW*GH||W.road[i])continue;if(Math.hypot(gx*CELL+5-x,gy*CELL+5-y)>7.5)continue;if(G0[i]===LAND){G0[i]=WALL;grid[i]=WALL;}}}
@@ -1283,7 +1291,7 @@ function buildWorldTry(seed,tryK){
         for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const t=G0[ci+oy*GW+ox];if(t===ROCK||t===WALL)return false;}
         if(W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+70)return false;if(pass.some(p=>Math.hypot(p.x-x,p.y-y)<p.w+35)||W.barriers.some(b=>Math.hypot(b.x-x,b.y-y)<60))return false;
         if(STR.some(q=>Math.hypot(q.x-x,q.y-y)<28)||E.some(e=>Math.hypot(e.x-x,e.y-y)<40)||D.villas.some(v=>Math.hypot(v.x-x,v.y-y)<45)||(D.sheds||[]).some(q=>Math.hypot(q.x-x,q.y-y)<16)||D.jetties.some(j=>Math.hypot(j.x-x,j.y-y)<14)||C.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
-        const h=elevAt(x,y,s,V);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.2)return false;return h;};
+        if(D.light&&Math.hypot(D.light.x-x,D.light.y-y)<200)return false;const h=elevAt(x,y,s,V);if(h<.8)return false;for(const[ox,oy]of[[5,4],[-5,4],[5,-4],[-5,-4]])if(Math.abs(elevAt(x+ox,y+oy,s,V)-h)>1.2)return false;return h;};
       /* five kinds of house (decided 16 okt, Magnus: at least five, and not only red with white corners), each with its own colours;
          a torp is mostly the old red cottage, by the water anything goes */
       const pick=(W8)=>{let r=Rd()*W8.reduce((a,b)=>a+b[1],0);for(const[k,w]of W8){r-=w;if(r<=0)return k;}return W8[0][0];};
@@ -1309,7 +1317,7 @@ function buildWorldTry(seed,tryK){
     // small sector lights (prickfyrar): four per island, two red and two green, well spread; on skerries first, then on low points of the coast
     // a daymark (båk) on one or two of the bigger skerries, placed before the sector lights so they keep away from it (fixed 16 okt: a sector
     // light stood on the same skerry as a daymark, the two drawn into each other)
-    D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7)D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
+    D.baks=[];for(const o of (W.islets||[])){if(D.baks.length>=2)break;if((o.kind==='skar'||o.kind==='hall'||o.kind==='kobbe')&&o.r>7&&Rd()<.7&&farHouses(o.x,o.y)&&!(D.light&&D.light.islet&&Math.hypot(D.light.x-o.x,D.light.y-o.y)<1))D.baks.push({x:o.x,y:o.y,h:o.parts[0].h*.8,style:Rd()<.5?'ruta':'rand'});}
     /* on the coast a light stands on level ground at the terrain's own height (fixed 16 okt: on ö 1504 a green one stood at the cliff
        top's height right at the edge and hung out over the drop): from the coast point it looks up to 9 m further in, still by the water, for a spot where
        the ground within 2 m is level to under a metre, and sits at the lowest of it; with no such spot the site is skipped. Skerries
@@ -1319,11 +1327,11 @@ function buildWorldTry(seed,tryK){
       for(let a=0;a<8;a++){const h=heightAt(x+Math.cos(a*PI/4)*2.2,y+Math.sin(a*PI/4)*2.2);lo=Math.min(lo,h);hi=Math.max(hi,h);}if(lo>.3&&hi-lo<.8&&shore(x,y))return{x,y,h:lo};if(!q.nx&&!q.ny)break;}return null;};
     D.secs=[];{const sites=[];for(const o of (W.islets||[]))if(o.kind!=='grynna'&&o.kind!=='stenar')sites.push({x:o.x,y:o.y,h:o.parts[0].h*.85,islet:true});
       for(let k=0;k<cand.length;k+=3){const c=cand[k];sites.push({x:c.x-c.n.x*3,y:c.y-c.n.y*3,nx:c.n.x,ny:c.n.y});}
-      for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
+      for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
         D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}
       if(D.secs.length<4){const more=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;if(!(wet(i+2)||wet(i-2)||wet(i+2*GW)||wet(i-2*GW)))continue;const c=cellCenter(i);more.push({x:c.x,y:c.y});}
         for(let k=more.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[more[k],more[j]]=[more[j],more[k]];}
-        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
+        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
     // a light stands in the open (decided 16 okt, Magnus): no trees within 25 m of any light, the lighthouse or a sector light (one
     // on ö 1504 stood hidden in the forest)
     {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>25));
@@ -3577,7 +3585,10 @@ function mkIslets(list,st){
       geo.computeVertexNormals();const cc=cols[o.kind]||cols.kobbe;
       const m=new THREE.Mesh(geo,mat(cc[Math.floor(rnd()*2)]));m.scale.set(pp.rx,pp.h,pp.rz);m.rotation.y=-pp.rot;m.position.set(o.x+pp.dx,o.kind==='grynna'?-.15:-.35,o.y+pp.dy);st.add(m);
       if((o.kind==='kobbe'||o.kind==='hall')&&pp===o.parts[0]&&pp.rx>8){const cap=new THREE.Mesh(geo,moss);cap.scale.set(pp.rx*.5,pp.h*.3,pp.rz*.45);cap.position.set(o.x+pp.dx+(rnd()-.5)*pp.rx*.3,pp.h*.78,o.y+pp.dy);cap.rotation.y=-pp.rot;st.add(cap);}}
-    if(o.kind!=='grynna'){const lic=mat(0xd4862e);for(const pp of o.parts){const n2=Math.floor(pp.rx/3);for(let k=0;k<n2;k++){const aa=rnd()*TAU,d=rnd()*.7,yy=pp.h*(1-d*d)*.92;const sp=mesh(R3.sphere,lic,o.x+pp.dx+Math.cos(aa)*d*pp.rx*.8,yy,o.y+pp.dy+Math.sin(aa)*d*pp.rz*.8);sp.scale.set(.6+rnd()*1.6,.08,.5+rnd()*1.3);st.add(sp);}}}
+    // loose stones on the rock, small and a few bigger (decided 17 okt, Magnus: the flat yellow lichen discs read as nothing)
+    if(o.kind!=='grynna'){const SM=[mat(0x8a847e),mat(0x76706b),mat(0x9a928a)],SG=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0));
+      for(const pp of o.parts){const n2=Math.floor(pp.rx/1.2);for(let k=0;k<n2;k++){const aa=rnd()*TAU,d=.4+rnd()*.45,yy=-.35+pp.h*Math.pow(1-d*d,.8)*.95,r0=.4+rnd()*rnd()*2.2;
+        const sn=mesh(SG,SM[Math.floor(rnd()*3)],o.x+pp.dx+Math.cos(aa)*d*pp.rx*.8,yy+r0*.5,o.y+pp.dy+Math.sin(aa)*d*pp.rz*.8);sn.scale.set(r0*(1+rnd()*.4),r0*(.55+rnd()*.3),r0);sn.rotation.set(rnd()*3,rnd()*3,rnd()*3);st.add(sn);}}}
     const P=o.parts[0];for(let k=0;k<o.trees;k++){const aa=rnd()*TAU,d=rnd()*Math.min(P.rx,P.rz)*.45,s2=.55+rnd()*.5;const tr=mesh(new THREE.ConeGeometry(2.2,7.5,6),mat(0x3d5a31),o.x+Math.cos(aa)*d,P.h*.85+3.4*s2,o.y+Math.sin(aa)*d);tr.scale.setScalar(s2);st.add(tr);}}
 }
 /* light characters as on the chart: alternating on and off durations in seconds */
@@ -5745,8 +5756,8 @@ function titleCam(dtr){
 /* turning the camera round the HÖK by hand (decided 17 okt, Magnus): with a mouse button held down the viewer drags the camera round
    the HÖK, the angle kept relative to its heading so it follows the turns; let go and the director takes over again. The director
    goes on underneath all the while, and the hand's angle is blended in round the HÖK (bearing, elevation and distance), in a third
-   of a second when grabbed and back over about three seconds when let go, so the camera swings back to the director's shot */
-function titleManual(dtr,m){const M=TITLE.man;if(!M)return;const dt=Math.min(dtr,.25);M.w=clamp(M.w+(M.active?dt/.35:-dt/2.8),0,1);if(M.w<=0)return;
+   of a second when grabbed, held three seconds after letting go and then back over about three seconds, so the camera swings back to the director's shot */
+function titleManual(dtr,m){const M=TITLE.man;if(!M)return;const dt=Math.min(dtr,.25);M.w=clamp(M.w+(M.active||TITLE.t-(M.relT??-1e9)<3?dt/.35:-dt/2.8),0,1);/* held 3 s after letting go (decided 17 okt) */if(M.w<=0)return;
   const w=sm(M.w),c=R3.cam.position,h=m.position,dx=c.x-h.x,dy=c.y-h.y,dz=c.z-h.z,rd=Math.hypot(dx,dy,dz)||1,yd=Math.atan2(dz,dx),pd=Math.asin(clamp(dy/rd,-1,1));
   const y=yd+angWrap(TITLE.hd+M.yaw-yd)*w,pt=lerp(pd,M.pitch,w),r=lerp(rd,M.r,w),L=R3.lookAt;
   c.set(h.x+Math.cos(y)*Math.cos(pt)*r,h.y+Math.sin(pt)*r,h.z+Math.sin(y)*Math.cos(pt)*r);{const f=camFloor(c.x,c.z)+2;if(c.y<f)c.y=f;}
@@ -5757,7 +5768,7 @@ function titleGrab(ev){if(!TITLE.on||FILM.on||!TITLE.drone||ev.button!==0||ev.ta
   M.active=true;M.x=ev.clientX;M.y=ev.clientY;M.moved=0;$('title').style.cursor='grabbing';try{$('title').setPointerCapture(ev.pointerId);}catch(_){}}
 function titleDrag(ev){const M=TITLE.man;if(!M||!M.active)return;const dx=ev.clientX-M.x,dy=ev.clientY-M.y;M.x=ev.clientX;M.y=ev.clientY;M.moved+=Math.abs(dx)+Math.abs(dy);
   M.yaw=angWrap(M.yaw+dx*.006);M.pitch=clamp(M.pitch+dy*.005,-.12,1.3);}
-function titleLetGo(){const M=TITLE.man;if(!M||!M.active)return;M.active=false;M.dragged=M.moved>4;$('title').style.cursor='';}
+function titleLetGo(){const M=TITLE.man;if(!M||!M.active)return;M.active=false;M.relT=TITLE.t;M.dragged=M.moved>4;$('title').style.cursor='';}
 
 function titleTick(dtr){
   if(!TITLE.on)return;
