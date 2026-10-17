@@ -2564,14 +2564,24 @@ function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried
   const reach=passLand(cellIdx(u.x,u.y))?landReach(u):null;
   const exp=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20).length,okAt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)]);
   // the spot on the arc that the fewest other known weapons reach (none if possible): guns that cover each other still get a planned attack
+  /* and not a spot, or a staging point, that takes it the long way (fixed 17 okt, issue 12: of two VARG attacking from the water,
+     one was given a staging point on land across a bay and drove off away from the target): the way there may be at most half as
+     long again as the drive straight in to that distance from the target, plus 60 m; with no such spot it takes an ordinary firing
+     point as a lone VARG does, and with no such staging point it goes in without one */
+  const D=wayFrom(u),du=Math.hypot(u.x-e.lx,u.y-e.ly),far=(q,rq)=>{const w=D[cellIdx(q.x,q.y)];return !(w<=Math.max(0,du-rq)*1.5+60);};
   let best=null,bx=1e9;
-  for(const da of[0,.25,-.25,.5,-.5,.8,-.8])for(const rr of[R,R*.9]){const a=want+da,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};if(!okAt(p))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break;}
+  for(const da of[0,.25,-.25,.5,-.5,.8,-.8])for(const rr of[R,R*.9]){const a=want+da,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};if(!okAt(p)||far(p,rr))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break;}
   if(!best)return null;const{p,a,rr}=best;
   // the staging point on the same bearing, just outside the target's own reach, pushed further out while other known weapons cover it;
   // a target that cannot fire on vehicles (air defence: its range is against aircraft) needs no staging, so they go straight in
   const gr=e.canGround?(e.range||0):0;
-  let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okAt(q))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
+  let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okAt(q)||far(q,sr))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
   return{x:p.x,y:p.y,a,st};}
+/* the length of the way from a unit to every cell it can drive to, water included (Dijkstra over the grid, 8 neighbours) */
+function wayFrom(u){const N=GW*GH,D=new Float32Array(N).fill(Infinity),g=WORLD.grid,s0=cellIdx(u.x,u.y),H=new Heap();D[s0]=0;H.push(s0,0);
+  while(H.size){const c=H.pop(),dc=D[c],x=c%GW,y=(c/GW)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;
+      const n=ny*GW+nx;if(!isGround(g[n])||(dx&&dy&&(!isGround(g[y*GW+nx])||!isGround(g[ny*GW+x]))))continue;const nd=dc+(dx&&dy?CELL*1.4142:CELL);if(nd<D[n]){D[n]=nd;H.push(n,nd);}}}
+  return D;}
 /* the land a vehicle can drive to from where it stands without going into the water: not across a barrier, a cliff or a strait */
 function landReach(u){const N=GW*GH,r=new Uint8Array(N),s0=cellIdx(u.x,u.y),st=[s0];r[s0]=1;
   while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(let k=0;k<4;k++){const nx=x+(k===0?1:k===1?-1:0),ny=y+(k===2?1:k===3?-1:0);if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!passLand(n))continue;r[n]=1;st.push(n);}}
@@ -2929,7 +2939,9 @@ function orderKrok(w){
 }
 
 /* ---------- orders ---------- */
-function ping(x,y){G.fx.push({k:'ping',x,y,t:0,ttl:.6});}
+/* the ring where an order is given ages in real time (fixed 17 okt, issue 12): with the game's clock, orders given while paused left
+   their rings on the chart until it ran again */
+function ping(x,y){(G.pings||(G.pings=[])).push({x,y,t0:performance.now()});}
 function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.override=false;u.waitT=0;}
 function dropCtrl(){stopFollowMe();G.ctrl=null;G.joy=null;G.firing=false;G.mlook=false;if(typeof document!=='undefined'&&document.pointerLockElement)document.exitPointerLock();}
 function lastPost(u){return u.orders.length?u.orders[u.orders.length-1].post:u.post;}
@@ -3428,8 +3440,9 @@ function drawMap(ctx,w,h,small){
     else if(f.k==='flash'){ctx.fillStyle=f.side==='e'?MAG:'#e0a21f';ctx.beginPath();ctx.arc(f.x,f.y,(f.big?4:2.5)*k,0,TAU);ctx.fill();}
     else if(f.k==='puff'||f.k==='spark')continue;
     else if(f.k==='boom'){ctx.strokeStyle=`rgba(214,90,40,${a})`;ctx.lineWidth=3*k;ctx.beginPath();ctx.arc(f.x,f.y,f.small?3+f.t*14:f.big?8+f.t*45:6+f.t*30,0,TAU);ctx.stroke();}
-    else{ctx.strokeStyle=`rgba(224,162,31,${a})`;ctx.lineWidth=2.5*k;ctx.beginPath();ctx.arc(f.x,f.y,(6+f.t*24)*k,0,TAU);ctx.stroke();}
   }
+  if(G.pings&&G.pings.length){const now=performance.now();G.pings=G.pings.filter(f=>now-f.t0<600);
+    for(const f of G.pings){const t=(now-f.t0)/1000,a=1-t/.6;ctx.strokeStyle=`rgba(224,162,31,${a})`;ctx.lineWidth=2.5*k;ctx.beginPath();ctx.arc(f.x,f.y,(6+t*24)*k,0,TAU);ctx.stroke();}}
   ctx.restore();
   if(!small){
     ctx.fillStyle='rgba(35,57,91,.62)';ctx.font=`600 10px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';
