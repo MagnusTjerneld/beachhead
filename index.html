@@ -2363,7 +2363,11 @@ function move(u,dt){
   let p=u.path[0];
   while(u.path.length>1&&Math.hypot(p.x-u.x,p.y-u.y)<4){u.path.shift();p=u.path[0];}
   const pd=Math.hypot(p.x-u.x,p.y-u.y);
-  if(u.path.length===1&&pd<3){if(o.type==='move'){u.orders.shift();u.path=null;}else u.path=null;return;}
+  /* BÄVER's work orders: short of the order's own arrival radius the last leg is driven to its very end (fixed 17 okt: it stopped 3 m
+     short of the path's end, so BÄVER stood 1.5 to 3 m from its spot at a barrier, or 16.6 m from a shed whose cell it cannot enter
+     with 16 m to reach, and never started the work). Other units keep stopping 3 m short, where they stood before */
+  const work=u.kind==='eng'&&(o.type==='clear'||o.type==='demolish'||o.type==='capture'||o.type==='demine'||o.type==='repair');
+  if(u.path.length===1&&pd<(work&&d>arr?.5:3)){if(o.type==='move'){u.orders.shift();u.path=null;}else u.path=null;return;}
   const a=Math.atan2(p.y-u.y,p.x-u.x);
   u.heading=turnTo(u.heading,a,(u.air?3:2.6)*dt);
   let sp=u.speed;
