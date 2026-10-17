@@ -124,6 +124,14 @@ node tests/sandbox.js all 10 --unseen               försvararna okända: wingen
 
 Scenarierna: `bunker` (bunker med två pansarvärnslag), `pansar` (två stridsvagnar), `lv` (luftvärn, bunker och infanteri), `linje` (en försvarslinje med sex vapen), `stormning` (rakt fram utan utpekade mål), `slutstrid` (två skadade VARG mot två nästan slagna stridsvagnar, rätt att stanna), `overmakt` (en VARG mot två hela stridsvagnar, rätt att dra sig ur), `hokaa` (två offensiva HÖK mot ett ensamt luftvärn), `hokaarb` (samma med en robotskytt bredvid), `hokrb` (två HÖK mot en bunker med två robotskyttar framför), `hokpv` (två offensiva HÖK mot två pansarvärnslag i skydd som flyttat 50 m sedan de sågs), `hokpvlv` (samma med ett okänt luftvärn 100 m bakom), `pvlv` (två VARG mot två pansarvärnslag under ett luftvärn), `getpvlv` (samma där kaptenen skickar en GETING på varje lag) och `motanfall` (tre VARG tar emot stridsvagnar som rycker ut). `ENGAGE.calc=0` slår av beräkningen av om det lönar sig att stanna och ger den gamla gränsen på 30 %, `ENGAGE.early=0` bara den tidiga reträtten. `--hok` lägger till en defensiv HÖK i wingar som saknar en. När hela wingen är ute (VARG döda eller på reträtt) spelas 25 s till, så att de som dör på vägen hem räknas. Utskriften ger vinstandel, tid, förluster, hur många som dog under reträtt och hur länge efter att de vänt, och vilka vapen som dödade.
 
+Årstidsbilden (`tests/arstider.js`, 17 okt): samma ö, klockslag och drönarkamera den tydligaste dagen per årstid (22 april, 2 juli, 16 oktober, 15 februari), varje bild i full storlek i spelets fotoläge (`&photo`: dimman 2,8 gånger längre ut, skuggor över 1,6 km, inga etiketter), och en bild hopsatt av en fjärdedel av varje som vertikala strimlor, vår, sommar, höst och vinter från vänster. PNG i 16:9, cirka en minut.
+
+```
+node tests/arstider.js                        ö 2024, kameran över viken med bryggan, 3402 px bred
+node tests/arstider.js 9052 ut/arstider       en annan ö; filerna blir ut/arstider_strimlor.png och ut/arstider_<årstid>.png
+node tests/arstider.js 2024 ut --cam 471,150,704 --look 836,0,713 --klocka 13:00 --moln 15 --bredd 3402 --datum var=04-25
+```
+
 | Test | Prövar |
 |---|---|
 | `t23.js` | Kartgeneratorn och fiendens försvarsplan på tio öar |
