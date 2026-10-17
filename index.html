@@ -97,6 +97,14 @@ button:disabled{opacity:.45;cursor:default}
 .sgrip::after{content:'';position:absolute;left:3px;top:50%;height:48px;margin-top:-24px;width:2px;border-radius:1px;background:var(--line)}
 .sgrip:hover::after,.sgrip:focus-visible::after,.sgrip.drag::after{background:var(--signal);top:0;height:100%;margin-top:0}
 .side{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
+/* the wide layout (17 okt, issue 17): the main view and the other view side by side, as large as each other or as the grip between
+   them sets, the roster under both, and the live pictures one above the other in the side panel */
+.mgrip{display:none}
+.stage.bred .maincol{display:grid;grid-template-columns:minmax(0,var(--sa,1fr)) 8px minmax(0,var(--sb,1fr));grid-template-rows:minmax(0,1fr) auto;gap:8px 2px}
+.stage.bred .mgrip{display:block}
+.stage.bred .roster{grid-column:1/-1}
+.stage.bred #subSlot{aspect-ratio:auto}
+.stage.bred .feeds{grid-template-columns:1fr}
 .side > *{flex-shrink:0}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;min-height:84px}
 .log li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;font-size:13px;padding:3px 6px;border-radius:2px;cursor:pointer;align-items:baseline}
@@ -230,6 +238,7 @@ button:disabled{opacity:.45;cursor:default}
         <button class="btn" id="bMusic" type="button" aria-pressed="true" title="Musik (N)">Musik på</button>
         <button class="btn" id="bSound" type="button" aria-pressed="true" title="Ljud (M)">Ljud på</button>
         <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
+        <button class="btn" id="bLayout" type="button" title="Bred: huvudvyn och den andra vyn sida vid sida, livebilderna över varandra i sidopanelen. Auto väljer bred på breda skärmar (21:9 och bredare)">Skärmlayout: auto</button>
         <button class="btn" id="bDynRes" type="button" aria-pressed="true" title="Sänker 3D-bildens upplösning när datorn inte hinner med 60 bilder per sekund">Dynamisk upplösning på</button>
         <button class="btn" id="bSikt" type="button" title="Hur långt bort dimman tätnar. Kortare sikt ritar färre träd">Siktavstånd: lång</button>
         <button class="btn" id="bBench" type="button" title="Mäter bildtiden på tre öar i dag, skymning, natt och strid (cirka tre minuter). Spelet du har på gång avbryts">Kör benchmark</button>
@@ -258,6 +267,7 @@ button:disabled{opacity:.45;cursor:default}
       <div class="pane" id="paneMap"><canvas id="cMap"></canvas><div class="vlabel" id="lblMap">SJÖKORT</div><div class="zoom"><button type="button" id="zIn" aria-label="Zooma in">+</button><button type="button" id="zOut" aria-label="Zooma ut">−</button><button type="button" id="zFit">Hela</button></div></div>
       <div class="wheel" id="wheel" hidden><div class="ring" id="wRing"></div><div class="wchips" id="wChips"></div></div>
     </div>
+    <div class="sgrip mgrip" id="mgrip" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Fördelningen mellan vyerna" title="Dra för att fördela bredden mellan vyerna. Dubbelklicka för lika stora."></div>
     <div class="roster" id="roster" role="toolbar" aria-label="Enheter"></div></div>
     <div class="sgrip" id="sgrip" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Sidopanelens bredd" title="Dra för bredare sidopanel och större livebilder. Dubbelklicka för standardbredd."></div>
     <aside class="side">
@@ -340,7 +350,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den; på Defensiv stannar den i skyddsrollen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, GETING, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
-      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
+      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Skärmlayout under Inställningar: bred ställer den andra vyn bredvid huvudvyn, lika stor (listen mellan dem fördelar bredden), och livebilderna över varandra i sidopanelen; auto väljer bred på skärmar i 21:9 och bredare. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen skyddar den. Det du skjuter på blir gruppens mål i 8 s efter senaste skottet: följarna bekämpar det när det är inom räckhåll, och HÖK på Offensiv anfaller det. V och H tar i första hand gruppens egna VARG och HÖK. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. KROK har två hållningar. Defensiv (standard) håller den vid liv: den flyger inte in i kända hot, sätter bara ned på en säkrad plats och drar sig tillbaka under halva skrovet. Offensiv följer dina egna order även in i hot och okänt område och avbryter inte. Båda väljer den säkraste kända vägen. När BÄVER själv ber om transport landar KROK bara på en säkrad plats: spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, GETING först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Hotbild och räckvidd:</span> med en enhet vald tonas varje känd fiendes räckvidd mot just den enheten på sjökortet: mot mark för VARG, BÄVER och MUS, mot flyg för HÖK, GETING och KROK. Det är zonerna enhetens vägval håller sig ifrån. Pekar du på en fiende visas dess räckvidd mot mark (heldragen) och mot flyg (streckad), pekar du på en egen enhet dess vapenräckvidd och sikt.</li>
@@ -5550,6 +5560,31 @@ function setSideW(w,save){const st=document.querySelector('.stage');if(!st)retur
   g.addEventListener('dblclick',()=>setSideW(null));
   g.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?40:e.key==='ArrowRight'?-40:0;if(!d)return;e.preventDefault();e.stopPropagation();setSideW(side.getBoundingClientRect().width+d,true);});
   window.addEventListener('resize',()=>{const st=document.querySelector('.stage');if(st&&st.style.getPropertyValue('--sideW'))setSideW(side.getBoundingClientRect().width,false);});})();
+/* the screen layout: standard (the other view in the side panel) or wide (it stands beside the main view); auto takes wide when the
+   window is at least 2.1 times as wide as it is high, a 21:9 screen. A per-viewer convenience kept in localStorage */
+const LAYOUT={k:'auto',on:null,N:{auto:'auto',standard:'standard',bred:'bred'}};try{const v=localStorage.getItem('bh.layout');if(LAYOUT.N[v])LAYOUT.k=v;}catch(_){}
+const layoutWide=()=>LAYOUT.k==='bred'||(LAYOUT.k==='auto'&&window.innerWidth>=2.1*window.innerHeight);
+function applyLayout(){const w=layoutWide(),st=document.querySelector('.stage');
+  if(w!==LAYOUT.on){LAYOUT.on=w;st.classList.toggle('bred',w);if(w)document.querySelector('.maincol').insertBefore(subSlot,$('roster'));else document.querySelector('.side').insertBefore(subSlot,$('log'));fitPanes();}
+  $('bLayout').textContent='Skärmlayout: '+LAYOUT.N[LAYOUT.k]+(LAYOUT.k==='auto'?(w?' (bred)':' (standard)'):'');}
+function setLayout(k){LAYOUT.k=k;try{localStorage.setItem('bh.layout',k);}catch(_){}applyLayout();}
+$('bLayout').addEventListener('click',()=>{const o=['auto','standard','bred'],k=o[(o.indexOf(LAYOUT.k)+1)%3];setLayout(k);say(null,'Skärmlayout '+LAYOUT.N[k]+'.');});
+window.addEventListener('resize',applyLayout);
+/* the grip between the two views in the wide layout: the main view's share of the width, a quarter to three quarters */
+function setSplit(f,save){const mc=document.querySelector('.maincol');
+  if(f==null){mc.style.removeProperty('--sa');mc.style.removeProperty('--sb');try{localStorage.removeItem('bh.split');}catch(_){}return;}
+  f=clamp(f,.25,.75);mc.style.setProperty('--sa',f+'fr');mc.style.setProperty('--sb',(1-f)+'fr');if(save){try{localStorage.setItem('bh.split',String(f));}catch(_){}}}
+(function(){const g=$('mgrip'),mc=document.querySelector('.maincol');if(!g||!mc)return;
+  try{const v=+localStorage.getItem('bh.split');if(v>0)setSplit(v,false);}catch(_){}
+  const at=x=>{const r=mc.getBoundingClientRect();return(x-r.left-4)/Math.max(1,r.width-10);},now=()=>{const r=mainSlot.getBoundingClientRect(),m=mc.getBoundingClientRect();return r.width/Math.max(1,m.width-10);};
+  let drag=false;
+  g.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag=true;g.classList.add('drag');try{g.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+  g.addEventListener('pointermove',e=>{if(drag)setSplit(at(e.clientX),false);});
+  const end=e=>{if(!drag)return;drag=false;g.classList.remove('drag');setSplit(now(),true);};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('dblclick',()=>setSplit(null));
+  g.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?-.03:e.key==='ArrowRight'?.03:0;if(!d)return;e.preventDefault();e.stopPropagation();setSplit(now()+d,true);});})();
+applyLayout();
 function setFeeds(on){FEED.on=on;try{localStorage.setItem('bh.feeds',on?'1':'0');}catch(_){}$('feeds').hidden=!on;const b=$('bFeeds');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Livebilder':'Livebilder av';}
 /* the two small live pictures: the first follows the active unit (the first selected one that the main camera is not already
    showing), the second the unit that last reported in the log, or the build bay when a build is started on the ship. A pinned
