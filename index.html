@@ -39,6 +39,7 @@ html,body{height:100%;margin:0;overflow:hidden}
 @keyframes tpulse{50%{opacity:.35}}
 .tmenu{display:flex;gap:10px}
 .title.clean .tfront,.title.clean .tshade,.title.clean .tfull{display:none}
+.title.filmlogo .tshade{display:none}/* the trailer's logo is drawn as the intro draws it, with no shade over the picture (decided 17 okt) */
 .tfull{position:absolute;top:14px;right:14px;z-index:3;background:rgba(17,26,34,.7);backdrop-filter:blur(2px)}
 .tmenu .btn{min-width:150px;backdrop-filter:blur(2px)}
 .tfoot{position:absolute;bottom:18px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:rgba(238,241,234,.7);text-shadow:0 1px 2px #000}
@@ -6177,6 +6178,7 @@ function filmCam(dtr){
   const t=Math.max(0,FILM.t);G.tod=filmTodAt(t);
   if(FILM.state==='play'&&t>=FILM_END+1.5){FILM.state='done';$('tPress').textContent='SPELA IGEN';$('tPress').hidden=false;$('title').classList.remove('clean');filmSaveBtn(true);}
   let i=0;while(i<FILM_SHOTS.length-1&&t>=filmShotT(i+1))i++;const S=FILM_SHOTS[i],t0=filmShotT(i),dur=(i<FILM_SHOTS.length-1?filmShotT(i+1):FILM_END)-t0;
+  $('title').classList.toggle('filmlogo',FILM.on);
   if(i!==FILM.i){FILM.i=i;filmClear();FILM.S={first:true};FILM.useMovers=false;filmMapShow(false);if(S.birka!==false)filmBirka(null);G.harbor.secured=S.birka===false;
     if(S.id!=='logga'){$('logoWrap').hidden=true;if(FILM.state==='play')$('title').classList.add('clean');}}
   for(const k in FILM.act)FILM.act[k].visible=false;FILM.useMovers=false;FILM.fov=40;FILM.sunEl=null;FILM.fadeA=0;FILM.hideBeaver=i>=2&&i<24;
@@ -6196,7 +6198,9 @@ function filmCam(dtr){
    own light takes over. */
 const FILM_SUN=[[17.72,.2],[18,.16],[18.15,.11],[18.3,.05],[18.5,-.03],[18.8,-.1]];
 function filmSunEl(h){const T=FILM_SUN;let i=0;while(i<T.length-2&&T[i+1][0]<=h)i++;const a=T[i],b=T[i+1];return lerp(a[1],b[1],clamp((h-a[0])/(b[0]-a[0]),0,1));}
-function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);if(R3.night>=.6)return;
+function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);
+  {const P=R3.points[0];P.castShadow=FILM.fires.some(f=>Math.abs(P.position.x-f.x)<.01&&Math.abs(P.position.z-f.z)<.01);}/* only a fire casts (filmShadowLight) */
+  if(R3.night>=.6)return;
   const el=FILM.sunEl??filmSunEl(h),hx=vDir.x,hz=vDir.z,hl=Math.hypot(hx,hz)||1,le=Math.max(el,.055),c=Math.cos(le);
   vDir.set(hx/hl*c,Math.sin(le),hz/hl*c);/* (shading: never below 3 degrees) */R3.sun.intensity*=lerp(1,1.45,up);R3.hemi.intensity*=lerp(1,.8,up);
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);
@@ -6218,10 +6222,11 @@ async function filmScore(sr){const len=Math.ceil((FILM_END+1.5)*sr),oc=new Offli
 function filmCompose(ctx,W,H){ctx.drawImage(R3.renderer.domElement,0,0,W,H);
   if(FILM.map){let oc=FILM.mapCv;if(!oc||oc.width!==W||oc.height!==H){oc=FILM.mapCv=document.createElement('canvas');oc.width=W;oc.height=H;FILM.mapCx=oc.getContext('2d');}
     const mc=FILM.mapCx,k=W/FILM_MAP_W;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,W,H);mc.setTransform(k,0,0,k,0,0);drawMap(mc,FILM_MAP_W,720,false);ctx.drawImage(oc,0,0);}
-  if(!$('logoWrap').hidden){const k0=W/FILM_BASE_W,lg=$('logo'),lw=Math.min(.78*W,940*k0*1.25),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.12;
-    ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0;ctx.shadowOffsetY=10*k0;ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
-    const fs=Math.round(26*k0),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px ui-monospace,Menlo,Consolas,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
-    let cx=(W-tw)/2;const ty=y+lh+H*.025;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
+  /* the logo as the intro shows it on a 1920 wide screen (#logo, .tfront and .tsub): no darkening of the picture under it */
+  if(!$('logoWrap').hidden){const k0=W/FILM_BASE_W,lg=$('logo'),lw=Math.min(.78*W,940*k0),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.09;
+    ctx.save();ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0;ctx.shadowOffsetY=10*k0;ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
+    const fs=Math.round(15*k0),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px "Share Tech Mono",ui-monospace,Menlo,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
+    let cx=(W-tw)/2;const ty=y+lh+10*k0;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
   if(FILM.fadeA>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,FILM.fadeA)+')';ctx.fillRect(0,0,W,H);}}
 async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
   const say=t=>{const b=$('tPress');b.textContent=t;b.hidden=false;};
@@ -6302,10 +6307,18 @@ function fP(x,y,z,o){const P=FX.parts;if(P.length>900)return;const sp=new THREE.
   sp.position.set(x,y,z);sp.scale.setScalar(o.s0??1);R3.scene.add(sp);const v=o.v||[0,0,0];P.push({sp,vx:v[0],vy:v[1],vz:v[2],g:o.g||0,s0:o.s0??1,s1:o.s1??1,o:o.a??1,ttl:o.ttl??1,t:0,drag:o.drag||0,fade:o.fade||0});}
 function fLight(x,y,z,c,i,d,ttl){FX.lts.push({x,y,z,c,i,d,ttl,t:0});}
 /* the fire's own shadow (decided 16 okt): a burning wreck lit the ground all round it, under and behind the hull too, so it seemed
-   to float. The light sits 5.5 m up in the flames: just over a roof it threw shadows in long hard wedges across the meadow. In the trailer the first point light casts a shadow, and the nearest fire takes it; only the film's actors (the layer
-   FILM_SHL) are drawn into that shadow, not trees or terrain, so it costs little */
+   to float. The light sits 5.5 m up in the flames: just over a roof it threw shadows in long hard wedges across the meadow. In the trailer the first point light casts a shadow while it is a fire, and the nearest fire takes it. The layer
+   FILM_SHL was meant to keep all but the film's actors out of that shadow, but three r128 picks the casters by the main camera's
+   layers, so everything that casts a shadow is drawn into it (see filmShadowLight) */
 const FILM_SHL=5;
-function filmShadowLight(){const P=R3.points[0];P.castShadow=true;P.shadow.mapSize.set(512,512);P.shadow.camera.near=.3;P.shadow.camera.far=60;P.shadow.bias=-.004;P.shadow.camera.layers.set(FILM_SHL);}
+/* (17 okt) Two things three r128 does that the film did not count on: a Lambert material (trees, crowns, the lighthouse) multiplies
+   ALL its direct light by its shadows, and the shadow map picks its casters by the main camera's layers, so the layer below never
+   kept the trees out. With the point light's shadow range set to the light's distance every frame, everything beyond a fire's 50 m
+   lost the sun, the moon and the lighthouse's beams; and when the nearest point light was the lighthouse's own lantern, inside its
+   glass, the lantern housing shadowed everything. So the shadow is cast only while the first point light is a fire (filmLight),
+   and its range is held at 2 km. The film's trees were darker than the game's, and the lighthouse lit no trees. */
+function filmShadowLight(){const P=R3.points[0];P.castShadow=true;P.shadow.mapSize.set(512,512);P.shadow.camera.near=.3;P.shadow.camera.far=2000;
+  const um=Object.getPrototypeOf(P.shadow).updateMatrices;P.shadow.updateMatrices=function(l,f){const d=l.distance;l.distance=0;um.call(this,l,f);l.distance=d;};P.shadow.bias=-.004;P.shadow.camera.layers.set(FILM_SHL);}
 const fr=()=>Math.random()-.5;
 function fxFlash(x,y,z,s,c){fP(x,y,z,{s0:s,s1:s*1.4,a:1,ttl:.1,c:c||0xffd890,add:true});fP(x,y,z,{s0:s*2.4,s1:s*3,a:.45,ttl:.16,c:0xff9a40,add:true});fLight(x,y,z,c||0xffc070,5,45,.15);}
 function fxSmoke(x,y,z,s,col,ttl,rise){fP(x,y,z,{v:[fr()*1.5,rise??2,fr()*1.5],s0:s,s1:s*3.2,a:.55,ttl:ttl||3,c:col??0x3a3836,drag:.6});}
