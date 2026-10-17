@@ -47,6 +47,11 @@ Bilderna i `FILM_SHOTS` (index.html, sök `const FILM_SHOTS`) står på fasta ko
 6. **Bild 13:** sikta robotarna på stridsvagnen som exploderar i bild 14 (`et1`, banan `[[1300,752],[1332,734]]` i `traff`), ställ ut den i bild 13 och se till att nedslaget hamnar i bild. Då blir 13 till 14 orsak och verkan. Koordinaterna 1300,752 bör också gå genom kontrollen.
 7. Kolla även övriga bilder med `node tests/trailer.js` (alla 23 bilder x 2, cirka 1 till 2 min lokalt). Bild 7, 10, 14, 16 och 18 till 20 står också på fasta koordinater i ängen kring `FILM_BF={x:1365,z:712}`.
 
+## Läge 17 okt kväll (session 2)
+
+Gjort, se commit: röjning med stråk (`lanes()`, `filmClearAt`, `R3.looseM`), `tests/trailerkoll.js` (inga flaggor), MUS från sydost (`FILM_MUS_P`), robotarna i bild 13 mot `et1` (`FILM_ET1`) med nedslaget i bild 14, bild 8 (`geting`, 11 m) och 9 (cirka 22 m, bildvinkel 30 och 38), fyren flyttad till krönet i filmen (`filmLighthouse`, Magnus ville ha den högre) med kameran ur `filmLhView`, sprängljuset dämpat i filmen och spårljus inte förbi linsen.
+Musiken: `filmMusic` är gemensam för live och export, `FILM_XF` väljer skarven (`cut` nu). Prov ligger i scratchpad (skarv-0, a, b, c). **Väntar på Magnus val** och på hans ja till fyren på krönet. Därefter: sätt `FILM_XF`, för in besluten i designdokumentet och ta bort den här filen.
+
 ## Regler att komma ihåg (CLAUDE.md)
 
 - Svara på svenska. Inga tankstreck (U+2013, U+2014) någonstans.

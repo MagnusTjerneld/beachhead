@@ -13,10 +13,12 @@ const argv=process.argv.slice(2),opt={},pos=[];for(let i=0;i<argv.length;i++){if
 const out=pos[0]||'trailer.jpg',W=+(opt.bredd||640),H=Math.round(W*9/16),cols=+(opt.kol||4);
 const three=process.env.THREE_JS||path.join(__dirname,'node_modules','three','build','three.min.js');
 if(!fs.existsSync(three)){console.error('three.min.js saknas: kör npm install i tests eller sätt THREE_JS');process.exit(1);}
-(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox','--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required']});
+// in the cloud: its own Chromium on swiftshader; on a desktop the graphics card (swiftshader loses the WebGL context there)
+const cloud=fs.existsSync('/opt/pw-browsers/chromium');
+(async()=>{const b=await chromium.launch({executablePath:cloud?'/opt/pw-browsers/chromium':undefined,args:['--no-sandbox','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required',...(cloud?['--use-gl=swiftshader','--enable-unsafe-swiftshader']:['--enable-gpu'])]});
   const p=await b.newPage({viewport:{width:W,height:H}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
-  await p.goto('file://'+path.join(__dirname,'..','index.html')+'?trailer',{waitUntil:'commit',timeout:120000});
+  await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?trailer',{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
   // the list of pictures: [film time, label]
   const shots=await p.evaluate(()=>__FILM.SHOTS.map((S,i)=>({id:S.id,t0:__FILM.shotT(i),t1:i<__FILM.SHOTS.length-1?__FILM.shotT(i+1):__FILM.END})));
