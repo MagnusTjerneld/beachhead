@@ -1436,13 +1436,20 @@ function buildWorldTry(seed,tryK){
     const shore=(x,y)=>{const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++){const X=gx+ox,Y=gy+oy;if(X>=0&&Y>=0&&X<GW&&Y<GH&&wet(Y*GW+X))return true;}return false;};
     const seat=q=>{if(q.islet)return q;for(let d=0;d<=9;d+=3){const x=q.x-(q.nx||0)*d,y=q.y-(q.ny||0)*d;let lo=heightAt(x,y),hi=lo;
       for(let a=0;a<8;a++){const h=heightAt(x+Math.cos(a*PI/4)*2.2,y+Math.sin(a*PI/4)*2.2);lo=Math.min(lo,h);hi=Math.max(hi,h);}if(lo>.3&&hi-lo<.8&&shore(x,y))return{x,y,h:lo};if(!q.nx&&!q.ny)break;}return null;};
+    /* a sector light's 140 degree sector faces the open water seen from the light (fixed 17 okt, issue 8: it faced straight out from
+       the island's centre, and on ö 3818 a green one in a bay faced the hill across it and showed only from close by). Each of 72
+       directions gets the distance free of ground over a line from the lamp to 30 m up 400 m out; the sector goes where those add
+       up most, the direction out from the centre winning a tie */
+    const secAim=q=>{const L=Math.max(0,q.h)+5.35,a0=Math.atan2(q.y-CY,q.x-CX),fr=[];
+      for(let k=0;k<72;k++){const a=a0+k*PI/36;let r=8;for(;r<=400;r+=8)if(heightAt(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r)>L+(30-L)*r/400)break;fr.push(r);}
+      let best=0,bs=-1;for(let k=0;k<72;k++){let t=0;for(let o=-14;o<=14;o++)t+=fr[(k+o+72)%72];t-=Math.min(k,72-k)*.01;if(t>bs){bs=t;best=k;}}return a0+best*PI/36;};
     D.secs=[];{const sites=[];for(const o of (W.islets||[]))if(o.kind!=='grynna'&&o.kind!=='stenar')sites.push({x:o.x,y:o.y,h:o.parts[0].h*.85,islet:true});
       for(let k=0;k<cand.length;k+=3){const c=cand[k];sites.push({x:c.x-c.n.x*3,y:c.y-c.n.y*3,nx:c.n.x,ny:c.n.y});}
       for(const q0 of sites){if(D.secs.length>=4)break;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(!away(q.x,q.y,300))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;if((D.baks||[]).some(b=>Math.hypot(b.x-q.x,b.y-q.y)<20))continue;
-        D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}
+        D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:secAim(q),ph:Rd()*3});}
       if(D.secs.length<4){const more=[];for(let gy=2;gy<GH-2;gy+=2)for(let gx=2;gx<GW-2;gx+=2){const i=gy*GW+gx;if(wet(i)||W.isletMask[i])continue;if(!(wet(i+2)||wet(i-2)||wet(i+2*GW)||wet(i-2*GW)))continue;const c=cellCenter(i);more.push({x:c.x,y:c.y});}
         for(let k=more.length-1;k>0;k--){const j=Math.floor(Rd()*(k+1));[more[k],more[j]]=[more[j],more[k]];}
-        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:Math.atan2(q.y-CY,q.x-CX),ph:Rd()*3});}}}
+        for(const q0 of more){if(D.secs.length>=4)break;if(!away(q0.x,q0.y,300))continue;const q=seat(q0);if(!q)continue;if(!farHouses(q.x,q.y))continue;if(D.secs.some(z=>Math.hypot(z.x-q.x,z.y-q.y)<460))continue;if(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<300)continue;D.secs.push({x:q.x,y:q.y,h:q.h,col:D.secs.length%2?'green':'red',a:secAim(q),ph:Rd()*3});}}}
     // a light stands in the open (decided 16 okt, Magnus): no trees within 25 m of any light, the lighthouse or a sector light (one
     // on ö 1504 stood hidden in the forest)
     {const lights=D.secs.concat(D.light?[D.light]:[]);if(lights.length)W.trees=W.trees.filter(t=>lights.every(z=>Math.hypot(t.x-z.x,t.y-z.y)>25));
@@ -4554,7 +4561,7 @@ function mkWaterMat(){
         if(uv.x>0.0&&uv.y>0.0&&uv.x<1.0&&uv.y<1.0){float dep=8.0-texture2D(uDepth,uv).r*16.0;
           float nz=0.55+0.45*sin(vWPos.x*0.37+uTime*0.5)*sin(vWPos.z*0.29-uTime*0.37)+0.25*sin(vWPos.x*1.3-vWPos.z*1.1+uTime);
           float edge=smoothstep(0.8,0.2,dep)+smoothstep(1.6,0.4,dep)*0.35*nz;
-          float band=smoothstep(0.6,0.95,sin(dep*4.0-uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
+          float band=smoothstep(0.6,0.95,sin(dep*4.0+uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
           float lip=smoothstep(0.02,0.3,dep);
           float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
           outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);
@@ -4666,7 +4673,7 @@ function updateSky(){
     for(const[ci,c]of((WORLD.decor&&WORLD.decor.cabins)||[]).entries())if(!(G.ddead.c&&G.ddead.c[ci]!=null)&&winLevel(winBucket(c.x,c.y),d)>.3)cand.push([3,c.x,Math.max(0,c.h)+3,c.y,0xffb860,.8*d,28]);
   }
   if(R3.lit>0&&R3.lhBeam){const p=R3.lhBeam.beam.position;cand.push([2,p.x,p.y,p.z,0xfff0c0,1.6*d*R3.lit,70]);}
-  for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
+  for(const q of R3.secs||[]){if(!(R3.lit>0)||!q.flash)continue;/* the light it throws round it flashes wherever the camera is; the lamp itself is seen only from inside its sector (fixed 17 okt, issue 8) */cand.push([2,q.z.x,Math.max(0,q.z.h)+5.4,q.z.y,q.lc,1.8*n,40]);}
   for(const q of R3.baks||[]){if(!(R3.lit>0)||!q.glow.visible)continue;cand.push([2,q.b.x,q.b.h+q.y,q.b.y,0xfff4dc,1.4*n,30]);}
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur;if(life<=0)continue;const fl=.8+.3*Math.sin(G.time*11+f.x)+.2*Math.sin(G.time*29+f.y);cand.push([1,f.x,groundY(f.x,f.y)+f.h+3,f.y,0xff6a1a,fl*Math.min(1,life*4)*(.7+n)*f.size*1.4,55]);}
   for(const w of G.wrecks){const age=G.time-w.t0;if(w.kind==='crate'||w.kind==='hulk'||age>120)continue;const fl=.8+.3*Math.sin(G.time*13+w.rot*9)+.2*Math.sin(G.time*31);cand.push([2,w.x,groundY(w.x,w.y)+2.5,w.y,0xff7024,fl*(1-age/120)*(.4+n),30]);}
@@ -4711,18 +4718,14 @@ function sync3D(dtr){
     if(m.userData.rockets)m.userData.rockets.forEach((r,i)=>r.visible=i<u.ammo);
     if(m.userData.tur)m.userData.tur.rotation.y=-angWrap(u.turret-u.heading);
   }
-  /* VARG on the water (decided 16 okt, as the trailer showed it): the boats' foam wake behind, and spray from the skirt that grows
-     with speed; on land the wake stops and fades */
-  {const T=R3.decoT||0,dt=G.running&&!G.paused?dtr*G.speed:0;if(!R3.uwake)R3.uwake=new Map();const live=new Set();
+  /* VARG on the water: spray from the skirt that grows with speed. The boats' foam wake it had from 16 okt was taken away 17 okt
+     (issue 4: it was painted on regardless of speed, drew corners in turns and began with a hard edge right behind VARG) */
+  {const dt=G.running&&!G.paused?dtr*G.speed:0;if(!R3.uwake)R3.uwake=new Map();const live=new Set();
     for(const u of G.units){if(u.kind!=='tank'||u.dead||u.carried)continue;live.add(u.id);let w=R3.uwake.get(u.id);
-      if(!w){w={wake:mkWake(),trail:[],tt:-1,beam:5.6,lx:u.x,ly:u.y,sp:0};D.add(w.wake.mesh);R3.uwake.set(u.id,w);}
+      if(!w){w={lx:u.x,ly:u.y,sp:0};R3.uwake.set(u.id,w);}
       if(dt>0){w.sp=lerp(w.sp,Math.hypot(u.x-w.lx,u.y-w.ly)/dt,Math.min(1,dt*4));}w.lx=u.x;w.ly=u.y;
-      const wet=heightAt(u.x,u.y)<=.05&&!onDeck(u.x,u.y),c=Math.cos(u.heading),sn=Math.sin(u.heading),sx=u.x-c*4.4,sz=u.y-sn*4.4;
-      if(wet&&w.sp>1.5){if(w.trail.length&&Math.hypot(sx-w.trail[0].x,sz-w.trail[0].z)>30){w.trail.length=0;w.tt=-1;}
-        if(w.tt<0||T-w.tt>.25){w.tt=T;w.trail.unshift({x:sx,z:sz,t:T});if(w.trail.length>w.wake.N)w.trail.pop();}updWake(w,{x:sx,z:sz,t:T},T);}
-      else if(w.trail.length){if(T-w.trail[0].t>8)w.trail.length=0;else updWake(w,w.trail[0],T);}
-      w.wake.mesh.visible=w.trail.length>0;if(wet)vargSpray(u.x,u.y,w.sp,dt);}
-    for(const[id,w]of R3.uwake)if(!live.has(id)){D.remove(w.wake.mesh);w.wake.geo.dispose();w.wake.mesh.material.dispose();R3.uwake.delete(id);}}
+      if(heightAt(u.x,u.y)<=.05&&!onDeck(u.x,u.y))vargSpray(u.x,u.y,w.sp,dt);}
+    for(const id of R3.uwake.keys())if(!live.has(id))R3.uwake.delete(id);}
   for(const[id,m]of R3.units)if(!seen.has(id)){const u=G.units.find(v=>v.id===id);if(u&&u.dead&&WRECK_KINDS.own.has(u.kind))blowApart(m,null,headOf(m));D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
     km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;}
@@ -4764,7 +4767,7 @@ function sync3D(dtr){
       const sx=p0.x-Math.cos(hd)*m.half,sz=p0.z-Math.sin(hd)*m.half;
       if(m.trail.length&&Math.hypot(sx-m.trail[0].x,sz-m.trail[0].z)>Math.max(30,m.speed*2)){m.trail.length=0;m.tt=-1;}/* a mover that was placed anew (the film's VARG patrol) starts a fresh wake instead of drawing one from where it was */
       if(m.tt<0||T-m.tt>.25){m.tt=T;m.trail.unshift({x:sx,z:sz,t:T});if(m.trail.length>m.wake.N)m.trail.pop();}
-      updWake(m,{x:sx,z:sz,t:T},T);
+      updWake(m,{x:sx,z:sz,t:T},T);if(m.varg)m.wake.mesh.visible=false;/* VARG has no foam wake (taken away 17 okt, issue 4), only spray */
       const nv=m.g.userData.nav;if(nv){const L=R3.lit||0;if(!m.g.userData.navH)m.g.userData.navH=nv.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(2.4);n.m.add(h);return h;});
         m.g.updateMatrixWorld();const lc=m.g.worldToLocal((R3.navV||(R3.navV=new THREE.Vector3())).copy(R3.cam.position)),brg=Math.atan2(lc.z,lc.x);
         m.g.userData.navH.forEach(h=>{h.material.opacity=.9*L;});nv.forEach(n=>n.m.visible=L>0&&navSeen(n.sec,brg));}}}
@@ -4778,7 +4781,7 @@ function sync3D(dtr){
       const dx=cx-B.beam.position.x,dz=cz-B.beam.position.z,ca=Math.atan2(dz,dx),hit=Math.max(Math.cos(ca-ang),Math.cos(ca-ang-PI));const fl=Math.pow(Math.max(0,hit),30);B.flare.scale.setScalar(2.5+fl*16*(.3+nn));B.flare.material.opacity=(.35+.65*fl)*lit;}
     if(R3.sWin){R3.sWin.visible=lit>0;R3.sWin.material.opacity=.85*lit;}
     if(R3.sNav){R3.sNav.visible=lit>0;if(lit>0){const D=WORLD.surround,cc=R3.sNav.geometry.attributes.color;D.navs.forEach((q,i)=>{const on=lightOn(LIGHT_CH[q.ch],RTs+q.ph);const v=on?1:0;if(q.col==='red')cc.setXYZ(i,v,.18*v,.12*v);else cc.setXYZ(i,.2*v,v,.4*v);});cc.needsUpdate=true;R3.sNav.material.opacity=lit;}}
-    for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180,on=lit>0&&inSec&&lightOn(q.ch,RTs+z.ph);
+    for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<PI*70/180;q.flash=lit>0&&lightOn(q.ch,RTs+z.ph);const on=q.flash&&inSec;
       q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}
     for(const q of R3.baks||[]){const on=lit>0&&lightOn(q.ch,RTs+q.ph);q.lm.color.setHex(on?0xfff4dc:0xd8d6cc);q.glow.scale.setScalar(1.8+2.6*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
   R3.ship.position.x=CARRIER.x;R3.ship.position.z=CARRIER.y;R3.ship.rotation.y=-(CARRIER.a+PI/2);
@@ -5334,7 +5337,7 @@ $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStar
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
 $('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
-function restart(seed,doc,when){if(R3){debClear(null);filmClear();R3.fxSeen=new WeakSet();if(R3.uwake){for(const w of R3.uwake.values())R3.dyn.remove(w.wake.mesh);R3.uwake.clear();}}/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc){const t=performance.now();buildStatic();if(globalThis.__boot){__boot.rb=performance.now()-t;__boot.rbT=performance.now();__boot.rbF=0;}}else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
+function restart(seed,doc,when){if(R3){debClear(null);filmClear();R3.fxSeen=new WeakSet();if(R3.uwake)R3.uwake.clear();}/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc){const t=performance.now();buildStatic();if(globalThis.__boot){__boot.rb=performance.now()-t;__boot.rbT=performance.now();__boot.rbF=0;}}else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and starting hour */
 $('bNew').addEventListener('click',()=>{restart(1000+Math.floor(Math.random()*9000),'auto');opStart(true);});
 const DRIVE=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -6110,7 +6113,7 @@ function filmCam(dtr){
   S.f(Math.min(t-t0,dur),dur,dtr,FILM.S);FILM.S.first=false;
   if(S.k>=20&&S.k<31&&FILM.state!=='idle')filmBattle(dtr);
   if(R3.cam.fov!==FILM.fov){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
-  for(const m of(R3.movers||[]))if(m.varg){m.g.visible=FILM.useMovers;m.wake.mesh.visible=FILM.useMovers;}
+  for(const m of(R3.movers||[]))if(m.varg)m.g.visible=FILM.useMovers;
   {const bu=G.units.find(u=>u.kind==='eng'),bm=bu&&R3.units.get(bu.id);if(bm&&FILM.hideBeaver&&!FILM.beaverHeld)bm.visible=false;else if(bm)bm.visible=true;FILM.beaverHeld=false;}
   for(const k in FILM.act){const m=FILM.act[k];if(m.visible&&m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;}
   filmFx(dtr);
