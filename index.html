@@ -2244,8 +2244,11 @@ function linkClamp(x,y){const L=radioRelays(),k=linkAt(x,y,L);if(k.ok)return{x,y
 function move(u,dt){
   const o=u.orders[0];
   // a SPARV that has lost its link turns back towards the nearest relay until it has it again
+  /* the link counts as found again only 10 m inside the edge, and the message comes at most every 10 s: at the edge, with a
+     moving relay, it was lost and found every frame and said so thousands of times (issue 36) */
   if(u.kind==='scout'&&G.ctrl!==u.id&&!(o&&o.type==='rtb')){const lk=linkAt(u.x,u.y);
-    if(!lk.ok){let p=linkClamp(u.x,u.y);if(!u.linkLost){u.linkLost=true;u.lostT=-1;say(u,'Tappat radiolänken. Vänder tillbaka mot närmaste relä.');}u.path=null;
+    if(!lk.ok||u.linkLost&&lk.d>-10){let p=linkClamp(u.x,u.y);if(lk.ok){const r=lk.relay,d=lk.dist||1;p={x:r.x+(u.x-r.x)/d*(r.r-20),y:r.y+(u.y-r.y)/d*(r.r-20)};}
+      if(!u.linkLost){u.linkLost=true;u.lostT=-1;if(G.time-(u.lostMsgT??-99)>10){u.lostMsgT=G.time;say(u,'Tappat radiolänken. Vänder tillbaka mot närmaste relä.');}}u.path=null;
       // back into the net round known air defence, not straight over it: the same route as an order on Defensiv, renewed every second
       if(G.time-(u.lostT??-9)>1){u.lostT=G.time;if(airDanger(u,p.x,p.y)){const q=safePoint(u,p.x,p.y);if(q)p=q;}u.lostP=airPath(u,p.x,p.y,{type:'move',post:'def'});}
       if(u.lostP&&u.lostP.length){if(u.lostP.length>1&&Math.hypot(u.lostP[0].x-u.x,u.lostP[0].y-u.y)<8)u.lostP.shift();p=u.lostP[0];}
@@ -2258,7 +2261,7 @@ function move(u,dt){
   }
   if(!o){
     u.override=false;u.path=null;
-    if(u.air){orbit(u,dt);u.state=dist(u.orbit,CARRIER)<50?'Cirklar vid fartyget':'Cirklar över '+sq(u.orbit.x,u.orbit.y);}
+    if(u.air){/* the circle shrinks so that no part of it comes within reach of a known threat (issue 29) */orbit(u,dt,safeOrbR(u,u.orbit.x,u.orbit.y,38,u.post));u.state=dist(u.orbit,CARRIER)<50?'Cirklar vid fartyget':'Cirklar över '+sq(u.orbit.x,u.orbit.y);}
     else{u.state='Väntar på order';if(u.kind==='eng'&&G.ctrl!==u.id&&G.time>=(u.repScan||0)){u.repScan=G.time+1;const t=repairCand(u,150);if(t){u.orders.push({type:'repair',unit:t,post:'def',auto:true});say(u,'Lagar '+t.name+' i fält.');}}}
     return;
   }
@@ -2304,7 +2307,7 @@ function move(u,dt){
     if(dist(u,t)<REP.r){u.path=null;workRepair(t,u,o,dt);return;}tx=t.x;ty=t.y;arr=REP.r-6;u.state='På väg att laga '+t.name;}
   else{const h=svcHome(u);o.hp=h;tx=h.x;ty=h.y;arr=h.ship?34:10;u.state='Återvänder till '+h.name;}
   if(u.air&&(o.type==='move'||o.type==='obs')&&o.post!=='off'){
-    if(o.sv!==(G.tver||0)){o.sv=G.tver||0;o.safe=safePoint(u,tx,ty);if(o.safe&&!o.safeMsg){o.safeMsg=1;say(u,'Punkten ligger inom räckhåll för känt luftvärn. Håller mig utanför (Offensiv flyger in ändå).');}}
+    if(o.sv!==(G.tver||0)){o.sv=G.tver||0;o.safe=safePoint(u,tx,ty);if(o.safe&&!o.safeMsg){o.safeMsg=1;const e=airDanger(u,tx,ty);say(u,'Punkten ligger inom räckhåll för '+(e?ename(e):'känt luftvärn')+'. Håller mig utanför (Offensiv flyger in ändå).');}}
     if(o.safe){tx=o.safe.x;ty=o.safe.y;}
   }
   const d=Math.hypot(tx-u.x,ty-u.y);
@@ -2791,6 +2794,9 @@ function dropSpot(p){
 function krokFly(k,tx,ty,dt,sp,cap){
   cap=!!cap;if(!k.pathT||Math.hypot(tx-k.pathT.x,ty-k.pathT.y)>15||k.pathV!==(G.tver||0)||k.pathCap!==cap||(!k.path&&(!k.pathFail||G.time-(k.pathAt||0)>2))){k.path=krokPath(k,tx,ty,cap);k.pathT={x:tx,y:ty};k.pathV=G.tver||0;k.pathCap=cap;k.pathAt=G.time;k.pathFail=!k.path;}
   if(!k.path){k.blocked=true;return Infinity;}k.blocked=false;
+  // the route ends where the target is now, not where it was when the route was planned: within the 15 m before a new route
+  // the target may have moved (a pad on the moving ship) or be a new one close by, and KROK would stop short of it for good
+  if(k.path.length)k.path[k.path.length-1]={x:tx,y:ty};
   let p=k.path.length?k.path[0]:{x:tx,y:ty};
   while(k.path&&k.path.length>1&&Math.hypot(p.x-k.x,p.y-k.y)<5){k.path.shift();p=k.path[0];}
   const d=Math.hypot(p.x-k.x,p.y-k.y);
