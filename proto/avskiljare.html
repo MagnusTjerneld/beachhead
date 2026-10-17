@@ -1,0 +1,145 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Avskiljare</title>
+<style>html,body{margin:0;background:#a9bbc4;overflow:hidden}</style></head><body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// Test bench for field boundaries (avskiljare): six types side by side on flat farmland, lit like the game (17 okt).
+// Small walls and fences are not in the game for now (they would need destruction and blocking); the models are kept here.
+// Each type runs along x at its own z, with field or pasture strips between them.
+const PI=Math.PI,clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const R=rng(7331);
+const TYPES=[
+  {k:'mur',n:'A Stenmur'},
+  {k:'stangsel',n:'B Stenmur med stängsel'},
+  {k:'murbusk',n:'C Stenmur med buskage och träd'},
+  {k:'stenrad',n:'D Låg stenrad, delvis raserad'},
+  {k:'holme',n:'E Åkerholme: låg kulle med buskage'},
+  {k:'rygg',n:'F Bergrygg med häll, en och tall'}];
+const ZS=55,LEN=90,X0=-LEN/2; TYPES.forEach((t,i)=>t.z=i*ZS);
+// mound height for E and F
+function hAt(x,z){let h=0;
+  for(const t of TYPES){if(t.k!=='holme'&&t.k!=='rygg')continue;const dz=z-t.z,u=clamp(1-Math.abs(x)/(LEN/2+8),0,1),ends=u*u*(3-2*u);
+    const wid=t.k==='holme'?11:15,H=t.k==='holme'?2.6:7,w=wid*(1+.25*Math.sin(x*.07+i3(t)))*(.8+.2*ends);
+    const q=clamp(1-Math.abs(dz)/w,0,1),prof=q*q*(3-2*q);
+    const knoll=1+.25*Math.sin(x*.19+1.3)*Math.sin(x*.11+dz*.2);
+    h+=H*prof*ends*knoll;}
+  return h;}
+function i3(t){return t.z*.13;}
+function rockFrac(x,z){// exposed granite on the ridge F
+  const t=TYPES[5],dz=z-t.z;if(Math.abs(dz)>16||Math.abs(x)>LEN/2+6)return 0;
+  const h=hAt(x,z),n=Math.sin(x*.21+dz*.37)+Math.sin(x*.09-dz*.5)*.8+Math.sin(x*.43+dz*.13)*.4;
+  return clamp((n+h*.18-1.0)*1.4,0,1);}
+
+let renderer,scene,cam,sun;
+function mkGround(){const W=180,D=TYPES.length*ZS+60,S=1;const nx=Math.round(W/S),nz=Math.round(D/S);
+  const g=new THREE.PlaneGeometry(W,D,nx,nz);g.rotateX(-PI/2);g.translate(0,0,(TYPES.length-1)*ZS/2);
+  const p=g.attributes.position,col=new Float32Array(p.count*3);const AKER=[.55,.58,.33],HAGE=[.47,.56,.3],GRAN=[.47,.46,.44],TALL=[.52,.6,.31];
+  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,hAt(x,z));
+    // strips: the land between two boundaries alternates field and pasture
+    const band=Math.floor((z+ZS/2)/ZS);let c=(band%2?HAGE:AKER).slice();
+    // field rows
+    if(!(band%2)){const r=.5+.5*Math.sin(x*1.6);c=c.map(v=>v*(.96+.06*r));}
+    // nearest boundary: an unmown strip along it, a bit taller and yellower grass
+    const bi=Math.round(z/ZS),t=TYPES[clamp(bi,0,TYPES.length-1)],dz=Math.abs(z-t.z),inX=Math.abs(x)<LEN/2+2;
+    if(inX&&t.k!=='holme'&&t.k!=='rygg'){const k=clamp(1-(dz-1)/2.5,0,1);c=c.map((v,j)=>lerp(v,TALL[j]*.9,k));}
+    if(t.k==='holme'||t.k==='rygg'){const hh=hAt(x,z);if(hh>.2)c=c.map((v,j)=>lerp(v,[.42,.5,.27][j],clamp(hh/1.5,0,1)));}
+    const rf=rockFrac(x,z);if(rf>0)c=c.map((v,j)=>lerp(v,GRAN[j],rf));
+    const n=.95+.1*R();col.set(c.map(v=>v*n),i*3);}
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();
+  const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));m.receiveShadow=true;scene.add(m);}
+
+// stone shapes: a subdivided icosahedron, every corner pushed in or out by a hash of its position (so faces stay closed),
+// then squashed. Vertex colours carry moss on the upward faces and lichen spots; the instance colour is the rock itself.
+function stoneGeo(seed,moss){const g=new THREE.IcosahedronGeometry(1,1),p=g.attributes.position,rr=rng(seed),key={},col=new Float32Array(p.count*3);
+  const sq=[.85+rr()*.3,.6+rr()*.2,.75+rr()*.25];
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),k=Math.round(x*50)+','+Math.round(y*50)+','+Math.round(z*50);
+    if(key[k]===undefined)key[k]=.8+rr()*.35;const f=key[k];p.setXYZ(i,x*f*sq[0],Math.max(y*f*sq[1],-.25),z*f*sq[2]);}
+  g.computeVertexNormals();const n=g.attributes.normal;
+  for(let i=0;i<p.count;i++){const up=n.getY(i),y=p.getY(i);let c=[1,1,1];const lich=rng(Math.round(p.getX(i)*97+p.getZ(i)*131+seed))();
+    if(lich>.7)c=[1.15,1.13,1.05];else if(lich<.15)c=[.85,.86,.8];
+    const mz=clamp((up-.15)*1.8,0,1)*moss*clamp(y*3+.3,0,1);c=c.map((v,j)=>lerp(v,[.72,.9,.36][j],mz));col.set(c,i*3);}
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));return g;}
+const STONEC=[[.5,.5,.48],[.44,.44,.42],[.54,.5,.47],[.4,.41,.4],[.56,.56,.53],[.5,.47,.45]];
+function bushGeo(seed,kind){// a bush: several squashed clumps merged; juniper is one tall narrow column of clumps
+  const rr=rng(seed),pos=[],col=[];const nb=kind==='en'?4:5+Math.floor(rr()*3);
+  for(let j=0;j<nb;j++){const g=new THREE.IcosahedronGeometry(1,1).toNonIndexed(),a=g.attributes.position.array;
+    let cx,cy,cz,r;if(kind==='en'){cx=(rr()-.5)*.25;cz=(rr()-.5)*.25;cy=.35+j*.45;r=.42-j*.06;}
+    else{const an=rr()*PI*2,d=Math.sqrt(rr())*.75;cx=Math.cos(an)*d;cz=Math.sin(an)*d;cy=.45+rr()*.35+(1-d)*.35;r=.45+rr()*.3;}
+    for(let i=0;i<a.length;i+=3){const jit=.85+rr()*.3;const x=cx+a[i]*r*jit,y=Math.max(0,cy+a[i+1]*r*(kind==='en'?1.3:.85)*jit),z=cz+a[i+2]*r*jit;pos.push(x,y,z);
+      const sh=clamp(.6+y*.35,0,1.15);col.push(sh,sh,sh*.95);}g.dispose();}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();return g;}
+const BUSHC={hassel:[.36,.5,.22],slan:[.27,.39,.2],nypon:[.38,.48,.24],en:[.2,.31,.22]};
+
+const stones=[],bushes=[],trees=[],posts=[];
+function addStone(x,z,s,y0,vari){stones.push({x,z,s:s*(.85+R()*.3),y:(y0||0)+hAt(x,z),a:R()*PI*2,t:Math.floor(R()*6),c:vari!=null?vari:Math.floor(R()*STONEC.length),tilt:(R()-.5)*.4});}
+// a dry stone wall: a bottom course of two rows of big stones side by side, a top course of smaller stones riding between
+// them, packed so they touch; the line wanders a little like a real wall laid along a field edge
+function wall(z0,o){o=o||{};const H=o.h||1,gap=o.gap||0;let x=X0;const wob=x=>Math.sin(x*.05+z0)*.8+Math.sin(x*.13)*.25;
+  while(x<X0+LEN){const s=(.35+R()*.25)*H;if(gap&&R()<gap){x+=s*2;continue;}
+    const z=z0+wob(x);addStone(x,z-.28*H,s,s*.25);addStone(x+s*.5,z+.28*H,s*(.85+R()*.2),s*.25);
+    if(!o.low){const s2=(.24+R()*.16)*H;addStone(x+s*.4,z+(R()-.5)*.25,s2,s*.25+s*.6+s2*.2);if(R()<.35)addStone(x+s*.9,z+(R()-.5)*.3,s2*.8,s*.9+s2*.3);}
+    x+=s*(1.25+R()*.25);}}
+function fence(z0,side){for(let x=X0;x<X0+LEN;x+=3+R()*.4)posts.push({x,z:z0+side+Math.sin(x*.05+z0)*.8,y:hAt(x,z0)});}
+function bush(x,z,s,kind){bushes.push({x,z,s,kind,y:hAt(x,z)-.15,a:R()*PI*2});}
+function tree(x,z,s,kind){trees.push({x,z,s,kind,y:hAt(x,z)});}
+function build(){
+  for(const t of TYPES){const z=t.z;
+    if(t.k==='mur')wall(z);
+    if(t.k==='stangsel'){wall(z,{h:.9});fence(z,1.3);}
+    if(t.k==='murbusk'){wall(z,{h:.9});
+      for(let x=X0;x<X0+LEN;x+=1.5+R()*3){if(R()<.25)continue;const kd=R()<.5?'hassel':R()<.6?'slan':'nypon';bush(x,z+1.6+R()*2.2,1.2+R()*1.3,kd);}
+      for(let x=X0+5;x<X0+LEN;x+=9+R()*14)tree(x,z+2.5+R()*2,.9+R()*.4,R()<.55?'bjork':'ek');}
+    if(t.k==='stenrad'){wall(z,{h:.75,low:true,gap:.18});for(let i=0;i<10;i++)addStone(X0+R()*LEN,z+(R()-.5)*3,.3+R()*.2,0);
+      for(let i=0;i<5;i++)bush(X0+R()*LEN,z+(R()-.5)*2,.9+R()*.6,R()<.5?'nypon':'en');}
+    if(t.k==='holme'){// rocks breaking the turf, dense bush clumps on the flanks, a few broadleaf trees on top
+      for(let i=0;i<55;i++){const x=X0+R()*LEN,dz=(R()-.5)*16;if(hAt(x,z+dz)<.4)continue;addStone(x,z+dz,.5+R()*.9,-.35);}
+      for(let c=0;c<14;c++){const cx=X0+4+R()*(LEN-8),cz=z+(R()-.5)*14,n=4+Math.floor(R()*7);
+        for(let i=0;i<n;i++){const x=cx+(R()-.5)*7,zz=cz+(R()-.5)*4;if(hAt(x,zz)<.25)continue;bush(x,zz,1.1+R()*1.4,R()<.45?'hassel':R()<.5?'slan':'nypon');}}
+      for(let i=0;i<7;i++){const x=X0+8+R()*(LEN-16),zz=z+(R()-.5)*6;tree(x,zz,.9+R()*.5,R()<.5?'ek':'bjork');}}
+    if(t.k==='rygg'){
+      for(let i=0;i<500;i++){const x=X0+R()*LEN,zz=z+(R()-.5)*30;const h=hAt(x,zz);if(h<.3)continue;const rf=rockFrac(x,zz);
+        if(rf>.3){if(R()<.25)addStone(x,zz,.6+R()*1.1,-.45,R()<.5?0:2);continue;}
+        const u=R();if(u<.3)bush(x,zz,.9+R()*.9,'en');else if(u<.42)bush(x,zz,1+R()*1.2,R()<.5?'slan':'nypon');else if(u<.5&&h>1.5)tree(x,zz,.7+R()*.5,'tall');}}}
+}
+function draw(){const d=new THREE.Object3D(),cl=new THREE.Color();
+  // stones
+  const sg=[...Array(6)].map((_,i)=>stoneGeo(101+i*17,.9));const sm=new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true});
+  sg.forEach((g,ti)=>{const L=stones.filter(s=>s.t===ti);if(!L.length)return;const m=new THREE.InstancedMesh(g,sm,L.length);
+    L.forEach((s,i)=>{d.position.set(s.x,s.y,s.z);d.rotation.set(s.tilt,s.a,s.tilt*.5);d.scale.setScalar(s.s);d.updateMatrix();m.setMatrixAt(i,d.matrix);
+      const c=STONEC[s.c];cl.setRGB(c[0],c[1],c[2]);m.setColorAt(i,cl);});m.castShadow=m.receiveShadow=true;scene.add(m);});
+  // bushes
+  const bm=new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true});
+  for(const kind of Object.keys(BUSHC)){const gs=[0,1,2].map(j=>bushGeo(500+j*31+kind.length*7,kind==='en'?'en':'b'));
+    gs.forEach((g,gi)=>{const L=bushes.filter((b,i)=>b.kind===kind&&i%3===gi);if(!L.length)return;const m=new THREE.InstancedMesh(g,bm,L.length);
+      L.forEach((b,i)=>{d.position.set(b.x,b.y,b.z);d.rotation.set(0,b.a,0);const w=b.s*(kind==='en'?.7:1.3);d.scale.set(w,b.s*(kind==='en'?1.1:.95),w*(.8+R()*.4));d.updateMatrix();m.setMatrixAt(i,d.matrix);
+        const c=BUSHC[kind],v=.88+R()*.24;cl.setRGB(c[0]*v,c[1]*v,c[2]*v);m.setColorAt(i,cl);});m.castShadow=m.receiveShadow=true;scene.add(m);});}
+  // trees: simple stand-ins in the game's style
+  const trunkW=new THREE.MeshLambertMaterial({color:0xe9e6dc}),trunkB=new THREE.MeshLambertMaterial({color:0x5a4a3a}),trunkP=new THREE.MeshLambertMaterial({color:0xa0603a});
+  const leafB=new THREE.MeshLambertMaterial({color:0x6f9a3c,flatShading:true}),leafO=new THREE.MeshLambertMaterial({color:0x4e7430,flatShading:true}),needle=new THREE.MeshLambertMaterial({color:0x34502e,flatShading:true});
+  const cyl=new THREE.CylinderGeometry(.18,.28,1,6),ico=new THREE.IcosahedronGeometry(1,0);
+  for(const t of trees){const g=new THREE.Group();g.position.set(t.x,t.y,t.z);const s=t.s;
+    const H=t.kind==='ek'?9:t.kind==='bjork'?13:12;const tr=new THREE.Mesh(cyl,t.kind==='bjork'?trunkW:t.kind==='tall'?trunkP:trunkB);tr.scale.set(s*(t.kind==='ek'?2:1),H*s*.7,s*(t.kind==='ek'?2:1));tr.position.y=H*s*.35;g.add(tr);
+    const nc=t.kind==='ek'?5:t.kind==='bjork'?4:3;for(let i=0;i<nc;i++){const c=new THREE.Mesh(ico,t.kind==='ek'?leafO:t.kind==='bjork'?leafB:needle);
+      const w=t.kind==='ek'?3.2:t.kind==='bjork'?2:2.4;c.scale.set(w*s,(t.kind==='bjork'?2.6:t.kind==='tall'?1.1:2.2)*s,w*s);
+      c.position.set((R()-.5)*w*s*.9,H*s*(t.kind==='tall'?.78+i*.08:.55+i*.1),(R()-.5)*w*s*.9);c.rotation.y=R()*6;g.add(c);}
+    g.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});scene.add(g);}
+  // fence posts and two wires
+  const pm=new THREE.MeshLambertMaterial({color:0x8a7a62}),pg=new THREE.BoxGeometry(.1,1.25,.1);
+  for(const p of posts){const m=new THREE.Mesh(pg,pm);m.position.set(p.x,p.y+.62,p.z);m.castShadow=true;scene.add(m);}
+  for(let i=0;i+1<posts.length;i++){const a=posts[i],b=posts[i+1];for(const hy of [.6,1.05]){const l=Math.hypot(b.x-a.x,b.z-a.z),m=new THREE.Mesh(new THREE.BoxGeometry(l,.02,.02),new THREE.MeshLambertMaterial({color:0x777a7c}));
+    m.position.set((a.x+b.x)/2,a.y+hy,(a.z+b.z)/2);m.rotation.y=-Math.atan2(b.z-a.z,b.x-a.x);scene.add(m);}}
+}
+function init(w,h){renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(w,h);renderer.setPixelRatio(1);
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+  scene=new THREE.Scene();scene.background=new THREE.Color(0xa9bbc4);scene.fog=new THREE.Fog(0xa9bbc4,400,1600);
+  cam=new THREE.PerspectiveCamera(58,w/h,.3,3000);
+  scene.add(new THREE.HemisphereLight(0xe4edf2,0x4b4a3c,.85));
+  sun=new THREE.DirectionalLight(0xfff0d4,.75);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);sun.shadow.bias=-.0004;sun.shadow.normalBias=.05;scene.add(sun,sun.target);
+  mkGround();build();draw();}
+// shot: camera and target, the shadow box fitted around the target
+window.shot=(c,l,box,fov)=>{cam.fov=fov||58;cam.updateProjectionMatrix();cam.position.set(c[0],c[1],c[2]);cam.lookAt(l[0],l[1],l[2]);
+  sun.target.position.set(l[0],0,l[2]);sun.position.set(l[0]-1*300,1.4*300,l[2]-.8*300);const sc=sun.shadow.camera;sc.left=sc.bottom=-box;sc.right=sc.top=box;sc.near=10;sc.far=1200;sc.updateProjectionMatrix();
+  renderer.render(scene,cam);return renderer.domElement.toDataURL('image/png');};
+window.TYPES=TYPES;window.hAt=hAt;
+const q=new URLSearchParams(location.search);init(+q.get('w')||1280,+q.get('h')||720);window.ready=true;
+</script></body></html>
