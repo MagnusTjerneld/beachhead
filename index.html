@@ -934,6 +934,13 @@ function buildWorldTry(seed,tryK){
   const relays=[zc[r1z],zc[r2z],zc[r3z]].map(p=>({x:p.x,y:p.y}));
   if(r2z===r1z)relays[1]=snapZ({x:relays[0].x+80,y:relays[0].y+60},r1z);
   {const Rt=rng(s*31+7),a=Rt()<.5?['varv','verkstad']:['verkstad','varv'];relays[0].type=a[0];Rt();relays[1].type='radar';relays[2].type='central';}
+  /* the radar station is always within reach of the net: within 850 m of Birka at anchor or in the harbour, or 500 m of another
+     point (NET.ship and NET.point); otherwise it moves to the place in its own zone closest to the nearest of them (decided 18 okt,
+     issue 37 c: on island 1490 nothing reached it, and units sent there were cut off) */
+  {const P=W.birkaPath,src=[{x:CARRIER.x,y:CARRIER.y,r:850},...(P?[{x:P.pts[P.pts.length-1].x,y:P.pts[P.pts.length-1].y,r:850}]:[]),{x:relays[0].x,y:relays[0].y,r:500},{x:relays[2].x,y:relays[2].y,r:500}];
+    const gap=q=>Math.min(...src.map(c=>Math.hypot(q.x-c.x,q.y-c.y)-c.r));
+    if(gap(relays[1])>0){let best=null;for(const c of src){const q=snapZ(c,r2z);if(q&&(!best||gap(q)<gap(best)))best=q;}
+      if(best&&gap(best)<gap(relays[1])){relays[1].x=best.x;relays[1].y=best.y;W.r2moved=true;}}}
   W.relays=relays;W.landing=landing;W.zid=zid;W.zones={r1z,r2z,r3z,land,hz};
   // roads along passes
   const stamp=pts=>{for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(d/3));for(let k=0;k<=n;k++){const x=lerp(a.x,b.x,k/n),y=lerp(a.y,b.y,k/n);const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const cx=gx+ox,cy=gy+oy;if(cx<0||cy<0||cx>=GW||cy>=GH)continue;const c=cy*GW+cx;const cc=cellCenter(c);if(Math.hypot(cc.x-x,cc.y-y)<7.5&&(grid[c]===LAND||grid[c]===BEACH))W.road[c]=1;}}}};
