@@ -5616,7 +5616,8 @@ function onDown(e){
     if(pts.size===2){if(ptr)clearTimeout(ptr.lp);ptr=null;G.box=null;G.drag=null;const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:mv.z,wm:{x:(mx-mapX.ox)/mapX.s,y:(my-mapX.oy)/mapX.s}};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}}
   if(e.button===2)return;
   /* in the wide layout the camera is as big as the main view: a click in it aims and fires there too (18 okt, test round 9949) */
-  if(G.ctrl&&kind==='cam'&&(isMain('cam')||LAYOUT.on)){const cu=unitById(G.ctrl);if(cu&&(cu.kind==='tank'||cu.kind==='drone')){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}
+  if(G.ctrl&&kind==='cam'){const cu=unitById(G.ctrl),gun=!!cu&&(cu.kind==='tank'||cu.kind==='drone');/* flying KROK in the wide layout, a click in the camera still gives orders (test round 6718) */
+    if(isMain('cam')||LAYOUT.on&&gun){if(gun){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}}
   const x=e.offsetX,y=e.offsetY,pk=pick(kind,x,y),su=selUnit();
   let dragFrom=null;
   if(su){if(pk.unit&&G.selIds.includes(pk.unit.id))dragFrom={x:pk.unit.x,y:pk.unit.y};else if(pk.wp&&pk.wp.i===su.orders.length-1){const p=orderPt(su.orders[pk.wp.i]);dragFrom={x:p.x,y:p.y};}}
@@ -5663,12 +5664,14 @@ function onUp(e){
 for(const el of[mapC,glC]){
   el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);
   el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;G.joy=null;pts.delete(e.pointerId);pinch=null;});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on||performance.now()-mlookOffT<800)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
   el.addEventListener('pointermove',e=>{HOV.el=el;HOV.x=e.offsetX;HOV.y=e.offsetY;const t=performance.now();if(t-HOV.t>70){HOV.t=t;HOV.pk=G&&!TITLE.on?hoverOf(pick(viewKind(el),e.offsetX,e.offsetY)):null;}});
   el.addEventListener('pointerleave',()=>{if(HOV.el===el){HOV.el=null;HOV.pk=null;}});
 }
 
-document.addEventListener('mousedown',e=>{if(G.mlook&&e.button===2){e.preventDefault();document.exitPointerLock();}},true);
+/* the right click that lets go of the aim does only that: the context menu event that follows it opens no wheel (test round 6718) */
+let mlookOffT=-1e9;
+document.addEventListener('mousedown',e=>{if(G.mlook&&e.button===2){e.preventDefault();mlookOffT=performance.now();document.exitPointerLock();}},true);
 document.addEventListener('pointerlockchange',()=>{G.mlook=document.pointerLockElement===glC;if(!G.mlook)G.firing=false;uiTick(true);});
 document.addEventListener('contextmenu',e=>{if(!TITLE.on&&e.target.closest&&e.target.closest('#paneMap,#paneCam,#feeds,#roster,.wheel'))e.preventDefault();});
 document.addEventListener('mousemove',e=>{if(!G.mlook||!G.ctrl)return;const u=unitById(G.ctrl);if(u&&u.kind==='drone'){u.heading=angWrap(u.heading+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.6,.4);return;}if(!u||u.kind!=='tank')return;u.turret=angWrap(u.turret+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.3,.35);});
