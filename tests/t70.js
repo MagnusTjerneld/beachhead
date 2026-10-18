@@ -49,4 +49,20 @@ const onPads=G=>Object.values(G.pads.ship||[]).filter(Boolean).length;
   const h=B.makeUnit('drone',q.x,q.y);h.pad={key:R.id,i:0,t:5};G.pads[R.id]=[h.id,null,null,null];h.onPad=true;h.orders=[{type:'rtb',post:'def',svc:R.id}];h.rtb=true;G.units.push(h);
   const aa=B.makeEnemy({id:'QA',kind:'aa',x:q.x+60,y:q.y});aa.seen=true;G.enemies.push(aa);const t=B.makeEnemy({id:'QT',kind:'turret',x:q.x-60,y:q.y});t.seen=true;G.enemies.push(t);
   B.step(.05);ok(t.tgtU===h,'the bunker takes the landed HÖK as its target');ok(aa.tgtU!==h,'the air defence does not');}
+// 7. a new VARG from the bay leaves by the side ramp; under way the ramps fold up and nobody drives on or off
+{const G=setup(1490),C=B.CARRIER,v=B.makeUnit('tank',0,0);const f={x:Math.cos(C.a),y:Math.sin(C.a)},S=(lat,fwd)=>({x:C.x-f.y*lat+f.x*fwd,y:C.y+f.x*lat+f.y*fwd});
+  const b=S(9,2);v.x=b.x;v.y=b.y;G.units.push(v);const q=S(60,0);B.giveOrder(v,{type:'move',x:q.x,y:q.y,post:'def'});let viaSide=false,wasIn=true;
+  for(let i=0;i<20*40;i++){B.step(.05);const l=loc(v),inHull=Math.abs(l.lat)<16&&Math.abs(l.fwd)<45;if(wasIn&&!inHull){viaSide=l.lat>15&&l.fwd>-4&&l.fwd<8;break;}wasIn=inHull;}
+  ok(viaSide,'a VARG in the build bay leaves by the side ramp');
+  if(G.harbor){G.harbor.secured=true;G.harbor.docked=false;run(5);ok(G.ramp.stern===0&&G.ramp.side===0,'under way both ramps are folded up');
+    const w=B.makeUnit('tank',S(0,-80).x,S(0,-80).y);w.hp=50;G.units.push(w);B.sendToService(w,'ship');run(15);ok(!w.onPad&&/rampen/.test(w.state),'a VARG waits astern while the ramp is up ('+w.state+')');}
+  else ok(true,'(no harbour on this island)');}
+// 8. in the harbour Birka lies backed in, starboard to a long quay; a BÄVER drives ashore by a ramp, and a VARG from land comes aboard by the stern
+{B.SHAPE_CFG.force='as';B.SHAPE_CFG.rough=1;const G=setup(1000);B.SHAPE_CFG.force=null;const W=B.W,D=W.harbor.dock;B.moveCarrier(D.x,D.y,D.a);G.harbor.secured=true;G.harbor.docked=true;G.ramp={stern:1,side:1};
+  const H=W.harbor,stern=loc({x:H.x-H.nx*124,y:H.y-H.ny*124});ok(Math.abs(B.CARRIER.a-Math.atan2(H.ny,H.nx))<.01&&stern.fwd<-46&&stern.fwd>-56,'Birka lies bow to the mouth with her stern '+(-stern.fwd-46).toFixed(1)+' m off the inner quay');
+  const e=G.units.find(u=>u.kind==='eng');const q=W.harborQ;B.giveOrder(e,{type:'move',x:q.x,y:q.y,post:'def'});let lifted=false;for(let i=0;i<20*60&&Math.hypot(e.x-q.x,e.y-q.y)>15;i++){B.step(.05);if(e.carried)lifted=true;}
+  ok(!lifted&&Math.hypot(e.x-q.x,e.y-q.y)<=15,'a BÄVER on deck drives ashore by a ramp, no KROK ('+Math.hypot(e.x-q.x,e.y-q.y).toFixed(0)+' m from the point)');
+  G.units=G.units.filter(u=>u!==e);const v=B.makeUnit('tank',q.x,q.y);v.hp=60;G.units.push(v);B.sendToService(v,'ship');let bad=0,wasOut=true;
+  for(let i=0;i<20*90&&!(v.onPad&&v.hp>=v.maxhp);i++){B.step(.05);const l=loc(v),inHull=Math.abs(l.lat)<16&&l.fwd>-45&&l.fwd<45;if(inHull&&wasOut&&l.fwd>-43)bad++;wasOut=!inHull;}
+  ok(!bad&&v.onPad&&v.hp>=v.maxhp,'a VARG from land comes aboard by the stern ramp and is mended ('+Math.round(v.hp)+', '+v.state+')');}
 console.log(fail?fail+' failed':'all passed');process.exit(fail?1:0);
