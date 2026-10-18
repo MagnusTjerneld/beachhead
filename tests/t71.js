@@ -18,7 +18,7 @@ const land=(G,r)=>{const L=G.relays[r];return{x:L.x,y:L.y};};
 {const G=setup(7341),p=land(G,0),a=B.makeUnit('tank',p.x,p.y),b=B.makeUnit('tank',p.x+12,p.y),r=B.makeUnit('eng',p.x+20,p.y+10);G.units.push(a,b,r);
   B.setSel([a.id,b.id]);B.assignWing('2');b.hp=b.maxhp*.4;const P={x:p.x+250,y:p.y};B.groupOrder({world:P},false);B.giveOrder(r,{type:'repair',unit:b,post:'def'});
   let t=0;for(let i=0;i<120*20&&!(b.hp>=b.maxhp*.74&&b.orders.length);i++){B.step(.05);t+=.05;}const o=b.orders[0];
-  ok(b.hp>=b.maxhp*.74&&o&&o.type==='move'&&Math.hypot(o.x-a.x,o.y-a.y)<=40,'a VARG repaired in the field ('+Math.round(b.hp/b.maxhp*100)+' % after '+t.toFixed(0)+' s) drives after its wing, which is already there'+(o?'':' (no order)'));}
+  ok(b.hp>=b.maxhp*.74&&o&&o.type==='move'&&(Math.hypot(o.x-a.x,o.y-a.y)<=40||Math.hypot(o.x-P.x,o.y-P.y)<=40),'a VARG repaired in the field ('+Math.round(b.hp/b.maxhp*100)+' % after '+t.toFixed(0)+' s) drives after its wing, to the leader or to the point of the wing'+(o?'':' (no order)'));}
 // 3. the whole wing to service: only those that need it, each to its own place
 {const G=setup(7341),p=land(G,0),a=B.makeUnit('tank',p.x,p.y),b=B.makeUnit('tank',p.x+12,p.y),h=B.makeUnit('drone',p.x,p.y+20);G.units.push(a,b,h);
   b.hp=b.maxhp*.6;h.ammo=0;B.groupService([a,b,h],'Wing 3');
@@ -39,7 +39,7 @@ const land=(G,r)=>{const L=G.relays[r];return{x:L.x,y:L.y};};
   B.setSel([b.id]);B.groupOrder({world:{x:p.x+200,y:p.y}},false);ok(!b.rtb&&b.orders[0].type==='move','an order to it alone sends it');}
 // 7. test round 9949: a VARG retreating from a bunker that hits it, with Birka on the far side of the bunker, first leaves the
 // bunker's reach by the shortest way instead of driving past it, then goes to service
-{let n=0,okN=0,info=[];for(const sd of[7341,1490,5555]){const G=setup(sd),C=B.CARRIER,L=G.relays[0],e=B.makeEnemy({id:'QB',kind:'turret',x:L.x,y:L.y});e.seen=true;e.lx=e.x;e.ly=e.y;e.dmg=1;e.hp=e.maxhp=5000;G.enemies.push(e);
+{let n=0,okN=0,info=[];for(const sd of[7341,1490,5555]){const G=setup(sd),C=B.CARRIER,L=G.relays.find(r=>!B.lockedAt(r.x,r.y))/* R1 stands behind a barrier on some islands since 19 okt */,e=B.makeEnemy({id:'QB',kind:'turret',x:L.x,y:L.y});e.seen=true;e.lx=e.x;e.ly=e.y;e.dmg=1;e.hp=e.maxhp=5000;G.enemies.push(e);
   const d=Math.hypot(L.x-C.x,L.y-C.y),v=B.makeUnit('tank',L.x+(L.x-C.x)/d*e.range*.6,L.y+(L.y-C.y)/d*e.range*.6);G.units.push(v);v.hp=v.maxhp*.25;
   let mn=1e9,left=null;for(let i=0;i<40*20&&left==null;i++){B.step(.05);const r=Math.hypot(v.x-e.x,v.y-e.y);mn=Math.min(mn,r);if(r>e.range+10)left=G.time;}
   n++;if(left!=null&&mn>e.range*.6-25)okN++;info.push(Math.round(mn)+'/'+Math.round(e.range*.6)+(left==null?' kvar':''));}
