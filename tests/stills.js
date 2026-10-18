@@ -17,19 +17,32 @@ const SERIES={
   arstider:{cols:3,shots:[['15 jan','01-15'],['1 apr','04-01'],['20 apr','04-20'],['10 maj','05-10'],['1 jul','07-01'],['15 sep','09-15'],['15 okt','10-15'],['10 nov','11-10'],['20 dec','12-20']].map(([l,d])=>({label:l,datum:d,klocka:'12:00',moln:20,...low}))},
   manader:{cols:4,shots:['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'].map((m,i)=>({label:'15 '+m,datum:String(i+1).padStart(2,'0')+'-15',klocka:'12:00',moln:20,...low}))},
   vinter:{cols:2,shots:[['15 jan 12','01-15','12:00'],['15 jan 22','01-15','22:00'],['20 dec 12','12-20','12:00'],['20 dec 22','12-20','22:00']].map(([l,d,k])=>({label:l,datum:d,klocka:k,moln:20,...low}))},
-  ar:{cols:6,w:240,h:142,shots:[].concat(...['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'].map((m,i)=>[0,4,8,12,16,20].map(h=>({label:m+' '+String(h).padStart(2,'0'),datum:String(i+1).padStart(2,'0')+'-15',klocka:String(h).padStart(2,'0')+':00',moln:20,...low}))))}};
+  ar:{cols:6,w:240,h:142,title:'Ett år i skärgården: ö 1234 den 15:e varje månad, 59,4° N',
+    rowLabels:['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'],
+    colLabels:[0,4,8,12,16,20].map(h=>'kl '+String(h).padStart(2,'0')),shots:[].concat(...['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'].map((m,i)=>[0,4,8,12,16,20].map(h=>({label:m+' '+String(h).padStart(2,'0'),datum:String(i+1).padStart(2,'0')+'-15',klocka:String(h).padStart(2,'0')+':00',moln:20,...low}))))}};
 const S=SERIES[arg[0]]||JSON.parse(fs.readFileSync(arg[0],'utf8'));
 const seed=S.seed||1234,W=S.w||560,H=S.h||340,cols=S.cols||3;
 const doyOf=(m,d)=>Math.round((Date.UTC(2032,m-1,d)-Date.UTC(2032,0,1))/864e5)+1;
-(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox','--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
-  const p=await b.newPage({viewport:{width:W,height:H}});p.on('pageerror',e=>console.log('ERR',e.message));
+// in the cloud: its own Chromium on swiftshader; on a desktop the graphics card (swiftshader loses the WebGL context there)
+const cloud=fs.existsSync('/opt/pw-browsers/chromium');
+(async()=>{const b=await chromium.launch({executablePath:cloud?'/opt/pw-browsers/chromium':undefined,args:['--no-sandbox','--ignore-gpu-blocklist',...(cloud?['--use-gl=swiftshader','--enable-unsafe-swiftshader']:['--enable-gpu'])]});
+  // the screen layouts give the camera pane only part of the window, so render in a big window and scale down in the sheet
+  const p=await b.newPage({viewport:{width:1600,height:900}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
-  await p.goto('file://'+path.join(__dirname,'..','index.html')+'?seed='+seed+'&nointro',{waitUntil:'commit',timeout:120000});
+  await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro',{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
   const imgs=[];for(const s of S.shots){const o={...s};if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}
+    await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice */
     imgs.push(await p.evaluate(o=>globalThis.__BHstill(o),o));process.stdout.write('.');}
-  // the contact sheet is drawn in the page itself
-  const sheet=await p.evaluate(async([imgs,labels,W,H,cols])=>{const rows=Math.ceil(imgs.length/cols),c=document.createElement('canvas');c.width=W*cols;c.height=H*rows;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,c.width,c.height);
-    for(let i=0;i<imgs.length;i++){const im=new Image();await new Promise(r=>{im.onload=r;im.src=imgs[i];});x.drawImage(im,(i%cols)*W,Math.floor(i/cols)*H,W,H);x.font='13px sans-serif';x.fillStyle='#ffd84a';x.fillText(labels[i]||'',(i%cols)*W+6,Math.floor(i/cols)*H+16);}
-    return c.toDataURL('image/jpeg',.86);},[imgs,S.shots.map(s=>s.label),W,H,cols]);
+  // the contact sheet is drawn in the page itself; with rowLabels/colLabels the labels go in margins instead of on the pictures
+  const sheet=await p.evaluate(async([imgs,labels,W,H,cols,title,rowL,colL])=>{const rows=Math.ceil(imgs.length/cols),grid=!!(rowL||colL),
+      L=rowL?110:0,T=(title?34:0)+(colL?40:0),c=document.createElement('canvas');c.width=L+W*cols;c.height=T+H*rows;const x=c.getContext('2d');
+    x.fillStyle=grid?'#0d111a':'#000';x.fillRect(0,0,c.width,c.height);
+    if(title){x.font='bold 20px sans-serif';x.fillStyle='#eee';x.fillText(title,L,26);}
+    x.font='15px sans-serif';x.fillStyle='#ccc';x.textBaseline='middle';
+    if(colL){x.textAlign='center';colL.forEach((t,i)=>x.fillText(t,L+i*W+W/2,T-20));x.textAlign='left';}
+    if(rowL)rowL.forEach((t,i)=>x.fillText(t,10,T+i*H+H/2));x.textBaseline='alphabetic';
+    for(let i=0;i<imgs.length;i++){const im=new Image();await new Promise(r=>{im.onload=r;im.src=imgs[i];});const px=L+(i%cols)*W,py=T+Math.floor(i/cols)*H;const k=Math.max(W/im.width,H/im.height),sw=W/k,sh=H/k;x.drawImage(im,(im.width-sw)/2,im.height-sh,sw,sh,px,py,W,H);
+      if(grid){x.strokeStyle='#0d111a';x.lineWidth=2;x.strokeRect(px,py,W,H);}else{x.font='13px sans-serif';x.fillStyle='#ffd84a';x.fillText(labels[i]||'',px+6,py+16);}}
+    return c.toDataURL('image/jpeg',.9);},[imgs,S.shots.map(s=>s.label),W,H,cols,S.title,S.rowLabels,S.colLabels]);
   fs.writeFileSync(out,Buffer.from(sheet.split(',')[1],'base64'));console.log('\n'+out);await b.close();})();
