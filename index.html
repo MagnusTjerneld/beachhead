@@ -5029,12 +5029,12 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
          snow and the ice (18 okt) */
       float v=uSnow*1.15-n3.z*.35+(nz-.5)*.6,sm=smoothstep(.5,.62,v)*lvl*smoothstep(-.45,-.2,vSWP.y);
       diffuseColor.rgb=mix(c,vec3(.93,.95,.98),sm);}
-      {float uw=smoothstep(-.2,-3.0,vSWP.y);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.07,.15,.22),uw);}/* under the surface everything goes over into the sea's dark by about 3 m, the visibility: the undersides of cliffs and shoals showed through with a sharp lower edge (18 okt) */`,
+      {float uw=smoothstep(-.3,-4.2,vSWP.y)*.85;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.07,.15,.22),uw);}/* under the surface everything goes over into the sea's dark by about 3 m, the visibility: the undersides of cliffs and shoals showed through with a sharp lower edge (18 okt) */`,
     /* snow on top of stones and on the islets, on the faces turned up (18 okt, Magnus: they stayed bare in winter) */
     snowtop:`{vec3 gn=normalize(cross(dFdx(vSWP),dFdy(vSWP)));/* the face's own slope: the islets and stones are scaled unevenly, which tilts a transformed normal */
       float nz=sNoise(vSWP.xz/3.0+vSWP.y*.3)*.5+.5;float sm=uSnow*smoothstep(.3,.65,abs(gn.y)+(nz-.5)*.35)*smoothstep(-.05,.1,vSWP.y);
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.92,.94,.97),clamp(sm*1.25,0.0,.95));
-      float uw=smoothstep(-.2,-3.0,vSWP.y);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.07,.15,.22),uw);}`,
+      float uw=smoothstep(-.3,-4.2,vSWP.y)*.85;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.07,.15,.22),uw);}`,
     conifer:`{vec3 n3=normalize(vSWN);float nz=sNoise(vSWP.xz/2.5+vSWP.y*.4);
       float sm=uSnow*(.5*smoothstep(.2,.5,n3.y+(nz-.5)*.5)+.55*smoothstep(3.0,5.5,vSLY));
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.9,.93,.96),clamp(sm,0.0,.7));}`,
@@ -5092,7 +5092,7 @@ function mkWaterMat(){
           float band=smoothstep(0.6,0.95,sin(dep*4.0+uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
           float lip=smoothstep(0.02,0.3,dep);
           float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
-          diffuseColor.a*=mix(.5,1.0,smoothstep(.3*(1.0+uIce*.8),3.0*(1.0+uIce*.8),dep));diffuseColor.a=mix(diffuseColor.a,1.0,smoothstep(1.5*(1.0+uIce*.8),4.0*(1.0+uIce*.8),dep));/* opaque from about 4 m: the water was 0.86 everywhere, so the undersides of islets and stones showed through to their lower edge (18 okt) */outgoingLight=mix(outgoingLight,uFoam,fo*0.5);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.45);/* the foam toned down (18 okt): against the darker sea the white line along every shore read as an edge */
+          diffuseColor.a*=mix(.5,1.0,smoothstep(.3*(1.0+uIce*.8),3.0*(1.0+uIce*.8),dep));diffuseColor.a=mix(diffuseColor.a,1.0,smoothstep(2.1*(1.0+uIce*.8),5.6*(1.0+uIce*.8),dep));/* opaque from about 4 m: the water was 0.86 everywhere, so the undersides of islets and stones showed through to their lower edge (18 okt) */outgoingLight=mix(outgoingLight,uFoam,fo*0.5);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.45);/* the foam toned down (18 okt): against the darker sea the white line along every shore read as an edge */
           /* ice (seasons step 4): a band out from the shore where the water is shallow, and the coast's indents frozen over (17 okt), with a ragged edge
              and a darker thin rim; Birka's channel stays open with broken floes in it; drifting floes on the open water in spring */
           /* and the coast's indents freeze over whatever their depth, up to a closing radius of about 110 m in the deepest winter;
