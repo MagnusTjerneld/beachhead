@@ -9,13 +9,13 @@ const setup=()=>{B.newGame(7341);const G=B.G;G.running=true;G.netAll=true;for(co
   v1.x=L.x+40;v1.y=L.y;v2.x=L.x+40;v2.y=L.y+20;h1.x=L.x+20;h1.y=L.y;h2.x=L.x+20;h2.y=L.y+20;for(const u of[v1,v2,h1,h2]){u.orders=[];u.mission=null;}
   h1.post='off';h2.post='def';G.wings={'1':[v1.id,v2.id,h1.id,h2.id]};G.selIds=[v1.id,v2.id,h1.id,h2.id];G.sel=v1.id;return{G,L,v1,v2,h1,h2};};
 const foe=(G,x,y)=>{const e=G.enemies.find(q=>q.dead&&(q.kind==='inf'||q.kind==='light'||q.kind==='rb'||q.kind==='tank'));e.dead=false;e.hp=e.maxhp||60;e.x=x;e.y=y;e.hx=x;e.hy=y;e.lx=x;e.ly=y;e.seen=true;e.mobile=false;e.route=null;e.march=null;return e;};
-// 1. an attack order to the wing: the Offensiv HÖK strikes the same target, the Defensiv one stays guarding the wing
+// 1. an attack order to the wing: both HÖK strike the same target whatever their stance (18 okt, issue 32), and keep guarding as their mission
 {const{G,L,v1,v2,h1,h2}=setup();const e=foe(G,L.x+260,L.y+40);
   B.groupOrder({enemy:e},false);
   ok(v1.orders[0]&&v1.orders[0].type==='attack'&&v1.orders[0].enemy===e&&v2.orders[0].enemy===e,'both VARG attack the target');
   ok(h1.orders[0]&&h1.orders[0].type==='attack'&&h1.orders[0].enemy===e,'the Offensiv HÖK strikes the wing\'s target');
   ok(h1.mission&&h1.mission.type==='follow'&&h1.mission.cover&&h1.mission.post==='off','and keeps guarding the wing as its mission, with its own stance');
-  ok(h2.orders[0]&&h2.orders[0]===h2.mission&&h2.mission.post==='def','the Defensiv HÖK stays in the guarding role');
+  ok(h2.orders[0]&&h2.orders[0].type==='attack'&&h2.orders[0].enemy===e&&h2.mission&&h2.mission.cover&&h2.mission.post==='def','the Defensiv HÖK strikes it too, and keeps guarding with its own stance');
   {let held=false,near=1e9;for(let i=0;i<10;i++){B.step(.25*4);if(/Väntar på VARG/.test(h1.state))held=true;if(!(v1.orders[0]&&v1.orders[0].go))near=Math.min(near,Math.hypot(h1.x-e.x,h1.y-e.y));}
    ok(held&&near>Math.max(e.range,e.airRange||0),'the HÖK waits outside the target\'s reach until the VARG go in (closest '+Math.round(near)+' m, '+h1.state+')');}
   // 2. a new target for the wing reaches the HÖK too
