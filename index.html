@@ -4103,6 +4103,32 @@ function mkBoat(b,sailing){const g=new THREE.Group();
   else{g.add(mesh(box(6.4,1.1,2.4),mat(0xf2f2ee),0,.45,0));g.add(mesh(box(1.8,.9,1.9),mat(0xf2f2ee),3.4,.4,0));g.add(mesh(box(.08,.3,2.42),mat(0x23395b),0,.7,0));
     g.add(mesh(box(1.8,1,1.9),mat(0x3a4a5a),-.4,1.4,0));g.add(mesh(box(.6,.5,.6),mat(0x2a2a2a),-3.4,.7,0));}
   g.rotation.y=-b.a;g.position.set(b.x,.15,b.y);g.userData.bob=Math.random()*TAU;return g;}
+/* foam round what breaks the surface (decided 18 okt, Magnus): the shore's foam comes from the depth of the bottom, which the islets
+   and the stones are not part of, so they had none. A ring of foam at the water line round every islet and every stone that
+   breaks the surface, broken up and moving with the water's time, faded with distance and gone under ice */
+function mkFoamRings(W,st){const U=R3.water&&R3.water.material.userData.U;if(!U)return;
+  const vs=`varying vec2 vP;varying vec3 vW;void main(){vP=position.xy;vec4 p=vec4(position,1.0);
+    #ifdef USE_INSTANCING
+    p=instanceMatrix*p;
+    #endif
+    vec4 w=modelMatrix*p;vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
+  const fs=`uniform float uTime,uIce,uOuter;uniform vec3 uFoam;varying vec2 vP;varying vec3 vW;
+    void main(){float r=length(vP),t=clamp((r-1.0)/(uOuter-1.0),0.0,1.0),a=atan(vP.y,vP.x);
+      float br=.55+.45*sin(a*7.0+uTime*1.1+vW.x*.3)*sin(a*3.0-uTime*.7+vW.z*.2);float wave=smoothstep(.55,.95,sin(t*6.0-uTime*1.6+br*1.5));
+      float al=pow(1.0-t,1.6)*(.35+.65*br)*.55+wave*(1.0-t)*.25;al*=(1.0-smoothstep(300.0,900.0,length(vW-cameraPosition)))*(1.0-smoothstep(.15,.5,uIce));
+      gl_FragColor=vec4(uFoam,al);}`;
+  const M=o=>{const m=new THREE.ShaderMaterial({uniforms:{uTime:U.uTime,uIce:U.uIce,uFoam:U.uFoam,uOuter:{value:o}},vertexShader:vs,fragmentShader:fs,transparent:true,depthWrite:false});return m;};
+  const put=(m)=>{m.rotation.x=-PI/2;m.renderOrder=5;m.userData.noShadow=true;st.add(m);};
+  // the islets: one ring each part, about 2.5 m wide whatever its size
+  for(const o of W.islets||[])for(const pp of o.parts){const R=Math.max(pp.rx,pp.rz),ou=1+2.5/R,m=new THREE.Mesh(new THREE.RingGeometry(.97,ou,48,1),M(ou));
+    m.scale.set(pp.rx,pp.rz,1);m.position.set(o.x+pp.dx,.05,o.y+pp.dy);put(m);m.rotation.z=-pp.rot;/* the islet turns by -rot about the vertical, which is -rot about the ring's own z once it lies flat */}
+  // the stones that break the surface: on the shoals, and the shore's boulders standing in the water
+  /* only stones that break the surface, each ring the size of the stone's cut at the water line (its centre c, half height hh) */
+  const S=[],cut=(c,hh)=>{const f=-c/hh;return Math.abs(f)<.95?Math.sqrt(1-f*f):0;};
+  for(const q of (W.decor&&W.decor.shoals)||[])for(const t of q.stones||[]){const k=cut(t.h-t.r*.55,t.r*.55);if(k)S.push([t.x,t.y,t.r*k,t.r*t.el*k,t.rot]);}
+  for(const q of W.coastStones||[]){if(q.h>.3)continue;const k=cut(q.h+q.r*.2,q.r*.65);if(k)S.push([q.x,q.y,q.r*1.15*k,q.r*k,0]);}
+  if(S.length){const m=new THREE.InstancedMesh(new THREE.RingGeometry(1,1.8,20,1),M(1.8),S.length),d=new THREE.Object3D();
+    S.forEach((q,i)=>{d.position.set(q[0],.05,q[1]);d.rotation.set(-PI/2,0,q[4]);d.scale.set(q[2],q[3],1);d.updateMatrix();m.setMatrixAt(i,d.matrix);});m.renderOrder=5;m.frustumCulled=false;st.add(m);}}
 function mkIslets(list,st){
   const SN=new Map(),mat=c=>{if(!SN.has(c))SN.set(c,seasonMat(new THREE.MeshLambertMaterial({color:c}),'snowtop'));return SN.get(c);};/* the islets and their stones take snow (18 okt) */
   const cols={hall:[0x9c8b82,0x8f8680],kobbe:[0x8f8680,0x948a84],stenar:[0x7f7a76,0x8a827c],grynna:[0x5f5a55,0x6a625a],skar:[0x857d78,0x7a736e]},moss=mat(0x5d6b3e);
@@ -4861,6 +4887,7 @@ function buildStatic(){
   if(R3.lhBeam)for(const m of R3.lhBeam.beam.children){m.castShadow=false;m.receiveShadow=false;}
   // boats throw their shadow on the water surface, not on the seabed metres below (that made them look as if they hovered)
   if(R3.seabed){R3.seabed.castShadow=false;R3.seabed.receiveShadow=false;}
+  mkFoamRings(W,st);
   R3.scene.add(st);R3.stat=st;R3.seed=W.seed+':'+W.doc;R3.snap=true;setWaterDepth();
   try{TITLE.vSync=null;}catch(_){}/* new movers: place the intro's VARG patrol again */
 }
