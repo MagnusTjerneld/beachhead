@@ -4986,7 +4986,9 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
       /* snow lies down to the water line, on the moderate slopes of the shore too (18 okt, Magnus: the black lichen band along the
          water stayed bare and read as a dark band in winter) */
       vec3 n3=normalize(vSWN);float lvl=max(smoothstep(.72,.9,n3.y),smoothstep(.35,.6,n3.y)*(1.0-smoothstep(1.0,2.5,vSWP.y))),nz=sNoise(vSWP.xz/22.0)*.6+sNoise(vSWP.xz/5.0)*.4;
-      float v=uSnow*1.15-n3.z*.35+(nz-.5)*.6,sm=smoothstep(.5,.62,v)*lvl*smoothstep(-.05,.08,vSWP.y);
+      /* and a little under it, where the shallowest water is drawn almost clear: the ground there showed as a dark edge between the
+         snow and the ice (18 okt) */
+      float v=uSnow*1.15-n3.z*.35+(nz-.5)*.6,sm=smoothstep(.5,.62,v)*lvl*smoothstep(-.45,-.2,vSWP.y);
       diffuseColor.rgb=mix(c,vec3(.93,.95,.98),sm);}`,
     /* snow on top of stones and on the islets, on the faces turned up (18 okt, Magnus: they stayed bare in winter) */
     snowtop:`{vec3 gn=normalize(cross(dFdx(vSWP),dFdy(vSWP)));/* the face's own slope: the islets and stones are scaled unevenly, which tilts a transformed normal */
@@ -5048,7 +5050,7 @@ function mkWaterMat(){
           float band=smoothstep(0.6,0.95,sin(dep*4.0+uTime*1.5+nz*1.8))*smoothstep(3.0,0.6,dep);
           float lip=smoothstep(0.02,0.3,dep);
           float fo=clamp(edge+band*0.75*nz,0.0,1.0)*lip*clamp(1.0-wDist/900.0,0.0,1.0);
-          diffuseColor.a*=mix(.5,1.0,smoothstep(.3*(1.0+uIce*.8),3.0*(1.0+uIce*.8),dep));outgoingLight=mix(outgoingLight,uFoam,fo*0.9);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.85);
+          diffuseColor.a*=mix(.5,1.0,smoothstep(.3*(1.0+uIce*.8),3.0*(1.0+uIce*.8),dep));outgoingLight=mix(outgoingLight,uFoam,fo*0.5);diffuseColor.a=max(diffuseColor.a*smoothstep(0.0,0.9,dep),fo*0.45);/* the foam toned down (18 okt): against the darker sea the white line along every shore read as an edge */
           /* ice (seasons step 4): a band out from the shore where the water is shallow, and the coast's indents frozen over (17 okt), with a ragged edge
              and a darker thin rim; Birka's channel stays open with broken floes in it; drifting floes on the open water in spring */
           /* and the coast's indents freeze over whatever their depth, up to a closing radius of about 110 m in the deepest winter;
