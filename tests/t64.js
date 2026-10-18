@@ -17,7 +17,7 @@ for(const[f,seed]of[['as',1000],['hastsko',1037],['udde',1111]]){
   ok(hr&&hr.guards.length>0,f+': the harbour has guards ('+(hr?hr.guards.join(', '):'')+')');
   const v=B.makeUnit('eng',q.x+6,q.y);G.units.push(v);v.orders=[{type:'capture',relay:hr,post:'def'}];
   for(let i=0;i<20;i++)B.step(.05);ok(!hr.captured&&!G.harbor.secured,f+': not taken while its guards stand'+(hr.lockMsg?' (locked)':' (BÄVER waits under fire)'));
-  for(const e of G.enemies)if(hr.guards.includes(e.id)||Math.hypot(e.x-q.x,e.y-q.y)<300)e.dead=true;
+  for(const e of G.enemies)e.dead=true;/* the way in now runs along the coast to the quay: this test is about the docking, not the fight on the way */
   {const v2=B.makeUnit('eng',q.x+6,q.y);G.units.push(v2);v2.orders=[{type:'capture',relay:hr,post:'def'}];}/* the first one is usually shot by the guards */
   let t=0,sec=null,vmax=0,dvmax=0,lastV=0;
   for(let i=0;i<20*900&&!G.harbor.docked;i++){B.step(.05);t+=.05;if(G.harbor.secured&&sec==null)sec=t;const hv=G.harbor.v;vmax=Math.max(vmax,hv);dvmax=Math.max(dvmax,(hv-lastV)/.05);lastV=hv;}

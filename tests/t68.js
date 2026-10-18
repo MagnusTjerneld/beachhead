@@ -46,6 +46,7 @@ const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(
   ok(n===3&&spent/n<=2,'four HÖK spend '+(spent/Math.max(1,n)).toFixed(1)+' robots on average on a robot team (30 hp, one robot does 30), killed '+n+' of 3');}
 // 9. an order to a target outside the net is given with a word in the log (issue 37 b)
 {const G=setup(1490);G.netAll=false;for(const r of G.relays)r.captured=false;const C=B.CARRIER,v=B.makeUnit('tank',C.x-500,C.y);G.units.push(v);B.setSel([v.id]);
-  B.groupOrder({world:{x:585,y:925}},false);ok(v.orders[0]&&v.orders[0].x===585&&/utanför ledningsnätet/.test(G.log[0].text),'the order is given, and the log says the target is outside the net');
+  const far=G.relays.slice().sort((a,b)=>Math.hypot(b.x-C.x,b.y-C.y)-Math.hypot(a.x-C.x,a.y-C.y))[0];/* the point furthest from Birka (it was R2 at 585,925 before the quay berth changed the island) */
+  B.groupOrder({world:{x:far.x,y:far.y}},false);ok(!B.inNet(far.x,far.y)&&v.orders[0]&&v.orders[0].x===far.x&&/utanför ledningsnätet/.test(G.log[0].text),'the order is given, and the log says the target is outside the net');
   const n0=G.log.length;B.groupOrder({world:{x:C.x-400,y:C.y}},false);ok(G.log.length===n0,'no word for a target inside it');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

@@ -57,9 +57,11 @@ const onPads=G=>Object.values(G.pads.ship||[]).filter(Boolean).length;
   if(G.harbor){G.harbor.secured=true;G.harbor.docked=false;run(5);ok(G.ramp.bow===0&&G.ramp.side===0,'under way both ramps are folded up');
     const w=B.makeUnit('tank',S(0,-80).x,S(0,-80).y);w.hp=50;G.units.push(w);B.sendToService(w,'ship');run(15);ok(!w.onPad&&/rampen/.test(w.state),'a VARG waits off the bow while the ramp is up ('+w.state+')');}
   else ok(true,'(no harbour on this island)');}
-// 8. in the harbour Birka lies bow to the inner quay, port side to a long quay; a BÄVER drives ashore by a ramp, and a VARG from land comes aboard by the bow
+// 8. at the quay berth Birka lies port side to the quay, bow to the pier; a BÄVER drives ashore by a ramp, and a VARG from land comes aboard by the bow
 {B.SHAPE_CFG.force='as';B.SHAPE_CFG.rough=1;const G=setup(1000);B.SHAPE_CFG.force=null;const W=B.W,D=W.harbor.dock;B.moveCarrier(D.x,D.y,D.a);G.harbor.secured=true;G.harbor.docked=true;G.ramp={bow:1,side:1};
-  const H=W.harbor,quay=loc({x:H.x-H.nx*124,y:H.y-H.ny*124});ok(Math.abs(B.CARRIER.a-Math.atan2(H.ny,H.nx))<.01&&quay.fwd<-46&&quay.fwd>-56,'Birka lies with her bow ramp '+(-quay.fwd-46).toFixed(1)+' m off the inner quay');
+  const H=W.harbor;
+  const KJ=B.KAJ,KP=(li,lt)=>({x:H.x-H.nx*li+H.ny*lt,y:H.y-H.ny*li-H.nx*lt}),side=loc(KP(0,KJ.c)).lat-17,bow=-loc(KP(-KJ.off,KJ.p0)).fwd-46;
+  ok(Math.abs(B.CARRIER.a-Math.atan2(H.nx,-H.ny))<.01&&Math.abs(side-1)<.5&&Math.abs(bow-4)<.5,'Birka lies with her port side '+side.toFixed(1)+' m off the quay and her bow '+bow.toFixed(1)+' m off the pier');
   const e=G.units.find(u=>u.kind==='eng');const q=W.harborQ;B.giveOrder(e,{type:'move',x:q.x,y:q.y,post:'def'});let lifted=false;for(let i=0;i<20*60&&Math.hypot(e.x-q.x,e.y-q.y)>15;i++){B.step(.05);if(e.carried)lifted=true;}
   ok(!lifted&&Math.hypot(e.x-q.x,e.y-q.y)<=15,'a BÄVER on deck drives ashore by a ramp, no KROK ('+Math.hypot(e.x-q.x,e.y-q.y).toFixed(0)+' m from the point)');
   G.units=G.units.filter(u=>u!==e);const v=B.makeUnit('tank',q.x,q.y);v.hp=60;G.units.push(v);B.sendToService(v,'ship');let bad=0,wasOut=true;
