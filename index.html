@@ -348,7 +348,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon. Ligger målet för en order utanför nätet säger loggen det. En enhet som har gjort klart sin order därute och inte har fler går själv tillbaka till närmaste punkt i nätet. En GETING som har radiolänk via ett relä i nätet har kontakt genom det, även utanför nätets kant.</li>
       <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer, fiendens doktrin, datum och klockslaget vid start, eller lämnar dem tomma (Auto) för slump och öns eget datum och klockslag; under fälten står årstiden och när solen går upp och ner. Samma ö med samma doktrin är alltid samma försvar, så du kan anfalla det igen; Spela igen behåller dem, och datum och klockslag. Med Auto väljer fienden doktrin efter ön, och du får veta vilken först när ön är vunnen. Datum och klocka står i översta raden (håll muspekaren över dem för soltiderna) och på sjökortets etikett, klockan också bredvid T+ i kameran; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt, 3D-last och hur lång tid starten tog, steg för steg (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer och kan rita på en frusen bild av skärmen för att peka ut något, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
-      <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. När du ger wingen en anfallsorder anfaller HÖK också wingens mål, oavsett hållning, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den. Hållningen styr vad HÖK gör på eget initiativ: på Defensiv tar den först dem som skjuter på wingen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand. En VARG som retirerar med svåra skador (under 30 %) följer inte en order till gruppen eller wingen utan fortsätter mot lagning; välj den ensam för att skicka in den igen. Den retirerar igen när den förlorat 10 % av fullt skrov eller hälften av det den hade kvar. När en enhet i en wing är klar med service eller lagning i fält tar den wingens senaste grupporder; har wingen redan gjort sitt kör den till wingens ledare, och en HÖK går tillbaka till att skydda wingen. En order du själv gett den ensam under servicen går före. Wing 1 till service i en enhets egen meny (eller Till service, var och en, i hjulet med flera valda) skickar dem som behöver det till var sin närmaste plats, en skadad VARG till en BÄVER i fält om den är klart närmare; ingen väntar in de andra. En enhet som servas på en platta har en skiftnyckel över sig med förloppet som en ring, och en som väntar på en ledig platta ett timglas.</li>
+      <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. När du ger wingen en anfallsorder anfaller HÖK också wingens mål, oavsett hållning, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den. Hållningen styr vad HÖK gör på eget initiativ: på Defensiv tar den först dem som skjuter på wingen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand. En enhet som är på väg till service eller lagning, eller retirerar med svåra skador, följer inte en order till gruppen eller wingen utan fortsätter dit; välj den ensam för att skicka den. Ett fordon som skickas till service under eld drar sig först ur räckhåll för dem som skjuter, den kortaste vägen, och kör sedan runt kända hot till servicen. Den retirerar igen när den förlorat 10 % av fullt skrov eller hälften av det den hade kvar. När en enhet i en wing är klar med service eller lagning i fält tar den wingens senaste grupporder; har wingen redan gjort sitt kör den till wingens ledare, och en HÖK går tillbaka till att skydda wingen. En order du själv gett den ensam under servicen går före. Wing 1 till service i en enhets egen meny (eller Till service, var och en, i hjulet med flera valda) skickar dem som behöver det till var sin närmaste plats, en skadad VARG till en BÄVER i fält om den är klart närmare; ingen väntar in de andra. En enhet som servas på en platta har en skiftnyckel över sig med förloppet som en ring, och en som väntar på en ledig platta ett timglas.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, GETING, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem,, och inget annat flyttar dem, inte heller Ta kontroll. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Livebilder under Inställningar växlar mellan 15 och 60 bilder per sekund och av. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Skärmlayout under Inställningar: bred ställer den andra vyn bredvid huvudvyn, lika stor (listen mellan dem fördelar bredden), och livebilderna över varandra i sidopanelen; auto väljer bred på skärmar i 21:9 och bredare. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
@@ -449,7 +449,13 @@ function astarCells(s,t,pass,cost,hs){
   const cells=[];for(let c=t;c!==-1&&c!==s;c=came[c])cells.push(c);cells.reverse();return cells;
 }
 function lineOK(a,b,pass){const road=WORLD.road;const ra=road[cellIdx(a.x,a.y)],rb=road[cellIdx(b.x,b.y)];const d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.ceil(d/4);for(let k=1;k<n;k++){const c=cellIdx(a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n);if(!pass(c))return false;if(ra&&rb&&!road[c])return false;}return true;}
-function smooth(p,pass){if(p.length<3)return p;const out=[p[0]];let i=0;while(i<p.length-1){let j=p.length-1;while(j>i+1&&!lineOK(p[i],p[j],pass))j--;out.push(p[j]);i=j;}return out;}
+/* the straightening keeps out of a known threat's reach that the search went round (18 okt, test round 9949: it cut straight
+   through it, both on the way to service and round other defenders in an attack) */
+const hotM=(a,b,cost)=>{const d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.ceil(d/4);let h=0;for(let k=1;k<=n;k++)if(cost(cellIdx(a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n))>=4)h+=d/n;return h;};
+function smooth(p,pass,cost){if(p.length<3)return p;const out=[p[0]];let i=0;
+  const cum=[0];for(let k=1;k<p.length;k++)cum[k]=cum[k-1]+(cost?hotM(p[k-1],p[k],cost):0);/* metres inside a threat's reach along the search's own way */
+  const ok=(a,b)=>lineOK(p[a],p[b],pass)&&(!cost||hotM(p[a],p[b],cost)<=cum[b]-cum[a]+4);
+  while(i<p.length-1){let j=p.length-1;while(j>i+1&&!ok(i,j))j--;out.push(p[j]);i=j;}return out;}
 function astar(sx,sy,tx,ty,pass,cost){
   const s=cellIdx(sx,sy);let t=cellIdx(tx,ty),exact=true;
   if(!pass(t)){t=nearestPass(t,pass);exact=false;if(t<0)return null;}
@@ -457,7 +463,7 @@ function astar(sx,sy,tx,ty,pass,cost){
   if(s===t)return[end];
   const cells=astarCells(s,t,pass,cost,.6);if(!cells)return null;
   const pts=[{x:sx,y:sy},...cells.map(cellCenter)];pts[pts.length-1]=end;
-  return smooth(pts,pass).slice(1);
+  return smooth(pts,pass,cost).slice(1);
 }
 
 /* ---------- world ---------- */
@@ -2034,7 +2040,15 @@ function aaPullOut(u,aa,lead){const ax=aa.lx??aa.x,ay=aa.ly??aa.y,dx=u.x-ax,dy=u
 /* a VARG the captain sent back in keeps fighting until it has lost 10 % of full hull or half of what it had when he sent it, whichever
    comes first (decided 18 okt, issue 25: a fixed 15 meant a VARG sent in with 7 of 150 never turned again) */
 const sentBackIn=u=>u.holdHp!=null&&u.hp>=u.holdHp-Math.min(u.maxhp*.1,u.holdHp*.5);
-function goRtb(u,msg){if(!u.air&&lockedAt(u.x,u.y)){cutOff(u);return;}u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post}];u.path=null;u.rtb=true;u.hold=false;say(u,msg);}
+function goRtb(u,msg){if(!u.air&&lockedAt(u.x,u.y)){cutOff(u);return;}u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post,via:escapePt(u)}];u.path=null;u.rtb=true;u.hold=false;say(u,msg);}
+/* a vehicle sent to service under fire first gets out of the reach of those firing on it, by the shortest way that also leans towards
+   home, and only then heads for service (18 okt, test round 9949: a VARG took the straight way to Birka past the bunker that hit it) */
+function escapePt(u){if(u.air)return null;const ok=u.kind==='tank'?passAmph:passLand,hm=homeFor(u);
+  const es=G.enemies.filter(e=>!e.dead&&(G.time-(u.hitBy[e.id]||-99)<6||e.seen&&e.range&&Math.hypot(u.x-e.lx,u.y-e.ly)<e.range+10)&&e.range);
+  const out=(x,y)=>es.every(e=>Math.hypot(x-e.lx,y-e.ly)>e.range+15);if(!es.length||out(u.x,u.y))return null;let best=null,bc=1e9;
+  for(let i=0;i<24;i++){const a=i*TAU/24;for(let r=10;r<=220;r+=10){const x=u.x+Math.cos(a)*r,y=u.y+Math.sin(a)*r;if(x<10||y<10||x>WW-10||y>WH-10||!ok(cellIdx(x,y)))break;
+    if(out(x,y)){const c=r+.3*Math.hypot(x-hm.x,y-hm.y);if(c<bc){bc=c;best={x,y};}break;}}}
+  return best;}
 /* after a marked target falls with nothing more queued, the group stays in the fight it was sent into for 20 s and takes whatever
    is in reach, without driving after it (decided 14 okt) */
 const curPost=u=>!u.air&&G.time<(u.engageT||0)?'off':u.orders[0]?u.orders[0].post:u.post;
@@ -2372,14 +2386,14 @@ function orbit(u,dt,R0){
   if(d>.5)u.heading=turnTo(u.heading,a,3*dt);
 }
 
-function costFor(post,tgt){
+function costFor(post,tgt,w){
   const g=WORLD.grid,road=WORLD.road;
   let dz=null;
   const av=G.enemies.filter(e=>!e.dead&&e.seen&&(post==='dold'||e.avoid||(tgt&&e!==tgt&&e.canGround)));
   if(av.length){
     dz=new Float32Array(GW*GH);
     for(const e of av){const r=e.range+15;const x0=Math.max(0,Math.floor((e.lx-r)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+r)/CELL)),y0=Math.max(0,Math.floor((e.ly-r)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+r)/CELL));
-      for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const cx=gx*CELL+5,cy=gy*CELL+5;if(Math.hypot(cx-e.lx,cy-e.ly)<r)dz[gy*GW+gx]+=6;}}
+      for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const cx=gx*CELL+5,cy=gy*CELL+5;if(Math.hypot(cx-e.lx,cy-e.ly)<r)dz[gy*GW+gx]+=w||6;}}
   }
   return i=>{let c=1;/* water costs as much as land, now that VARG is as fast on it (17 okt; it was 1.35 for 0.7 speed) */if(road[i])c*=post==='dold'?1.7:.6;return dz?c+dz[i]:c;};
 }
@@ -2556,7 +2570,8 @@ function move(u,dt){
       else u.state='Till plattan vid '+h.name;}
     else{/* a vehicle bound for Birka waits off the bow, where the ramp is; in the harbour on the quay by the pier */const ws=!u.air&&key==='ship'?(G.harbor&&G.harbor.docked?shipPos(33,-56):shipPos(0,-68)):null;
       tx=ws?ws[0]:h.x;ty=ws?ws[1]:h.y;arr=u.air?10:ws?6:SVC.wait.ground;u.state='Återvänder till '+h.name;
-      if(!u.padWait&&(Math.hypot(u.x-h.x,u.y-h.y)<(u.air?SVC.near.air:SVC.near.ground)||ws&&Math.hypot(u.x-tx,u.y-ty)<20))u.padWait={key,t:G.time};}}
+      if(!u.padWait&&(Math.hypot(u.x-h.x,u.y-h.y)<(u.air?SVC.near.air:SVC.near.ground)||ws&&Math.hypot(u.x-tx,u.y-ty)<20))u.padWait={key,t:G.time};}
+    if(o.via){if(Math.hypot(u.x-o.via.x,u.y-o.via.y)<10)o.via=null;else{tx=o.via.x;ty=o.via.y;arr=8;u.state='Drar mig ur elden, sedan till '+h.name;}}}
   if(u.air&&(o.type==='move'||o.type==='obs')&&o.post!=='off'){
     if(o.sv!==(G.tver||0)){o.sv=G.tver||0;o.safe=safePoint(u,tx,ty);if(o.safe&&!o.safeMsg){o.safeMsg=1;const e=airDanger(u,tx,ty);say(u,'Punkten ligger inom räckhåll för '+(e?ename(e):'känt luftvärn')+'. Håller mig utanför (Offensiv flyger in ändå).');}}
     if(o.safe){tx=o.safe.x;ty=o.safe.y;}
@@ -2614,10 +2629,10 @@ function move(u,dt){
         if(why){u.path=null;u.pathFor=null;u.hold=true;u.unsafeWait=true;u.safeT=G.time+3;u.state=u.waitTxt='Väntar: '+why.charAt(0).toLowerCase()+why.slice(1);
           if(!u.safeMsgT||G.time>u.safeMsgT){u.safeMsgT=G.time+25;say(u,why+'. Väntar tills det är säkert (Kör ändå skickar mig ändå).');}return;}
         if(u.unsafeWait){u.unsafeWait=false;u.hold=false;say(u,'Säker väg finns. Kör.');}}
-      if(!pth){const pass=u.kind==='eng'?passLand:u.kind==='tank'?passTank:passAmph,avoid=o.type==='attack'&&u.kind==='tank';pth=astar(u.x,u.y,tx,ty,pass,costFor(o.post,avoid?o.enemy:null));
+      if(!pth){const pass=u.kind==='eng'?passLand:u.kind==='tank'?passTank:passAmph,avoid=o.type==='attack'&&u.kind==='tank'||o.type==='rtb'&&u.kind==='tank';/* on the way to service a VARG keeps round known threats too (18 okt, test round 9949) */pth=astar(u.x,u.y,tx,ty,pass,costFor(o.post,avoid?o.enemy||{}:null,o.type==='rtb'?40:6));
         /* an attack keeps clear of the other known weapons, but not at any price: a way round that is more than half as long again (or 250 m
            longer) than the plain way is dropped for the plain way; a 300 m wide reach used to send the wing round the island by sea */
-        if(avoid&&pth){const pl=astar(u.x,u.y,tx,ty,pass,costFor(o.post)),L=p=>{let t=0,q=u;for(const r of p){t+=Math.hypot(r.x-q.x,r.y-q.y);q=r;}return t;};if(pl&&L(pth)>Math.max(L(pl)*1.5,L(pl)+250))pth=pl;}}
+        if(avoid&&pth&&o.type!=='rtb'){const pl=astar(u.x,u.y,tx,ty,pass,costFor(o.post)),L=p=>{let t=0,q=u;for(const r of p){t+=Math.hypot(r.x-q.x,r.y-q.y);q=r;}return t;};if(pl&&L(pth)>Math.max(L(pl)*1.5,L(pl)+250))pth=pl;}}
       if(!pth&&u.kind==='eng'&&(!passLand(cellIdx(u.x,u.y))||(!u.amphT||G.time>u.amphT)&&(u.amphT=G.time+10,!!astar(u.x,u.y,tx,ty,passAmph,costFor(o.post))))&&!u.awaitKrok&&!G.kroks.some(k=>!k.dead&&k.orders.some(q=>q.unit===u))){if(G.time>=(u.liftAskT||0)){u.liftAskT=G.time+3;if(autoLift(u,tx,ty))say(u,'BÄVER kör inte i vatten. Begär lufttransport med KROK.');}if(u.unsafeWait){u.state=u.waitTxt='Väntar på säker landningsplats';return;}u.state='Väntar på lufttransport';return;}
       if(!pth&&o.type==='attack'&&o.arc){o.arc=null;o.fp=null;o.arcT=G.time+8;}/* a point on the arc that cannot be reached: fall back to a firing point the unit can drive to */
       if(!pth&&o.type==='attack'&&!o.fp){o.fp=firingPoint(u,o.enemy,o.close);o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;if(o.fp){u.state='Söker skjutläge mot '+ename(o.enemy);return;}}
@@ -3311,10 +3326,11 @@ function groupOrder(pk,append,postOverride){
   let us=noContact(selUnits());if(!us.length)return;
   const nwt=pk.relay||(pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:null)||pk.struct||pk.barrier||pk.mine||pk.world;
   if(us.length===1){netWarn(us,nwt);const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;if(o&&append&&u.rtb)o.own=true;giveOrder(u,markRetreat(u,o),append);return;}
-  /* a VARG retreating with heavy damage keeps retreating when the order is to the group or the wing (18 okt, issue 25: every
-     click on the wing sent a VARG with 5 % hull back in, and it never turned again); an order to it alone still sends it back */
-  {const hurt=us.filter(u=>u.kind==='tank'&&(u.rtb||u.orders[0]&&u.orders[0].toRep)&&u.hp<u.maxhp*.3);if(hurt.length&&hurt.length<us.length){us=us.filter(u=>!hurt.includes(u));
-    for(const u of hurt)say(u,u.name+' retirerar med svåra skador ('+Math.round(u.hp/u.maxhp*100)+' %) och följer inte gruppordern. Välj den ensam för att skicka in den igen.');}}
+  /* a unit on its way to or at service or field repair keeps going when the order is to the group or the wing (18 okt, issue 25:
+     every click on the wing sent a VARG with 5 % hull back in; widened the same day after test round 9949, where an order to the
+     group took a VARG off its service order); an order to it alone still sends it */
+  {const svc=us.filter(u=>u.rtb||u.orders[0]&&u.orders[0].toRep||u.awaitRep);if(svc.length&&svc.length<us.length){us=us.filter(u=>!svc.includes(u));
+    for(const u of svc)say(u,u.name+(u.kind==='tank'&&u.hp<u.maxhp*.3?' retirerar med svåra skador ('+Math.round(u.hp/u.maxhp*100)+' %)':' är på väg till service')+' och följer inte gruppordern. Välj den ensam för att skicka den.');}}
   netWarn(us,nwt);noteWing(us,pk,append,postOverride);
   let tp=pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:pk.struct?{x:pk.struct.x,y:pk.struct.y}:pk.world;
   if(pk.barrier&&!pk.barrier.cleared){const sd=barrierSide(pk.barrier,us[0]);tp={x:sd.x,y:sd.y};}
@@ -5599,7 +5615,8 @@ function onDown(e){
   if(kind==='map'){pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pts.size===2){if(ptr)clearTimeout(ptr.lp);ptr=null;G.box=null;G.drag=null;const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:mv.z,wm:{x:(mx-mapX.ox)/mapX.s,y:(my-mapX.oy)/mapX.s}};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}}
   if(e.button===2)return;
-  if(G.ctrl&&kind==='cam'&&isMain('cam')){const cu=unitById(G.ctrl);if(cu&&(cu.kind==='tank'||cu.kind==='drone')){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}
+  /* in the wide layout the camera is as big as the main view: a click in it aims and fires there too (18 okt, test round 9949) */
+  if(G.ctrl&&kind==='cam'&&(isMain('cam')||LAYOUT.on)){const cu=unitById(G.ctrl);if(cu&&(cu.kind==='tank'||cu.kind==='drone')){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}
   const x=e.offsetX,y=e.offsetY,pk=pick(kind,x,y),su=selUnit();
   let dragFrom=null;
   if(su){if(pk.unit&&G.selIds.includes(pk.unit.id))dragFrom={x:pk.unit.x,y:pk.unit.y};else if(pk.wp&&pk.wp.i===su.orders.length-1){const p=orderPt(su.orders[pk.wp.i]);dragFrom={x:p.x,y:p.y};}}

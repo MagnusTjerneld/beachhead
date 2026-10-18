@@ -33,4 +33,15 @@ const land=(G,r)=>{const L=G.relays[r];return{x:L.x,y:L.y};};
 {const G=setup(7341);G.res=5000;B.queueBuild('eng');let u=null;for(let i=0;i<200*20&&!u;i++){B.step(.05);u=G.units.find(v=>v.kind==='eng'&&G.units.indexOf(v)>0);}
   for(let i=0;i<20*20;i++)B.step(.05);const L=u&&B.shipLocal(u.x,u.y),S=B.BEV_SPOT;
   ok(u&&Math.hypot(L.lat-S.lat,L.fwd-S.fwd)<2.5&&L.fwd>17,'the new BÄVER waits in its box aft of the bay'+(L?' (lat '+L.lat.toFixed(1)+', fwd '+L.fwd.toFixed(1)+': '+u.state+')':''));}
+// 6. test round 9949: an order to the group does not take a unit off its way to service; one to it alone does
+{const G=setup(7341),p=land(G,0),a=B.makeUnit('tank',p.x,p.y),b=B.makeUnit('tank',p.x+12,p.y);G.units.push(a,b);b.hp=b.maxhp*.6;B.sendToService(b,'ship');
+  B.setSel([a.id,b.id]);B.groupOrder({world:{x:p.x+200,y:p.y}},false);ok(b.rtb&&b.orders[0].type==='rtb'&&a.orders[0].type==='move','a group order leaves a VARG at 60 % on its way to service');
+  B.setSel([b.id]);B.groupOrder({world:{x:p.x+200,y:p.y}},false);ok(!b.rtb&&b.orders[0].type==='move','an order to it alone sends it');}
+// 7. test round 9949: a VARG retreating from a bunker that hits it, with Birka on the far side of the bunker, first leaves the
+// bunker's reach by the shortest way instead of driving past it, then goes to service
+{let n=0,okN=0,info=[];for(const sd of[7341,1490,5555]){const G=setup(sd),C=B.CARRIER,L=G.relays[0],e=B.makeEnemy({id:'QB',kind:'turret',x:L.x,y:L.y});e.seen=true;e.lx=e.x;e.ly=e.y;e.dmg=1;e.hp=e.maxhp=5000;G.enemies.push(e);
+  const d=Math.hypot(L.x-C.x,L.y-C.y),v=B.makeUnit('tank',L.x+(L.x-C.x)/d*e.range*.6,L.y+(L.y-C.y)/d*e.range*.6);G.units.push(v);v.hp=v.maxhp*.25;
+  let mn=1e9,left=null;for(let i=0;i<40*20&&left==null;i++){B.step(.05);const r=Math.hypot(v.x-e.x,v.y-e.y);mn=Math.min(mn,r);if(r>e.range+10)left=G.time;}
+  n++;if(left!=null&&mn>e.range*.6-25)okN++;info.push(Math.round(mn)+'/'+Math.round(e.range*.6)+(left==null?' kvar':''));}
+  ok(okN===n,'a VARG retreating from a bunker between it and Birka leaves its reach without closing on it ('+okN+' of '+n+'; closest/start '+info.join(', ')+')');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);
