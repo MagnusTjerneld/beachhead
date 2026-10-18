@@ -1337,7 +1337,7 @@ function buildWorldTry(seed,tryK,type,move){
     const isWall=p=>(open[p]||0)/(cnt[p]||1)>.2||hash2(p,7,s+963)<.33;
     const RS=[],BU=[],JU=[];W.ridgeStones=RS;W.bushes=BU;W.junipers=JU;
     const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
-    const bush=(x,y,sz)=>BU.push({x,y,s:sz,a:Rr()*6.28,sp:Rr()<.45?0:Rr()<.5?5:3,r:Rr()});
+    const bush=(x,y,sz)=>BU.push({x,y,s:sz,a:Rr()*6.28,sp:Rr()<.45?0:Rr()<.5?6:3,r:Rr()});
     const Dd=W.decor||{},HS=[...(Dd.villas||[]),...(Dd.cabins||[]),...(Dd.sheds||[]),...(Dd.light?[Dd.light]:[]),...(Dd.jetties||[])];
     const clear=(x,y)=>{const ci=cellIdx(x,y);return !W.road[ci]&&!(W.lane&&W.lane[ci])&&relays.every(r=>Math.hypot(r.x-x,r.y-y)>30)&&!(W.yard&&Math.hypot(W.yard.x-x,W.yard.y-y)<34)&&STR.every(q=>Math.hypot(q.x-x,q.y-y)>18)&&HS.every(q=>Math.hypot(q.x-x,q.y-y)>12);};
     for(let k=0;k<N;k++){if(rP[k]<0)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY,sv=rS[k];
@@ -1581,9 +1581,19 @@ function buildWorldTry(seed,tryK,type,move){
     /* stones breaking the surface on most shoals (decided 12 okt: grund och grynnor are common): none on about a third of them,
        otherwise one to five of different sizes within the shoal, some barely awash. Scenery only, with their own random stream
        so that the rest of the decor is unchanged. */
-    D.shoals.forEach((sh,i)=>{const Rs=rng(s*131+i*977+5);sh.stones=[];if(Rs()<.33)return;const n=1+Math.floor(Rs()*Rs()*5.5);
+    /* every shoal now has stones, three to seven, some breaking the surface (18 okt, Magnus: as round the coast, instead of a pale disc) */
+    D.shoals.forEach((sh,i)=>{const Rs=rng(s*131+i*977+5);sh.stones=[];Rs();const n=3+Math.floor(Rs()*5);
       for(let k=0;k<n;k++){const a=Rs()*TAU,f=Math.sqrt(Rs())*.7,u=Math.cos(a)*sh.r*f,v=Math.sin(a)*sh.r*sh.el*f,c=Math.cos(sh.rot),sn=Math.sin(sh.rot),big=Rs();
         sh.stones.push({x:sh.x+u*c-v*sn,y:sh.y+u*sn+v*c,r:.35+big*big*2.2,h:.08+Rs()*(.25+big*.7),rot:Rs()*PI,el:.6+Rs()*.4});}});
+    /* and the shoal is shallow ground: the bottom rises to about 0.6 m under the surface over it and eases into the sea floor at 1.3
+       times its size, so that the water's colour by depth shows it, as at the coast. Only the heights of the bottom change; the grid,
+       which is water there either way, stays as it was */
+    {const ev=W.ev,SX2=W.SX,SY2=W.SY,nx2=SX2+1,ch=new Uint8Array(ev.length);
+      for(const sh of D.shoals){const R=sh.r*1.3,c=Math.cos(sh.rot),sn=Math.sin(sh.rot),i0=Math.max(0,Math.floor((sh.x-R)/WW*SX2)),i1=Math.min(SX2,Math.ceil((sh.x+R)/WW*SX2)),j0=Math.max(0,Math.floor((sh.y-R)/WH*SY2)),j1=Math.min(SY2,Math.ceil((sh.y+R)/WH*SY2));
+        for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const dx=i*WW/SX2-sh.x,dy=j*WH/SY2-sh.y,u=(dx*c+dy*sn)/sh.r,v=(-dx*sn+dy*c)/(sh.r*sh.el),r=Math.hypot(u,v);if(r>1.3)continue;
+          const k=j*nx2+i,e2=Math.min(-.35,lerp(ev[k],-.6,sm((1.3-r)/.6)));if(e2>ev[k]){ev[k]=e2;ch[k]=1;}}}
+      for(let k=0;k<ev.length;k++)if(ch[k])W.vcls[k]=ev[k]<-3.2?DEEP:SHAL;
+      for(let j=0;j<SY2;j++)for(let i=0;i<SX2;i++){const k=j*nx2+i;if(!ch[k]&&!ch[k+1]&&!ch[k+nx2]&&!ch[k+nx2+1])continue;const a=ev[k],b=ev[k+1],cc=ev[k+nx2],d=ev[k+nx2+1];W.diag[j*SX2+i]=Math.abs(a-d)<Math.abs(b-cc)?1:0;}}
     // lateral marks only at the harbour mouth: entering, red to port and green to starboard
     if(harborPt&&V.harbor.std){const Hh=V.harbor,KP=(li,lt)=>({x:Hh.x-Hh.nx*li+Hh.ny*lt,y:Hh.y-Hh.ny*li-Hh.nx*lt}),g1=KP(-KAJ.out-6,(KAJ.p0+KAJ.p1)/2),r1=KP(-KAJ.dredge-8,KAJ.app);
       if(wet(cellIdx(g1.x,g1.y)))D.marks.push({...g1,type:'green'});if(wet(cellIdx(r1.x,r1.y)))D.marks.push({...r1,type:'red'});}
@@ -4306,10 +4316,10 @@ function mkDecor(D,st){
         const ev=W.ev,cv=(ev[k-1]+ev[k+1]+ev[k-nx]+ev[k+nx])/4-ev[k];
         if(Rr()>clamp((vnoise(x/28,y/28,W.seed+881)-.42)/.3,0,1)*.34*clamp(.25+cv*1.6,0,1.8))continue;
         const n=1+Math.floor(Rr()*2.6);for(let q=0;q<n;q++){const px=x+(Rr()-.5)*7,py=y+(Rr()-.5)*7,h=heightAt(px,py);if(h<.5)continue;
-          if(Rr()<.45)JU.push({x:px,y:py,h,s:.8+Rr()*.9,a:Rr()*6.28});else BU.push({x:px,y:py,h,s:1.1+Rr()*1.0,a:Rr()*6.28,sp:Rr()<.5?5:3,r:Rr()});}}
+          if(Rr()<.45)JU.push({x:px,y:py,h,s:.8+Rr()*.9,a:Rr()*6.28});else BU.push({x:px,y:py,h,s:1.1+Rr()*1.0,a:Rr()*6.28,sp:Rr()<.5?6:3,r:Rr()});}}
       for(const q of W.coastStones||[]){if(q.h<.4||q.h>5||Rr()>.2)continue;const a=Rr()*6.28,dd=q.r*1.1+.6+Rr()*1.2,px=q.x+Math.cos(a)*dd,py=q.y+Math.sin(a)*dd,h=heightAt(px,py);if(h<.4)continue;
         if(Math.hypot(px-L.x,py-L.y)<90||(W.harbor&&Math.hypot(px-W.harbor.x,py-W.harbor.y)<HARB.L+40))continue;
-        if(Rr()<.3)JU.push({x:px,y:py,h,s:.7+Rr()*.7,a:Rr()*6.28});else BU.push({x:px,y:py,h,s:.9+Rr()*.9,a:Rr()*6.28,sp:Rr()<.5?5:3,r:Rr()});}}
+        if(Rr()<.3)JU.push({x:px,y:py,h,s:.7+Rr()*.7,a:Rr()*6.28});else BU.push({x:px,y:py,h,s:.9+Rr()*.9,a:Rr()*6.28,sp:Rr()<.5?6:3,r:Rr()});}}
     const G=R3.ridgeG;
     G.st.forEach((g,t)=>{const L=RS.filter((q,i)=>i%3===t);if(!L.length)return;const m=new THREE.InstancedMesh(g,G.stM,L.length);
       L.forEach((q,i)=>{d.position.set(q.x,!q.m?q.h+gLow(q.x,q.y,q.r*1.05)-heightAt(q.x,q.y):q.h,q.y);d.rotation.set((hash2(i,t,5)-.5)*.4,q.a,0);d.scale.set(q.r*1.1,q.r*.72,q.r*.95);d.updateMatrix();m.setMatrixAt(i,d.matrix);
@@ -4331,7 +4341,6 @@ function mkDecor(D,st){
     g.rotation.y=-j.a;g.position.set(j.x,0,j.y);st.add(g);}
   {const sg=new THREE.DodecahedronGeometry(1,0),sm=seasonMat(mdWet(new THREE.MeshLambertMaterial({color:0x6d6a64,flatShading:true})),'snowtop','-wet'),wet2=seasonMat(mdWet(new THREE.MeshLambertMaterial({color:0x4d4b47,flatShading:true})),'snowtop','-wet');
     for(const q of D.shoals||[])for(const t of q.stones||[]){const m=new THREE.Mesh(sg,t.h<.2?wet2:sm);m.scale.set(t.r,t.r*.55,t.r*t.el);m.rotation.set(0,t.rot,0);m.position.set(t.x,t.h-t.r*.55,t.y);st.add(m);}}
-  for(const q of D.shoals||[]){const m=new THREE.Mesh(new THREE.CircleGeometry(1,24),new THREE.MeshBasicMaterial({color:0x6fa8b0,transparent:true,opacity:.1,depthWrite:false}));m.rotation.x=-PI/2;m.rotation.z=q.rot;m.scale.set(q.r,q.r*q.el,1);m.position.set(q.x,.06,q.y);st.add(m);}
   const YEL=mat(0xf2c200),BLK=mat(0x161616);
   for(const m of D.marks){const g=new THREE.Group();
     if(m.type==='red'||m.type==='green'){const c=mat(m.type==='red'?0xc23b2e:0x2e8a4a);g.add(mesh(cyl(.22,.3,3.4,6),c,0,1.1,0));g.add(m.type==='red'?mesh(cyl(.32,.32,.6,6),c,0,3.1,0):mesh(new THREE.ConeGeometry(.38,.8,6),c,0,3.2,0));}
@@ -5006,8 +5015,9 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
       else if(sp==3){g0*=vec3(.8,.86,.74);a1=vec3(.72,.62,.26);a2=vec3(.62,.44,.2);a3=vec3(.52,.34,.18);sh=-.4;keep=1.0;}
       else if(sp==4){g0*=vec3(.95,1.0,.85);a1=vec3(.96,.74,.15);a2=vec3(.93,.44,.1);a3=vec3(.82,.16,.1);sh=.18;}
       else if(sp==5){a1=vec3(.9,.52,.15);a2=vec3(.84,.3,.12);a3=vec3(.72,.18,.12);sh=.35;}
+      else if(sp==6){g0*=vec3(.72,.82,.7);a1=vec3(.66,.6,.26);a2=vec3(.56,.42,.22);a3=vec3(.46,.28,.28);sh=-.45;}/* blackthorn (slån): dark green until October, then a dull yellow-brown with a touch of purple (18 okt) */
       vec3 au=mix(a1,a2,smoothstep(.35,.75,r));au=mix(au,a3,smoothstep(.75,.95,r));
-      vec3 c=mix(g0,au,clamp(uAutumn*1.6-(1.0-r)*.6+sh,0.0,1.0));c=mix(vec3(.42,.37,.33),c,smoothstep(.12-keep*.25,.45-keep*.3,uLeaf));
+      vec3 c=mix(g0,au,clamp(uAutumn*1.6-(1.0-r)*.6+sh,0.0,1.0)*smoothstep(0.0,.12,uAutumn));/* the kinds' shifts only once autumn has begun: rowan and the bushes were a third orange in July (18 okt) */c=mix(vec3(.42,.37,.33),c,smoothstep(.12-keep*.25,.45-keep*.3,uLeaf));
       diffuseColor.rgb=c;}`};
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
