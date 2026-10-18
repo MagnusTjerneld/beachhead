@@ -4230,15 +4230,15 @@ function mkFoamRings(W,st){const U=R3.water&&R3.water.material.userData.U,src=R3
         al*=(1.0-smoothstep(300.0,900.0,length(vW-cameraPosition)))*(1.0-smoothstep(.15,.5,uIce));gl_FragColor=vec4(uFoam,al);}`});
   const fm=new THREE.Mesh(g,mt);fm.renderOrder=5;fm.frustumCulled=false;fm.userData.noShadow=true;st.add(fm);}
 function mkIslets(list,st){
-  const SN=new Map(),mat=c=>{if(!SN.has(c))SN.set(c,seasonMat(new THREE.MeshLambertMaterial({color:c}),'snowtop'));return SN.get(c);};/* the islets and their stones take snow (18 okt) */
-  const cols={hall:[0x9c8b82,0x8f8680],kobbe:[0x8f8680,0x948a84],stenar:[0x7f7a76,0x8a827c],grynna:[0x5f5a55,0x6a625a],skar:[0x857d78,0x7a736e]},moss=mat(0x5d6b3e);
+  const SN=new Map(),mat=(c,k)=>{const key=c+(k||'');if(!SN.has(key))SN.set(key,seasonMat(new THREE.MeshLambertMaterial({color:c}),k||'snowtop'));return SN.get(key);};/* the islets and their stones take snow (18 okt); the rock itself is the main island's (19 okt, issue 48) */
+  const cols={hall:[0x8c8782,0x7d7b74],kobbe:[0x86827d,0x8c8782],stenar:[0x7a7772,0x84807a],grynna:[0x5c5a56,0x66625c],skar:[0x827e78,0x76746e]}/* the main island's grey granite, low enough in colour to read as rock in the ground shader */,moss=mat(0x5d6b3e);
   for(const o of list){let q=o.seed;const rnd=()=>((q=(q*16807)%2147483647)/2147483647);
     for(const pp of o.parts){const geo=new THREE.SphereGeometry(1,32,18),pos=geo.attributes.position,p1=rnd()*TAU,p2=rnd()*TAU,p3=rnd()*TAU;
       for(let i=0;i<pos.count;i++){let x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
         const w=1+.16*Math.sin(x*2.6+p1)*Math.cos(z*2.1+p2)+.08*Math.sin((x+z)*4.3+p3)+.04*Math.sin(x*7.1-z*6.3+p1);
         if(y<0)y*=.5;else y=Math.pow(y,o.kind==='hall'||o.kind==='grynna'?1.6:o.kind==='skar'?.8:1.15);pos.setXYZ(i,x*w,y*(.9+.2*w),z*w);}
       geo.computeVertexNormals();const cc=cols[o.kind]||cols.kobbe;
-      const m=new THREE.Mesh(geo,mat(cc[Math.floor(rnd()*2)]));m.scale.set(pp.rx,pp.h,pp.rz);m.rotation.y=-pp.rot;m.position.set(o.x+pp.dx,o.kind==='grynna'?-.15:-.35,o.y+pp.dy);st.add(m);(o._pm||(o._pm=[])).push(m);
+      const m=new THREE.Mesh(geo,mat(cc[Math.floor(rnd()*2)],'islet'));m.scale.set(pp.rx,pp.h,pp.rz);m.rotation.y=-pp.rot;m.position.set(o.x+pp.dx,o.kind==='grynna'?-.15:-.35,o.y+pp.dy);st.add(m);(o._pm||(o._pm=[])).push(m);
       if((o.kind==='kobbe'||o.kind==='hall')&&pp===o.parts[0]&&pp.rx>8){const cap=new THREE.Mesh(geo,moss);cap.scale.set(pp.rx*.5,pp.h*.3,pp.rz*.45);cap.position.set(o.x+pp.dx+(rnd()-.5)*pp.rx*.3,pp.h*.78,o.y+pp.dy);cap.rotation.y=-pp.rot;st.add(cap);}}
     // loose stones on the rock, small and a few bigger (decided 17 okt, Magnus: the flat yellow lichen discs read as nothing)
     if(o.kind!=='grynna'){const GULL=mat(0xeceae2),SM=[mat(0x8a847e),mat(0x76706b),mat(0x9a928a)],SG=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0));
@@ -5161,6 +5161,10 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
       vec3 au=mix(a1,a2,smoothstep(.35,.75,r));au=mix(au,a3,smoothstep(.75,.95,r));
       vec3 c=mix(g0,au,clamp(uAutumn*1.6-(1.0-r)*.6+sh,0.0,1.0)*smoothstep(0.0,.12,uAutumn));/* the kinds' shifts only once autumn has begun: rowan and the bushes were a third orange in July (18 okt) */c=mix(vec3(.42,.37,.33),c,smoothstep(.12-keep*.25,.45-keep*.3,uLeaf));
       diffuseColor.rgb=c;}`};
+  /* the islets and skerries get the main island's rock (decided 19 okt, issue 48): the ground's tone steps, grey and yellow lichen and
+     the black lichen band at the water, read off the face's own slope (they are scaled unevenly, which tilts a transformed normal),
+     then the snow and the sea's dark under the surface as before */
+  F.islet=F.ground.split('diffuseColor.rgb=c;}')[0].replace('vec3 n3=normalize(vSWN);','vec3 n3=normalize(cross(dFdx(vSWP),dFdy(vSWP)));n3*=sign(n3.y+1e-4);')+'diffuseColor.rgb=c;}'+F.snowtop;
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
 /* the season's values into the uniforms and the water's ice, once per date */
