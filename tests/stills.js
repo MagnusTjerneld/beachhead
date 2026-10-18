@@ -3,7 +3,7 @@
 // the first picture of a series has its trees like the rest. Swiftshader takes about a second and a half a picture; a series of
 // more than about 60 pictures takes over two minutes and needs a yes first (CLAUDE.md).
 //   node tests/stills.js arstider [ut.jpg]        built-in series: arstider (9 dates at noon), manader (12 months at noon), ar (12 months x 6 hours), vinter
-//   node tests/stills.js serie.json [ut.jpg]      your own: {seed, cols, w, h, shots:[{label, datum:'12-21', klocka:'08:30',
+//   node tests/stills.js serie.json [ut.jpg]      your own: {seed, cols, w, h, photo (no labels, far fog), title, rowLabels, colLabels, shots:[{label, datum:'12-21', klocka:'08:30',
 //                                                 moln, cam:{rel,x,y,z}, look:{rel,x,y,z}}]}; rel = relative to the landing beach,
 //                                                 a missing y = that high over the ground (camUp, lookUp)
 // three.js r128 comes from tests/node_modules/three (npm install in tests) or the path in THREE_JS.
@@ -29,7 +29,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   // the screen layouts give the camera pane only part of the window, so render in a big window and scale down in the sheet
   const p=await b.newPage({viewport:{width:1600,height:900}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
-  await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro',{waitUntil:'commit',timeout:120000});
+  await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro'+(S.photo?'&photo':''),{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
   const imgs=[];for(const s of S.shots){const o={...s};if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}
     await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice */
