@@ -2396,7 +2396,7 @@ const spotterFor=e=>G.units.find(v=>!v.dead&&v.air&&!v.carried&&v.orders[0]&&v.o
 function sendSpotter(h,e,from,force){
   let p=spotPoint(h,e,from),post='def';
   if(!p){if(!force)return false;const d=Math.hypot(from.x-e.lx,from.y-e.ly)||1;p={x:e.lx+(from.x-e.lx)/d*airSeeR(h,e)*.85,y:e.ly+(from.y-e.ly)/d*airSeeR(h,e)*.85};post='off';}
-  const back=h.orders.length?null:{x:h.orbit.x,y:h.orbit.y};giveOrder(h,{type:'obs',x:p.x,y:p.y,post,spotFor:e,spotWho:from.name||'VARG',orbR:5,back},false,'temp');
+  const back=h.orders.length?null:h.orbit?{x:h.orbit.x,y:h.orbit.y}:{x:h.x,y:h.y};/* a HÖK parked on a service pad has no circle */giveOrder(h,{type:'obs',x:p.x,y:p.y,post,spotFor:e,spotWho:from.name||'VARG',orbR:5,back},false,'temp');
   say(h,'Spanar på '+ename(e)+' åt '+(from.name||'VARG')+(post==='off'?', inom räckhåll för luftvärn.':' från säkert avstånd.'));return true;}
 function requestSpot(u,e){
   if(spotterFor(e)||G.units.some(v=>!v.dead&&v.air&&!v.carried&&dist(v,e)<airSeeR(v,e)*.95))return;
