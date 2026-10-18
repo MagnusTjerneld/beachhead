@@ -3032,12 +3032,13 @@ function netWarn(us,pt){if(G.netAll||!pt||pt.x==null||inNet(pt.x,pt.y))return;co
   say(null,'Målet i ruta '+sq(pt.x,pt.y)+' ligger utanför ledningsnätet. '+L.map(u=>u.name).join(', ')+' får ingen kontakt därute och kan inte få nya order förrän '+(L.length>1?'de':'den')+' är tillbaka.');}
 function groupOrder(pk,append,postOverride){
   let us=noContact(selUnits());if(!us.length)return;
-  netWarn(us,pk.relay||(pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:null)||pk.struct||pk.barrier||pk.mine||pk.world);
-  if(us.length===1){const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;giveOrder(u,markRetreat(u,o),append);return;}
+  const nwt=pk.relay||(pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:null)||pk.struct||pk.barrier||pk.mine||pk.world;
+  if(us.length===1){netWarn(us,nwt);const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;giveOrder(u,markRetreat(u,o),append);return;}
   /* a VARG retreating with heavy damage keeps retreating when the order is to the group or the wing (18 okt, issue 25: every
      click on the wing sent a VARG with 5 % hull back in, and it never turned again); an order to it alone still sends it back */
   {const hurt=us.filter(u=>u.kind==='tank'&&(u.rtb||u.orders[0]&&u.orders[0].toRep)&&u.hp<u.maxhp*.3);if(hurt.length&&hurt.length<us.length){us=us.filter(u=>!hurt.includes(u));
     for(const u of hurt)say(u,u.name+' retirerar med svåra skador ('+Math.round(u.hp/u.maxhp*100)+' %) och följer inte gruppordern. Välj den ensam för att skicka in den igen.');}}
+  netWarn(us,nwt);
   let tp=pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:pk.struct?{x:pk.struct.x,y:pk.struct.y}:pk.world;
   if(pk.barrier&&!pk.barrier.cleared){const sd=barrierSide(pk.barrier,us[0]);tp={x:sd.x,y:sd.y};}
   if(pk.mine&&!pk.mine.cleared){const sd=mineSide(pk.mine,us[0]);tp={x:sd.x,y:sd.y};}
