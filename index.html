@@ -611,7 +611,7 @@ function islandD(x,y,V){const S=V.shape,rg=S.rough||0;
   let d=shapeD(S,wx,wy);for(const b of S.bumps)d=b.hole?Math.max(d,2-lobeD(b,wx,wy)):smin(d,lobeD(b,wx,wy),.08);
   const shore=1+(fbm(x*.7,y*.7,s+31)-.5)*V.shoreAmp*1.6+(vnoise(x/45,y/45,s+57)-.5)*.12*rg*att;
   return{d:d/shore};}
-function shapeFor(seed,V,base){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let type=SHAPE_CFG.force&&SHAPES[SHAPE_CFG.force]?SHAPE_CFG.force:null;
+function shapeFor(seed,V,base,alt){const R=rng(seed*29+17),mix=SHAPE_CFG.mix;let type=SHAPE_CFG.force&&SHAPES[SHAPE_CFG.force]?SHAPE_CFG.force:alt||null;
   /* the island number picks the shape, so a retry of the generator keeps it; the retry only redraws the geometry */
   if(!type){let tw=0;for(const k in mix)tw+=mix[k];let r=rng((base??seed)*29+17)()*tw;R();for(const k in mix){r-=mix[k];if(r<=0){type=k;break;}}type=type||'rund';}
   const lobes=[],holes=[],L=(x,y,rx,ry,rot)=>({x,y,rx,ry,rot:rot||0});let k=.2;
@@ -686,10 +686,10 @@ function elevAt(x,y,s,V,noBank){
   if(H&&H.std&&hOwn&&hl<HARB.hw+80&&hi>-30&&hi<HARB.L+110){const t=sm((hi-HARB.L-20)/70),side=sm((HARB.hw+80-hl)/30)*edge;e=lerp(e,lerp(1.1,e,t),side);}
   return e;
 }
-function levelFor(seed,base){
+function levelFor(seed,base,type){
   const R=rng(seed*7+3);
   const V={seed,RX:580+R()*130,RY:480+R()*140,shoreAmp:.14+R()*.16,zones:[]};
-  V.shape=shapeFor(seed,V,base);
+  V.shape=shapeFor(seed,V,base,type);
   const K=8+Math.floor(R()*5);
   if(V.shape.type==='rund')for(let t=0;t<4000&&V.zones.length<K;t++){
     const a=R()*TAU,rr=Math.sqrt(R())*.86,x=CX+Math.cos(a)*rr*V.RX,y=CY+Math.sin(a)*rr*V.RY;
@@ -746,9 +746,17 @@ function buildChart(W){
 }
 /* a defence is island plus doctrine (decided 16 okt): the island's seed decides the geography and the base defence it is checked
    with, the doctrine the island's base draw (doc null) or one the captain chose; the same island and doctrine is always the same */
+/* the island number picks its shape; if no try of that shape passes (decided 18 okt: every island has a harbour, so a shape where
+   none fits gives way), the other shapes follow in an order the number also picks, each with its own tries. With a forced shape,
+   or none passing at all, the last try of the island's own shape is kept as before */
 function buildWorld(seed,doc){
-  let W=null;
-  for(let k=0;k<(SHAPE_CFG.rough?12:8);k++){W=buildWorldTry(seed,k);W.tries=k+1;W.valid=validWorld(W);{const lg=buildWorld.log=buildWorld.log||[];lg.push(W.valid?"ok":W.why);if(lg.length>200)lg.shift();}if(W.valid)break;}
+  let W=null,first=null;const N=SHAPE_CFG.rough?12:8,log=w=>{const lg=buildWorld.log=buildWorld.log||[];lg.push(w.valid?"ok":w.why);if(lg.length>200)lg.shift();};
+  for(let k=0;k<N;k++){W=buildWorldTry(seed,k);W.tries=k+1;W.valid=validWorld(W);log(W);if(W.valid)break;}
+  /* a second round where the harbour may move to a site in the land */
+  if(!W.valid&&SHAPE_CFG.rough)for(let k=0;k<N;k++){W=buildWorldTry(seed,k,null,true);W.tries=N+k+1;W.moved=true;W.valid=validWorld(W);log(W);if(W.valid)break;}
+  if(!W.valid&&SHAPE_CFG.rough&&!SHAPE_CFG.force){first=W;const own=W.V.shape.type,Ro=rng(seed*37+11),alts=Object.keys(SHAPES).filter(t=>t!==own&&SHAPE_CFG.mix[t]>0).map(t=>({t,r:Ro()})).sort((a,b)=>a.r-b.r).map(o=>o.t);
+    for(let a=0;a<alts.length&&!W.valid;a++)for(let k=0;k<N;k++){W=buildWorldTry(seed,100+a*N+k,alts[a],true);W.tries=first.tries+a*N+k+1;W.valid=validWorld(W);W.shapeFrom=own;log(W);if(W.valid)break;}
+    if(!W.valid){W=buildWorldTry(seed,N-1);W.tries=N;W.valid=false;}}
   W.seed=seed;W.doc=null;W.baseDoc=W.plan.doctrine;WORLD=W;setDefense(W,doc,true);return W;
 }
 /* the island's own doctrine is its base defence; another doctrine that fails the island's check (two bunkers at LC) tries a few
@@ -790,6 +798,14 @@ function validWorld(W){
       if(n>=12)big.set(z,(big.get(z)||0)+1);}
     for(const[,k]of big)if(k>1){W.why='zon i flera delar';return false;}}
   if(W.V.shape.rough&&W.harbor&&!W.birkaPath){W.why='Birka når inte hamnen';return false;}
+  /* every island has a harbour (decided 18 okt: it becomes central with heavier units such as BJÖRN), dug into the land: there is
+     land along at least three quarters of both long sides behind the quays (on ö 7642 both quays stood as piers out in the water),
+     and the basin does not cut the island in two (on ö 7313 it ran straight across the neck) */
+  if(W.V.shape.rough){if(!W.harbor){W.why='ingen hamn';return false;}const H=W.harbor,ux=-H.nx,uy=-H.ny,land=(li,lt)=>g[cellIdx(H.x+ux*li-uy*lt,H.y+uy*li+ux*lt)]>=BEACH;
+    for(const sd of[-1,1]){let n=0,k=0;for(let li=8;li<=HARB.L;li+=6){k++;if(land(li,sd*(HARB.hw+HARB.deck+4)))n++;}if(n<k*.75){W.why='hamnen ligger inte i land';return false;}}
+    const seen=new Int32Array(g.length).fill(-1),sizes=[];for(let i=0;i<g.length;i++){if(seen[i]>=0||g[i]<BEACH)continue;const id=sizes.length,st=[i];seen[i]=id;let n=0;
+      while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;n++;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(seen[m]<0&&g[m]>=BEACH){seen[m]=id;st.push(m);}}}sizes.push(n);}
+    sizes.sort((a,b)=>b-a);if(sizes.length>1&&sizes[1]>sizes[0]*.15){W.why='hamnen delar ön';return false;}}
   // the finished way in, holms and all, keeps 20 m of water on both sides of the hull line until the harbour mouth
   if(W.birkaPath&&!birkaClear(W)){W.why='Birkas väg över land';return false;}
   // the new shapes and every rough coast: every point reachable over land from the beach once the barriers are open (BÄVER cannot cross water)
@@ -803,8 +819,8 @@ function validWorld(W){
    every target for every candidate on every pick, which was most of the time it takes to build an island */
 function nearLists(cand,tg,r){const B=new Map(),key=(x,y)=>x*4096+y;for(let j=0;j<tg.length;j++){const k=key(Math.floor(tg[j].x/r),Math.floor(tg[j].y/r));let a=B.get(k);if(!a){a=[];B.set(k,a);}a.push(j);}
   return cand.map(c=>{const bx=Math.floor(c.x/r),by=Math.floor(c.y/r),o=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const a=B.get(key(bx+dx,by+dy));if(!a)continue;for(const j of a)if(Math.hypot(tg[j].x-c.x,tg[j].y-c.y)<r)o.push(j);}return Int32Array.from(o);});}
-function buildWorldTry(seed,tryK){
-  const s=seed+tryK*7919,V=levelFor(s,seed),R=rng(s*13+5);
+function buildWorldTry(seed,tryK,type,move){
+  const s=seed+tryK*7919,V=levelFor(s,seed,type),R=rng(s*13+5);
   V.passMap=new Map();V.harbor=null;V.beach=null;V.cove=null;
   const Z=V.zones,NZ=Z.length;
   // zone assignment on the grid (shape only) to find adjacency and boundary cells
@@ -882,9 +898,19 @@ function buildWorldTry(seed,tryK){
   const cptClear=(z,w,clr,ship)=>{if(isRound)return null;let best=null,bd=1e9;for(const c of coastCells.get(z)||[]){const dd=Math.hypot(c.x-Z[z].x,c.y-Z[z].y);if(dd>=bd||passD(c)<clr)continue;
       const n=outN(c.x,c.y),o={x:c.x,y:c.y,nx:n.x,ny:n.y,w};if(ship&&!shipSpot(o))continue;bd=dd;best=o;}return best;};
   if(isRound)V.beach={...cpt(land,0),w:9+R()*5,a:Z[land].a};else{const w=90+R()*50;V.beach=cptClear(land,w,w+120,true)||cpt(land,w)||{x:Z[land].x,y:Z[land].y,nx:0,ny:1,w:100};V.beach.z=land;}
-  const hc=coastal.filter(i=>!Z[i].water&&i!==land&&pd[i]>=2&&safe.has(i));const hz=hc.length?hc[Math.floor(R()*hc.length)]:coastal.find(i=>!Z[i].water&&i!==land&&safe.has(i));
+  const hc=coastal.filter(i=>!Z[i].water&&i!==land&&pd[i]>=2&&safe.has(i));let hz=hc.length?hc[Math.floor(R()*hc.length)]:coastal.find(i=>!Z[i].water&&i!==land&&safe.has(i));
   if(hz!==undefined){V.harbor=isRound?{...cpt(hz,4.5),a:Z[hz].a,depth:.8}:cptClear(hz,45,240,false)||cpt(hz,45);if(!isRound)V.harbor.z=hz;}
   if(V.harbor)V.harbor.std=!!(V.shape.rough||!isRound);
+  /* the harbour is dug into the land (decided 18 okt): the shape has land along three quarters of both long sides of the basin
+     and beyond its inner end, so the quays are not piers in the water (ö 7642) and the basin does not cut across a neck (ö 7313). The site drawn is kept
+     when it fits; otherwise (only in buildWorld's second round, move, so that every island whose own harbour passes stays as it
+     was) the coast cell nearest the middle of a harbour zone that fits, the drawn zone first */
+  if(V.harbor&&V.harbor.std){const inLand=(x,y)=>islandD(x,y,V).d<.97,siteOK=o=>{const ux=-o.nx,uy=-o.ny,P=(li,lt)=>inLand(o.x+ux*li-uy*lt,o.y+uy*li+ux*lt);
+      for(const sd of[-1,1]){let n=0,k=0;for(let li=10;li<=HARB.L;li+=10){k++;if(P(li,sd*(HARB.hw+HARB.deck+4)))n++;}if(n<k*.75)return false;}return P(HARB.L+40,0)+P(HARB.L+40,25)+P(HARB.L+40,-25)>=2;};
+    if(move&&!siteOK(V.harbor)){let pick=null;const zs=[hz,...hc.filter(z=>z!==hz),...coastal.filter(i=>!Z[i].water&&i!==land&&safe.has(i)&&!hc.includes(i)&&i!==hz)];
+      for(const z of zs){const cs=(coastCells.get(z)||[]).slice().sort((a,b)=>Math.hypot(a.x-Z[z].x,a.y-Z[z].y)-Math.hypot(b.x-Z[z].x,b.y-Z[z].y));
+        for(const c of cs){if(!isRound&&passD(c)<240)continue;const n=outN(c.x,c.y),o={x:c.x,y:c.y,nx:n.x,ny:n.y,w:V.harbor.w,std:true};if(siteOK(o)){pick={o,z};break;}}if(pick)break;}
+      if(pick){hz=pick.z;V.harbor=isRound?{...pick.o,a:Math.atan2(pick.o.y-CY,pick.o.x-CX)*180/PI,depth:.8}:{...pick.o,z:hz};}}}
   const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cptClear(ci,55,170,false)||cpt(ci,55);if(!isRound)V.cove.z=ci;}
   let sp=null;
   if(isRound){const ba=V.beach.a*PI/180;for(let f=1;f<2.2&&!sp;f+=.01){const x=CX+Math.cos(ba)*f*V.RX,y=CY+Math.sin(ba)*f*V.RY;if(clear(x,y))sp={x:x+Math.cos(ba)*20,y:y+Math.sin(ba)*20};}if(!sp)sp=polar(V.beach.a,1.4);}
@@ -1540,6 +1566,8 @@ function buildWorldTry(seed,tryK){
     W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));}
   // the ridges and the field islets, now that the houses stand where they would without them (see the note at ridges)
   {const ev0=ev.slice();ridges();
+    /* the lighthouse was seated before the ridges reshaped the ground; on ö 7313 they lowered it 12 m and the tower hung in the air */
+    if(W.decor&&W.decor.light&&!W.decor.light.islet)W.decor.light.h=heightAt(W.decor.light.x,W.decor.light.y);
     // the ground class and the square diagonals again where the ground changed
     const ch=new Uint8Array(nx*ny);for(let k=0;k<nx*ny;k++)if(ev[k]!==ev0[k]){const i=k%nx,j=(k/nx)|0;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){const ii=i+di,jj=j+dj;if(ii>=0&&jj>=0&&ii<nx&&jj<ny)ch[jj*nx+ii]=1;}}
     for(let k=0;k<nx*ny;k++){if(!ch[k]||(W.hall&&W.hall[k]))continue;const i=k%nx,j=(k/nx)|0,e=ev[k];if(e<=0){vcls[k]=e<-3.2?DEEP:SHAL;continue;}let g=0;if(i<SX)g=Math.max(g,Math.abs(e-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(e-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(e-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(e-ev[k-nx]));vcls[k]=g>2.6?ROCK:e<1.8?BEACH:LAND;}
