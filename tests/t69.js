@@ -1,6 +1,7 @@
 // decisions after the test round on island 1490 (18 okt): rocket reach only with eyes of another kind (issue 30), a HÖK hit by air
 // defence pulls out of reach and waits instead of flying home, with the wing (issue 33), a VARG sent back in turns again after a
-// share of its hull (issue 25), and a unit done outside the net comes back into it (issue 37 a)
+// share of its hull (issue 25), a unit done outside the net comes back into it (issue 37 a), and KROK's set-down follows its own
+// stance for the air and the vehicle's stance for secured land (issue 22)
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(let i=0;i<40;i++)B.step(.05);return G;};
@@ -37,4 +38,11 @@ const foe=(G,kind,x,y)=>{const e=B.makeEnemy({id:'Q'+kind,kind,x,y});e.seen=true
   for(let i=0;i<120*20&&!(B.inNet(v.x,v.y)&&B.inNet(h.x,h.y));i++)B.step(.05);
   for(let i=0;i<30;i++)B.step(.05);
   ok(B.inNet(v.x,v.y)&&B.inNet(h.x,h.y)&&!v.offNet&&!h.offNet,'and are inside it again with contact');}
+// 5. on scouted but unsecured land a BÄVER on Dold is not set down; on Offensiv it is, with a line in the log
+{const drop=post=>{const G=setup(1490),L=G.relays[0],k=G.kroks[0],u=G.units.find(v=>v.kind==='eng');G.known.fill(0);
+    for(let y=-90;y<=90;y+=5)for(let x=-90;x<=90;x+=5)if(x*x+y*y<90*90)G.known[B.cellIdx(L.x+x,L.y+y)]=1;G.knownV++;
+    k.x=L.x+40;k.y=L.y;k.orders=[];k.cargo=u;u.carried=k.id;u.post=post;B.krokOrder(k,{type:'drop',x:L.x,y:L.y});
+    for(let i=0;i<40*20&&k.cargo;i++)B.step(.05);return{G,L,k,u,sec:B.isSecured(L.x,L.y),log:G.log.map(l=>l.text).join(' | ')};};
+  const a=drop('dold');ok(!a.sec&&a.k.cargo===a.u&&/Ingen säkrad landningsplats/.test(a.log),'a BÄVER on Dold is not set down on unsecured land ('+(a.k.cargo?'still carried':'set down')+')');
+  const b=drop('off');ok(!b.k.cargo&&Math.hypot(b.u.x-b.L.x,b.u.y-b.L.y)<15&&/sätts ned på osäkrad mark/.test(b.log),'a BÄVER on Offensiv is set down where the captain points, with a line in the log ('+Math.hypot(b.u.x-b.L.x,b.u.y-b.L.y).toFixed(0)+' m off)');}
 console.log(fail?fail+' failed':'all passed');process.exit(fail?1:0);
