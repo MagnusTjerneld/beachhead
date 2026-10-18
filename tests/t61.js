@@ -127,7 +127,7 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
   h.x=R.x+(C.x-R.x)*.4;h.y=R.y+(C.y-R.y)*.4;h.ammo=0;B.sendToService(h,'ship');run(3);ok(h.orders[0]&&h.orders[0].svc==='ship','service order names Birka');
   for(let i=0;i<90&&h.orders.length;i++)run(1);ok(h.ammo>=4&&Math.hypot(h.x-C.x,h.y-C.y)<60,'rearmed at Birka although the workshop was nearer');
   h.x=R.x+150;h.y=R.y;h.ammo=0;B.sendToService(h,R.id);for(let i=0;i<60&&h.orders.length;i++)run(1);ok(h.ammo>=4&&!h.orders.length,'rearmed at the workshop, service done');
-  h.ammo=0;h.orders=[{type:'move',x:R.x,y:R.y,post:'def'}];run(25);ok(h.ammo>=4,'a HÖK sent to the workshop and circling it rearms ('+h.ammo.toFixed(1)+')');}
+  h.ammo=0;h.orders=[{type:'move',x:R.x,y:R.y,post:'def'}];run(25);ok(h.ammo<1,'a HÖK circling the workshop does not rearm: service is only on a pad (18 okt, '+h.ammo.toFixed(1)+')');}
  else ok(false,'no workshop on this island');}
 // recycling at Birka: 80 % of the build cost, a MUS aboard included; nothing away from the ship
 {B.newGame(1234);const G=B.G;G.running=true;run(.2);const C=B.CARRIER;const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');
@@ -135,8 +135,8 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  v.x=C.x;v.y=C.y;const r0=G.res;ok(B.recycleValue(v)===160+24,'a VARG is worth 160 plus 24 for its MUS ('+B.recycleValue(v)+')');
  B.recycle([v]);ok(!G.units.includes(v)&&!G.units.some(u=>u.kind==='mus'&&u.owner===v.id),'the VARG and its MUS are gone');ok(Math.round(G.res-r0)===184,'184 material back');
  ok(G.wings['1']&&!G.wings['1'].includes(v.id),'it leaves its wing');}
-// a BÄVER from the yard drives along the deck to a stern pad no KROK owns
-{B.START.units=['eng'];B.newGame(1234);const G=B.G;G.running=true;const e=G.units.find(u=>u.kind==='eng'),k=G.kroks[0];run(15);
- ok(Math.hypot(e.x-k.pad.x,e.y-k.pad.y)>6&&B.freePad(e)!==null,'the BÄVER is not on the KROK pad');ok(/helikopterplattan/.test(e.state)||e.state==='Väntar på order','it waits on a free pad ('+e.state+')');
+// a BÄVER from the yard waits in the build bay, takes no service pad, and is not under KROK's spot (18 okt, issue 34)
+{B.START.units=['eng'];B.newGame(1234);const G=B.G;G.running=true;const e=G.units.find(u=>u.kind==='eng'),k=G.kroks[0];const e0={x:e.x,y:e.y};run(15);
+ ok(Math.hypot(e.x-k.pad.x,e.y-k.pad.y)>6&&B.freePad(e)!==null,'the BÄVER is not on the KROK spot and leaves the pads free');ok(Math.hypot(e.x-e0.x,e.y-e0.y)<1&&e.state==='Väntar på order','it waits in the bay ('+e.state+')');
  B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

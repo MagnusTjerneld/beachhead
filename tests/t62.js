@@ -31,8 +31,8 @@ const hp0=m.hp;m.x=mn.x;m.y=mn.y;mn.cells=[];{const gx=Math.floor(mn.x/10),gy=Ma
  G.ctrl=m.id;ok(B.roverBlast(m)&&m.dead,'F detonates the charge');ok(tk.dead,'a tank within 8 m is destroyed');ok(!far.dead&&far.hp===40,'nothing beyond 12 m is hurt');
  ok(G.ctrl!==m.id&&!v.musId,'control returns, the VARG has no MUS');
  // replaced at Birka for 30 material in 15 s
- const C=B.CARRIER;v.x=C.x;v.y=C.y;G.res=100;run(17);const m2=G.units.find(u=>u.kind==='mus'&&!u.dead&&u.owner===v.id);
- ok(m2&&m2.carried===v.id,'a new MUS at Birka');ok(G.res<100-25,'it cost material ('+Math.round(100-G.res)+' net of income)');
+ const C=B.CARRIER;v.x=C.x;v.y=C.y;G.res=100;const s0=G.salvaged;run(17);const m2=G.units.find(u=>u.kind==='mus'&&!u.dead&&u.owner===v.id),net=G.res-(G.salvaged-s0);
+ ok(m2&&m2.carried===v.id,'a new MUS at Birka');ok(net<100-25,'it cost material ('+Math.round(100-net)+' net of income and salvage)');
  // driving it back to the VARG puts it aboard
  v.x=L.x;v.y=L.y;run(.2);B.roverOut(v);run(4);m2.x=v.x+3;m2.y=v.y;run(.5);ok(m2.carried===v.id&&G.ctrl!==m2.id,'driven back to its VARG, it is aboard again');}
 // sight: a MUS sees infantry hidden in the woods at 70 m; enemies see it only close and heavy guns rarely hit it

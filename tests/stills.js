@@ -5,7 +5,9 @@
 //   node tests/stills.js arstider [ut.jpg]        built-in series: arstider (9 dates at noon), manader (12 months at noon), ar (12 months x 6 hours), vinter
 //   node tests/stills.js serie.json [ut.jpg]      your own: {seed, cols, w, h, photo (no labels, far fog), title, rowLabels, colLabels, shots:[{label, datum:'12-21', klocka:'08:30',
 //                                                 moln, cam:{rel,x,y,z}, look:{rel,x,y,z}}]}; rel = relative to the landing beach,
-//                                                 a missing y = that high over the ground (camUp, lookUp)
+//                                                 a missing y = that high over the ground (camUp, lookUp); rel:'birka' is Birka's own frame
+//                                                 (x across, z forward), rel:'station' the field station's plates (z out through them);
+//                                                 prep (in the series or a shot) is JavaScript run in the page first, with B = __BH and G = __BH.G
 // three.js r128 comes from tests/node_modules/three (npm install in tests) or the path in THREE_JS.
 const fs=require('fs'),path=require('path'),{execSync}=require('child_process');
 const {chromium}=require(execSync('npm root -g').toString().trim()+'/playwright');
@@ -31,8 +33,10 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
   await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro'+(S.photo?'&photo':''),{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
-  const imgs=[];for(const s of S.shots){const o={...s};if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}
-    await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice */
+  const prep=code=>code&&p.evaluate(c=>{const B=globalThis.__BH,G=B.G;return new Function('B','G',c)(B,G);},code);let prepped=false;
+  const imgs=[];for(const s of S.shots){const o={...s};delete o.prep;if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}
+    await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice; it also starts the game, so prep runs after it */
+    if(!prepped){prepped=true;await prep(S.prep);}await prep(s.prep);
     imgs.push(await p.evaluate(o=>globalThis.__BHstill(o),o));process.stdout.write('.');}
   // the contact sheet is drawn in the page itself; with rowLabels/colLabels the labels go in margins instead of on the pictures
   const sheet=await p.evaluate(async([imgs,labels,W,H,cols,title,rowL,colL])=>{const rows=Math.ceil(imgs.length/cols),grid=!!(rowL||colL),

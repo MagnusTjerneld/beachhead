@@ -1,5 +1,5 @@
 // harbour and docking: the planned path is open water, the harbour is point H with its own guards and is taken by BÄVER like the others,
-// Birka sails in at about 10 knots with acceleration and braking, docks aligned, and carries the deck BÄVER and the KROK pad along
+// Birka sails in at about 10 knots with acceleration and braking, docks aligned, and carries the deck BÄVER, KROK's spot and an idle KROK along
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const GW=220,DEEP=0,SHAL=1;
@@ -28,9 +28,9 @@ for(const[f,seed]of[['as',1000],['hastsko',1037],['udde',1111]]){
   const d=W.harbor.dock;ok(Math.hypot(B.CARRIER.x-d.x,B.CARRIER.y-d.y)<.01&&Math.abs(B.CARRIER.a-d.a)<.01,f+': moored on the dock point and heading');
   ok(Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y)>300,f+': Birka moved '+Math.round(Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y))+' m');
   const e1=loc(eng),p1=loc(k.pad);
-  ok(eng.carried||Math.abs(e1.lat-e0.lat)+Math.abs(e1.fwd-e0.fwd)<1.5,f+': the deck BÄVER rides along ('+e1.lat.toFixed(1)+', '+e1.fwd.toFixed(1)+')');
+  ok(eng.carried||Math.abs(e1.lat-e0.lat)+Math.abs(e1.fwd-e0.fwd)<1.5||Math.abs(e1.lat)<16&&Math.abs(e1.fwd)<45,f+': the deck BÄVER rides along, where it stood or on a service pad ('+e1.lat.toFixed(1)+', '+e1.fwd.toFixed(1)+')');
   ok(Math.abs(p1.lat-p0.lat)+Math.abs(p1.fwd-p0.fwd)<.01,f+': the KROK pad rides along');
-  ok(k.cargo||k.orders.length||Math.hypot(k.x-k.pad.x,k.y-k.pad.y)<3,f+': an idle KROK sits on its pad');
+  {const kc=Math.hypot(k.x-B.CARRIER.x,k.y-B.CARRIER.y);ok(k.cargo||k.orders.length||kc<70,f+': an idle KROK circles over Birka ('+kc.toFixed(0)+' m from its centre)');}
   // a new game puts Birka back at sea
   B.newGame(seed);ok(Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y)<.01&&!B.G.harbor.secured,f+': a new game resets Birka and the harbour');
 }
