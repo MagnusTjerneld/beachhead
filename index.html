@@ -3944,8 +3944,8 @@ function servicePads(r){if(r.pads)return r.pads;const b=pointBld(r),a0=b.a+PI,ou
 /* a service plate: a level concrete slab with a yellow edge, a white H and a lamp at its outer corner */
 function mkPlateMesh(q){const g=new THREE.Group(),h=Math.max(.5,q.y3-q.lo+.6),S=PLATE;g.position.set(q.x,0,q.y);g.rotation.y=-q.a;
   g.add(mesh(box(S,h,S),mat(0x8f918a),0,q.y3-h/2,0));
-  for(const[x,z,w,d]of[[0,S/2-.25,S,.4],[0,-S/2+.25,S,.4],[S/2-.25,0,.4,S],[-S/2+.25,0,.4,S]])g.add(mesh(box(w,.05,d),mat(0xe0b84a),x,q.y3+.02,z));
-  for(const z of[-1.1,1.1])g.add(mesh(box(2.6,.05,.42),mat(0xe6e1d2),0,q.y3+.02,z));g.add(mesh(box(.42,.05,2.2),mat(0xe6e1d2),0,q.y3+.02,0));
+  for(const[x,z,w,d]of[[0,S/2-.25,S,.4],[0,-S/2+.25,S,.4],[S/2-.25,0,.4,S],[-S/2+.25,0,.4,S]])g.add(mesh(box(w,.05,d),mat(0xe0b84a),x,q.y3+.06,z));
+  for(const z of[-1.1,1.1])g.add(mesh(box(2.6,.05,.42),mat(0xe6e1d2),0,q.y3+.06,z));g.add(mesh(box(.42,.05,2.2),mat(0xe6e1d2),0,q.y3+.06,0));/* 6 cm up, not 2: at a distance the marks fought the slab's top for the depth (issue 53) */
   g.add(mesh(cyl(.08,.1,3.2,5),mat(0x737d84),S/2+.3,q.y3+1.6-.2,S/2+.3));g.add(mesh(box(.5,.3,.5),R3.lampMat,S/2+.3,q.y3+3.2,S/2+.3));
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
 function mkPointMesh(r){
@@ -4974,7 +4974,11 @@ function buildStatic(){
     const FR=fairwayRoute(W);[['ferry',6.5,0],['tanker',3.5,.2],['box',4.5,.45],['ferry',6.5,.55],['cargo',4,.78]].forEach(([k,sp,ph],i)=>{const sh=mkBigShip(k);mv2(sh,FR,sp,(ph+hs(10+i)*.08)%1,sh.userData.beam,sh.userData.len/2,1);});}if(W.islets)mkIslets(W.islets,st);
   for(const r of G.relays){const g=mkPointMesh(r),gb=inYard(r)?pointBld(r):r;g.position.set(r.x,groundY(gb.x,gb.y),r.y);st.add(g);R3.relays.set(r.id,g);if(r.type==='verkstad'||r.type==='varv')for(const q of servicePads(r))st.add(mkPlateMesh(q));}
   if(W.yard){const Y=W.yard,N=10,h=Y.half,ca=Math.cos(Y.a),sa=Math.sin(Y.a),P=new Float32Array((N+1)*(N+1)*3),ix=[];
-    for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const s2=-h+2*h*i/N,t=-h+2*h*j/N,x=Y.x+ca*s2-sa*t,z=Y.y+sa*s2+ca*t,k=(j*(N+1)+i)*3;P[k]=x;P[k+1]=groundY(x,z)+.45;P[k+2]=z;}
+    /* under the service plates the yard sinks inside the slab (19 okt, issue 53: on a sloping yard its surface, drawn with a polygon
+       offset, could come up through a plate and hide its yellow edge and H at a distance) */
+    const yr=G.relays.find(inYard),pads=yr?servicePads(yr):[];
+    for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const s2=-h+2*h*i/N,t=-h+2*h*j/N,x=Y.x+ca*s2-sa*t,z=Y.y+sa*s2+ca*t,k=(j*(N+1)+i)*3;P[k]=x;P[k+1]=groundY(x,z)+.45;P[k+2]=z;
+      for(const q of pads){const dx=x-q.x,dz=z-q.y,lx=dx*Math.cos(q.a)+dz*Math.sin(q.a),lz=-dx*Math.sin(q.a)+dz*Math.cos(q.a);if(Math.max(Math.abs(lx),Math.abs(lz))<PLATE/2+2.5)P[k+1]=Math.min(P[k+1],q.lo-.2);}}
     for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b=a+1,c=a+N+1,d=c+1;ix.push(a,c,b,b,c,d);}
     const yg=new THREE.BufferGeometry();yg.setAttribute('position',new THREE.BufferAttribute(P,3));yg.setIndex(ix);yg.computeVertexNormals();
     const ym=new THREE.Mesh(yg,new THREE.MeshLambertMaterial({color:0x9b998f,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));ym.receiveShadow=true;st.add(ym);}
