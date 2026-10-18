@@ -97,6 +97,14 @@ button:disabled{opacity:.45;cursor:default}
 .sgrip::after{content:'';position:absolute;left:3px;top:50%;height:48px;margin-top:-24px;width:2px;border-radius:1px;background:var(--line)}
 .sgrip:hover::after,.sgrip:focus-visible::after,.sgrip.drag::after{background:var(--signal);top:0;height:100%;margin-top:0}
 .side{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
+/* the wide layout (17 okt, issue 17): the main view and the other view side by side, as large as each other or as the grip between
+   them sets, the roster under both, and the live pictures one above the other in the side panel */
+.mgrip{display:none}
+.stage.bred .maincol{display:grid;grid-template-columns:minmax(0,var(--sa,1fr)) 8px minmax(0,var(--sb,1fr));grid-template-rows:minmax(0,1fr) auto;gap:8px 2px}
+.stage.bred .mgrip{display:block}
+.stage.bred .roster{grid-column:1/-1}
+.stage.bred #subSlot{aspect-ratio:auto}
+.stage.bred .feeds{grid-template-columns:1fr}
 .side > *{flex-shrink:0}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;min-height:84px}
 .log li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;font-size:13px;padding:3px 6px;border-radius:2px;cursor:pointer;align-items:baseline}
@@ -230,7 +238,8 @@ button:disabled{opacity:.45;cursor:default}
         <div class="mh">Ljud och bild</div>
         <button class="btn" id="bMusic" type="button" aria-pressed="true" title="Musik (N)">Musik på</button>
         <button class="btn" id="bSound" type="button" aria-pressed="true" title="Ljud (M)">Ljud på</button>
-        <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter">Livebilder</button>
+        <button class="btn" id="bFeeds" type="button" aria-pressed="true" title="Två små livebilder från andra enheter: 15 bilder per sekund, 60 eller av">Livebilder 15 bps</button>
+        <button class="btn" id="bLayout" type="button" title="Bred: huvudvyn och den andra vyn sida vid sida, livebilderna över varandra i sidopanelen. Auto väljer bred på breda skärmar (21:9 och bredare)">Skärmlayout: auto</button>
         <button class="btn" id="bDynRes" type="button" aria-pressed="true" title="Sänker 3D-bildens upplösning när datorn inte hinner med 60 bilder per sekund">Dynamisk upplösning på</button>
         <button class="btn" id="bSikt" type="button" title="Hur långt bort dimman tätnar. Kortare sikt ritar färre träd">Siktavstånd: lång</button>
         <button class="btn" id="bBench" type="button" title="Mäter bildtiden på tre öar i dag, skymning, natt och strid (cirka tre minuter). Spelet du har på gång avbryts">Kör benchmark</button>
@@ -259,6 +268,7 @@ button:disabled{opacity:.45;cursor:default}
       <div class="pane" id="paneMap"><canvas id="cMap"></canvas><div class="vlabel" id="lblMap">SJÖKORT</div><div class="zoom"><button type="button" id="zIn" aria-label="Zooma in">+</button><button type="button" id="zOut" aria-label="Zooma ut">−</button><button type="button" id="zFit">Hela</button></div></div>
       <div class="wheel" id="wheel" hidden><div class="ring" id="wRing"></div><div class="wchips" id="wChips"></div></div>
     </div>
+    <div class="sgrip mgrip" id="mgrip" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Fördelningen mellan vyerna" title="Dra för att fördela bredden mellan vyerna. Dubbelklicka för lika stora."></div>
     <div class="roster" id="roster" role="toolbar" aria-label="Enheter"></div></div>
     <div class="sgrip" id="sgrip" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Sidopanelens bredd" title="Dra för bredare sidopanel och större livebilder. Dubbelklicka för standardbredd."></div>
     <aside class="side">
@@ -336,12 +346,12 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Ekonomi är bärgning.</span> Grundinkomsten är liten. Ön är full av byggnader, materiel och vrak, men det mesta ligger i flankerna: sektorerna längs den raka vägen till LC är magra, de vid sidan av rika, så det lönar sig att ta en sektor för materialets skull. BÄVER river byggnader till rasmassor med fullt värde; VARG och HÖK kan skjuta sönder dem men förstör det mesta. Bränsledepåer exploderar och skadar allt i närheten, även fienden. KROK hämtar automatiskt bara högar där terrängen runt är spanad (bleka högar på kartan har den inte sett tillräckligt av) och inga kända hot finns. En beställd hög hämtas så fort den ligger i spanat område utan kända hot. Klicka på en hög för att beställa KROK dit först. Fler KROK kan byggas på varvet. Byggen i kö avbryts genom att klicka på dem under Varv: det som väntar ger tillbaka allt material, det som redan byggs bara den del som inte hunnit skrivas ut.</li>
       <li><span class="em">Skärgården:</span> båtar och bryggor går sönder av granater, robotar och explosioner, till exempel när du siktar själv med en VARG. Det ger ingenting och kostar ingenting. Stugor och bodar som skjuts sönder brinner en stund. Gul-svarta kardinalmärken visar grund under ytan (passera på den sida märket anger), röda och gröna prickar markerar inloppet till hamnen.</li>
       <li><span class="em">Ledningsnätet:</span> Birka har bara kontakt med enheterna inom radioräckvidd: 850 m från fartyget, som ankrar utanför landstigningen, och 500 m runt varje tagen punkt. Nätets kant är streckad på sjökortet och marken utanför svagt tonad. Tar du radarstationen R2, som också är radiomast, täcker nätet hela ön. En enhet utanför nätet fortsätter med sin senaste order och sin autonomi, men tar inga nya order, har ingen kamerabild och rapporterar inget den ser förrän den är tillbaka. Ge alltså order innan du skickar ut någon. Ligger målet för en order utanför nätet säger loggen det. En GETING som har radiolänk via ett relä i nätet har kontakt genom det, även utanför nätets kant.</li>
-      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer, fiendens doktrin, datum och klockslaget vid start, eller lämnar dem tomma (Auto) för slump och öns eget datum och klockslag; under fälten står årstiden och när solen går upp och ner. Samma ö med samma doktrin är alltid samma försvar, så du kan anfalla det igen; Spela igen behåller dem, och datum och klockslag. Med Auto väljer fienden doktrin efter ön, och du får veta vilken först när ön är vunnen. Datum och klocka står i översta raden (håll muspekaren över dem för soltiderna) och på sjökortets etikett, klockan också bredvid T+ i kameran; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt, 3D-last och hur lång tid starten tog, steg för steg (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
+      <li><span class="em">Inställningar:</span> menyn Inställningar i översta raden har musik, ljud, livebilder, dynamisk upplösning (på från början: 3D-bilden ritas i lägre upplösning, ner till hälften, när datorn inte hinner med 60 bilder per sekund, och går upp igen när det finns marginal), siktavstånd (lång, medel eller kort: kortare sikt drar in diset och ritar färre träd), autopaus, Starta om ön (kräver ett andra klick) och Ny ö, som öppnar en ruta där du väljer öns nummer, fiendens doktrin, datum och klockslaget vid start, eller lämnar dem tomma (Auto) för slump och öns eget datum och klockslag; under fälten står årstiden och när solen går upp och ner. Samma ö med samma doktrin är alltid samma försvar, så du kan anfalla det igen; Spela igen behåller dem, och datum och klockslag. Med Auto väljer fienden doktrin efter ön, och du får veta vilken först när ön är vunnen. Datum och klocka står i översta raden (håll muspekaren över dem för soltiderna) och på sjökortets etikett, klockan också bredvid T+ i kameran; den går en timme på fyra minuter, och +3 h spolar fram. F3 eller § visar och döljer statistikrutan med bildtakt, 3D-last och hur lång tid starten tog, steg för steg (dold från början). Kör benchmark mäter bildtiden på tre öar (cirka tre minuter), Visa trailern spelar trailern, och Spela in testrunda spelar in en runda som en fil att ge till Claude: med inspelningen igång sätter P en kontrollpunkt där du skriver vad som händer och kan rita på en frusen bild av skärmen för att peka ut något, och Spara inspelning (i menyn eller på REC-märket) laddar ner filen. I introfilmen döljer ett klick i bilden logga och knappar, så att filmen kan gå ren i helskärm; nästa klick tar tillbaka dem.</li>
       <li><span class="em">Autopaus:</span> valet Autopaus under Inställningar (av från början) pausar spelet när någon annan enhet än den du kör, eller en tagen punkt, upptäcker en ny fiende. Loggen säger vad och var, med knappar för att visa enheten och fortsätta; mellanslag fortsätter också. Flera kontakter i rad ger en paus, och de första sekunderna efter att du fortsatt pausar den inte igen.</li>
       <li><span class="em">Flera enheter:</span> dra en ruta på sjökortet eller Ctrl+klicka. Spara urvalet som wing med knapparna eller Skift+siffra. Ger du order till en grupp med både fordon och HÖK skyddar HÖK hela wingen och håller sig framför dess mitt, sida vid sida om de är flera, i stället för att flyga i förväg till punkten, och spanar åt fordonen när de anfaller något kamouflerat. På Offensiv anfaller HÖK också wingens mål när du ger wingen en anfallsorder, men väntar utanför målets räckhåll tills VARG går in; varje ny order når den; på Defensiv stannar den i skyddsrollen. Ger du wingen en förflyttning under strid till en plats utanför räckhåll för dem som skjuter, är det en reträtt: alla drar sig tillbaka och ingen vänder för att stötta en kamrat. Vid en framryckning stöttar fordonen varandra som vanligt, men aldrig genom en lång omväg eller in i en annan zon. Välj HÖK ensam för att skicka den på egen hand. En VARG som retirerar med svåra skador (under 30 %) följer inte en order till gruppen eller wingen utan fortsätter mot lagning; välj den ensam för att skicka in den igen.</li>
       <li><span class="em">Ropa in:</span> peka på något i kameran eller på sjökortet och tryck en tangent, utan att byta urval eller släppa enheten du kör. B skickar närmaste BÄVER (spränger spärren, röjer minfältet, tar punkten, river huset), H skickar HÖK som luftstöd (anfaller fienden, eskorterar fordonet, spanar över platsen), V skickar VARG (din grupp när du kör, annars de valda eller de närmaste), K skickar KROK (bärgar vraket, lyfter ut fordonet). Högerklick öppnar hjulet i två nivåer, i båda vyerna. Först vem: VARG överst och sedan medurs HÖK, GETING, BÄVER och KROK på fasta platser, så att handen lär sig dem, och wingarna i raden under (eller tangenterna 1 till 4). Finns flera av en sort väljer du bland dem, med Alla först. Sedan vad: bara det de valda kan göra där du pekade. Har du redan valt enheter börjar hjulet på andra nivån; klicka i mitten för att välja en annan enhet. Högerklickar du på en egen enhet är den målet: välj till exempel KROK och sedan Lyft. Mitten på första nivån öppnar enhetens egen meny (Välj, Kamera, Återvinn och egna uppgifter). I 3D-vyn räcker det att peka var som helst på en byggnad för att få punktens val. Notiser i loggen har knappar, till exempel Skicka BÄVER när någon står fast vid en spärr.</li>
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
-      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
+      <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem, och inget annat flyttar dem (utom Ta kontroll i standardlayouten, som lägger kameran i huvudvyn). Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. FÄST låser en bild vid enheten, klick visar den i kameran. Livebilder under Inställningar växlar mellan 15 och 60 bilder per sekund och av. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Skärmlayout under Inställningar: bred ställer den andra vyn bredvid huvudvyn, lika stor (listen mellan dem fördelar bredden), och livebilderna över varandra i sidopanelen; auto väljer bred på skärmar i 21:9 och bredare. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen skyddar den. Det du skjuter på blir gruppens mål i 8 s efter senaste skottet: följarna bekämpar det när det är inom räckhåll, och HÖK på Offensiv anfaller det. V och H tar i första hand gruppens egna VARG och HÖK. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Eller högerklicka med fordonet valt: Flyg dit med KROK, eller Lyft med KROK i fordonets egen meny, och klicka sedan på kartan där det ska sättas ned. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. KROK har två hållningar. Defensiv (standard) håller den vid liv: den flyger inte in i kända hot, sätter bara ned på en säkrad plats och drar sig tillbaka under halva skrovet. Offensiv följer dina egna order även in i hot och okänt område och avbryter inte. Båda väljer den säkraste kända vägen. När BÄVER själv ber om transport landar KROK bara på en säkrad plats: spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, GETING först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Hotbild och räckvidd:</span> med en enhet vald tonas varje känd fiendes räckvidd mot just den enheten på sjökortet: mot mark för VARG, BÄVER och MUS, mot flyg för HÖK, GETING och KROK. Det är zonerna enhetens vägval håller sig ifrån. Pekar du på en fiende visas dess räckvidd mot mark (heldragen) och mot flyg (streckad), pekar du på en egen enhet dess vapenräckvidd och sikt.</li>
@@ -5383,7 +5393,7 @@ function buildRoster(){
     el.innerHTML='<span class="rn"><i></i><span></span><em></em></span><span class="kit"></span><span class="bars"><span class="b hp"><b></b></span>'+(u.air&&u.kind!=='krok'?'<span class="b fu"><b></b></span>':'')+'</span><span class="rs"></span><span class="rm"></span>';
     el.querySelector('.rn i').style.background=u.color;el.querySelector('.rn span').textContent=u.name;el.title='Klick väljer, Ctrl+klick lägger till, dubbelklick visar kameran';
     el.addEventListener('click',ev=>{if(u.kind==='krok'){if(!u.dead)selectKrok(u);}else if(!u.dead){if(ev.ctrlKey||ev.metaKey||ev.shiftKey)toggleSel(u.id);else setSel([u.id]);}uiTick(true);});
-    el.addEventListener('dblclick',()=>{if(u.dead)return;setCam(u.id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}uiTick(true);});
+    el.addEventListener('dblclick',()=>{if(u.dead)return;setCam(u.id);uiTick(true);});/* only Q moves the views (17 okt) */
     rosterEl.appendChild(el);cardRefs[u.id]={el,u,state:el.querySelector('.rs'),mis:el.querySelector('.rm'),em:el.querySelector('.rn em'),hp:el.querySelector('.hp > b'),fu:el.querySelector('.fu > b'),kit:el.querySelector('.kit'),kitS:null};
   }
 }
@@ -5410,8 +5420,8 @@ function setCtrl(id){
   if(!id){stopFollowMe(true);if(prev&&prev.kind==='krok'){krokHookStop(prev);prev.state=prev.carry?'back':'idle';}if(prev&&!prev.dead)say(prev,prev.kind==='mus'?prev.name+' står kvar och väntar.':'Tillbaka i autonomi.');G.ctrl=null;G.joy=null;G.firing=false;if(document.pointerLockElement)document.exitPointerLock();return;}
   const u=unitById(id);if(!u||u.dead)return;
   if(u.kind==='krok'){if(prev&&prev!==u)setCtrl(null);stopFollowMe(false);clearKrok(u);if(u.target){u.target.claimed=false;u.target=null;}u.retreat=false;if(u.state!=='back'||!u.carry)u.state='idle';
-    G.ctrlSel=G.selIds.slice();G.ctrl=id;setCam(id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}G.pitch=0;say(u,'Manuell flygning. F sänker kroken över ett fordon eller en hög, eller sätter ned lasten. Inga automatiska säkerhetsmarginaler.');return;}
-  stopFollowMe(false);G.ctrlSel=G.selIds.slice();u.orders=[];resetFor(u);G.ctrl=id;setCam(id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
+    G.ctrlSel=G.selIds.slice();G.ctrl=id;setCam(id);camToMain();G.pitch=0;say(u,'Manuell flygning. F sänker kroken över ett fordon eller en hög, eller sätter ned lasten. Inga automatiska säkerhetsmarginaler.');return;}
+  stopFollowMe(false);G.ctrlSel=G.selIds.slice();u.orders=[];resetFor(u);G.ctrl=id;setCam(id);camToMain();
   G.pitch=0;say(u,u.kind==='mus'?u.name+' fjärrstyrs. W A S D kör, F spränger laddningen, E släpper. Kör tillbaka till VARG för att komma ombord.':'Manuell styrning.'+(u.kind==='tank'?' Klicka i kamerabilden för att sikta och skjuta själv, annars automatisk eld.':''));
 }
 $('bFollowMe').addEventListener('click',()=>{setFollowMe(!G.followMe);uiTick(true);});
@@ -5514,6 +5524,9 @@ function hoverOf(pk){if(!pk||!pk.wp)return pk;const o=pk.wp.u.orders[pk.wp.i];if
 const CALLKEY={KeyB:'eng',KeyH:'air',KeyV:'tank',KeyK:'krok'};
 function pointedPick(){if(G.mlook)return pick('cam',size.cam.w/2,size.cam.h/2);if(!HOV.el)return null;return pick(viewKind(HOV.el),HOV.x,HOV.y);}
 function doCall(kind,key,shift){const pk=pointedPick();if(!pk||!callTarget(pk)){say(null,'Peka på ett mål i kameran eller på sjökortet och tryck '+String(key).toUpperCase()+'.');return;}callIn(kind,pk,shift&&kind!=='krok');}
+/* the views keep their places: only Q (Byt vy) swaps them (decided 17 okt, Magnus). Taking control is the one exception, and only in
+   the standard layout, where the camera in the side panel is too small to drive in */
+function camToMain(){if(!LAYOUT.on&&G.mainMode!=='cam'){G.mainMode='cam';placePanes();}}
 function swapViews(){G.mainMode=G.mainMode==='map'?'cam':'map';placePanes();uiTick(true);}
 function focusUnit(u){if(u&&!u.dead){setCam(u.id);uiTick(true);}}
 function focusPoint(x,y){ping(x,y);if(G.mainMode==='map'){mv.free=true;mv.z=Math.max(mv.z,2.2);mv.cx=x;mv.cy=y;}}
@@ -5585,22 +5598,21 @@ function syncTags(){if(!R3.tags)R3.tags=new Map();const want=new Map(),film=TITL
       g.position.set(w.x,groundY(w.x,w.y),w.y);R3.dyn.add(g);o={g,sp,txt:w.t};R3.tags.set(k,o);}
     const d=Math.hypot(cp.x-w.x,cp.z-w.y),sc=clamp(d*.045,2.2,34);o.sp.scale.set(sc*4,sc,1);o.sp.position.y=6+sc*.6;o.g.visible=d<700;}
 }
-/* ---------- live feeds: two small cameras on other units, own renderers, no shadows, each refreshed about 15 times a second ---------- */
-const FEED={list:[],n:0,on:true,pickT:0};
+/* ---------- live feeds: two small cameras on other units, own renderers, no shadows, each refreshed about 15 times a second or every frame (setFeeds) ---------- */
+const FEED={list:[],n:0,on:true,fast:false,pickT:0};
 globalThis.__BHUI={restart:s=>restart(s),FEED,feedPick:()=>feedPick(),setSel:ids=>setSel(ids),get G(){return G;},openWheel:(x,y,pk,pick)=>openWheel(x,y,pk,null,pick),addUnit:(k,x,y)=>{const u=makeUnit(k,x,y);G.units.push(u);return u;}};   // for the browser checks
-try{FEED.on=localStorage.getItem('bh.feeds')!=='0';}catch(_){}
+try{const v=localStorage.getItem('bh.feeds');FEED.on=v!=='0';FEED.fast=v==='60';}catch(_){}
 function mkFeeds(){const box=$('feeds');box.innerHTML='';FEED.list=[];
   for(let i=0;i<2;i++){const el=document.createElement('div');el.className='feed';
     el.innerHTML='<canvas></canvas><div class="fnz"></div><div class="fhp"></div><div class="fl"><b></b><span></span></div><button class="fpin" type="button" aria-pressed="false" title="Fäst bilden vid enheten">FÄST</button>';box.appendChild(el);
     const cv=el.querySelector('canvas');let r=null;
     if(R3){try{r=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'low-power'});r.setPixelRatio(1);r.localClippingEnabled=true;r.shadowMap.enabled=false;}catch(_){r=null;}}
     const F={el,cv,r,cam:R3?new THREE.PerspectiveCamera(55,16/10,.5,1400):null,uid:null,pin:false,w:0,h:0,lbl:el.querySelector('.fl b'),st:el.querySelector('.fl span'),hp:el.querySelector('.fhp'),pinB:el.querySelector('.fpin'),nz:el.querySelector('.fnz'),nzv:-1};F.nz.style.backgroundImage='url('+grain.toDataURL()+')';
-    el.title='Klick: visa i kameran · dubbelklick: helbild';
+    el.title='Klick: visa i kameran';
     el.addEventListener('click',ev=>{if(ev.target===F.pinB)return;const u=unitById(F.uid);if(u&&!u.dead){setCam(u.id);uiTick(true);}});
-    el.addEventListener('dblclick',()=>{const u=unitById(F.uid);if(u&&!u.dead){setCam(u.id);if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}uiTick(true);}});
     F.pinB.addEventListener('click',ev=>{ev.stopPropagation();F.pin=!F.pin;F.pinB.setAttribute('aria-pressed',String(F.pin));});
     FEED.list.push(F);}
-  setFeeds(FEED.on);}
+  setFeeds(FEED.on,FEED.fast);}
 /* resizable side panel: drag the grip between the main view and the side column; width is a per-viewer convenience kept in localStorage */
 const SIDEW={min:300,maxF:.6};
 function setSideW(w,save){const st=document.querySelector('.stage');if(!st)return;
@@ -5617,7 +5629,34 @@ function setSideW(w,save){const st=document.querySelector('.stage');if(!st)retur
   g.addEventListener('dblclick',()=>setSideW(null));
   g.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?40:e.key==='ArrowRight'?-40:0;if(!d)return;e.preventDefault();e.stopPropagation();setSideW(side.getBoundingClientRect().width+d,true);});
   window.addEventListener('resize',()=>{const st=document.querySelector('.stage');if(st&&st.style.getPropertyValue('--sideW'))setSideW(side.getBoundingClientRect().width,false);});})();
-function setFeeds(on){FEED.on=on;try{localStorage.setItem('bh.feeds',on?'1':'0');}catch(_){}$('feeds').hidden=!on;const b=$('bFeeds');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Livebilder':'Livebilder av';}
+/* the screen layout: standard (the other view in the side panel) or wide (it stands beside the main view); auto takes wide when the
+   window is at least 2.1 times as wide as it is high, a 21:9 screen. A per-viewer convenience kept in localStorage */
+const LAYOUT={k:'auto',on:null,N:{auto:'auto',standard:'standard',bred:'bred'}};try{const v=localStorage.getItem('bh.layout');if(LAYOUT.N[v])LAYOUT.k=v;}catch(_){}
+const layoutWide=()=>LAYOUT.k==='bred'||(LAYOUT.k==='auto'&&window.innerWidth>=2.1*window.innerHeight);
+function applyLayout(){const w=layoutWide(),st=document.querySelector('.stage');
+  if(w!==LAYOUT.on){LAYOUT.on=w;st.classList.toggle('bred',w);if(w)document.querySelector('.maincol').insertBefore(subSlot,$('roster'));else document.querySelector('.side').insertBefore(subSlot,$('log'));fitPanes();}
+  $('bLayout').textContent='Skärmlayout: '+LAYOUT.N[LAYOUT.k]+(LAYOUT.k==='auto'?(w?' (bred)':' (standard)'):'');}
+function setLayout(k){LAYOUT.k=k;try{localStorage.setItem('bh.layout',k);}catch(_){}applyLayout();}
+$('bLayout').addEventListener('click',()=>{const o=['auto','standard','bred'],k=o[(o.indexOf(LAYOUT.k)+1)%3];setLayout(k);say(null,'Skärmlayout '+LAYOUT.N[k]+'.');});
+window.addEventListener('resize',applyLayout);
+/* the grip between the two views in the wide layout: the main view's share of the width, a quarter to three quarters */
+function setSplit(f,save){const mc=document.querySelector('.maincol');
+  if(f==null){mc.style.removeProperty('--sa');mc.style.removeProperty('--sb');try{localStorage.removeItem('bh.split');}catch(_){}return;}
+  f=clamp(f,.25,.75);mc.style.setProperty('--sa',f+'fr');mc.style.setProperty('--sb',(1-f)+'fr');if(save){try{localStorage.setItem('bh.split',String(f));}catch(_){}}}
+(function(){const g=$('mgrip'),mc=document.querySelector('.maincol');if(!g||!mc)return;
+  try{const v=+localStorage.getItem('bh.split');if(v>0)setSplit(v,false);}catch(_){}
+  const at=x=>{const r=mc.getBoundingClientRect();return(x-r.left-4)/Math.max(1,r.width-10);},now=()=>{const r=mainSlot.getBoundingClientRect(),m=mc.getBoundingClientRect();return r.width/Math.max(1,m.width-10);};
+  let drag=false;
+  g.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag=true;g.classList.add('drag');try{g.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+  g.addEventListener('pointermove',e=>{if(drag)setSplit(at(e.clientX),false);});
+  const end=e=>{if(!drag)return;drag=false;g.classList.remove('drag');setSplit(now(),true);};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('dblclick',()=>setSplit(null));
+  g.addEventListener('keydown',e=>{const d=e.key==='ArrowLeft'?-.03:e.key==='ArrowRight'?.03:0;if(!d)return;e.preventDefault();e.stopPropagation();setSplit(now()+d,true);});})();
+applyLayout();
+/* the live pictures at about 15 pictures a second each (every fourth frame, by turns), at the full frame rate (60, tried 17 okt for
+   fast graphics cards: both are drawn every frame), or off */
+function setFeeds(on,fast){FEED.on=on;FEED.fast=!!fast&&on;try{localStorage.setItem('bh.feeds',on?(FEED.fast?'60':'1'):'0');}catch(_){}$('feeds').hidden=!on;const b=$('bFeeds');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Livebilder '+(FEED.fast?'60':'15')+' bps':'Livebilder av';}
 /* the two small live pictures: the first follows the active unit (the first selected one that the main camera is not already
    showing), the second the unit that last reported in the log, or the build bay when a build is started on the ship. A pinned
    picture keeps its unit. With nothing to show, a picture falls back to the most eventful unit (under fire, fighting) */
@@ -5635,7 +5674,9 @@ function feedCam(u,cam){const air=u.air||u.kind==='krok',y=u.alt!=null&&air?u.al
   const px=u.x-fx*back,pz=u.y-fz*back,py=Math.max(y+up,camFloor(px,pz)+.7);cam.position.set(px,py,pz);const ax=u.x+fx*30,az=u.y+fz*30;cam.lookAt(ax,air?groundY(ax,az)+4:y+2.5,az);}
 function feedTick(now){if(!FEED.on||TITLE.on||!FEED.list.length)return;
   if(now-FEED.pickT>500){FEED.pickT=now;feedPick();}
-  FEED.n=(FEED.n+1)%4;if(FEED.n%2)return;const F=FEED.list[FEED.n/2];if(!F)return;
+  if(FEED.fast){for(const F of FEED.list)feedDraw(F);return;}
+  FEED.n=(FEED.n+1)%4;if(FEED.n%2)return;const F=FEED.list[FEED.n/2];if(F)feedDraw(F);}
+function feedDraw(F){
   if(F.uid==='bay'){const b=G.build[0];F.el.classList.toggle('empty',!F.r);F.lbl.textContent='BYGGBÄDDEN';const st=b?'Bygger '+(b.kind==='krok'?'KROK':TYPES[b.kind].label)+' '+Math.round(clamp(1-b.t/(b.total||1),0,1)*100)+' %'+(G.build.length>1?' · '+(G.build.length-1)+' i kö':''):'Ledig';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width='0';F.el.classList.remove('hit');
     if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
     const c=shipPos(BAY.lat+15,BAY.fwd-13),t=shipPos(BAY.lat,BAY.fwd);F.cam.position.set(c[0],DECK_Y+10,c[1]);F.cam.lookAt(t[0],DECK_Y+2.5,t[1]);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);return;}
@@ -5646,7 +5687,7 @@ function feedTick(now){if(!FEED.on||TITLE.on||!FEED.list.length)return;
   if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
   feedCam(u,F.cam);treeCull(F.cam,false);F.r.render(R3.scene,F.cam);
   {const n=sigNoise(u),v=n?Math.round((.12+.6*n)*20)/20:0;if(v!==F.nzv){F.nzv=v;F.nz.style.opacity=v;}if(n)F.nz.style.backgroundPosition=(Math.random()*128|0)+'px '+(Math.random()*128|0)+'px';}}
-$('bFeeds').addEventListener('click',()=>setFeeds(!FEED.on));
+$('bFeeds').addEventListener('click',()=>{if(!FEED.on)setFeeds(true,false);else if(!FEED.fast)setFeeds(true,true);else setFeeds(false);});
 $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
   if(FILM.on){if(e.target&&e.target.id==='filmSave')return;/* the save button takes Enter and space itself */if(e.key==='Enter'||e.key===' '){e.preventDefault();filmClick();}else if(e.code==='KeyF')toggleFull();return;}
@@ -6768,16 +6809,41 @@ function recUI(){const b=$('bRec'),sv=$('bRecSave');if(b)b.textContent=REC.on?'S
     el.innerHTML='<b>REC</b><button type="button" class="btn" style="padding:2px 8px;font-size:11px">Kontrollpunkt (P)</button><button type="button" class="btn" style="padding:2px 8px;font-size:11px">Spara</button>';
     el.children[1].addEventListener('click',e=>{e.stopPropagation();recCheckpoint();});el.children[2].addEventListener('click',e=>{e.stopPropagation();recSave();});document.body.appendChild(el);REC.el=el;}
   REC.el.style.display=REC.on?'flex':'none';}
+/* the screen at a checkpoint (17 okt, Magnus): the 3D view, the chart, the HUD and the live pictures put together where they stand
+   on the screen. The 3D views are drawn once more first, since their pictures are not kept after the frame; the panels' text is not
+   drawn on any canvas and comes with the checkpoint's data instead */
+function recShot(){const W=innerWidth,H=innerHeight,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#0b1015';x.fillRect(0,0,W,H);
+  const put=el=>{if(!el||!el.isConnected)return;const r=el.getBoundingClientRect();if(r.width<2||r.height<2)return;try{x.drawImage(el,r.left,r.top,r.width,r.height);}catch(_){}};
+  if(R3){try{treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);renderPip();}catch(_){}}put(glC);put(hudC);put(mapC);
+  if(FEED.on&&!$('feeds').hidden)for(const F of FEED.list){if(F.r&&F.uid)try{feedDraw(F);}catch(_){}put(F.cv);}
+  return c;}
+/* a checkpoint: the game pauses, the screen as it was stands frozen behind the comment box, and the captain can draw on it with the
+   mouse to point things out. Saved with the comment, the full state and the picture (the marks drawn in, and on their own) */
 function recCheckpoint(){if(!REC.on||$('recNote'))return;const was=G.paused;if(G.running)G.paused=true;uiTick(true);
-  const d=document.createElement('div');d.id='recNote';d.style.cssText='position:fixed;inset:0;z-index:101;display:grid;place-items:center;background:rgba(0,0,0,.35)';
-  d.innerHTML='<div style="background:#16202a;color:#e8eef0;padding:14px;border-radius:8px;width:min(520px,calc(100vw - 32px));font:14px system-ui,sans-serif"><b>Kontrollpunkt '+fmtT(G.time)+'</b><div style="opacity:.75;margin:4px 0 8px">Vad händer, och vad borde ha hänt? Spelet står pausat.</div><textarea style="width:100%;height:110px;box-sizing:border-box;font:14px system-ui,sans-serif"></textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button type="button" class="btn">Avbryt</button><button type="button" class="btn">Spara (Ctrl+Enter)</button></div></div>';
-  document.body.appendChild(d);const ta=d.querySelector('textarea'),[bc,bs]=d.querySelectorAll('button');setTimeout(()=>ta.focus(),0);
-  const close=save=>{if(save){const c=R3?R3.cam.position:null;recEv('kontrollpunkt',{note:ta.value.trim(),view:{main:G.mainMode,cam:G.cam,camPos:c?{x:r0(c.x),y:r0(c.y),z:r0(c.z)}:null,map:{z:r1(mv.z||1),cx:r0(mv.cx||0),cy:r0(mv.cy||0)}},full:recFull()});say(null,'Kontrollpunkt sparad.');}
+  let shot=null;try{shot=recShot();}catch(_){}
+  const d=document.createElement('div');d.id='recNote';d.style.cssText='position:fixed;inset:0;z-index:101;background:#0b1015;cursor:crosshair';
+  let mk=null,drew=false;
+  if(shot){shot.style.cssText='position:absolute;inset:0;width:100%;height:100%;opacity:.9';d.appendChild(shot);
+    mk=document.createElement('canvas');mk.width=shot.width;mk.height=shot.height;mk.style.cssText='position:absolute;inset:0;width:100%;height:100%;touch-action:none';d.appendChild(mk);
+    const mx=mk.getContext('2d');mx.strokeStyle='#ff2a2a';mx.lineWidth=4;mx.lineCap=mx.lineJoin='round';let down=false;
+    const at=e=>{const r=mk.getBoundingClientRect();return[(e.clientX-r.left)*mk.width/r.width,(e.clientY-r.top)*mk.height/r.height];};
+    mk.addEventListener('pointerdown',e=>{if(e.button!==0)return;down=true;drew=true;try{mk.setPointerCapture(e.pointerId);}catch(_){}const[px,py]=at(e);mx.beginPath();mx.moveTo(px,py);mx.lineTo(px+.1,py);mx.stroke();});
+    mk.addEventListener('pointermove',e=>{if(!down)return;const[px,py]=at(e);mx.lineTo(px,py);mx.stroke();});
+    const up=()=>{down=false;const t=d.querySelector('textarea');if(t)t.focus();};mk.addEventListener('pointerup',up);mk.addEventListener('pointercancel',up);mk.addEventListener('mousedown',e=>e.preventDefault());/* the comment keeps the focus */}
+  const box=document.createElement('div');box.style.cssText='position:absolute;left:50%;bottom:24px;transform:translateX(-50%);cursor:auto;background:#16202a;color:#e8eef0;padding:14px;border-radius:8px;width:min(520px,calc(100vw - 32px));font:14px system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.5)';
+  box.innerHTML='<b>Kontrollpunkt '+fmtT(G.time)+'</b><div style="opacity:.75;margin:4px 0 8px">Vad händer, och vad borde ha hänt? Spelet står pausat.'+(shot?' Rita på bilden med musen för att peka ut något.':'')+'</div><textarea style="width:100%;height:110px;box-sizing:border-box;font:14px system-ui,sans-serif"></textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">'+(shot?'<button type="button" class="btn" style="margin-right:auto">Sudda ritningen</button>':'')+'<button type="button" class="btn">Avbryt</button><button type="button" class="btn">Spara (Ctrl+Enter)</button></div>';
+  d.appendChild(box);document.body.appendChild(d);const ta=box.querySelector('textarea'),bt=box.querySelectorAll('button'),bs=bt[bt.length-1],bc=bt[bt.length-2];setTimeout(()=>ta.focus(),0);
+  if(shot)bt[0].addEventListener('click',()=>{mk.getContext('2d').clearRect(0,0,mk.width,mk.height);drew=false;ta.focus();});
+  // while the box is up no key reaches the game: a key outside it goes to the comment
+  const blk=e=>{if(!box.contains(e.target)){e.stopPropagation();if(e.key.length===1||e.key==='Enter'||e.key==='Escape'){ta.focus();if(e.key==='Escape'){e.preventDefault();close(false);}else if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();close(true);}}}};window.addEventListener('keydown',blk,true);
+  const close=save=>{window.removeEventListener('keydown',blk,true);if(save){const c=R3?R3.cam.position:null;let pic;
+      if(shot){try{const marks=drew?mk.toDataURL('image/png'):undefined;if(drew)shot.getContext('2d').drawImage(mk,0,0);pic={w:shot.width,h:shot.height,img:shot.toDataURL('image/jpeg',.82),marks};}catch(_){}}
+      recEv('kontrollpunkt',{note:ta.value.trim(),view:{main:G.mainMode,cam:G.cam,camPos:c?{x:r0(c.x),y:r0(c.y),z:r0(c.z)}:null,map:{z:r1(mv.z||1),cx:r0(mv.cx||0),cy:r0(mv.cy||0)},layout:LAYOUT.on?'bred':'standard'},full:recFull(),shot:pic});say(null,'Kontrollpunkt sparad'+(pic?' med skärmbild':'')+'.');}
     d.remove();G.paused=was;uiTick(true);};
   bc.addEventListener('click',()=>close(false));bs.addEventListener('click',()=>close(true));
   d.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')close(false);else if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))close(true);});}
 async function recSave(){recTick();const data={...REC.head,saved:new Date().toISOString(),end:recFull(),events:REC.ev,snapshots:REC.snaps,
-    legend:'snapshots: varje sekund speltid; u = egna enheter (x,y i meter, hp, ammo, fuel, st = läget som visas, o = första ordern, n = antal order, path = kvarvarande väg i m); e = fiender som ändrats sedan förra (lx,ly = senast kända plats, seen, vis = syns just nu). events: order (spelarens order med urval och det som pekades på), anrop, kontroll, paus, bygg, wing, luftlyft, krokorder (order till KROK: typ, punkt, enhet eller vrak), kamera (vilken enhet kameran visar), knapp (Stopp och Till service med urvalet), meddelande, fel, omstart, kontrollpunkt (med full bild).'};
+    legend:'snapshots: varje sekund speltid; u = egna enheter (x,y i meter, hp, ammo, fuel, st = läget som visas, o = första ordern, n = antal order, path = kvarvarande väg i m); e = fiender som ändrats sedan förra (lx,ly = senast kända plats, seen, vis = syns just nu). events: order (spelarens order med urval och det som pekades på), anrop, kontroll, paus, bygg, wing, luftlyft, krokorder (order till KROK: typ, punkt, enhet eller vrak), kamera (vilken enhet kameran visar), knapp (Stopp och Till service med urvalet), meddelande, fel, omstart, kontrollpunkt (med full bild av läget, och shot: skärmbilden som JPEG i data-URL, img med markeringarna inritade och marks med bara markeringarna som PNG; packas ut med node tests/kontrollpunkter.js).'};
   const name='inspelning-o'+(REC.head?REC.head.seed:G.seed)+'-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
   const how=await saveFile(name,JSON.stringify(data),'application/json');if(how!=='declined'){REC.saved=true;say(null,'Inspelningen sparad som '+name+'.');}}
 // what the captain does, recorded on the way in: the functions the chart, the wheel and the keys call
