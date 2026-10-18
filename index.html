@@ -3905,18 +3905,18 @@ function vargSpray(x,z,sp,dt){if(!(dt>0))return;let n=dt*(4+sp*2.5);const k=1-.7
     fP(x+Math.cos(a)*r,.4,z+Math.sin(a)*r,{v:[Math.cos(a)*(2+sp*.25),(1.5+Math.random()*2.5)*up,Math.sin(a)*(2+sp*.25)],g:9,s0:.6,s1:2.4,a:.7,ttl:.7,c:col});}}
 /* foam wake: a ribbon over the last seconds of a boat's track, widening and fading behind it */
 let wakeTex=null;
-function mkWake(){
+function mkWake(N0){
   if(!wakeTex){const c=mkCanvas(64,32),x=c.getContext('2d'),gr=x.createLinearGradient(0,0,64,0);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(.3,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,32);
     const g2=x.createLinearGradient(0,0,0,32);g2.addColorStop(0,'rgba(0,0,0,1)');g2.addColorStop(.32,'rgba(0,0,0,0)');g2.addColorStop(.68,'rgba(0,0,0,0)');g2.addColorStop(1,'rgba(0,0,0,1)');x.globalCompositeOperation='destination-out';x.fillStyle=g2;x.fillRect(0,0,64,32);wakeTex=new THREE.CanvasTexture(c);}
-  const N=28,pos=new Float32Array(N*6),uv=new Float32Array(N*4),idx=[];for(let i=0;i<N-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
+  const N=N0||28,pos=new Float32Array(N*6),uv=new Float32Array(N*4),idx=[];for(let i=0;i<N-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(idx);
   const mt=new THREE.MeshBasicMaterial({map:wakeTex,transparent:true,opacity:.85,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,side:THREE.DoubleSide});
   const m=new THREE.Mesh(geo,mt);m.frustumCulled=false;m.renderOrder=3;m.userData.noShadow=true;return{mesh:m,geo,N};}
-function updWake(m,head,T){const N=m.wake.N,P=m.wake.geo.attributes.position.array,U=m.wake.geo.attributes.uv.array,life=7,pts=[head,...m.trail];
+function updWake(m,head,T){const N=m.wake.N,P=m.wake.geo.attributes.position.array,U=m.wake.geo.attributes.uv.array,life=m.life||7,pts=[head,...m.trail];
   for(let i=0;i<N;i++){const p=pts[Math.min(i,pts.length-1)],a=pts[Math.max(0,Math.min(i,pts.length-1)-1)],b=pts[Math.min(pts.length-1,i+1)];let dx=a.x-b.x,dz=a.z-b.z;const L=Math.hypot(dx,dz)||1;dx/=L;dz/=L;
-    const age=T-p.t,w=i>=pts.length?0:m.beam*.5+age*1.5,u=clamp(age/life,0,1);
+    const age=T-p.t,w=i>=pts.length?0:m.beam*.5+age*(m.spread||1.5),u=clamp(age/life,0,1);
     P[i*6]=p.x-dz*w;P[i*6+1]=.06;P[i*6+2]=p.z+dx*w;P[i*6+3]=p.x+dz*w;P[i*6+4]=.06;P[i*6+5]=p.z-dx*w;U[i*4]=u;U[i*4+1]=0;U[i*4+2]=u;U[i*4+3]=1;}
-  m.wake.geo.attributes.position.needsUpdate=true;m.wake.geo.attributes.uv.needsUpdate=true;m.wake.mesh.material.color.setScalar(1-.72*(R3.night||0));}
+  m.wake.geo.attributes.position.needsUpdate=true;m.wake.geo.attributes.uv.needsUpdate=true;m.wake.mesh.material.color.setScalar(1-(m.dark??.72)*(R3.night||0));}
 /* navigation lights (lanternor) for civilian boats under way: red to port, green to starboard, white masthead and stern; lit only in the dark */
 const NAV_R=0xff3a2a,NAV_G=0x3aff6a,NAV_W=0xfff4dc;
 function navLights(g,list){const nav=[];for(const[c,x,y,z,sec]of list){const m2=mesh(new THREE.SphereGeometry(.16,6,5),new THREE.MeshBasicMaterial({color:c}),x,y,z);m2.userData.noShadow=true;g.add(m2);nav.push({m:m2,c,sec});}g.userData.nav=nav;return g;}
@@ -4516,7 +4516,9 @@ function buildStatic(){
   for(const b of W.barriers){const im=new THREE.InstancedMesh(new THREE.BoxGeometry(5,1.1,1.1),mat(0x4a3a2c),b.cells.length*2);let n=0;for(const c of b.cells){const q=cellCenter(c);for(const rot of[PI/4,-PI/4]){dummy.position.set(q.x,groundY(q.x,q.y)+.9,q.y);dummy.rotation.set(0,rot,.35);dummy.scale.set(1,1,1);dummy.updateMatrix();im.setMatrixAt(n++,dummy.matrix);}}st.add(im);R3.bars.set(b.id,im);}
   R3.ship.position.set(CARRIER.x,0,CARRIER.y);R3.ship.rotation.y=-(CARRIER.a+PI/2);
   R3.harborM=W.harbor?mkHarbor(W,st):null;
-  if(!R3.birkaWake){R3.birkaWake={wake:mkWake(),trail:[],tt:-1,beam:16};}st.add(R3.birkaWake.wake.mesh);R3.birkaWake.trail.length=0;
+  /* Birka's wake is its own, long and bright enough to see (18 okt, issue 40: with the boats' 7 s it was 36 m behind a 90 m ship, and
+     nearly black at night): 25 s of foam, 125 m at full speed, spreading slower, lit by the ship */
+  if(!R3.birkaWake){R3.birkaWake={wake:mkWake(100),trail:[],tt:-1,beam:16,life:25,spread:.9,dark:.45};}st.add(R3.birkaWake.wake.mesh);R3.birkaWake.trail.length=0;
   R3.surround=mkSurround(W,st);
   st.traverse(o=>{if(o.isMesh&&!o.userData.surround){o.castShadow=true;o.receiveShadow=true;}});
   // light itself casts no shadow (a transparent beam still lands in the shadow map)
