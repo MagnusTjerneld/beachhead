@@ -1,6 +1,6 @@
 global.performance={now:()=>0};
 require('./g2.js');
-const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */
+const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;/* before any island is built: the piles get their value then */
 const V=process.argv[2]||'base';
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
@@ -28,7 +28,7 @@ function play(seed,limit){
   if(V==='nosalv')G.krokAuto=false;
   if(process.env.START)G.res=+process.env.START;if(process.env.BASE)B.INCOME.base=+process.env.BASE;if(process.env.RELAY)B.INCOME.relay=+process.env.RELAY;
   const lostK={},seenDead=new Set(),killers={};
-  const cat={},known=new Map();let tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null;
+  const cat={},known=new Map();let res15=null,res30=null,tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null;
   const COST={scout:40,drone:120,tank:200,eng:150};
   while(G.time<limit&&!G.over){
     if(exS)for(const m of [300,600,890])if(!exK[m]&&G.time>=m)exK[m]=landPct()+(exS.dead?'x':'');
@@ -36,7 +36,7 @@ function play(seed,limit){
     // salvage accounting
     if(tick%20===0){const now=new Set(G.wrecks.map(w=>w.id));for(const w of G.wrecks)known.set(w.id,w);for(const[id,w]of known)if(!now.has(id)){const k=w.own?'own':w.kind==='rubble'||w.kind==='crate'||w.kind==='hulk'?w.kind:'enemy';cat[k]=(cat[k]||0)+w.value;known.delete(id);}
       for(const u of G.units)if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);lostK[u.kind]=(lostK[u.kind]||0)+1;if(u.kind==='scout'||process.env.ALLK){let k='?',t=-1;for(const id in u.hitBy)if(u.hitBy[id]>t){t=u.hitBy[id];k=id;}const e=G.enemies.find(x=>x.id===k);const key=u.kind+'<'+(e?e.kind+(e.seen?'':'(osedd)'):k);killers[key]=(killers[key]||0)+1;}}
-      for(const k of G.kroks){krokN++;if(k.state!=='idle')krokBusy++;}maxRes=Math.max(maxRes,G.res);
+      for(const k of G.kroks){krokN++;if(k.state!=='idle')krokBusy++;}maxRes=Math.max(maxRes,G.res);if(res15==null&&G.time>=900)res15=Math.round(G.res);if(res30==null&&G.time>=1800)res30=Math.round(G.res);
       if(firstRelay===null&&G.relays.some(r=>r.captured))firstRelay=Math.round(G.time);}
     if(tick%40)continue;
     const alive=G.units.filter(u=>!u.dead);
@@ -76,7 +76,7 @@ function play(seed,limit){
   }
   const lost={};for(const l of G.log)0;
   if(process.env.DBG){for(const u of G.units.filter(u=>!u.dead))console.log(u.name,Math.round(u.x),Math.round(u.y),u.state,u.orders[0]&&u.orders[0].type,u.orders[0]&&u.orders[0].enemy&&u.orders[0].enemy.id);for(const e of G.enemies.filter(e=>!e.dead))console.log(' ',e.id,e.kind,Math.round(e.x),Math.round(e.y),'seen',e.seen,'vis',e.visibleNow,'hp',Math.round(e.hp));console.log(G.relays.map(r=>r.id+':'+r.captured+':'+r.guards).join(' '),'barriers',G.barriers.map(b=>b.id+(b.cleared?'x':'')).join(' '));}
-  return {seed,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length};
+  return {seed,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length};
 }
 // seeds: a comma list, 'quick' (four islands, about a minute) or nothing (all ten, two to three minutes)
 const seeds=(process.argv[3]==='quick'?'1234,7341,4242,9001':process.argv[3]||'1234,7341,4242,9001,2718,5555,31,77,1001,1002').split(',').map(Number);

@@ -22,7 +22,7 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
     ok([f1,f2].every(f=>Math.hypot(f.x-other.lx,f.y-other.ly)>other.range+19),'both stay out of the other weapon\'s reach');
     const r1=Math.hypot(f1.x-t.x,f1.y-t.y);ok(r1<v1.range&&r1>v1.range*.6,'inside their reach ('+Math.round(r1)+' m; 85 % of it, or 90 % of their sight while nobody else sees the target)');}
   run(25);const p0={x:v1.x,y:v1.y};run(5);const moved=Math.hypot(v1.x-p0.x,v1.y-p0.y);
-  ok(moved>3,'VARG-1 keeps moving while it fights ('+moved.toFixed(1)+' m in 5 s, '+v1.state+')');
+  ok(moved<1.5,'VARG-1 stands with its front to the target while it fights, no sliding along the arc since 19 okt ('+moved.toFixed(1)+' m in 5 s, '+v1.state+')');
   ok(t.hp<5000,'and the bunker is being hit');}
 // 2b. a coordinated attack: the VARG that arrives first waits at its staging point outside the bunker's reach until the other is
 //     in place, then both go in together

@@ -45,14 +45,16 @@ function run(G,name,seed,us,straight,done,extra){
     if(u.air&&u.kind!=='drone'&&r.minAA<125)f.push('nära luftvärn '+Math.round(r.minAA)+' m');if(nw>20)f.push('ingen väg '+Math.round(nw)+' s');
     rows.push([seed,name,u.kind,'plan '+(r.plan==null?'-':r.plan+' m ('+r.planWet+' % vatten)'),'fram '+Math.round(r.atk)+' m','totalt '+Math.round(r.len)+' m','fågelväg '+Math.round(straight)+' m',u.dead?'död':'',Math.round(t)+' s',top].join(' | '));
     if(f.length)flags.push(seed+' '+name+' '+u.kind+' '+u.id+': '+f.join(', ')+'  ['+top+']');}}
+/* a target behind an unblown barrier: "ingen väg" is then the game saying so, not a fault (19 okt, issue 63) */
+const bak=t=>B.lockedAt(t.lx??t.x,t.ly??t.y)?' (målet bakom spärr)':'';
 const TANK='tank',HOK='drone',SP='scout',BV='eng';
 for(const seed of SEEDS){let G=setup(seed);const L=B.W.landing,start=()=>{const c={x:1100,y:1100},d=dist(L,c)||1;return{x:L.x+(c.x-L.x)/d*40,y:L.y+(c.y-L.y)/d*40};};
   const near=k=>G.enemies.filter(e=>!e.dead&&e.kind===k).sort((a,b)=>dist(a,L)-dist(b,L))[0];
   const lc=G.relays.slice().sort((a,b)=>dist(b,L)-dist(a,L))[0],tp={x:lc.x+15,y:lc.y+15};
-  if(want('lv')){const aa=near('aa');if(aa){const us=place(G,[TANK,TANK]);select(G,us,true);B.groupOrder({enemy:aa});run(G,'2 VARG mot luftvärn',seed,us,Math.max(0,dist(start(),{x:aa.lx,y:aa.ly})-120),()=>aa.dead);}}
-  if(want('bunker')){G=setup(seed);const tb=near('turret');if(tb){const us=place(G,[TANK,TANK,TANK,HOK]);select(G,us,true);B.groupOrder({enemy:tb});run(G,'3 VARG och HÖK mot bunker',seed,us,Math.max(0,dist(start(),{x:tb.lx,y:tb.ly})-120),()=>tb.dead);}}
-  if(want('punkt')){G=setup(seed);const us=place(G,[TANK,TANK]);select(G,us,true);B.groupOrder({world:tp});run(G,'2 VARG till punkt',seed,us,dist(start(),tp),()=>us.every(u=>u.dead||dist(u,tp)<40));}
-  if(want('baver')){G=setup(seed);const us=place(G,[TANK,BV]);select(G,us,true);B.groupOrder({world:tp});run(G,'VARG och BÄVER till punkt',seed,us,dist(start(),tp),()=>us.every(u=>u.dead||dist(u,tp)<40));}
+  if(want('lv')){const aa=near('aa');if(aa){const us=place(G,[TANK,TANK]);select(G,us,true);B.groupOrder({enemy:aa});run(G,'2 VARG mot luftvärn'+bak(aa),seed,us,Math.max(0,dist(start(),{x:aa.lx,y:aa.ly})-120),()=>aa.dead);}}
+  if(want('bunker')){G=setup(seed);const tb=near('turret');if(tb){const us=place(G,[TANK,TANK,TANK,HOK]);select(G,us,true);B.groupOrder({enemy:tb});run(G,'3 VARG och HÖK mot bunker'+bak(tb),seed,us,Math.max(0,dist(start(),{x:tb.lx,y:tb.ly})-120),()=>tb.dead);}}
+  if(want('punkt')){G=setup(seed);const us=place(G,[TANK,TANK]);select(G,us,true);B.groupOrder({world:tp});run(G,'2 VARG till punkt'+bak(tp),seed,us,dist(start(),tp),()=>us.every(u=>u.dead||dist(u,tp)<40));}
+  if(want('baver')){G=setup(seed);const us=place(G,[TANK,BV]);select(G,us,true);B.groupOrder({world:tp});run(G,'VARG och BÄVER till punkt'+bak(tp),seed,us,dist(start(),tp),()=>us.every(u=>u.dead||dist(u,tp)<40));}
   if(want('sparv')){G=setup(seed);const c={x:1100,y:1100},d=dist(L,c)||1,sp0={x:L.x+(c.x-L.x)/d*350,y:L.y+(c.y-L.y)/d*350};const us=place(G,[SP,TANK]),sp=us[0];select(G,[sp],false);B.groupOrder({world:sp0});let back=false,bt=0;
     run(G,'SPARV ut och hem',seed,[sp],2*dist(start(),sp0),t=>back&&(sp.dead||dist(sp,L)<40||!sp.orders.length)&&t-bt>5,t=>{if(!back&&(dist(sp,sp0)<30||t>60)){back=true;bt=t;select(G,[sp],false);B.groupOrder({world:{x:L.x,y:L.y}});}});}
 }
