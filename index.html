@@ -4970,12 +4970,27 @@ function sync3D(dtr){
   if(su&&su.orders.length){const pts=[new THREE.Vector3(su.x,groundY(su.x,su.y)+1.2,su.y)],cols=[];let prev={x:su.x,y:su.y};for(const o of su.orders){const tp=orderPt(o),c=o.type==='attack'||o.type==='raze'?[.86,.2,.17]:[.94,.77,.35];const n=Math.max(1,Math.ceil(Math.hypot(tp.x-prev.x,tp.y-prev.y)/8));if(!cols.length)cols.push(...c);for(let i=1;i<=n;i++){const x=lerp(prev.x,tp.x,i/n),y=lerp(prev.y,tp.y,i/n);pts.push(new THREE.Vector3(x,groundY(x,y)+1.2,y));cols.push(...c);}prev={x:tp.x,y:tp.y};}
     const gq=new THREE.BufferGeometry().setFromPoints(pts);gq.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));R3.route=new THREE.Line(gq,new THREE.LineBasicMaterial({vertexColors:true}));D.add(R3.route);}
 }
+/* solid things the chase camera must not sit in: houses, buildings, points and big blocks, in a 20 m grid made once per island;
+   camBlock gives the share of the way from the unit to the camera that is clear (1 when nothing is in the way) */
+let camObsW=null,camObsG=null;
+function camBlock(x0,z0,x1,z1){const W=WORLD;if(camObsW!==W){camObsW=W;camObsG=new Map();const D=W.decor||{},add=(x,z,r)=>{const k=Math.floor(x/20)+','+Math.floor(z/20);if(!camObsG.has(k))camObsG.set(k,[]);camObsG.get(k).push({x,z,r});};
+    for(const q of D.villas||[])add(q.x,q.y,6.5);for(const q of D.cabins||[])add(q.x,q.y,5);for(const q of D.sheds||[])add(q.x,q.y,3.2);for(const q of W.structs||[])add(q.x,q.y,7);
+    for(const q of W.relays||[])add(q.x,q.y,8);for(const q of W.ridgeStones||[])if(q.r>=1)add(q.x,q.y,q.r);if(D.light)add(D.light.x,D.light.y,4);}
+  let best=1;const n=12;for(let i=1;i<=n;i++){const t=i/n,x=lerp(x0,x1,t),z=lerp(z0,z1,t),L=camObsG.get(Math.floor(x/20)+','+Math.floor(z/20))||[];
+    for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){const M=dx||dz?camObsG.get((Math.floor(x/20)+dx)+','+(Math.floor(z/20)+dz)):L;if(!M)continue;
+      for(const o of M){if(Math.hypot(o.x-x0,o.z-z0)<o.r+2)continue;/* the unit stands at it: the view over it is the unit's own */if(Math.hypot(x-o.x,z-o.z)<o.r+1.5){best=Math.min(best,(i-1)/n);}}}
+    if(best<1)break;}
+  return best;}
 let tmpV=hasDOM&&typeof THREE!=='undefined'?new THREE.Vector3():null,tmpV2=hasDOM&&typeof THREE!=='undefined'?new THREE.Vector3():null;
 function updateCam(dtr){
   const u=unitById(G.cam);if(!u)return;
   const air=u.air||u.kind==='krok';const y=u.alt!=null&&air?u.alt:unitY(u,0);const small=u.kind==='scout';const aim=G.ctrl===u.id&&u.kind==='tank',daim=G.ctrl===u.id&&u.kind==='drone'&&G.mlook;
   const mus=u.kind==='mus';const fx=Math.cos(u.camH),fz=Math.sin(u.camH),back=mus?4.5:small?9:air?22:aim?17:15,up=mus?1.8:small?3.5:air?9:aim?6.5:6;
-  const px=u.x-fx*back,pz=u.y-fz*back;let py=Math.max(y+up,camFloor(px,pz)+.7);
+  let px=u.x-fx*back,pz=u.y-fz*back;
+  /* a ground unit's camera comes in front of a house, a building or a big block between it and the unit instead of sitting inside or
+     behind it (18 okt, issue 42: VARG-1's view was a roof filling the screen) */
+  if(!air){const t=camBlock(u.x,u.y,px,pz);if(t<1){const tt=Math.max(.2,t);px=lerp(u.x,px,tt);pz=lerp(u.y,pz,tt);}}
+  let py=Math.max(y+up,camFloor(px,pz)+.7);
   // keep the sight line from camera to unit above the terrain: raise the camera over a ridge or cliff between them
   for(let t=.15;t<1;t+=.1){const gx=lerp(px,u.x,t),gz=lerp(pz,u.y,t),need=heightAt(gx,gz)+1.2;const lineY=lerp(py,y+1,t);if(lineY<need)py+=(need-lineY)/(1-t);}
   const ax=u.x+fx*30,az=u.y+fz*30,ay=daim?y+Math.tan(G.pitch-.45)*30:air?groundY(ax,az)+4:aim?y+4.2+Math.tan(G.pitch)*30:y+2.5;
