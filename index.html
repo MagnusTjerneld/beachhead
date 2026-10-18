@@ -4104,31 +4104,34 @@ function mkBoat(b,sailing){const g=new THREE.Group();
     g.add(mesh(box(1.8,1,1.9),mat(0x3a4a5a),-.4,1.4,0));g.add(mesh(box(.6,.5,.6),mat(0x2a2a2a),-3.4,.7,0));}
   g.rotation.y=-b.a;g.position.set(b.x,.15,b.y);g.userData.bob=Math.random()*TAU;return g;}
 /* foam round what breaks the surface (decided 18 okt, Magnus): the shore's foam comes from the depth of the bottom, which the islets
-   and the stones are not part of, so they had none. A ring of foam at the water line round every islet and every stone that
-   breaks the surface, broken up and moving with the water's time, faded with distance and gone under ice */
-function mkFoamRings(W,st){const U=R3.water&&R3.water.material.userData.U;if(!U)return;
-  const vs=`varying vec2 vP;varying vec3 vW;void main(){vP=position.xy;vec4 p=vec4(position,1.0);
-    #ifdef USE_INSTANCING
-    p=instanceMatrix*p;
-    #endif
-    vec4 w=modelMatrix*p;vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
-  const fs=`uniform float uTime,uIce,uOuter;uniform vec3 uFoam;varying vec2 vP;varying vec3 vW;
-    void main(){float r=length(vP),t=clamp((r-1.0)/(uOuter-1.0),0.0,1.0),a=atan(vP.y,vP.x);
-      float br=.55+.45*sin(a*7.0+uTime*1.1+vW.x*.3)*sin(a*3.0-uTime*.7+vW.z*.2);float wave=smoothstep(.55,.95,sin(t*6.0-uTime*1.6+br*1.5));
-      float al=pow(1.0-t,1.6)*(.35+.65*br)*.55+wave*(1.0-t)*.25;al*=(1.0-smoothstep(300.0,900.0,length(vW-cameraPosition)))*(1.0-smoothstep(.15,.5,uIce));
-      gl_FragColor=vec4(uFoam,al);}`;
-  const M=o=>{const m=new THREE.ShaderMaterial({uniforms:{uTime:U.uTime,uIce:U.uIce,uFoam:U.uFoam,uOuter:{value:o}},vertexShader:vs,fragmentShader:fs,transparent:true,depthWrite:false});return m;};
-  const put=(m)=>{m.rotation.x=-PI/2;m.renderOrder=5;m.userData.noShadow=true;st.add(m);};
-  // the islets: one ring each part, about 2.5 m wide whatever its size
-  for(const o of W.islets||[])for(const pp of o.parts){const R=Math.max(pp.rx,pp.rz),ou=1+2.5/R,m=new THREE.Mesh(new THREE.RingGeometry(.97,ou,48,1),M(ou));
-    m.scale.set(pp.rx,pp.rz,1);m.position.set(o.x+pp.dx,.05,o.y+pp.dy);put(m);m.rotation.z=-pp.rot;/* the islet turns by -rot about the vertical, which is -rot about the ring's own z once it lies flat */}
-  // the stones that break the surface: on the shoals, and the shore's boulders standing in the water
-  /* only stones that break the surface, each ring the size of the stone's cut at the water line (its centre c, half height hh) */
-  const S=[],cut=(c,hh)=>{const f=-c/hh;return Math.abs(f)<.95?Math.sqrt(1-f*f):0;};
-  for(const q of (W.decor&&W.decor.shoals)||[])for(const t of q.stones||[]){const k=cut(t.h-t.r*.55,t.r*.55);if(k)S.push([t.x,t.y,t.r*k,t.r*t.el*k,t.rot]);}
-  for(const q of W.coastStones||[]){if(q.h>.3)continue;const k=cut(q.h+q.r*.2,q.r*.65);if(k)S.push([q.x,q.y,q.r*1.15*k,q.r*k,0]);}
-  if(S.length){const m=new THREE.InstancedMesh(new THREE.RingGeometry(1,1.8,20,1),M(1.8),S.length),d=new THREE.Object3D();
-    S.forEach((q,i)=>{d.position.set(q[0],.05,q[1]);d.rotation.set(-PI/2,0,q[4]);d.scale.set(q[2],q[3],1);d.updateMatrix();m.setMatrixAt(i,d.matrix);});m.renderOrder=5;m.frustumCulled=false;st.add(m);}}
+   and the stones are not part of. Their own outline at the water line is cut from their models (every triangle against the plane
+   just above the water), and a band of foam follows it outwards, about 2 m round an islet and less round a stone, as faint as at
+   the shore, broken up and moving with the water's time, faded with distance and gone under ice. All in one drawing */
+function waterCut(geo,mx,L){const P=geo.attributes.position,n=P.count,v=new Float32Array(n*3),q=new THREE.Vector3();
+  for(let i=0;i<n;i++){q.fromBufferAttribute(P,i).applyMatrix4(mx);v[i*3]=q.x;v[i*3+1]=q.y;v[i*3+2]=q.z;}
+  const I=geo.index?geo.index.array:null,nt=I?I.length/3:n/3,pts=[];
+  for(let t=0;t<nt;t++){const a=I?I[t*3]:t*3,b=I?I[t*3+1]:t*3+1,c=I?I[t*3+2]:t*3+2;for(const[u,w]of[[a,b],[b,c],[c,a]]){const yu=v[u*3+1]-L,yw=v[w*3+1]-L;if((yu<0)===(yw<0))continue;const f=yu/(yu-yw);pts.push(v[u*3]+(v[w*3]-v[u*3])*f,v[u*3+2]+(v[w*3+2]-v[u*3+2])*f);}}
+  if(pts.length<6)return null;let cx=0,cz=0;for(let k=0;k<pts.length;k+=2){cx+=pts[k];cz+=pts[k+1];}cx/=pts.length/2;cz/=pts.length/2;
+  const N=48,r=new Float32Array(N);for(let k=0;k<pts.length;k+=2){const dx=pts[k]-cx,dz=pts[k+1]-cz,b=((Math.round(Math.atan2(dz,dx)/TAU*N)%N)+N)%N;r[b]=Math.max(r[b],Math.hypot(dx,dz));}
+  for(let pass=0;pass<N;pass++){let gap=false;for(let b=0;b<N;b++)if(!r[b]){const a=r[(b+N-1)%N],c=r[(b+1)%N];if(a&&c)r[b]=(a+c)/2;else if(a||c)r[b]=a||c;else gap=true;}if(!gap)break;}
+  return{cx,cz,r};}
+function mkFoamRings(W,st){const U=R3.water&&R3.water.material.userData.U,src=R3.foamSrc||[];R3.foamSrc=[];if(!U)return;
+  const cuts=[],L=.05,mx=new THREE.Matrix4(),m4=new THREE.Matrix4();
+  for(const o of W.islets||[])for(const m of o._pm||[]){m.updateMatrixWorld(true);const c=waterCut(m.geometry,m.matrixWorld,L);if(c){c.w=2.2;cuts.push(c);}}
+  for(const m of src){m.updateMatrixWorld(true);if(m.isInstancedMesh){for(let i=0;i<m.count;i++){m.getMatrixAt(i,m4);mx.multiplyMatrices(m.matrixWorld,m4);const c=waterCut(m.geometry,mx,L);if(c){c.w=clamp(Math.max(...c.r)*.45,.35,1);cuts.push(c);}}}
+    else{const c=waterCut(m.geometry,m.matrixWorld,L);if(c){c.w=clamp(Math.max(...c.r)*.45,.35,1);cuts.push(c);}}}
+  if(!cuts.length)return;
+  const pos=[],aT=[],aA=[],idx=[];for(const c of cuts){const N=c.r.length,base=pos.length/3;
+    for(let b=0;b<=N;b++){const k=b%N,a=b/N*TAU,ca=Math.cos(a),sa=Math.sin(a),ri=c.r[k]*.96,ro=c.r[k]+c.w;pos.push(c.cx+ca*ri,L,c.cz+sa*ri,c.cx+ca*ro,L,c.cz+sa*ro);aT.push(0,1);aA.push(a,a);}
+    for(let b=0;b<N;b++){const i0=base+b*2;idx.push(i0,i0+2,i0+1,i0+1,i0+2,i0+3);}}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aT',new THREE.Float32BufferAttribute(aT,1));g.setAttribute('aA',new THREE.Float32BufferAttribute(aA,1));g.setIndex(idx);
+  const mt=new THREE.ShaderMaterial({uniforms:{uTime:U.uTime,uIce:U.uIce,uFoam:U.uFoam},side:THREE.DoubleSide,transparent:true,depthWrite:false,
+    vertexShader:`attribute float aT,aA;varying float vT,vA;varying vec3 vW;void main(){vT=aT;vA=aA;vW=position;gl_Position=projectionMatrix*viewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`uniform float uTime,uIce;uniform vec3 uFoam;varying float vT,vA;varying vec3 vW;
+      void main(){float br=.55+.45*sin(vW.x*1.7+uTime*1.1)*sin(vW.z*1.3-uTime*.8)+.2*sin(vA*9.0+uTime*.6);float wave=smoothstep(.6,.95,sin(vT*5.0-uTime*1.5+br*1.4));
+        float al=(pow(1.0-vT,1.8)*(.3+.5*br)*.32+wave*(1.0-vT)*.1)*smoothstep(0.0,.12,vT+.05);
+        al*=(1.0-smoothstep(300.0,900.0,length(vW-cameraPosition)))*(1.0-smoothstep(.15,.5,uIce));gl_FragColor=vec4(uFoam,al);}`});
+  const fm=new THREE.Mesh(g,mt);fm.renderOrder=5;fm.frustumCulled=false;fm.userData.noShadow=true;st.add(fm);}
 function mkIslets(list,st){
   const SN=new Map(),mat=c=>{if(!SN.has(c))SN.set(c,seasonMat(new THREE.MeshLambertMaterial({color:c}),'snowtop'));return SN.get(c);};/* the islets and their stones take snow (18 okt) */
   const cols={hall:[0x9c8b82,0x8f8680],kobbe:[0x8f8680,0x948a84],stenar:[0x7f7a76,0x8a827c],grynna:[0x5f5a55,0x6a625a],skar:[0x857d78,0x7a736e]},moss=mat(0x5d6b3e);
@@ -4321,7 +4324,7 @@ function mkDecor(D,st){
   {const S=WORLD.coastStones||[];if(S.length){const g=R3.stoneG||(R3.stoneG=new THREE.IcosahedronGeometry(1,0)),m=new THREE.InstancedMesh(g,seasonMat(mdWet(new THREE.MeshLambertMaterial({color:0xffffff})),'snowtop','-wet'),S.length),G2=S.filter(q=>q.g),w=G2.length?new THREE.InstancedMesh(g,mat(0xeceae2),G2.length):null,d=new THREE.Object3D(),cl=new THREE.Color();let gi=0;
     S.forEach((q,i)=>{const sy=q.r*.65;d.position.set(q.x,(q.h>.3?Math.max(gLow(q.x,q.y,q.r*1.1),-q.r*.2):q.h)+q.r*.2,q.y)/* stones in the water keep their height: they are sized to the depth so that about half break the surface */;d.rotation.set(0,q.a,0);d.scale.set(q.r*1.15,sy,q.r);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.45+hash2(i,3,77)*.15;m.setColorAt(i,cl.setRGB(v+.03,v,v-.02));
       if(q.g){d.position.y+=sy*.72;d.scale.set(q.r*.7,sy*.36,q.r*.62);d.updateMatrix();w.setMatrixAt(gi++,d.matrix);}});
-    m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);if(w){w.frustumCulled=false;st.add(w);}(R3.looseM||(R3.looseM=[])).push([m,S]);if(w)R3.looseM.push([w,G2]);}}
+    m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);(R3.foamSrc||(R3.foamSrc=[])).push(m);if(w){w.frustumCulled=false;st.add(w);}(R3.looseM||(R3.looseM=[])).push([m,S]);if(w)R3.looseM.push([w,G2]);}}
   /* the ridges (17 okt): the wall's blocks with moss on their upper faces and snow on top in winter, the loose blocks of the strips
      and the foot of the granite ridge, broadleaf bushes that turn with the season (hazel as birch, dog rose as rowan, sloe as oak)
      and dark junipers that hold snow */
@@ -4366,7 +4369,7 @@ function mkDecor(D,st){
     const run=6,rise=Math.max(0,j.top-.95),len=Math.hypot(run,rise),st2=mesh(box(len,.25,1.3),wood,-run/2+2,.95+rise/2,0);st2.rotation.z=-Math.atan2(rise,run);g.add(st2);
     g.rotation.y=-j.a;g.position.set(j.x,0,j.y);st.add(g);}
   {const sg=new THREE.DodecahedronGeometry(1,0),sm=seasonMat(mdWet(new THREE.MeshLambertMaterial({color:0x6d6a64,flatShading:true})),'snowtop','-wet'),wet2=seasonMat(mdWet(new THREE.MeshLambertMaterial({color:0x4d4b47,flatShading:true})),'snowtop','-wet');
-    for(const q of D.shoals||[])for(const t of q.stones||[]){const m=new THREE.Mesh(sg,t.h<.2?wet2:sm);m.scale.set(t.r,t.r*.55,t.r*t.el);m.rotation.set(0,t.rot,0);m.position.set(t.x,t.h-t.r*.55,t.y);st.add(m);}}
+    for(const q of D.shoals||[])for(const t of q.stones||[]){const m=new THREE.Mesh(sg,t.h<.2?wet2:sm);m.scale.set(t.r,t.r*.55,t.r*t.el);m.rotation.set(0,t.rot,0);m.position.set(t.x,t.h-t.r*.55,t.y);st.add(m);(R3.foamSrc||(R3.foamSrc=[])).push(m);}}
   const YEL=mat(0xf2c200),BLK=mat(0x161616);
   for(const m of D.marks){const g=new THREE.Group();
     if(m.type==='red'||m.type==='green'){const c=mat(m.type==='red'?0xc23b2e:0x2e8a4a);g.add(mesh(cyl(.22,.3,3.4,6),c,0,1.1,0));g.add(m.type==='red'?mesh(cyl(.32,.32,.6,6),c,0,3.1,0):mesh(new THREE.ConeGeometry(.38,.8,6),c,0,3.2,0));}
