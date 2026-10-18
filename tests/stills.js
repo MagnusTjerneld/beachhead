@@ -34,7 +34,8 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro'+(S.photo?'&photo':''),{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
   const prep=code=>code&&p.evaluate(c=>{const B=globalThis.__BH,G=B.G;return new Function('B','G',c)(B,G);},code);let prepped=false;
-  const imgs=[];for(const s of S.shots){const o={...s};delete o.prep;if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}
+  // the flashing lights (sector lights, daymarks) are held lit unless the series or a shot says fyrar:false
+  const imgs=[];for(const s of S.shots){const o={fyrar:S.fyrar??true,...s};delete o.prep;if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}
     await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice; it also starts the game, so prep runs after it */
     if(!prepped){prepped=true;await prep(S.prep);}await prep(s.prep);
     imgs.push(await p.evaluate(o=>globalThis.__BHstill(o),o));process.stdout.write('.');}

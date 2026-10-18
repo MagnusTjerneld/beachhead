@@ -5077,8 +5077,8 @@ function sync3D(dtr){
       R3.lhSpots.forEach((S,i)=>{const a2=ang+i*PI;S.position.copy(B.beam.position);S.target.position.set(B.beam.position.x+Math.cos(a2)*200,B.beam.position.y,B.beam.position.z+Math.sin(a2)*200);S.target.updateMatrixWorld();S.intensity=3*lit;});
       const dx=cx-B.beam.position.x,dz=cz-B.beam.position.z,ca=Math.atan2(dz,dx),hit=Math.max(Math.cos(ca-ang),Math.cos(ca-ang-PI));const fl=Math.pow(Math.max(0,hit),30);B.flare.scale.setScalar(2.5+fl*16*(.3+nn));B.flare.material.opacity=(.35+.65*fl)*lit;}
     if(R3.sWin){R3.sWin.visible=lit>0;R3.sWin.material.opacity=.85*lit;}
-    if(R3.sNav){R3.sNav.visible=lit>0;if(lit>0){const D=WORLD.surround,cc=R3.sNav.geometry.attributes.color;D.navs.forEach((q,i)=>{const on=lightOn(LIGHT_CH[q.ch],RTs+q.ph);const v=on?1:0;if(q.col==='red')cc.setXYZ(i,v,.18*v,.12*v);else cc.setXYZ(i,.2*v,v,.4*v);});cc.needsUpdate=true;R3.sNav.material.opacity=lit;}}
-    for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<SEC_HALF;q.flash=lit>0&&lightOn(q.ch,RTs+z.ph);const on=q.flash&&inSec;
+    if(R3.sNav){R3.sNav.visible=lit>0;if(lit>0){const D=WORLD.surround,cc=R3.sNav.geometry.attributes.color;D.navs.forEach((q,i)=>{const on=R3.allOn||lightOn(LIGHT_CH[q.ch],RTs+q.ph);const v=on?1:0;if(q.col==='red')cc.setXYZ(i,v,.18*v,.12*v);else cc.setXYZ(i,.2*v,v,.4*v);});cc.needsUpdate=true;R3.sNav.material.opacity=lit;}}
+    for(const q of R3.secs||[]){const z=q.z,dx=cx-z.x,dz=cz-z.y,off=Math.abs(angWrap(Math.atan2(dz,dx)-z.a)),inSec=off<SEC_HALF;q.flash=lit>0&&(R3.allOn||lightOn(q.ch,RTs+z.ph));const on=q.flash&&inSec;
       q.lm.color.setHex(on?q.lc:q.col);q.glow.scale.setScalar(2.2+3*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}
     for(const q of R3.baks||[]){const on=lit>0&&lightOn(q.ch,RTs+q.ph);q.lm.color.setHex(on?0xfff4dc:0xd8d6cc);q.glow.scale.setScalar(1.8+2.6*nn);q.glow.material.opacity=(.55+.45*nn)*lit;q.glow.visible=on;}}
   R3.ship.position.x=CARRIER.x;R3.ship.position.z=CARRIER.y;R3.ship.rotation.y=-(CARRIER.a+PI/2);
@@ -7117,7 +7117,7 @@ function frameBody(now,P){
 /* a still for review (tests/stills.js): the same steps as a frame of the game, the tree culling included, at a given date, hour,
    cloud cover and camera. Without the culling the first still of a series kept the title camera's tiles and showed no trees */
 globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP.on=false;$('opStage').hidden=true;placePanes();}
-  G.paused=true;if(o.doy!=null)G.doy=o.doy;if(o.tod!=null)G.tod=o.tod;if(o.moln!=null)CLOUD.force=o.moln/100;if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
+  G.paused=true;R3.allOn=!!o.fyrar;/* stills can hold every flashing light in its lit phase */if(o.doy!=null)G.doy=o.doy;if(o.tod!=null)G.tod=o.tod;if(o.moln!=null)CLOUD.force=o.moln/100;if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
   /* rel: true for the landing beach, 'birka' for Birka's own frame (x across, z forward), 'station' for the field station's plates
      (z out from the building through the plates, x across) */
   const L=WORLD.landing,P=(v,d)=>{if(!v)return d;if(v.rel==='birka'){const q=shipPos(v.x,v.z);return{x:q[0],y:v.y,z:q[1]};}
