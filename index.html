@@ -4630,9 +4630,12 @@ function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group()
     const pl=new THREE.Mesh(new THREE.PlaneGeometry(14,14),poolM);pl.rotation.x=-PI/2;pl.position.set(x-(ax?3:0),top+.04,z-(ax?0:3));pl.renderOrder=4;pl.userData.noShadow=true;g.add(pl);lamps.push(hd);};
   for(let z=K.lt0+10;z<K.p0;z+=30)lamp(K.deck-1.2,z,true);lamp(-K.out+2,K.p1-1,false);
   st.add(g);
-  // small boats moored along the quay where Birka will lie, that leave when the harbour is secured
-  const boats=[],P=(li,lt)=>({x:H.x+u.x*li-u.y*lt,y:H.y+u.y*li+u.x*lt}),ang=Math.atan2(-u.y,u.x)+PI/2,Rb=rng(W.seed*59+7);
-  for(const lt of[-84,-60,-36,-12,12]){if(Rb()<.25)continue;const q=P(-4.5,lt),b=mkBoat({kind:['motor','sail','eka'][Math.floor(Rb()*3)],x:q.x,y:q.y,a:Math.atan2(-H.nx,H.ny)+(Rb()<.5?0:PI)});b.userData.y0=.15;st.add(b);R3.bobs.push(b);boats.push(b);}
+  /* small boats moored where Birka will lie, as in the archipelago: bow to the quay and a buoy off the stern (decided 18 okt, Magnus:
+     not alongside). They and their buoys leave when the harbour is secured */
+  const boats=[],P=(li,lt)=>({x:H.x+u.x*li-u.y*lt,y:H.y+u.y*li+u.x*lt}),Rb=rng(W.seed*59+7),inA=Math.atan2(-H.ny,-H.nx),HALF={eka:2.4,motor:4,sail:4.8};
+  for(let lt=KAJ.lt0+7;lt<=24;lt+=6.5){if(Rb()<.45)continue;const kind=['motor','sail','eka','motor'][Math.floor(Rb()*4)],hl=HALF[kind],q=P(-(hl+1.2),lt),b=mkBoat({kind,x:q.x,y:q.y,a:inA});b.userData.y0=.15;st.add(b);R3.bobs.push(b);boats.push(b);
+    const qb=P(-(2*hl+6),lt+(Rb()-.5)*1.5),buoy=new THREE.Group();buoy.add(mesh(new THREE.SphereGeometry(.45,10,8),mat(Rb()<.5?0xe8e4dc:0xe0702a),0,.15,0));buoy.add(mesh(cyl(.06,.06,.5,5),mat(0x5a6066),0,.6,0));
+    buoy.position.set(qb.x,0,qb.y);buoy.userData.y0=0;buoy.userData.bob=Rb()*6;st.add(buoy);R3.bobs.push(buoy);boats.push(buoy);}
   /* life ashore (decided 13 okt, re-seated 18 okt): a fuel stop at the quay's far end with boats laid up on trestles behind it,
      boathouses along the shore beyond the quay and a store shed behind the pier. Scenery only, clear of the stretch behind
      Birka's side ramp and of the way from the quay onto the pier; everything ashore checks the ground first */
