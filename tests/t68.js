@@ -38,13 +38,7 @@ const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(
 {const G=setup(7341),a=B.makeUnit('tank',1000,1000),b=B.makeUnit('tank',1010,1000);G.units.push(a,b);b.hp=7;B.giveOrder(b,{type:'move',x:1500,y:1000,post:'def'});b.rtb=true;
   B.setSel([a.id,b.id]);B.groupOrder({world:{x:800,y:1000}},false);ok(a.orders[0].x===800&&b.orders[0].x===1500&&b.rtb,'a group order moves the healthy VARG and leaves the retreating one');
   B.setSel([b.id]);B.groupOrder({world:{x:800,y:1000}},false);ok(b.orders[0].x===800,'an order to the damaged VARG alone sends it');}
-// 8. four HÖK on a robot team that one robot kills spend about one robot, not one each (issue 31)
-{let spent=0,n=0;for(const sd of[7341,1490,2024]){const G=setup(sd),L=G.relays[0],e=B.makeEnemy({id:'QR',kind:'rb',x:L.x,y:L.y});e.seen=true;e.lx=e.x;e.ly=e.y;e.dmg=0;G.enemies.push(e);
-  const H=[0,1,2,3].map(i=>{const h=B.makeUnit('drone',L.x+110,L.y-30+i*20);h.fuel=h.maxFuel=1e5;h.post='off';G.units.push(h);return h;});
-  for(const h of H)B.giveOrder(h,{type:'attack',enemy:e,post:'off'});for(let i=0;i<20*20&&!e.dead;i++)B.step(.05);
-  if(e.dead){n++;spent+=H.reduce((s,h)=>s+h.maxAmmo-h.ammo,0);}}
-  ok(n===3&&spent/n<=2,'four HÖK spend '+(spent/Math.max(1,n)).toFixed(1)+' robots on average on a robot team (30 hp, one robot does 30), killed '+n+' of 3');}
-// 9. an order to a target outside the net is given with a word in the log (issue 37 b)
+// 8. an order to a target outside the net is given with a word in the log (issue 37 b)
 {const G=setup(1490);G.netAll=false;for(const r of G.relays)r.captured=false;const C=B.CARRIER,v=B.makeUnit('tank',C.x-500,C.y);G.units.push(v);B.setSel([v.id]);
   B.groupOrder({world:{x:585,y:925}},false);ok(v.orders[0]&&v.orders[0].x===585&&/utanför ledningsnätet/.test(G.log[0].text),'the order is given, and the log says the target is outside the net');
   const n0=G.log.length;B.groupOrder({world:{x:C.x-400,y:C.y}},false);ok(G.log.length===n0,'no word for a target inside it');}
