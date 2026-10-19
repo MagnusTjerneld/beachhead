@@ -1,7 +1,15 @@
 <!doctype html>
+<!--
+  Uppdrag Arkipelag
+  Copyright (c) 2026 Magnus Tjerneld. Alla rättigheter förbehållna.
+  Får inte kopieras, publiceras på annan plats, ändras eller användas i andra verk utan skriftligt tillstånd. Se LICENSE.
+  UA-MT-714de53211532471
+-->
 <html lang="sv">
 <head>
 <meta charset="utf-8">
+<meta name="author" content="Magnus Tjerneld">
+<meta name="copyright" content="© 2026 Magnus Tjerneld. Alla rättigheter förbehållna.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
@@ -35,6 +43,7 @@ html,body{height:100%;margin:0;overflow:hidden}
 .tfront > *{pointer-events:auto}
 #logo{width:min(78vw,940px);image-rendering:pixelated;display:block;filter:drop-shadow(0 10px 24px rgba(0,0,0,.45))}
 .tsub{margin-top:10px;text-align:center;font-family:var(--f-mono);letter-spacing:.32em;font-size:15px;color:#eef1ea;text-shadow:0 1px 3px rgba(0,0,0,.8);text-transform:uppercase}
+.tcopy{margin-top:8px;text-align:center;font-family:var(--f-mono);letter-spacing:.2em;font-size:12px;color:rgba(238,241,234,.72);text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .tpress{font-family:var(--f-mono);letter-spacing:.3em;font-size:16px;color:#f0c45a;text-shadow:0 1px 4px rgba(0,0,0,.9);animation:tpulse 1.6s ease-in-out infinite}
 @keyframes tpulse{50%{opacity:.35}}
 .tmenu{display:flex;gap:10px}
@@ -211,6 +220,7 @@ button:disabled{opacity:.45;cursor:default}
 .panel p,.panel li{margin:0;font-size:14px;max-width:62ch}
 .panel ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .panel .em{color:var(--signal);font-weight:600}
+.panel .tdim{font-size:12px;color:var(--dim)}
 .res{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .res div{background:#111a22;border:1px solid var(--line);border-radius:3px;padding:8px 10px}
 .res span{display:block;font-size:10px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
@@ -312,7 +322,7 @@ button:disabled{opacity:.45;cursor:default}
   <div class="tshade"></div>
   <button class="btn tfull" id="tFull" type="button" title="Helskärm (F)">Helskärm</button>
   <div class="tfront">
-    <div id="logoWrap" hidden><canvas id="logo" aria-label="Uppdrag Arkipelag"></canvas><div class="tsub">Frigör skärgården, en ö i taget.</div></div>
+    <div id="logoWrap" hidden><canvas id="logo" aria-label="Uppdrag Arkipelag"></canvas><div class="tsub">Frigör skärgården, en ö i taget.</div><div class="tcopy">© 2026 Magnus Tjerneld</div></div>
     <div class="tgap"></div>
     <div class="tpress" id="tPress">KLICKA FÖR ATT STARTA</div>
     <div class="tmenu" id="tMenu" hidden>
@@ -362,6 +372,7 @@ button:disabled{opacity:.45;cursor:default}
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
+    <p class="tdim">© 2026 Magnus Tjerneld. Alla rättigheter förbehållna. Spelet får inte kopieras eller publiceras på annan plats utan tillstånd.</p>
     <div class="row"><button class="btn big pri" id="bStart" type="button">Starta</button></div>
   </div>
 </div>
@@ -388,6 +399,8 @@ button:disabled{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
+/* Copyright (c) 2026 Magnus Tjerneld. Alla rättigheter förbehållna. Se LICENSE. UA-MT-714de53211532471 */
+const COPYRIGHT='© 2026 Magnus Tjerneld';
 const WW=2200,WH=2200,CELL=10,GW=WW/CELL,GH=WH/CELL,TS=2,TW=WW/TS,TH=WH/TS;
 const DEEP=0,SHAL=1,BEACH=2,LAND=3,ROCK=4,WALL=5;
 /* the land plan (markkarta, W.mark): what each land cell is used for. Häll is bare rock, strand the open shore, skog forest land,
@@ -6882,7 +6895,10 @@ function filmCompose(ctx,W,H){ctx.drawImage(R3.renderer.domElement,0,0,W,H);
   if(!$('logoWrap').hidden){const k0=W/FILM_BASE_W,lg=$('logo'),lw=Math.min(.78*W,940*k0),sc=lw/lg.width,lh=lg.height*sc,x=(W-lw)/2,y=H*.09;
     ctx.save();ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=24*k0;ctx.shadowOffsetY=10*k0;ctx.drawImage(lg,x,y,lw,lh);ctx.restore();
     const fs=Math.round(15*k0),t='FRIGÖR SKÄRGÅRDEN, EN Ö I TAGET.';ctx.save();ctx.font=fs+'px "Share Tech Mono",ui-monospace,Menlo,monospace';ctx.textBaseline='top';const sp=fs*.32;let tw=-sp;for(const c of t)tw+=ctx.measureText(c).width+sp;
-    let cx=(W-tw)/2;const ty=y+lh+10*k0;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}ctx.restore();}
+    let cx=(W-tw)/2;const ty=y+lh+10*k0;ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;ctx.fillStyle='#eef1ea';for(const c of t){ctx.fillText(c,cx,ty);cx+=ctx.measureText(c).width+sp;}
+    /* the copyright line under it (.tcopy) */
+    const fc=Math.round(12*k0),tc=COPYRIGHT,sc2=fc*.2;ctx.font=fc+'px "Share Tech Mono",ui-monospace,Menlo,monospace';let tcw=-sc2;for(const c of tc)tcw+=ctx.measureText(c).width+sc2;
+    cx=(W-tcw)/2;const tcy=ty+fs*1.35+8*k0;ctx.fillStyle='rgba(238,241,234,.72)';for(const c of tc){ctx.fillText(c,cx,tcy);cx+=ctx.measureText(c).width+sc2;}ctx.restore();}
   if(FILM.fadeA>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,FILM.fadeA)+')';ctx.fillRect(0,0,W,H);}}
 async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
   const say=t=>{const b=$('tPress');b.textContent=t;b.hidden=false;};
