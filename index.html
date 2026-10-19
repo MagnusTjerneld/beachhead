@@ -3230,6 +3230,12 @@ function krokPath(k,tx,ty,cap){
     for(let i=0;i<=n;i++){const x=p.x+(q.x-p.x)*i/n,y=p.y+(q.y-p.y)*i/n,c=cellIdx(x,y);if(!K[c]&&c!==s)return false;
       if(dz[c]){if(!inside&&!nearB(x,y))return false;}else inside=false;}return true;};
   if(cap)return capPath(s,t,a,b,K,dz);
+  /* inside a known air threat: first straight out, away from the threat it is in, to the nearest safe known air, and the rest of the
+     way from there (prov 19 okt, ö 9949: an air defence found 262 m off; "inside, so the way on may stay inside" let KROK fly along
+     it for 11 s, and home past it again, until it went down) */
+  if(dz[s]&&!k.exiting){let th=null,bd=1e9;for(const e of G.enemies){if(e.dead||!e.seen||!e.canAir)continue;const r=(e.kRange||airR(e))+25,dd=Math.hypot(k.x-e.lx,k.y-e.ly);if(dd<r&&dd-r<bd){bd=dd-r;th={e,r,dd};}}
+    if(th){const a0=Math.atan2(k.y-th.e.ly,k.x-th.e.lx);for(const da of[0,.26,-.26,.52,-.52,.79,-.79,1.05,-1.05,1.4,-1.4]){const p={x:clamp(th.e.lx+Math.cos(a0+da)*(th.r+20),20,WW-20),y:clamp(th.e.ly+Math.sin(a0+da)*(th.r+20),20,WH-20)},c=cellIdx(p.x,p.y);
+        if(K[c]&&!dz[c]){const rest=krokPath({x:p.x,y:p.y,exiting:true},tx,ty,false);if(rest)return[p,...rest];}}}}
   if(segOK(a,b))return[b];
   const inZ=!!dz[s];
   const cells=astarCells(s,t,i=>(K[i]||i===s)&&(!dz[i]||inZ||nearB(cellCenter(i).x,cellCenter(i).y)),i=>dz[i]?30:1,.8);if(!cells)return null;
@@ -3378,7 +3384,10 @@ function updateKrok(k,dt){
   if(G.ctrl===k.id){krokManual(k,dt,sp);return;}
   if(!k.retreat&&k.hp<k.maxhp*.5&&G.time-k.lastHit<1&&!(k.orders[0]&&(k.orders[0].force||k.post==='off'&&k.orders[0].cap)))krokRetreat(k);
   // queued orders take over unless a salvaged load is already on the hook
-  if(k.orders.length&&(k.state==='idle'||k.state==='out')){if(k.state==='out'&&k.target){k.target.claimed=false;k.target=null;}k.state='idle';krokOrders(k,dt,sp);return;}
+  /* the captain's orders take over on the way home and in a retreat too (prov 19 okt: KROK flew home past the air defence that had hit it
+     with an order to get out standing); a salvaged load on the hook goes to the ship once they are done */
+  if(k.orders.length&&(k.state==='idle'||k.state==='out'||k.state==='back')){if(k.state==='out'&&k.target){k.target.claimed=false;k.target=null;}k.state='idle';krokOrders(k,dt,sp);return;}
+  if(k.state==='idle'&&k.carry)k.state='back';
   if(k.cargo){k.low=false;const d=fly(k.pad.x,k.pad.y);k.status=d>6?'Väntar på order, återvänder med '+k.cargo.name:'Väntar med '+k.cargo.name+' i kroken';return;}
   k.low=k.state==='hook';
   if(k.state==='idle'){
