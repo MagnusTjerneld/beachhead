@@ -2757,10 +2757,12 @@ function updateEnemy(e,dt){
   if(e.sc){scootTick(e,dt);return;}
   if(e.mag&&e.ammo<=0&&e.cd<=0)e.ammo=e.mag;
   const SCo=SCOOT[e.kind],hold=u=>SCo&&!e.seen&&!e.firedHere&&u.kind==='scout'&&!u.dive&&dist(u,e)>(hides(e)?HIDE_AIR:u.vision)+5;/* a SPARV that has not seen it is not worth giving it away */
-  let tgt=null,bd=1e9,keep=null,kd=0;const look=e.mobile?e.vision:Math.max(e.range,e.airRange||0);
+  let tgt=null,bd=1e9,bs=-1e9,keep=null,kd=0,ks=0;const look=e.mobile?e.vision:Math.max(e.range,e.airRange||0);
   if(e.canAir)for(const k of G.kroks){if(k.dead)continue;const d=dist(k,e);if(d<=Math.max(look,rVs(e,k))){if(k===e.tgtU){keep=k;kd=d;}if(d<bd){bd=d;tgt=k;}}}
-  for(const u of G.units){if(u.dead||u.carried)continue;if(flying(u)?!e.canAir:!e.canGround)continue;if(hold(u))continue;if(u.kind==='scout'&&e.kind==='rb')continue;/* the MANPADS is for helicopters and larger drones, not a GETING (16 okt) */const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim){if(u===e.tgtU){keep=u;kd=d;}if(d<bd){bd=d;tgt=u;}}}
-  if(keep&&kd<=rVs(e,keep)){tgt=keep;bd=kd;}e.tgtU=tgt;
+  for(const u of G.units){if(u.dead||u.carried)continue;if(flying(u)?!e.canAir:!e.canGround)continue;if(hold(u))continue;if(u.kind==='scout'&&e.kind==='rb')continue;/* the MANPADS is for helicopters and larger drones, not a GETING (16 okt) */const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim){const sc=d<=rVs(e,u)?expHit(e,u):-d*1e-3;if(u===e.tgtU){keep=u;kd=d;ks=sc;}if(sc>bs){bs=sc;bd=d;tgt=u;}}}
+  /* (decided 19 okt, issue 44) the target it can expect to hurt most per shot, by its weapon, the range, the target's size, armour
+     and speed across the line; it keeps its target until another is clearly better, a third more, since turning the gun costs time */
+  if(keep&&kd<=rVs(e,keep)&&ks>=bs*.75){tgt=keep;bd=kd;}e.tgtU=tgt;
   if(SCo&&SCo.quiet&&!tgt&&e.firedHere&&G.time-e.lastFire>SCo.quiet&&startScoot(e))return;
   if(SCo&&SCo.flee&&G.time-(e.scootEnd||-99)>SCo.fleeGap){const v=G.units.find(u=>!u.dead&&!u.carried&&!u.air&&u.kind!=='mus'&&dist(u,e)<SCo.flee&&dist(u,e)<e.vision);if(v&&startScoot(e,v))return;}
   const home=Math.hypot(e.x-e.hx,e.y-e.hy);
@@ -2824,7 +2826,19 @@ function launch(a,t,x2,y2,h2,ws,side,hit,dmg,w){
   G.fx.push({k:'shot',x1:mx,y1:my,h1,x2,y2,h2,t:0,ttl:Math.max(.05,Math.hypot(x2-mx,y2-my)/W.v),ws,side,a,tg:t,hit,dmg,w,done:false});
   G.fx.push({k:'flash',x:mx,y:my,h:h1,t:0,ttl:ws==='mg'||ws==='e_rifle'?.05:.09,big:ws==='cannon'||ws==='e_shell',ws,side});
 }
+/* range matters for weapons that are not homing (decided 19 okt, Magnus, issue 44): hit chance and damage rise from full at the
+   weapon's whole reach to RANGE_F.max more at a third of it, for our cannon and machine gun and for the enemy's shells, flak,
+   automatic cannon and grenades; robots and anti-tank missiles fly the same at any range */
+const RANGE_F={on:true,max:.25,air:0};/* not against aircraft for now: in the sandbox (19 okt) two HÖK against a lone air defence won 55 % instead of 100 % with it, since they fight well inside its 200 m; on the ground it changed little. air 1 puts it on */
+/* what an enemy can expect to do to a unit with one shot, as it fires: weapon, aim against aircraft, the target's size and speed
+   across the line, the range and the target's armour (issue 44) */
+function expHit(e,u){if(u.kind==='mus'&&(e.kind==='inf'||e.kind==='at'))return ROVER.rifle.dmg*ROVER.rifle.acc;
+  const a0=u.air&&e.kind==='turret'?e.acc*.55:u.air&&e.airAcc?e.airAcc:e.acc;return e.dmg*Math.min(.98,a0*(SIZE_ACC[u.kind]||1)*moveDef(e,u)*rangeF(e,u,'e'))*dmgMult(e,u);}
+function rangeF(a,t,side,w){if(!RANGE_F.on||!t)return 1;let R=0;
+  if(side==='f'){if(w==='cannon')R=a.range;else if(w==='mg')R=MG.range;else return 1;}else{if(!MOVE_DEF.ball.has(a.kind)||t.air&&!RANGE_F.air)return 1;R=rVs(a,t);}
+  if(!(R>0))return 1;return 1+RANGE_F.max*clamp((R-dist(a,t))/(R*2/3),0,1);}
 function shoot(a,t,dmg,acc,side,w){
+  {const f=rangeF(a,t,side,w||(side==='f'?null:'e'));if(f!==1){acc=Math.min(.98,acc*f);dmg*=f;}}
   const hit=Math.random()<acc;
   if(side==='e')t.hitBy[a.id]=G.time;
   else for(const m of G.enemies)if(m.mobile&&!m.dead&&dist(m,t)<320)m.alert={x:a.x,y:a.y,t:G.time};
@@ -3598,7 +3612,7 @@ function saveState(){const enc=graphEnc(G);return{fmt:'uppdrag-arkipelag-sparnin
   when:G.start,carrier:{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a},grid:b64(WORLD.grid),g:enc.tab};}
 /* the state of a save put back over a freshly built island of the same number (the caller has built it) */
 function applySave(sv){G=graphDec(sv.g);WORLD.grid.set(unb64(sv.grid));Object.assign(CARRIER,sv.carrier);G.running=true;G.paused=true;}
-if(typeof globalThis!=='undefined')globalThis.__BH={saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
