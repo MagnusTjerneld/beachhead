@@ -2910,6 +2910,9 @@ function assaultStage(u,o){const e=o.enemy,st=o.arc.st,A=(G.assault||(G.assault=
   const launch=why=>{for(const v of atk)v.orders[0].go=true;if(!A.said){A.said=true;say(u,why);}return null;};
   if(atk.some(v=>v.orders[0].go))return launch('Anfaller '+ename(e)+'.');
   if(u.hitBy[e.id]&&G.time-u.hitBy[e.id]<3)return launch(ename(e)+' öppnade eld. Anfaller nu.');
+  /* a planned attack waits for everyone, unless someone of the group is already in a fight and needs backing (decided 19 okt,
+     Magnus, issue 59): then they go in at once */
+  {const v=atk.find(x=>x!==u&&inFire(x));if(v)return launch(v.name+' är redan i strid. Anfaller '+ename(e)+' nu.');}
   const inPlace=v=>v.orders[0].arc.st?dist(v,v.orders[0].arc.st)<14:true,n=atk.filter(inPlace).length;
   if(dist(u,st)<14&&A.first<0)A.first=G.time;
   if(n===atk.length)return launch('Alla i position. Anfaller '+ename(e)+' samtidigt från '+atk.length+' håll.');
@@ -2921,8 +2924,10 @@ function assaultStage(u,o){const e=o.enemy,st=o.arc.st,A=(G.assault||(G.assault=
    target, or the target fires on them. With no VARG on that target any more it goes on its own */
 function hokHold(u,o){const e=o.enemy,gs=o.withWing.map(id=>G.units.find(v=>v.id===id&&!v.dead&&!v.carried&&!v.air)).filter(Boolean),mine=gs.filter(v=>v.orders.some(q=>q.type==='attack'&&q.enemy===e));
   if(!mine.length)return false;
-  if(mine.some(v=>{const q=v.orders[0];return q&&q.type==='attack'&&q.enemy===e&&(q.go||((!q.arc||!q.arc.st)&&dist(v,e)<effRange(v)+30));}))return false;
-  if(mine.some(v=>v.hitBy[e.id]&&G.time-v.hitBy[e.id]<4))return false;
+  /* it goes in when the VARG leave their staging points (decided 19 okt, issue 59), or, for a VARG that has none, when it is within
+     its own reach of the target; and at once when the target fires on them or one of them is already in a fight */
+  if(mine.some(v=>{const q=v.orders[0];return q&&q.type==='attack'&&q.enemy===e&&(q.go||((!q.arc||!q.arc.st)&&dist(v,e)<effRange(v)));}))return false;
+  if(mine.some(v=>v.hitBy[e.id]&&G.time-v.hitBy[e.id]<4||inFire(v)))return false;
   let cx=0,cy=0;for(const v of mine){cx+=v.x;cy+=v.y;}cx/=mine.length;cy/=mine.length;const a=Math.atan2(cy-e.ly,cx-e.lx),r=Math.max(e.range||0,airR(e)||0)+40;
   let p={x:clamp(e.lx+Math.cos(a)*r,20,WW-20),y:clamp(e.ly+Math.sin(a)*r,20,WH-20)};if(airDanger(u,p.x,p.y)){const sp=safePoint(u,p.x,p.y);if(sp)p=sp;}
   o.hold={x:p.x,y:p.y,s:'Väntar på VARG innan anfallet mot '+ename(e)};return true;}
