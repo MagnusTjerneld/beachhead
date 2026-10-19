@@ -2484,12 +2484,13 @@ function hokWeave(u,dt){const t=u.target,tx=t.lx??t.x,ty=t.ly??t.y,dx=tx-u.x,dy=
   u.x=clamp(nx,6,WW-6);u.y=clamp(ny,6,WH-6);u.state='Bekämpar '+(t.isStruct?slabel(t):ename(t))+' i rörelse';return true;}
 function tankCombat(u,dt,post){
   let tgt=null;const o=u.orders[0],R=effRange(u);
-  if(o&&o.type==='attack'){if(o.enemy.dead){attackDone(u);}else if(o.enemy.visibleNow&&dist(u,o.enemy)<=(u.kind==='drone'?reachR(u,o.enemy):R)&&canHit(u,o.enemy,true)&&sees(u,o.enemy))tgt=o.enemy;}
+  const hold=u.kind==='tank'&&stagingHold(u,o);
+  if(o&&o.type==='attack'){if(o.enemy.dead){attackDone(u);}else if(!hold&&o.enemy.visibleNow&&dist(u,o.enemy)<=(u.kind==='drone'?reachR(u,o.enemy):R)&&canHit(u,o.enemy,true)&&sees(u,o.enemy))tgt=o.enemy;}
   {const mk=markOf(o);if(!tgt&&mk&&mk.visibleNow&&canHit(u,mk,true)&&dist(u,mk)<=(u.kind==='drone'?reachR(u,mk):R))tgt=mk;}
   if(!tgt&&!u.rtb&&post!=='dold'){
     let bd=1e9;
     for(const e of G.enemies){
-      if(e.dead||!e.visibleNow||!canHit(u,e))continue;const d=dist(u,e);if(d>(u.kind==='drone'?reachR(u,e):R)||d>=bd||!sees(u,e))continue;
+      if(e.dead||!e.visibleNow||!canHit(u,e)||(hold&&e===o.enemy))continue;const d=dist(u,e);if(d>(u.kind==='drone'?reachR(u,e):R)||d>=bd||!sees(u,e))continue;
       if(post==='off'||(u.hitBy[e.id]&&G.time-u.hitBy[e.id]<5)||(u.kind==='tank'&&mateHit(u,e))||(e===u.escTgt&&o&&o.escort)){bd=d;tgt=e;}
     }
   }
@@ -2699,7 +2700,7 @@ function move(u,dt){
   else if(o.type==='attack'){if(o.enemy.dead){attackDone(u);return;}if(o.search&&o.enemy.visibleNow)o.search=0;if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;o.arc=null;u.path=null;}
     if(!o.fp&&!u.air&&LOS.on&&o.enemy.visibleNow&&dist(u,o.enemy)<=effRange(u)&&!sees(u,o.enemy)&&G.time>=(o.losT||0)){o.losT=G.time+2;const fp=firingPoint(u,o.enemy,o.close);if(fp){o.fp=fp;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}else if(u.kind==='tank')losCall(u,o.enemy);}/* in reach but behind the ground: a spot with a clear line (issue 38), or a HÖK when there is none */
     if(!o.fp&&u.kind==='tank'&&!o.close&&(o.enemy.visibleNow||!o.enemy.camo)&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=arcPoint(u,o);if(ap){o.fp=ap;o.arc=ap;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}}
-    let stg=null;if(o.fp&&o.arc&&o.arc.st&&!o.go){const st=assaultStage(u,o);if(st){tx=st.x;ty=st.y;arr=8;stg=u.state;}}
+    let stg=null;if(!o.go&&!o.support&&u.kind==='tank'&&groupAtk(o.enemy).length>=2){const sp=stagePt(u,o);if(sp){const st=assaultStage(u,o,sp);if(st){tx=st.x;ty=st.y;arr=8;stg=u.state;}}}
     if(stg){}else if(o.fp&&(!o.arc||!o.arc.st||o.go)){tx=o.fp.x;ty=o.fp.y;arr=6;/* no sliding along the arc any more (decided 19 okt, Magnus: too slow to throw a bunker off, and a VARG keeps its front to the target) */}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow||(u.kind==='tank'&&areaKnown(o.enemy))?(u.kind==='scout'?GETING.diveR*.8:u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):u.air?Math.min(45,airSeeR(u,o.enemy)*.75):45;}u.state=stg||('Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':''));if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400&&!(u.kind==='tank'&&areaKnown(o.enemy))){o.spotAsk=1;requestSpot(u,o.enemy);}/* the spot it just fired from is enough to answer with area fire */if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
   else if(o.type==='clear'){const b=o.barrier;if(b.cleared){u.orders.shift();u.path=null;return;}const bd=barrierDist(b,u);if(bd<12){workBarrier(b,u,dt);return;}/* charges are laid by hand: BÄVER drives right up to the barrier, through its side of the pass to the cell next to it */if(!o.sd||(u.waitT&&G.time<u.waitT)){o.sd=barrierSide(b,u);o.at=barrierFoot(b,o.sd);}const sd=o.at||o.sd;tx=sd.x;ty=sd.y;arr=o.at?1.5:3;u.state='På väg mot spärr '+b.id;}
   else if(o.type==='demolish'){const st=o.s;if(st.dead){u.orders.shift();u.path=null;return;}tx=st.x;ty=st.y;arr=16;u.state='På väg att riva '+slabel(st);}
@@ -2756,7 +2757,11 @@ function move(u,dt){
       if(r.prog>=1){u.orders.shift();capturePoint(r,u);}
       return;
     }
-    if(o.type==='attack'&&o.arc&&o.arc.st&&!o.go)return;   // at the staging point: waiting for the others, not for spotting
+    if(o.type==='attack'&&(o.arc&&o.arc.st||o.stg0)&&!o.go)return;   // at the staging point: waiting for the others, not for spotting
+    /* at its firing spot, the target seen, but no shot (the spot was picked with a line from its eye height that the shot itself does
+       not have, prov 19 okt: a VARG stood 50 s "söker skottläge"): after 3 s a new firing spot, and after two of those it goes closer */
+    if(o.type==='attack'&&o.enemy.visibleNow&&!u.air&&!(dist(u,o.enemy)<=effRange(u)&&sees(u,o.enemy))){o.noShot=(o.noShot||0)+dt;u.state='I position, söker skottläge';
+      if(o.noShot>3){o.noShot=0;o.fpFail=(o.fpFail||0)+1;if(o.fpFail>=2)o.close=true;o.fp=null;o.arc=null;o.stg0=null;o.arcT=G.time+30;o.losT=0;u.path=null;}return;}
     if(o.type==='attack'){if(o.enemy.visibleNow){o.waitS=0;u.state='I position, söker skottläge';return;}u.state='I position, väntar på spaning';if(spotterFor(o.enemy)){o.waitS=0;u.state='I position, HÖK spanar på väg';return;}o.waitS=(o.waitS||0)+dt;if(u.air&&o.waitS>3&&!o.search){o.search=G.time+30;o.searchR=SCOOT[o.enemy.kind]?Math.min(75,SCOOT[o.enemy.kind].max*.6):55;/* a ring of 55 m with 40 m sight in cover covers 15 to 95 m out */say(u,'Ser inte '+ename(o.enemy)+' här. Söker runt senast kända plats.');return;}if(o.waitS>20&&!o.close&&!u.air){o.close=true;o.fp=null;u.path=null;say(u,'Ingen spaning på '+ename(o.enemy)+'. Går närmare för att se själv.');}return;}
     if(o.type==='clear'){workBarrier(o.barrier,u,dt);return;}
     if(o.type==='demolish'){workStruct(o.s,u,dt);return;}
@@ -3039,8 +3044,20 @@ function relayLocked(r,u){const gs=relayGuards(r);if(!gs.length)return false;u.s
 /* a coordinated attack (decided 14 okt): each VARG on the arc first drives to a staging point on its own bearing, 25 m outside the
    target's reach, and waits there until all of them are in place; then they go in together. The wait ends early if the target
    opens fire on one of them, and after 40 s at the latest so that one stuck VARG does not hold the rest */
-function assaultStage(u,o){const e=o.enemy,st=o.arc.st,A=(G.assault||(G.assault={}))[e.id]||(G.assault[e.id]={first:-1,said:false,t:G.time});
-  const atk=G.units.filter(v=>!v.dead&&!v.carried&&v.kind==='tank'&&v.orders[0]&&v.orders[0].type==='attack'&&v.orders[0].enemy===e&&v.orders[0].arc);
+/* a group attack (prov 19 okt, ö 9949, twice: VARG-1 went in before VARG-2 was in place): every VARG with a planned attack on the
+   target stages, not only the ones that got a point on the arc, and all of them count. The one without an arc point waits on the
+   line from the target, just outside its reach (or backs out to it); a target that cannot fire on vehicles needs no staging */
+const planAtk=(v,e)=>!v.dead&&!v.carried&&v.kind==='tank'&&v.orders[0]&&v.orders[0].type==='attack'&&v.orders[0].enemy===e&&!v.orders[0].support;
+const groupAtk=e=>G.units.filter(v=>planAtk(v,e));
+function stagePt(u,o){if(o.arc&&o.arc.st)return o.arc.st;if(o.stg0)return o.stg0;const e=o.enemy,gr=e.canGround?(e.range||0):0;if(!gr)return null;
+  const D=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=gr+25,/* all at the same distance, so that they arrive together when they go */p={x:e.lx+(u.x-e.lx)/D*r,y:e.ly+(u.y-e.ly)/D*r};
+  /* the point on the line, or the nearest drivable one a little further out; standing where it is only if there is none */
+  for(let k=0;k<6;k++){const rr=r+k*8,q={x:e.lx+(u.x-e.lx)/D*rr,y:e.ly+(u.y-e.ly)/D*rr};if(passAmph(cellIdx(q.x,q.y)))return o.stg0=q;}
+  return o.stg0={x:u.x,y:u.y};}
+/* staging and not yet launched: it does not give itself away by firing on the target, unless the target is firing on it */
+const stagingHold=(u,o)=>!!o&&o.type==='attack'&&!o.go&&!o.support&&!!(o.stg0||(o.arc&&o.arc.st))&&!(u.hitBy[o.enemy.id]&&G.time-u.hitBy[o.enemy.id]<5);
+function assaultStage(u,o,sp){const e=o.enemy,st=sp||o.arc.st,A=(G.assault||(G.assault={}))[e.id]||(G.assault[e.id]={first:-1,said:false,t:G.time});
+  const atk=groupAtk(e);
   if(A.said&&!atk.some(v=>v.orders[0].go)){A.first=-1;A.said=false;}/* a new attack on the same target */
   const launch=why=>{for(const v of atk)v.orders[0].go=true;if(!A.said){A.said=true;say(u,why);}return null;};
   if(atk.some(v=>v.orders[0].go))return launch('Anfaller '+ename(e)+'.');
@@ -3048,7 +3065,7 @@ function assaultStage(u,o){const e=o.enemy,st=o.arc.st,A=(G.assault||(G.assault=
   /* a planned attack waits for everyone, unless someone of the group is already in a fight and needs backing (decided 19 okt,
      Magnus, issue 59): then they go in at once */
   {const v=atk.find(x=>x!==u&&inFire(x));if(v)return launch(v.name+' är redan i strid. Anfaller '+ename(e)+' nu.');}
-  const inPlace=v=>v.orders[0].arc.st?dist(v,v.orders[0].arc.st)<14:true,n=atk.filter(inPlace).length;
+  const inPlace=v=>{const q=v.orders[0];if(!(e.canGround&&e.range))return true;const p=q.arc&&q.arc.st||q.stg0;return!!p&&dist(v,p)<14;},n=atk.filter(inPlace).length;
   if(dist(u,st)<14&&A.first<0)A.first=G.time;
   if(n===atk.length)return launch('Alla i position. Anfaller '+ename(e)+' samtidigt från '+atk.length+' håll.');
   if(A.first>=0&&G.time-A.first>40)return launch('Väntat 40 s, '+n+' av '+atk.length+' i position. Anfaller '+ename(e)+'.');
@@ -3085,11 +3102,10 @@ function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried
   // a target that cannot fire on vehicles (air defence: its range is against aircraft) needs no staging, so they go straight in
   const gr=e.canGround?(e.range||0):0;
   /* the staging point needs no clear line to the target, only the firing spot does (prov 19 okt, ö 9949: with the line required no
-     staging point was found and VARG-1 went in before VARG-2 was in place); with none, a VARG outside the target's reach waits where
-     it stands */
+     staging point was found and VARG-1 went in before VARG-2 was in place); with none, stagePt gives one on the line from the
+     target (waiting where it stood counted a far VARG as in place at once, and they went in from different distances) */
   const okSt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)]);
   let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okSt(q)||far(q,sr))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
-  if(!st&&gr&&du>gr+5)st={x:u.x,y:u.y};
   return{x:p.x,y:p.y,a,st};}
 /* the length of the way from a unit to every cell it can drive to, water included (Dijkstra over the grid, 8 neighbours) */
 function wayFrom(u){const N=GW*GH,D=new Float32Array(N).fill(Infinity),g=WORLD.grid,s0=cellIdx(u.x,u.y),H=new Heap();D[s0]=0;H.push(s0,0);
