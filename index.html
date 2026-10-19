@@ -312,7 +312,7 @@ button:disabled{opacity:.45;cursor:default}
         <div class="row" id="yardRow"></div>
         <div class="row"><span class="who">Bärgning</span><button class="chip" id="bAuto" type="button" aria-pressed="true">Hämtar automatiskt</button><span class="hint" id="krokInfo"></span></div>
       </div>
-      <div class="keys"><b>Ropa in:</b> peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK), eller högerklicka för hjulet. Q byter huvudvy. Ctrl+klick lägger till i urvalet. Skift+siffra sparar wing, siffra väljer den, dubbeltryck visar dess kamera. E tar eller släpper kontroll. I kontroll kör W A S D; i en VARG låser klick i kameran musen till tornet, klick skjuter, Esc frigör musen. C sätter kamera på vald, F helskärm, M ljud, N musik, Skift+klick lägger till punkt, mellanslag pausar.</div>
+      <div class="keys"><b>Ropa in:</b> peka i kameran eller på sjökortet och tryck B (BÄVER), H (HÖK luftstöd), V (VARG) eller K (KROK), eller högerklicka för hjulet. Q byter huvudvy. Ctrl+klick lägger till i urvalet. Skift+siffra sparar wing, siffra väljer den, dubbeltryck visar dess kamera. E tar eller släpper kontroll. I kontroll kör W A S D; i en VARG låser klick i kameran musen till tornet, klick skjuter, Esc frigör musen. C sätter kamera på vald, F helskärm, M ljud, N musik, Skift+klick lägger till punkt, Backspace stryker de valdas order (de stannar), mellanslag pausar.</div>
     </aside>
   </main>
 </div>
@@ -3139,6 +3139,13 @@ function inNet(x,y){if(G.netAll)return true;for(const c of netShapes().C)if(Math
 const netOf=u=>{if(u.kind==='scout')return inNet(u.x,u.y)||linkAt(u.x,u.y).ok;if(u.kind!=='mus')return inNet(u.x,u.y);const v=unitById(u.owner);return !!v&&!v.dead&&inNet(v.x,v.y)&&dist(u,v)<=ROVER.link;};
 const heard=u=>!!u&&(u.dead||netOf(u));
 function noContact(us){const off=us.filter(u=>!heard(u));if(off.length)say(null,'Ingen radiokontakt med '+off.map(u=>u.name).join(' och ')+'. Utanför ledningsnätet fortsätter '+(off.length>1?'de':'den')+' med senaste ordern.');return us.filter(heard);}
+/* Halt (decided 19 okt, Magnus, after Hostile Waters, where Backspace deletes the vehicle's order stack): Backspace strikes every
+   order and the mission of the selected units, or KROK's queue, and they stop where they are; with no orders they still fight by
+   their stance. A unit out of radio contact does not hear it */
+function haltSel(){const sk=selKrok();if(sk){if(sk.orders.length){clearKrok(sk);say(sk,'Kön rensad. Väntar på order.');}return;}
+  const us=noContact(selUnits()).filter(u=>u.id!==G.ctrl&&(u.orders.length||u.mission||u.rtb));if(!us.length)return;
+  for(const u of us){u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);}
+  say(us.length===1?us[0]:null,us.length===1?'Order strukna. Står still.':us.map(u=>u.name).join(', ')+': order strukna. Står stilla.');}
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
   const t=r.type;
@@ -6495,6 +6502,7 @@ $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
   if(FILM.on){if(e.target&&e.target.id==='filmSave')return;/* the save button takes Enter and space itself */if(e.key==='Enter'||e.key===' '){e.preventDefault();filmClick();}else if(e.code==='KeyF')toggleFull();return;}
   if(TITLE.on){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();if(!$('intro').hidden&&e.key==='Escape'){$('intro').hidden=true;return;}titleWake(true);}return;}
+  if(e.key==='Backspace'&&G.running&&!/INPUT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName||'')){e.preventDefault();haltSel();uiTick(true);return;}
   if(e.key==='Escape'){closeWheel();if(G.ctrl){setCtrl(null);uiTick(true);}else if(G.selK){G.selK=null;uiTick(true);}return;}
   if(CALLKEY[e.code]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.running){e.preventDefault();doCall(CALLKEY[e.code],e.key,e.shiftKey);uiTick(true);return;}
   if(e.code==='KeyQ'&&!e.ctrlKey&&!e.metaKey&&G.running){swapViews();return;}
