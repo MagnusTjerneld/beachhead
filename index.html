@@ -1763,7 +1763,7 @@ function newGame(seed,doc,when){
   G.mines=[];G.reachAll=null;mkMines(WORLD.mineSites||[]);computeLock();
   G.harbor=WORLD.harbor&&WORLD.birkaPath&&WORLD.harborQ?{secured:false,docked:false,s:0,v:0,chk:0}:null;
   if(G.harbor){const q=WORLD.harborQ;G.relays.push({id:'H',type:'hamn',x:q.x,y:q.y,prog:0,captured:false,lockMsg:null,guards:WORLD.enemies.filter(e=>e.guard===3).map(e=>e.id)});}
-  {let nt=0;for(const k of START.units)G.units.push(k==='drone'?makeUnit('drone',...shipPos(0,60)):k==='tank'?makeUnit('tank',...shipPos(nt++?32:-32,0)):k==='scout'?makeUnit('scout',...shipPos(0,-60)):makeUnit('eng',...deckSpot(0)));}
+  {let nt=0;for(const k of START.units)G.units.push(k==='drone'?makeUnit('drone',...shipPos(0,60)):k==='tank'?makeUnit('tank',...shipPos(nt++?32:-32,0)):k==='scout'?makeUnit('scout',...shipPos(0,-60)):(()=>{const b=makeUnit('eng',...deckSpot(0));bevHome(b);return b;})());}
   {const e=G.units.find(u=>u.kind==='eng');if(e)setSel([e.id]);G.cam=(G.units.find(u=>u.kind==='tank')||e||G.units[0]).id;}
   G.kroks.push(makeKrok());
   for(let i=0;i<GW*GH;i++)if(WORLD.baseGrid[i]===DEEP||WORLD.isletMask[i])G.known[i]=1;markKnown();
@@ -1774,7 +1774,10 @@ const DECK_Y=4.3;
 function shipLocal(x,y){const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)},dx=x-CARRIER.x,dy=y-CARRIER.y;return{lat:-dx*f.y+dy*f.x,fwd:dx*f.x+dy*f.y};}
 const onDeck=(x,y)=>{const l=shipLocal(x,y);return Math.abs(l.lat)<16&&Math.abs(l.fwd)<45;};
 const BEV_SPOT={lat:10.6,fwd:21.5};
-function deckSpot(n){return shipPos(BEV_SPOT.lat+((n||0)%2?1.7:-1.7),BEV_SPOT.fwd);}
+/* the first BÄVER stands in the middle of its box, along the ship; a second beside it (prov 19 okt: the one at the start stood across the
+   box with half of it outside) */
+function deckSpot(n){return n?shipPos(BEV_SPOT.lat+(n%2?1.7:-1.7),BEV_SPOT.fwd):shipPos(BEV_SPOT.lat,BEV_SPOT.fwd);}
+const bevHome=u=>{if(u.kind==='eng'&&onDeck(u.x,u.y))u.heading=CARRIER.a;};
 function shipPos(lat,fwd){const f={x:Math.cos(CARRIER.a),y:Math.sin(CARRIER.a)};return[CARRIER.x-f.y*lat+f.x*fwd,CARRIER.y+f.x*lat+f.y*fwd];}
 /* KROK takes none of the four pads (decided 18 okt, issue 34): its home is its spot at the bow (KROK_SPOT), where it lands loads and
    comes down low only when it needs mending, at the stern; idle it circles over Birka, each KROK on its own ring. It never needs fuel */
@@ -2479,7 +2482,7 @@ function tankCombat(u,dt,post){
   }
   if(!tgt&&o&&o.type==='raze'&&!o.s.dead&&dist(u,o.s)<=R*.95)tgt=o.s;
   if(!tgt){u.target=null;if(u.kind==='tank')u.turret=turnTo(u.turret,u.heading,2*dt);return false;}
-  if(u.target!==tgt){u.target=tgt;if(!tgt.isStruct)say(u,'Bekämpar '+ename(tgt)+'.');}
+  if(u.target!==tgt){u.target=tgt;if(!tgt.isStruct){const oe=o&&o.type==='attack'&&o.enemy;say(u,oe&&oe!==tgt&&!oe.dead?'Besvarar eld från '+ename(tgt)+' på väg mot '+ename(oe)+'.':'Bekämpar '+ename(tgt)+'.');}}
   const a=Math.atan2(tgt.y-u.y,tgt.x-u.x);
   u.state=tgt.isStruct?'Skjuter sönder '+slabel(tgt):(u.rtb?'Drar sig tillbaka, bekämpar ':'Bekämpar ')+ename(tgt);
   if(u.kind==='tank'){u.turret=turnTo(u.turret,a,2.5*dt);if(Math.abs(angWrap(a-u.turret))<.12)fireAt(u,tgt);}
@@ -3035,7 +3038,12 @@ function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried
   // the staging point on the same bearing, just outside the target's own reach, pushed further out while other known weapons cover it;
   // a target that cannot fire on vehicles (air defence: its range is against aircraft) needs no staging, so they go straight in
   const gr=e.canGround?(e.range||0):0;
-  let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okAt(q)||far(q,sr))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
+  /* the staging point needs no clear line to the target, only the firing spot does (prov 19 okt, ö 9949: with the line required no
+     staging point was found and VARG-1 went in before VARG-2 was in place); with none, a VARG outside the target's reach waits where
+     it stands */
+  const okSt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)]);
+  let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okSt(q)||far(q,sr))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
+  if(!st&&gr&&du>gr+5)st={x:u.x,y:u.y};
   return{x:p.x,y:p.y,a,st};}
 /* the length of the way from a unit to every cell it can drive to, water included (Dijkstra over the grid, 8 neighbours) */
 function wayFrom(u){const N=GW*GH,D=new Float32Array(N).fill(Infinity),g=WORLD.grid,s0=cellIdx(u.x,u.y),H=new Heap();D[s0]=0;H.push(s0,0);
@@ -3176,7 +3184,7 @@ function capPath(s,t,a,b,K,dz){
 function krokRetreat(k){
   clearKrok(k);if(k.target){k.target.claimed=false;k.target=null;}
   if(k.state==='out'||k.state==='hook')k.state='back';
-  if(k.cargo){const p=k.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);k.orders.push({type:'drop',x:p[0],y:p[1]});}
+  if(k.cargo){const p=k.cargo.kind==='eng'?deckSpot(0):shipPos(0,75);k.orders.push({type:'drop',x:p[0],y:p[1]});}
   if(!k.cargo&&k.state==='idle')k.orders.push({type:'move',x:k.pad.x,y:k.pad.y});
   k.retreat=true;say(k,'Träffad, skrovet '+Math.round(k.hp/k.maxhp*100)+' %. Avbryter och drar mig tillbaka till fartyget.');
 }
@@ -3264,7 +3272,7 @@ function krokOrders(k,dt,sp){
   const toOff=(f)=>cg?[{l:'Sätt '+cg.name+' på Offensiv',f:()=>{cg.post='off';f();}}]:null;
   if((o.type==='move'||o.type==='drop')&&bold&&!sec){if(!o.tp){o.tp={x:o.x,y:o.y};const e=airDanger(k,o.x,o.y);if(e||!isKnown(o.x,o.y))say(k,e?'Punkten ligger inom räckhåll för '+ename(e)+'. Flyger ändå på din order.':'Okänt område. Flyger ändå på din order.');}}
   else if(o.type==='move'||o.type==='drop'){if(!o.tp||o.sv!==(G.tver||0)||sec&&G.time-(o.st||0)>2){o.sv=G.tver||0;o.st=G.time;const ks=knownSafe(k,o.x,o.y,sec,!bold);
-    if(!ks){const ox=o.x,oy=o.y,ty=o.type;say(k,sec?'Ingen säkrad landningsplats nära punkten. '+cg.name+' står på '+POST[cg.post]+' och vill sättas ned på säkrad mark. Ordern struken.'+secWhy():'Inget spanat och säkert område nära punkten. Ordern struken.',!o.cap?null:sec?toOff(()=>krokOrder(k,{type:ty,x:ox,y:oy},true)):[{l:'Offensiv och flyg ändå',f:()=>{k.post='off';krokOrder(k,{type:ty,x:ox,y:oy},true);}}]);k.orders.shift();return;}o.tp=ks;
+    if(!ks){const ox=o.x,oy=o.y,ty=o.type;say(k,sec?'Ingen säkrad landningsplats nära punkten. '+cg.name+' står på '+POST[cg.post]+' och vill sättas ned på säkrad mark. Ordern struken, '+cg.name+' hänger kvar i kroken.'+secWhy():'Inget spanat och säkert område nära punkten. Ordern struken.',!o.cap?null:sec?toOff(()=>krokOrder(k,{type:ty,x:ox,y:oy},true)):[{l:'Offensiv och flyg ändå',f:()=>{k.post='off';krokOrder(k,{type:ty,x:ox,y:oy},true);}}]);k.orders.shift();return;}o.tp=ks;
     if(ks.moved&&!o.warned){o.warned=1;const dz=!bold&&airDanger(k,o.x,o.y);say(k,!isKnown(o.x,o.y)&&!bold?'Okänt område. Flyger bara till kanten av det vi har spanat.':dz?'Punkten ligger inom räckhåll för kända hot. Stannar strax utanför.':'Platsen är inte säkrad: allt land inom '+SECURE_R+' m är inte spanat, och '+cg.name+' står på '+POST[cg.post]+'. Sätter ned på närmaste säkrade plats.',!o.cap?null:sec&&!dz&&isKnown(o.x,o.y)?toOff(()=>{o.tp=null;o.warned=0;}):[{l:'Offensiv och flyg ändå',f:()=>{k.post='off';o.tp=null;o.warned=0;}}]);}}}
   /* an Offensiv vehicle is set down on unsecured land on the captain's order, with a line in the log (decided 18 okt) */
   if(cg&&!sec&&o.tp&&!o.unsec&&!onDeck(o.tp.x,o.tp.y)&&!isSecured(o.tp.x,o.tp.y)){o.unsec=1;say(cg,cg.name+' sätts ned på osäkrad mark.');}
@@ -3283,11 +3291,11 @@ function krokOrders(k,dt,sp){
     if(!o.dp||o.dpv!==o.tp){o.dpv=o.tp;o.dp=dropSpot(o.tp);}
     const d=krokFly(k,o.dp.x,o.dp.y,dt,sp,bold);k.status='Flyger '+k.cargo.name+' till '+sq(o.dp.x,o.dp.y);
     if(d===Infinity){k.status='Ingen spanad väg dit';o.bt=(o.bt||0)+dt;if(o.bt>6){say(k,'Ingen väg genom spanat område. Väntar med lasten.');k.orders.shift();}return;}
-    if(d<3){o.t=(o.t||0)+dt;k.low=true;k.status='Sätter ned '+k.cargo.name;if(o.t>=KROK_LIFT){const u=k.cargo;u.x=o.dp.x;u.y=o.dp.y;u.carried=null;u.path=null;u.waitT=0;k.cargo=null;k.orders.shift();k.path=null;say(u,'Nedsatt i ruta '+sq(u.x,u.y)+'.'+(u.orders.length?' Fortsätter med köade order.':''));}}
+    if(d<3){o.t=(o.t||0)+dt;k.low=true;k.status='Sätter ned '+k.cargo.name;if(o.t>=KROK_LIFT){const u=k.cargo;u.x=o.dp.x;u.y=o.dp.y;bevHome(u);u.carried=null;u.path=null;u.waitT=0;k.cargo=null;k.orders.shift();k.path=null;say(u,'Nedsatt i ruta '+sq(u.x,u.y)+'.'+(u.orders.length?' Fortsätter med köade order.':''));}}
     return;
   }
   if(o.type==='salvage'){
-    k.orders.shift();const w=o.wreck;if(!w||!G.wrecks.includes(w)||w.claimed||k.cargo)return;
+    k.orders.shift();const w=o.wreck;if(k.cargo){say(k,'Har '+k.cargo.name+' i kroken. Sätt ned den först.');return;}if(!w||!G.wrecks.includes(w)||w.claimed)return;
     if(!wreckSafe(w)){say(k,'Högen ligger i ett område med kända hot. Hoppar över.');return;}
     w.claimed=true;k.target=w;k.state='out';say(k,'Hämtar '+wlabel(w)+' i ruta '+sq(w.x,w.y)+'.');return;
   }
@@ -3343,7 +3351,7 @@ function krokManual(k,dt,sp){
   a.t+=dt;k.status=(a.type==='drop'?'Sätter ned '+k.cargo.name:a.type==='lift'?'Kopplar '+a.unit.name:'Kopplar last')+' '+Math.round(Math.min(1,a.t/KROK_LIFT)*100)+' %';
   if(a.t<KROK_LIFT)return;
   if(a.type==='lift'){const u=a.unit;k.cargo=u;u.carried=k.id;u.awaitKrok=null;say(k,u.name+' kopplad. Lyfter.');}
-  else if(a.type==='drop'){const u=k.cargo;u.x=a.x;u.y=a.y;u.carried=null;u.path=null;u.waitT=0;k.cargo=null;say(u,'Nedsatt i ruta '+sq(u.x,u.y)+'.');}
+  else if(a.type==='drop'){const u=k.cargo;u.x=a.x;u.y=a.y;bevHome(u);u.carried=null;u.path=null;u.waitT=0;k.cargo=null;say(u,'Nedsatt i ruta '+sq(u.x,u.y)+'.');}
   else{k.carry=a.w;k.carryT=G.time;a.w.claimed=true;G.wrecks=G.wrecks.filter(w=>w!==a.w);G.krokQ=G.krokQ.filter(id=>id!==a.w.id);say(k,'Last kopplad: '+wlabel(a.w)+'. Flyg den till fartyget.');}
   k.mAct=null;k.orders=[];
 }
@@ -3357,7 +3365,10 @@ function krokHook(k){
   if(k.mAct){krokHookStop(k,'Kroken upp.');return;}
   const h=krokHookTarget(k);
   if(!h){say(k,k.carry?'Lasten ska till fartyget.':'Inget att kroka under mig.');return;}
-  if(h.type==='drop'){const c=cellIdx(k.x,k.y),t=WORLD.grid[c];if(t!==LAND&&t!==BEACH&&t!==SHAL){say(k,'Kan inte sätta ned '+k.cargo.name+' här.');return;}k.mAct={type:'drop',t:0,x:k.x,y:k.y};return;}
+  if(h.type==='drop'){const c=cellIdx(k.x,k.y),t=WORLD.grid[c];if(t!==LAND&&t!==BEACH&&t!==SHAL){say(k,'Kan inte sätta ned '+k.cargo.name+' här.');return;}
+    /* set down by hand near BÄVER's box on Birka: it goes into the box (prov 19 okt) */
+    let x=k.x,y=k.y;const bp=deckSpot(0);if(k.cargo.kind==='eng'&&Math.hypot(x-bp[0],y-bp[1])<8){x=bp[0];y=bp[1];}
+    k.mAct={type:'drop',t:0,x,y};return;}
   if(h.type==='salvage'&&lockedAt(h.w.x,h.w.y)){say(k,'Högen ligger bakom en oröjd spärr. Ingen bärgning där.');return;}
   if(h.type==='lift'){const u=h.unit;if(G.ctrl===u.id)return;u.orders=[];resetFor(u);u.awaitKrok=k.id;k.orders=[{type:'lift',unit:u,manual:true}];say(u,'Väntar på '+k.name+'.');}
   k.mAct=Object.assign({t:0},h);
@@ -3417,6 +3428,8 @@ function krokDefault(k,pk){
 function krokOrder(k,o,append){
   if(!k||k.dead||!o)return;
   if(o.type==='salvage'&&o.wreck&&lockedAt(o.wreck.x,o.wreck.y)){orderKrok(o.wreck);return;}
+  /* a load on the hook goes down before anything else is lifted (prov 19 okt: the orders vanished without a word) */
+  if((o.type==='salvage'||o.type==='lift')&&k.cargo&&!(append&&k.orders.some(x=>x.type==='drop'))){say(k,'Har '+k.cargo.name+' i kroken. Peka ut var den ska sättas ned först.');return;}
   if(!append){for(const x of k.orders)if(x.unit&&x.unit.awaitKrok===k.id)x.unit.awaitKrok=null;k.orders=[];k.path=null;}
   if(o.cap==null)o.cap=true;k.orders.push(o);const p=o.type==='lift'?o.unit:o.type==='salvage'?o.wreck:o;ping(p.x,p.y);
 }
@@ -4725,6 +4738,8 @@ function krokLoad3D(k,km,dtr){const ud=km.userData,ky=km.position.y;let L=4,ld=n
   if(k.state==='hook'&&k.target){L=Math.max(1,ky-groundY(k.target.x,k.target.y)-.5-KROK_HOOK_H-1.5)*Math.min(1,(k.t||0)/1.2);}
   else if(k.carry){const low=Math.max(4,ky-groundY(k.x,k.y)-.5-below+.15),up=clamp((G.time-(k.carryT??-99))/2.5,0,1);L=k.dropT!=null?lerp(4,low,clamp(k.dropT/KROK_DROP,0,1)):lerp(low,4,up*up*(3-2*up));}
   else if(cg)L=2.5;
+  /* nothing on the hook and not working: the hook is winched up under KROK, still seen (prov 19 okt) */
+  else if(!k.low)L=.3;
   ud.cable.scale.y=L/5;ud.cable.position.y=-L/2;ud.hook.position.y=-L;ud.hook.visible=ud.cable.visible;
   krokSwing(ud,km,dtr,L+.5+below*.7);
   const yh=-L-KROK_HOOK_H,yt=yh-sl;
@@ -4734,7 +4749,7 @@ function krokLoad3D(k,km,dtr){const ud=km.userData,ky=km.position.y;let L=4,ld=n
   _kv.set(-ld.b.c.x*ld.s,yt-ld.b.c.y*ld.s,-ld.b.c.z*ld.s);
   if(!ld.unit){ld.o.position.copy(_kv);return;}
   ud.sw.updateMatrixWorld(true);ud.sw.localToWorld(_kv);const pr=ld.o.parent;if(pr){pr.updateMatrixWorld(true);pr.worldToLocal(_kv);}ld.o.position.copy(_kv);
-  ud.sw.getWorldQuaternion(_kq);if(pr){pr.getWorldQuaternion(_kq2);_kq.premultiply(_kq2.invert());}ld.o.quaternion.copy(_kq);ld.o.userData.hung=true;}
+  ud.sw.getWorldQuaternion(_kq);if(pr){pr.getWorldQuaternion(_kq2);_kq.premultiply(_kq2.invert());}ld.o.quaternion.copy(_kq);ld.o.userData.hung=true;if(ld.o.userData.blob)ld.o.userData.blob.visible=false;}
 function charred(g){if(!CHAR_M){CHAR_M=new THREE.MeshLambertMaterial({color:0x1f1c1a});CHAR_M2=new THREE.MeshLambertMaterial({color:0x3a2a22});CHAR_M.userData.shared=CHAR_M2.userData.shared=true;}
   g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=CHAR_M;});return g;}
 const headOf=m=>m.userData.head||m.userData.tur||null;
@@ -4762,7 +4777,7 @@ function mkWreckMesh(w){
   else if(w.kind==='crate'){g.add(mesh(box(2.4,1.6,1.6),mat(0x5f6138),0,.8,0));g.add(mesh(box(2.4,1.6,1.6),mat(0x6b6d40),.3,.8,1.8));g.add(mesh(box(2.2,1.4,1.5),mat(0x55572f),.1,2.3,.9));}
   /* the beach wrecks (decided 19 okt, issue 49): iron anti-tank obstacles, Czech hedgehogs of three crossed girders, or an old
      burnt-out vehicle gone to rust; still salvaged by KROK */
-  else if(w.kind==='hulk'){if(rn()<.6){const n=2+(rn()<.5?1:0);for(let i=0;i<n;i++)g.add(hedgehog(rn,(rn()-.5)*7,(rn()-.5)*5));}
+  else if(w.kind==='hulk'){if(rn()<.6){const n=2+(rn()<.5?1:0);/* in a loose row 3.8 m apart, so they do not stand in each other (prov 19 okt, ö 9949) */for(let i=0;i<n;i++)g.add(hedgehog(rn,(i-(n-1)/2)*3.8+(rn()-.5)*.6,(rn()-.5)*2+(i%2?.8:-.8)));}
     else{const v=mkEnemyMesh({kind:rn()<.5?'light':'tank',id:'hulk'+w.id});const H=headOf(v);if(H&&rn()<.5&&H.parent){H.rotation.y+=1.2;H.position.x+=.6;}if(v.userData.blob)v.remove(v.userData.blob);rusted(v,rn);v.rotation.set(.06,0,.16);v.position.y=-.35;g.add(v);}}
   /* a bunker blown apart: the eight-sided pit broken into slabs, some fallen in, reinforcing bars sticking out of the breaks, all
      sooted; it smokes a while after (issue 49) */
@@ -5595,7 +5610,7 @@ function sync3D(dtr){
     let m=R3.units.get(u.id);if(!m){m=mkUnitMesh(u);D.add(m);R3.units.set(u.id,m);}
     m.visible=!(u.kind==='mus'&&u.carried);if(!m.visible)continue;
     if(u.carried){const kk=G.kroks.find(x=>x.id===u.carried);if(kk){m.position.set(kk.x,unitY(kk,0)-8,kk.y);m.rotation.y=-kk.heading;continue;}}
-    /* set down: the swing under the hook goes */if(m.userData.hung){m.rotation.x=m.rotation.z=0;m.userData.hung=false;}
+    /* set down: the swing under the hook goes */if(m.userData.hung){m.rotation.x=m.rotation.z=0;m.userData.hung=false;if(m.userData.blob)m.userData.blob.visible=true;}
     m.position.set(u.x,unitY(u,dtr),u.y);m.rotation.y=-u.heading;
     if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
     if(m.userData.rockets)m.userData.rockets.forEach((r,i)=>r.visible=i<u.ammo);
@@ -5611,7 +5626,7 @@ function sync3D(dtr){
     for(const id of R3.uwake.keys())if(!live.has(id))R3.uwake.delete(id);}
   for(const[id,m]of R3.units)if(!seen.has(id)){const u=G.units.find(v=>v.id===id);if(u&&u.dead&&WRECK_KINDS.own.has(u.kind))blowApart(m,null,headOf(m));D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
-    km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;krokLoad3D(ke,km,dtr);}
+    km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=true;km.visible=!ke.dead;krokLoad3D(ke,km,dtr);}
   if(TITLE.on&&TITLE.land)titleLandingApply(dtr);
   seen.clear();
   for(const st of G.structs){if(st.dead)continue;seen.add(st.id);if(!R3.structs.has(st.id)){const m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}}
@@ -6229,7 +6244,7 @@ $('bMus').addEventListener('click',()=>{roverKey();uiTick(true);});
   if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+v+' material'+(w.length?' ('+w.join(', ')+')':'');clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent='Återvinn';},4000);return;}
   clearTimeout(b._t);b.classList.remove('confirm');b.textContent='Återvinn';recycle(us);uiTick(true);});}
 $('bExplore').addEventListener('click',()=>{for(const v of noContact(selUnits()))if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');uiTick(true);});
-$('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(1):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of noContact(selUnits())){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
+$('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(0):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of noContact(selUnits())){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of noContact(selUnits())){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
 $('bPause').addEventListener('click',()=>{setPaused(!G.paused);uiTick(true);});
 function setAutoPause(on){AUTOPAUSE.on=on;try{localStorage.setItem('bh.autopause',on?'1':'0');}catch(_){}const b=$('bAutoPause');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Autopaus på':'Autopaus av';}
