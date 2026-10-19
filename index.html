@@ -3145,7 +3145,7 @@ function noContact(us){const off=us.filter(u=>!heard(u));if(off.length)say(null,
 function haltSel(){const sk=selKrok();if(sk){if(sk.orders.length){clearKrok(sk);say(sk,'Kön rensad. Väntar på order.');}return;}
   const us=noContact(selUnits()).filter(u=>u.id!==G.ctrl&&(u.orders.length||u.mission||u.rtb));if(!us.length)return;
   for(const u of us){u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);}
-  say(us.length===1?us[0]:null,us.length===1?'Order strukna. Står still.':us.map(u=>u.name).join(', ')+': order strukna. Står stilla.');}
+  say(us.length===1?us[0]:null,us.length===1?'Order strukna. Står still.':us.map(u=>u.name).join(', ')+': order strukna. Står still.');}
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
   const t=r.type;
