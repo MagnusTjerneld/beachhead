@@ -89,7 +89,7 @@ Ordrar byggs som en mening i tre steg: välj enheten (siffertangent), välj orde
 
 ## Referenskortet, med ordergränssnittet uppe
 
-Från spelets tryckta referenskort (Magnus foto 19 okt, samma kort som Steam-guiden 2101864210, bilden "com int enabled"). Siffertangenterna: ett tryck visar enheten och ger order, två tryck tar över den. Kortet för körläget, med ordergränssnittet nere, saknas ännu.
+Från spelets tryckta referenskort (Magnus foto 19 okt, samma kort som Steam-guiden 2101864210, bilden "com int enabled"). Siffertangenterna: ett tryck visar enheten och ger order, två tryck tar över den. Körläget står i nästa avsnitt.
 
 | Tangent | Funktion |
 |---|---|
@@ -119,6 +119,33 @@ Från spelets tryckta referenskort (Magnus foto 19 okt, samma kort som Steam-gui
 Målval enligt kortet (gäller i båda lägena): Tab målet närmast siktet, R närmaste resurs, T stega genom alla mål, Y målet närmast siktet, F närmaste egna enhet, G släpp alla mål, H närmaste fiende, J närmaste fiende som anfaller dig, B närmaste byggnad, M närmaste uppdragsmål, N mörkersikte.
 
 Skillnader mot manualen: kortet har också F5 och P för paus, Backspace för att stryka orderkön, Ctrl för att låta AI:n styra enheten man sitter i, ` för fartyget, - och = för kartzoom, Y och F som målval, C för kamouflage och Z för kikaren. Med ordergränssnittet uppe betyder Q W E A S D annat än i körläget, alltså samma tangenter i två lägen.
+
+## Referenskortet, körläget (ordergränssnittet nere)
+
+Kortets andra sida (Magnus foto 19 okt, bilden "com int disabled"). Det här är läget när man kör eller flyger själv.
+
+| Tangent | Funktion |
+|---|---|
+| W / S | Fram / bak |
+| A / D | Strafe vänster / höger |
+| Q / E | Sjunk / stig (kollektivet) |
+| Tab, R, T, Y, F, G, H, B, M | Målval som på andra sidan |
+| C | Kamouflera enheten |
+| N | Mörkersikte |
+| P eller F5 | Paus |
+| Backspace | Stryk orderkön för enheten |
+| Enter | Ta över den egna enhet man siktar på |
+| Ctrl | AI-styrning av och på |
+| Mellanslag | Ordergränssnittet av och på |
+| ` | Välj fartyget |
+| 1 till 0 | Enhet eller grupp; två tryck tar över |
+| - / = | Zooma kartan ut / in |
+| Insert / Delete och resten av blocket ovanför pilarna | AI-kameran (vänster, zooma in och så vidare; delvis utanför bilden) |
+| Piltangenterna | Flytta kartan |
+
+Kortets färger delar in tangenterna i fartyget, diverse och rörelse (förklaringen är delvis utanför bilden). J (närmaste fiende som anfaller dig) syns bara på sidan med ordergränssnittet uppe men gäller enligt manualen i fordonet.
+
+Samma tangenter i två lägen: Q W E A S D är rörelse i körläget och order och rum när ordergränssnittet är uppe (Q krigsrummet, W byggrummet, E stryk alla order, A till fartyget, S byt sida, D navigationspunkter, X anfall till, Z kikaren). Mellanslag växlar mellan lägena.
 
 ## Att jämföra med vårt spel
 
