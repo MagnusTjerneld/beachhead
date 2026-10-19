@@ -15,7 +15,8 @@ require('./g2.js');const B=globalThis.__BH;B.SHAPE_CFG.force='rund';B.SHAPE_CFG.
 const DT=.05,TMAX=300,SEED=7341;
 // defenders: [kind, forward, lateral, hull share at start] in metres from the defence centre, forward pointing away from the attackers;
 // own.hp is the attackers' hull share at start
-// plan: chain = attack the targets in this order (Shift), advance = move the wing onto the centre, hold = stand and receive
+// plan: chain = attack the targets in this order (Shift), advance = move the wing onto the centre, point = move it to S.to metres
+// from the centre, hold = stand and receive
 const SC={
   bunker:{txt:'3 VARG och en offensiv HÖK mot en bunker med två pansarvärnslag',
     own:{tank:3,hok:['off']},def:[['turret',0,0],['at',-25,55],['at',-20,-60]],plan:'chain',order:[1,2,0]},
@@ -34,6 +35,7 @@ const SC={
   hokpv:{txt:'2 offensiva HÖK mot två pansarvärnslag i skydd som flyttat 50 m sedan de sågs',own:{hok:['off','off']},def:[['at',0,-30],['at',10,40]],plan:'chain',order:[0,1],cover:true,moved:50},
   hokpvlv:{txt:'som hokpv, med ett okänt luftvärn 100 m bakom lagen',own:{hok:['off','off']},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],cover:true,moved:50,hide:[2],need:[0,1]},
   pvlv:{txt:'2 VARG mot två pansarvärnslag under ett luftvärn (som vid spärren i inspelningen på ö 1234, skog utan skydd)',own:{tank:2},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],need:[0,1]},
+  pvdold:{txt:'2 VARG (Offensiv) kör till en punkt 100 m framför två dolda pansarvärnslag som ingen sett (som på ö 9949, 19 okt: de syns bara när de skjuter)',own:{tank:2},def:[['at',0,-30],['at',10,40]],plan:'point',to:-100,hide:[0,1]},
   getpvlv:{txt:'som pvlv, och kaptenen skickar en GETING på vart och ett av pansarvärnslagen',own:{tank:2,get:['def','def']},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],need:[0,1],getOn:[0,1]},
   motanfall:{txt:'3 VARG står kvar och tar emot två stridsvagnar och ett lätt pansarfordon som rycker ut mot dem',
     own:{tank:3},def:[['tank',0,-30],['tank',0,30],['light',20,0]],plan:'hold',dist:330}
@@ -75,6 +77,7 @@ function play(name,rep){
   const plan=UNSEEN&&S.plan==='chain'?'advance':S.plan;/* unknown defenders cannot be pointed out: the wing advances on the centre */
   if(plan==='chain')(S.order||S.def.map((_,i)=>i)).forEach((k,j)=>B.groupOrder({enemy:G.enemies[k]},j>0));
   else if(plan==='advance')B.groupOrder({world:at(0,0)},false,'off');
+  else if(plan==='point')B.groupOrder({world:at(S.to,0)},false,'off');/* to a point short of the defence */
   else if(plan==='hold'){const c=at(back,0);B.counterattack({id:'sandlådan',x:c.x,y:c.y});G.log=G.log.filter(l=>!/fältvarvet/.test(l.text));}
   if(S.getOn){const gs=own.filter(u=>u.kind==='scout');S.getOn.forEach((k,i)=>{if(gs[i])B.giveOrder(gs[i],{type:'attack',enemy:G.enemies[k],post:'off'},false);});}/* the captain sends a GETING at each */
   const hp0=own.reduce((s,u)=>s+u.hp,0),dmg0=G.enemies.reduce((s,e)=>s+e.hp,0),deaths=[],seenDead=new Set(),rtbOnce=new Set(),rtbT={};let t=0,res='tid',outT=null;
