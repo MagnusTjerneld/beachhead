@@ -40,7 +40,9 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
  ok(!G.build.length&&Math.abs(G.res-r1-part)<1&&part<200,'VARG in production cancelled, '+part+' of 200 back');}
 // 6. a badly damaged VARG goes to a BÄVER nearby for field repair, not to the ship; a player order keeps it fighting
 {B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;G.res=500;const L=G.relays[0];
- const v=G.units.find(u=>u.kind==='tank'),e=G.units.find(u=>u.kind==='eng');v.x=L.x+40;v.y=L.y;v.orders=[];e.x=L.x+160;e.y=L.y+20;e.orders=[];
+ const v=G.units.find(u=>u.kind==='tank'),e=G.units.find(u=>u.kind==='eng');v.x=L.x;v.y=L.y;v.orders=[];
+ /* the BÄVER on open land 100 to 140 m off (19 okt: R1 moved into its yard, and a fixed offset fell on a cliff) */
+ {const g=B.W.grid;let p=null;for(let r=100;r<=140&&!p;r+=10)for(let k=0;k<24&&!p;k++){const x=L.x+Math.cos(k/24*6.283)*r,y=L.y+Math.sin(k/24*6.283)*r,c=g[B.cellIdx(x,y)];if((c===2||c===3)&&B.astar(L.x,L.y,x,y,i=>g[i]===2||g[i]===3,()=>1))p={x,y};}e.x=p.x;e.y=p.y;}e.orders=[];
  v.hp=25;for(let i=0;i<20;i++)B.step(.05);ok(!v.rtb&&v.orders[0]&&v.orders[0].toRep===e.id,'damaged VARG drives to the BÄVER instead of the ship');
  for(let t=0;t<60&&v.hp<74;t++)for(let i=0;i<20;i++)B.step(.05);ok(v.hp>=74,'repaired in the field to '+Math.round(v.hp));
  const v2=G.units.filter(u=>u.kind==='tank')[1];v2.x=L.x+300;v2.y=L.y+200;e.x=9999;e.dead=true;v2.hp=20;v2.orders=[];for(let i=0;i<10;i++)B.step(.05);ok(v2.rtb,'without a BÄVER it retreats to the ship');

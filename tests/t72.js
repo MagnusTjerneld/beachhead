@@ -6,7 +6,8 @@ require('./g2.js');const B=globalThis.__BH;B.LOS.on=false;/* laid out before the
 const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(let i=0;i<40;i++)B.step(.05);return G;};
 const foe=(G,kind,x,y)=>{const e=B.makeEnemy({id:'Q'+kind,kind,x,y});e.seen=true;e.lx=x;e.ly=y;e.mobile=false;e.speed=0;G.enemies.push(e);return e;};
 // a start on the first point and a line out from it that a VARG can drive, with the foe beside the line halfway
-const lane=G=>{const L=G.relays[0];for(let k=0;k<16;k++){const a=k*Math.PI/8,P={x:L.x+Math.cos(a)*420,y:L.y+Math.sin(a)*420};if(P.x<60||P.y<60||P.x>2140||P.y>2140)continue;
+/* laid out from R1 as it stood before 19 okt (issue 57 moved it into its yard) */
+const lane=G=>{const L={x:1095,y:565};for(let k=0;k<16;k++){const a=k*Math.PI/8,P={x:L.x+Math.cos(a)*420,y:L.y+Math.sin(a)*420};if(P.x<60||P.y<60||P.x>2140||P.y>2140)continue;
   const p=B.astar(L.x,L.y,P.x,P.y,i=>G&&B.W.grid[i]>=1,()=>1);if(!p)continue;return{S:{x:L.x,y:L.y},P,a,side:(d,o)=>({x:L.x+Math.cos(a)*d-Math.sin(a)*o,y:L.y+Math.sin(a)*d+Math.cos(a)*o})};}return null;};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 // 1. a move given before the contact: the VARG stops, fights, and drives on when the bunker is out
@@ -15,7 +16,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   let held=false,near=1e9,t=0;for(;t<180&&!e.dead;t+=.05){B.step(.05);if(u.fh)held=true;near=Math.min(near,dist(u,e));if(u.dead)break;}
   ok(held,'a VARG under fire lays its move by ('+(held?'held':'never held')+')');
   ok(near>75,'and stays where the first shot met it instead of driving past the bunker (it fires first at 80 to 140 m) (nearest '+Math.round(near)+' m, the line passes 50 m from it)');
-  ok(e.dead||u.dead,'the fight is settled ('+(e.dead?'bunker out':'VARG lost')+' after '+t.toFixed(0)+' s)');
+  ok(e.dead||u.dead,'the fight is settled ('+(e.dead?'bunker out':u.dead?'VARG lost':'neither, '+u.state)+' after '+t.toFixed(0)+' s)');
   if(e.dead&&!u.dead){let s=0;for(;s<90&&dist(u,R.P)>15;s+=.05)B.step(.05);ok(u.orders[0]===o||dist(u,R.P)<=15,'with the bunker out it takes the order up again and reaches the point ('+Math.round(dist(u,R.P))+' m left after '+s.toFixed(0)+' s)');}}
 // 2. the captain's move during the fight is carried out
 {const G=setup(7341),R=lane(G),u=B.makeUnit('tank',R.S.x,R.S.y);u.post='def';u.hp=u.maxhp=1e4;G.units.push(u);const q=R.side(230,50),e=foe(G,'turret',q.x,q.y);e.hp=e.maxhp=1e5;
