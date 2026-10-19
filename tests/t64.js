@@ -23,7 +23,7 @@ for(const[f,seed]of[['as',1000],['hastsko',1037],['udde',1111]]){
   for(let i=0;i<20*900&&!G.harbor.docked;i++){B.step(.05);t+=.05;if(G.harbor.secured&&sec==null)sec=t;const hv=G.harbor.v;vmax=Math.max(vmax,hv);dvmax=Math.max(dvmax,(hv-lastV)/.05);lastV=hv;}
   ok(hr.captured&&sec!=null&&sec<12,f+': BÄVER takes the harbour in '+(sec||0).toFixed(1)+' s once the guards are out, and that secures it');
   ok(G.harbor.docked,f+': Birka docked after '+(t-(sec||0)).toFixed(0)+' s');
-  ok(vmax>4.5&&vmax<=5.15,f+': top speed '+(vmax/0.5144).toFixed(1)+' knots');
+  ok(vmax>B.BIRKA_MOVE.vmax*.88&&vmax<=B.BIRKA_MOVE.vmax*1.01,f+': top speed '+(vmax/0.5144).toFixed(1)+' knots');
   ok(dvmax<=B.BIRKA_MOVE.acc+1e-6,f+': acceleration capped ('+dvmax.toFixed(3)+' m/s2)');
   const d=W.harbor.dock;ok(Math.hypot(B.CARRIER.x-d.x,B.CARRIER.y-d.y)<.01&&Math.abs(B.CARRIER.a-d.a)<.01,f+': moored on the dock point and heading');
   ok(Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y)>300,f+': Birka moved '+Math.round(Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y))+' m');
