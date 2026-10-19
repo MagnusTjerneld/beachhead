@@ -87,10 +87,44 @@ Ordrar byggs som en mening i tre steg: välj enheten (siffertangent), välj orde
 - Ordrar: anfall och anfall till (en plats: förstör allt på vägen och slåss sedan fritt där), flytta till (utan att stanna för strid; till en enhet = följ den, "var min wingman"), håll position, bärga och laga (och till en plats), hämta upp och sätt ned, samlingspunkt, rutter, tillbaka till skrotaren, töm orderkön, bakåt en meny, avfyra fartygets kanoner.
 - Utan order slåss beväpnade enheter fritt ("frenzy"), först mot fiender och sedan byggnader; bärgare och lagare håller sig nära där de står. Håll position stoppar det.
 
+## Referenskortet, med ordergränssnittet uppe
+
+Från spelets tryckta referenskort (Magnus foto 19 okt, samma kort som Steam-guiden 2101864210, bilden "com int enabled"). Siffertangenterna: ett tryck visar enheten och ger order, två tryck tar över den. Kortet för körläget, med ordergränssnittet nere, saknas ännu.
+
+| Tangent | Funktion |
+|---|---|
+| Esc | Avbryt, hoppa över film |
+| F1 / F2 / F3 | Krigsrummet / byggrummet / inställningarna |
+| F5 eller P | Paus |
+| F6 / F7 | Snabbspara / snabbladda |
+| ` (vänster om 1) | Välj fartyget |
+| 1 till 0 | Enhet eller grupp; två tryck tar över |
+| - / = | Zooma ut / in på kartan |
+| Backspace | Stryk orderkön för enheten |
+| Q | Till krigsrummet |
+| W | Byggrummet |
+| E | Stryk alla order / inställningar |
+| A | Tillbaka till fartyget för återvinning |
+| S | Byt sida i ordergränssnittet |
+| D | Navigationspunkter och samlingspunkt |
+| X | Anfall till |
+| Z | Zoomkikaren och fartygets kanon |
+| C | Kamouflera enheten |
+| Mellanslag | Ordergränssnittet av och på |
+| Enter | Ta över den egna enhet man siktar på |
+| Ctrl | AI-styrning av och på för enheten man styr |
+| Shift + målval | Stegar mellan giltiga mål |
+| Shift + siffra | Visa vad enheten ser medan man slåss själv |
+
+Målval enligt kortet (gäller i båda lägena): Tab målet närmast siktet, R närmaste resurs, T stega genom alla mål, Y målet närmast siktet, F närmaste egna enhet, G släpp alla mål, H närmaste fiende, J närmaste fiende som anfaller dig, B närmaste byggnad, M närmaste uppdragsmål, N mörkersikte.
+
+Skillnader mot manualen: kortet har också F5 och P för paus, Backspace för att stryka orderkön, Ctrl för att låta AI:n styra enheten man sitter i, ` för fartyget, - och = för kartzoom, Y och F som målval, C för kamouflage och Z för kikaren. Med ordergränssnittet uppe betyder Q W E A S D annat än i körläget, alltså samma tangenter i två lägen.
+
 ## Att jämföra med vårt spel
 
 - A och D som strafe och musen som sikte med fordonet låst efter det: rakt över till HÖK (issue 64).
 - Q och E för höjd: krockar med våra Q (byt vyer) och E (ta över, släppa) men kan få ny betydelse i manuellt läge, med T kvar för att släppa.
 - Högerklick som stegar mellan mål, och siktet som byter färg vid räckhåll och lås: saknas hos oss.
 - Våra B H V K (inkallning) krockar med deras B H M J (målval); deras målval är bara i fordonet, våra inkallningar gäller överallt.
-- Deras orderspråk liknar vårt hjul (vem, sedan vad), och "håll position" liknar vår Halt-knapp, som vi föreslagit på Delete.
+- Deras orderspråk liknar vårt hjul (vem, sedan vad), och "håll position" liknar vår Halt-knapp, som vi föreslagit på Delete. Deras Backspace stryker orderkön, alltså vår Halt; Backspace är ledig hos oss.
+- Ctrl för att låta AI:n ta över enheten man sitter i liknar vårt släpp (E/T) men låter enheten fortsätta själv.
