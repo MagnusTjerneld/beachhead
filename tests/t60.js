@@ -15,7 +15,7 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
  k.x=L.x+120;k.y=L.y+40;run(.2);ok(Math.hypot(v.x-k.x,v.y-k.y)<1,'cargo follows KROK');B.krokHook(k);run(4);
  ok(!k.cargo&&!v.carried&&Math.hypot(v.x-(L.x+120),v.y-(L.y+40))<2,'VARG set down at '+Math.round(v.x)+','+Math.round(v.y));
  const w={x:L.x+150,y:L.y+40,value:40,id:'wM',kind:'crate'};G.wrecks.push(w);k.x=w.x+3;k.y=w.y;const r0=G.res;B.krokHook(k);run(4);ok(k.carry===w,'pile hooked by hand');
- k.x=k.pad.x;k.y=k.pad.y;run(.2);ok(!k.carry&&G.res>=r0+40-1,'pile delivered at the ship (+'+Math.round(G.res-r0)+')');
+ k.x=k.pad.x;k.y=k.pad.y;run(2.2);/* the load is lowered for 2 s since 19 okt (issue 60) */ok(!k.carry&&G.res>=r0+40-1,'pile delivered at the ship (+'+Math.round(G.res-r0)+')');
  for(const e of G.units)if(e.kind==='eng'){e.x=L.x;e.y=L.y;}/* BÄVER parks on a stern pad now, within the hook's reach */
  B.krokHook(k);ok(!k.mAct,'F with nothing below does nothing');G.ctrl=null;}
 // 3. BÄVER repairs a damaged VARG in the field up to 75 %, only when both are still and out of fire

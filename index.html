@@ -2871,7 +2871,7 @@ function workStruct(st,u,dt){
   st.prog=Math.min(1,st.prog+dt/STRUCT[st.kind].demo);u.state='River '+slabel(st)+' '+Math.round(st.prog*100)+' %';
   if(st.prog>=1){if(u.orders[0]&&u.orders[0].s===st)u.orders.shift();u.path=null;killStruct(st,u,'demo');}
 }
-function killEnemy(e,by){if(e.dead)return;e.dead=true;if(e.canAir)G.tver=(G.tver||0)+1;e.hp=0;e.visibleNow=false;e.seen=true;e.lx=e.x;e.ly=e.y;G.fx.push({k:'boom',x:e.x,y:e.y,t:0,ttl:1.1});if(e.value>0)addWreck(e.x,e.y,e.value,false,e.kind);if(WRECK_KINDS.enemy.has(e.kind))startFire(e.x,e.y,90+Math.random()*60,1,1.5);/* a destroyed vehicle burns on, as in the trailer */say(by,ENEMY[e.kind].label+' '+e.id+' utslagen.'+(e.value>0?' Vrak att bärga.':''));}
+function killEnemy(e,by){if(e.dead)return;e.dead=true;if(e.canAir)G.tver=(G.tver||0)+1;e.hp=0;e.visibleNow=false;e.seen=true;e.lx=e.x;e.ly=e.y;G.fx.push({k:'boom',x:e.x,y:e.y,t:0,ttl:1.1});if(e.value>0)addWreck(e.x,e.y,e.value,false,e.kind);if(WRECK_KINDS.enemy.has(e.kind)||e.kind==='turret')startFire(e.x,e.y,90+Math.random()*60,1,1.5);/* a destroyed vehicle burns on, as in the trailer */say(by,ENEMY[e.kind].label+' '+e.id+' utslagen.'+(e.value>0?' Vrak att bärga.':''));}
 function killUnit(u,msg){
   if(u.dead)return;
   if(G.ctrl===u.id)dropCtrl();
@@ -3199,24 +3199,25 @@ function updateKrok(k,dt){
     else{k.status='På väg mot '+wlabel(w)+' i '+sq(w.x,w.y);const d=fly(w.x,w.y);if(d===Infinity){w.claimed=false;k.target=null;k.state='back';}else if(d<2){k.state='hook';k.t=0;}}
   }else if(k.state==='hook'){
     k.t+=dt;k.status='Kopplar last';
-    if(k.t>=3){k.carry=k.target;G.wrecks=G.wrecks.filter(w=>w!==k.target);G.krokQ=G.krokQ.filter(id=>id!==k.target.id);k.target=null;k.state='back';}
+    if(k.t>=3){k.carry=k.target;k.carryT=G.time;G.wrecks=G.wrecks.filter(w=>w!==k.target);G.krokQ=G.krokQ.filter(id=>id!==k.target.id);k.target=null;k.state='back';}
   }else{
     k.status=k.carry?'Flyger last till fartyget':'Återvänder';
     if(fly(k.pad.x,k.pad.y)<4){
-      if(k.carry){const v=k.carry.value;G.res+=v;G.salvaged+=v;if(k.carry.own)G.salvagedOwn+=v;say(k,'Bärgat: '+wlabel(k.carry)+'. +'+v+' material.');k.carry=null;}
+      /* the load is lowered onto the pad before it counts (decided 19 okt, issue 60: it used to vanish) */
+      if(k.carry){k.dropT=(k.dropT||0)+dt;k.status='Firar ned lasten';if(k.dropT<KROK_DROP)return;const v=k.carry.value;G.res+=v;G.salvaged+=v;if(k.carry.own)G.salvagedOwn+=v;say(k,'Bärgat: '+wlabel(k.carry)+'. +'+v+' material.');k.carry=null;k.dropT=null;}
       k.state='idle';
     }
   }
 }
 /* KROK flown by hand: no route over scouted ground, no safety margins. F lowers the hook: lift the vehicle or pile below,
    or set the load down. Hold still while it couples, as the automatic flight does */
-const KROK_HOOK_R=16;
+const KROK_HOOK_R=16,KROK_DROP=2;
 function krokManual(k,dt,sp){
   k.heading+=CTRL.steer*1.7*dt;const v=sp*CTRL.thr*(CTRL.thr<0?.4:1);
   k.x=clamp(k.x+Math.cos(k.heading)*v*dt,6,WW-6);k.y=clamp(k.y+Math.sin(k.heading)*v*dt,6,WH-6);k.path=null;
   const th=G.enemies.find(e=>!e.dead&&e.seen&&e.canAir&&dist(e,k)<rVs(e,k));
   if(th&&G.time-(k.warnT||0)>6){k.warnT=G.time;say(k,'Inom räckhåll för '+ename(th)+' i ruta '+sq(th.x,th.y)+'.');}
-  if(k.carry&&dist(k,k.pad)<10){const w=k.carry;G.res+=w.value;G.salvaged+=w.value;if(w.own)G.salvagedOwn+=w.value;say(k,'Bärgat: '+wlabel(w)+'. +'+w.value+' material.');k.carry=null;}
+  if(k.carry&&dist(k,k.pad)<10){k.dropT=(k.dropT||0)+dt;if(k.dropT>=KROK_DROP){const w=k.carry;G.res+=w.value;G.salvaged+=w.value;if(w.own)G.salvagedOwn+=w.value;say(k,'Bärgat: '+wlabel(w)+'. +'+w.value+' material.');k.carry=null;k.dropT=null;}}else if(k.carry)k.dropT=null;
   const a=k.mAct;k.low=!!a;
   if(!a){k.status='Manuell flygning'+(k.cargo?' med '+k.cargo.name:k.carry?' med last':'');return;}
   const t=a.type==='drop'?a:a.type==='lift'?a.unit:a.w;
@@ -3225,7 +3226,7 @@ function krokManual(k,dt,sp){
   if(a.t<KROK_LIFT)return;
   if(a.type==='lift'){const u=a.unit;k.cargo=u;u.carried=k.id;u.awaitKrok=null;say(k,u.name+' kopplad. Lyfter.');}
   else if(a.type==='drop'){const u=k.cargo;u.x=a.x;u.y=a.y;u.carried=null;u.path=null;u.waitT=0;k.cargo=null;say(u,'Nedsatt i ruta '+sq(u.x,u.y)+'.');}
-  else{k.carry=a.w;a.w.claimed=true;G.wrecks=G.wrecks.filter(w=>w!==a.w);G.krokQ=G.krokQ.filter(id=>id!==a.w.id);say(k,'Last kopplad: '+wlabel(a.w)+'. Flyg den till fartyget.');}
+  else{k.carry=a.w;k.carryT=G.time;a.w.claimed=true;G.wrecks=G.wrecks.filter(w=>w!==a.w);G.krokQ=G.krokQ.filter(id=>id!==a.w.id);say(k,'Last kopplad: '+wlabel(a.w)+'. Flyg den till fartyget.');}
   k.mAct=null;k.orders=[];
 }
 function krokHookStop(k,msg){const a=k.mAct;if(!a)return;if(a.unit&&a.unit.awaitKrok===k.id)a.unit.awaitKrok=null;k.mAct=null;k.orders=[];if(msg)say(k,msg);}
@@ -4551,6 +4552,23 @@ function mkStructMesh(st){
    settle, the big ones trailing smoke. One routine for the game and the trailer; the trailer's pieces carry the tag 'film' and run
    on the film's clock */
 const DEB=[];let CHAR_M=null,CHAR_M2=null;
+/* a Czech hedgehog: three girders crossed square to each other at the middle, standing on three of their ends */
+function hedgehog(rn,x,z){const h=new THREE.Group(),R=mat(rn()<.5?0x5a3e2c:0x6a4632);for(const[ax,ay,az]of[[1,0,0],[0,1,0],[0,0,1]]){const b=mesh(box(ax?3.2:.28,ay?3.2:.28,az?3.2:.28),R,0,0,0);h.add(b);
+    for(const sd of[-1,1]){const f=mesh(box(ax?.08:.7,ay?.08:.7,az?.08:.7),R,ax*sd*1.5,ay*sd*1.5,az*sd*1.5);b.parent.add(f);}}
+  h.rotation.set(.6155,rn()*TAU,PI/4);const o=new THREE.Group();o.add(h);h.position.y=1.55;o.position.set(x,-.15,z);o.rotation.y=rn()*TAU;return o;}
+/* old wrecks go to rust, not to soot */
+function rusted(g,rn){const M=[mat(0x6b4a32),mat(0x5a3e2c),mat(0x7a5638)];g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=M[Math.floor(rn()*3)];});return g;}
+/* KROK's load (decided 19 okt, issue 60): the wire is paid out to the wreck while it couples, the wreck's own model (scaled down
+   only past 7 m) hangs under the hook and is hoisted up in 2.5 s, and at the pad it is lowered before it counts */
+function krokLoad3D(k,km){const ud=km.userData,ky=km.position.y;let L=5;
+  if(k.state==='hook'&&k.target){L=Math.max(1,ky-groundY(k.target.x,k.target.y)-1)*Math.min(1,(k.t||0)/1.2);}
+  else if(k.carry){const low=Math.max(6,ky-groundY(k.x,k.y)-.6),up=clamp((G.time-(k.carryT??-99))/2.5,0,1);L=k.dropT!=null?lerp(6,low,clamp(k.dropT/KROK_DROP,0,1)):lerp(low,6,up*up*(3-2*up));}
+  ud.cable.scale.y=L/5;ud.cable.position.y=-.5-L/2;ud.hook.position.y=-.5-L;
+  if(k.carry){if(ud.loadW!==k.carry){if(ud.load)km.remove(ud.load);const c=mkWreckMesh(Object.assign({},k.carry,{x:k.x,y:k.y}));c.position.set(0,0,0);c.rotation.set(0,0,0);
+      c.traverse(o=>{if(o.isMesh&&BLOB&&o.material===BLOB.mat)o.visible=false;});const bb=new THREE.Box3().setFromObject(c),sz=bb.getSize(new THREE.Vector3()),sc=Math.min(1,7/Math.max(sz.x,sz.z,1));c.scale.setScalar(sc);
+      ud.load=c;ud.loadH=sz.y*sc;ud.loadW=k.carry;km.add(c);}
+    ud.load.position.y=-.5-L-ud.loadH*.9;ud.hook.visible=false;}
+  else if(ud.load){km.remove(ud.load);ud.load=null;ud.loadW=null;}}
 function charred(g){if(!CHAR_M){CHAR_M=new THREE.MeshLambertMaterial({color:0x1f1c1a});CHAR_M2=new THREE.MeshLambertMaterial({color:0x3a2a22});CHAR_M.userData.shared=CHAR_M2.userData.shared=true;}
   g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=CHAR_M;});return g;}
 const headOf=m=>m.userData.head||m.userData.tur||null;
@@ -4576,7 +4594,18 @@ function mkWreckMesh(w){
   const g=new THREE.Group();let seed=Math.floor(w.rot*1000);const rn=()=>{seed=(seed*16807)%2147483647;return(seed%1000)/1000;};
   if(w.kind==='rubble'){const n=w.big?7:5;for(let i=0;i<n;i++){const s=1.4+rn()*(w.big?3.2:2.2);const m=mesh(box(s,s*.6,s*.9),mat(rn()<.5?0x7a6a58:0x5d5246),(rn()-.5)*(w.big?9:6),s*.25,(rn()-.5)*(w.big?7:5));m.rotation.set(rn()*.6,rn()*3,rn()*.6);g.add(m);}}
   else if(w.kind==='crate'){g.add(mesh(box(2.4,1.6,1.6),mat(0x5f6138),0,.8,0));g.add(mesh(box(2.4,1.6,1.6),mat(0x6b6d40),.3,.8,1.8));g.add(mesh(box(2.2,1.4,1.5),mat(0x55572f),.1,2.3,.9));}
-  else if(w.kind==='hulk'){const m=mesh(box(9,2.4,4.4),mat(0x6b4a32),0,.9,0);m.rotation.set(.08,0,.18);g.add(m);g.add(mesh(box(.4,2.6,4.2),mat(0x5a3c28),-4.4,1.6,0));}
+  /* the beach wrecks (decided 19 okt, issue 49): iron anti-tank obstacles, Czech hedgehogs of three crossed girders, or an old
+     burnt-out vehicle gone to rust; still salvaged by KROK */
+  else if(w.kind==='hulk'){if(rn()<.6){const n=2+(rn()<.5?1:0);for(let i=0;i<n;i++)g.add(hedgehog(rn,(rn()-.5)*7,(rn()-.5)*5));}
+    else{const v=mkEnemyMesh({kind:rn()<.5?'light':'tank',id:'hulk'+w.id});const H=headOf(v);if(H&&rn()<.5&&H.parent){H.rotation.y+=1.2;H.position.x+=.6;}if(v.userData.blob)v.remove(v.userData.blob);rusted(v,rn);v.rotation.set(.06,0,.16);v.position.y=-.35;g.add(v);}}
+  /* a bunker blown apart: the eight-sided pit broken into slabs, some fallen in, reinforcing bars sticking out of the breaks, all
+     sooted; it smokes a while after (issue 49) */
+  else if(w.kind==='turret'){const C1=mat(0x7d776c),C2=mat(0x5e5850),SOOT=mat(0x2c2a27),BAR=mat(0x4a3428);
+    for(let i=0;i<8;i++){if(rn()<.22)continue;const a=i/8*TAU+(rn()-.5)*.2,r=3+(rn()-.5)*.5,hgt=.8+rn()*1.6,sl=mesh(box(2.4,hgt,.55),rn()<.35?SOOT:(rn()<.5?C1:C2),Math.cos(a)*r,hgt/2-.1,Math.sin(a)*r);
+      sl.rotation.set((rn()-.5)*.5,-a+PI/2,(rn()-.5)*.6+(rn()<.3?.9:0));g.add(sl);
+      for(let k=0;k<2;k++){const b=mesh(cyl(.05,.05,1.2+rn(),4),BAR,Math.cos(a)*r+(rn()-.5)*1.4,hgt+.3,Math.sin(a)*r+(rn()-.5)*.4);b.rotation.set((rn()-.5)*1.2,0,(rn()-.5)*1.2);g.add(b);}}
+    const slab=mesh(box(4.2,.3,3.6),SOOT,(rn()-.5),.6,(rn()-.5));slab.rotation.set(.35,rn()*3,.2);g.add(slab);
+    for(let i=0;i<6;i++){const s2=.4+rn()*.7,c=mesh(box(s2,s2*.6,s2*.8),rn()<.5?C2:SOOT,(rn()-.5)*7,s2*.3,(rn()-.5)*7);c.rotation.set(rn(),rn()*3,rn());g.add(c);}}
   else if((w.own?WRECK_KINDS.own:WRECK_KINDS.enemy).has(w.kind)){const v=w.own?mkUnitMesh({kind:w.kind,color:'#3a3a3a',ammo:0}):mkEnemyMesh({kind:w.kind,id:w.id});
     const H=headOf(v);if(H&&H.parent)H.parent.remove(H);if(v.userData.blob)v.remove(v.userData.blob);charred(v);v.rotation.set(.05,0,.07);v.position.y=-.2;g.add(v);}
   else{const m=mesh(box(6,1.4,4),mat(0x2b2b2a),0,.6,0);m.rotation.set(.12,0,.08);g.add(m);}
@@ -5415,7 +5444,7 @@ function sync3D(dtr){
     for(const id of R3.uwake.keys())if(!live.has(id))R3.uwake.delete(id);}
   for(const[id,m]of R3.units)if(!seen.has(id)){const u=G.units.find(v=>v.id===id);if(u&&u.dead&&WRECK_KINDS.own.has(u.kind))blowApart(m,null,headOf(m));D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
-    km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;}
+    km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;krokLoad3D(ke,km);}
   if(TITLE.on&&TITLE.land)titleLandingApply(dtr);
   seen.clear();
   for(const st of G.structs){if(st.dead)continue;seen.add(st.id);if(!R3.structs.has(st.id)){const m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}}
