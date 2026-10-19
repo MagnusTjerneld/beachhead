@@ -10,7 +10,7 @@ Spelet är en enda HTML-fil med Three.js (r128 från cdnjs) för 3D och ett 2D-s
 
 ## Upphovsrätt
 
-© 2026 Magnus Tjerneld. Alla rättigheter förbehållna. Spelet, koden, grafiken, musiken och trailern får inte kopieras, publiceras på annan plats, ändras eller användas i andra verk utan skriftligt tillstånd; se `LICENSE`. Att koden går att läsa här eller i webbläsaren ger ingen rätt att använda den. Copyrightraden syns under loggan i introt och i trailerns sista bild, i hjälptexten och i en kommentar överst i `index.html` och i skriptet, tillsammans med märkningen `UA-MT-714de53211532471` som gör att en kopia går att känna igen.
+© 2026 Magnus Tjerneld. Alla rättigheter förbehållna. Spelet, koden, grafiken, musiken och trailern får inte kopieras, publiceras på annan plats, ändras eller användas i andra verk utan skriftligt tillstånd; se `LICENSE`. Undantag: det är fritt att spela in och strömma spelet, lägga upp videor och skärmbilder (också med intäkter) och dela trailern oförändrad. Musiken har ett eget avsnitt i `LICENSE`: gjord med Suno på betald plan och använd med Sunos kommersiella licens. Att koden går att läsa här eller i webbläsaren ger ingen rätt att använda den. Copyrightraden syns under loggan i introt och i trailerns sista bild, i hjälptexten och i en kommentar överst i `index.html` och i skriptet, tillsammans med märkningen `UA-MT-714de53211532471` som gör att en kopia går att känna igen.
 
 ## Köra spelet
 
