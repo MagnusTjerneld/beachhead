@@ -2134,7 +2134,7 @@ function updateUnit(u,dt){
   /* a unit that has finished its order outside the net with nothing more to do heads back to the nearest point inside it, so the
      captain can reach it again (decided 18 okt, issue 37 a: two VARG stood beyond the net waiting for orders that could not come);
      GETING keeps its own radio link logic and MUS stays where it is left */
-  if(u.offNet&&!u.dead&&!u.carried&&u.kind!=='scout'&&u.kind!=='mus'&&u.kind!=='krok'&&!u.orders.length&&!u.mission&&!u.rtb&&G.time>(u.engageT||0)){
+  if(u.offNet&&!u.dead&&!u.carried&&u.kind!=='scout'&&u.kind!=='mus'&&u.kind!=='krok'&&!u.orders.length&&!u.mission&&!u.rtb&&(G.time>(u.engageT||0)||!(inFire(u)||Object.values(u.hitBy).some(t=>G.time-t<5)))){/* the 20 s it holds its ground after a kill only while it is under fire: outside the net no order can reach it (prov 19 okt: VARG-2 stood 20 s out of contact) */
     if(u.offIdleT==null)u.offIdleT=G.time;else if(G.time-u.offIdleT>3){u.offIdleT=null;const p=netReturnPt(u);if(p){u.orders=[{type:'move',x:p.x,y:p.y,post:u.post,toNet:true}];u.path=null;u.orbit=null;u.hold=false;}}}
   else u.offIdleT=null;
   if(u.dead)return;
