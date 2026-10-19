@@ -2300,7 +2300,10 @@ function drawGlyph(c,g,x,y,s,col){c.save();c.translate(x,y);c.lineCap='round';c.
   else if(g==='mine'){c.beginPath();c.arc(0,0,s*.45,0,TAU);c.fill();for(let i=0;i<8;i++){const a=i*TAU/8;c.beginPath();c.moveTo(Math.cos(a)*s*.4,Math.sin(a)*s*.4);c.lineTo(Math.cos(a)*s*.8,Math.sin(a)*s*.8);c.stroke();}}
   else if(g==='flag'){c.beginPath();c.moveTo(-s*.45,s*.85);c.lineTo(-s*.45,-s*.85);c.stroke();c.beginPath();c.moveTo(-s*.4,-s*.8);c.lineTo(s*.75,-s*.45);c.lineTo(-s*.4,-s*.1);c.closePath();c.fill();}
   else if(g==='pick'){c.lineWidth=s*.2;c.beginPath();c.moveTo(-s*.6,s*.75);c.lineTo(s*.45,-s*.3);c.stroke();c.beginPath();c.moveTo(-s*.15,-s*.85);c.quadraticCurveTo(s*.55,-s*.55,s*.85,s*.15);c.stroke();}
-  else if(g==='wrench'){c.lineWidth=s*.24;c.beginPath();c.moveTo(-s*.6,s*.6);c.lineTo(s*.25,-s*.25);c.stroke();c.beginPath();c.arc(s*.4,-s*.4,s*.38,PI*.95,PI*2.55);c.stroke();}
+  /* an open-ended spanner (prov 19 okt, Magnus: the old one read as a key or a magnifier): a filled handle and a head with an open jaw */
+  else if(g==='wrench'){c.rotate(-PI/4);const hx=s*.42,R=s*.42,a=.62,sw=R*Math.sin(a),dp=s*.02;
+    c.beginPath();c.moveTo(-s*.9,-s*.13);c.lineTo(hx-R*.6,-s*.15);c.lineTo(hx-R*.6,s*.15);c.lineTo(-s*.9,s*.13);c.arc(-s*.9,0,s*.13,PI/2,PI*1.5);c.closePath();c.fill();
+    c.beginPath();c.arc(hx,0,R,a,TAU-a);c.lineTo(hx-dp,-sw);c.lineTo(hx-dp,sw);c.closePath();c.fill();}
   else if(g==='wait'){c.beginPath();c.moveTo(-s*.55,-s*.85);c.lineTo(s*.55,-s*.85);c.moveTo(-s*.55,s*.85);c.lineTo(s*.55,s*.85);c.stroke();
     c.beginPath();c.moveTo(-s*.42,-s*.85);c.lineTo(s*.42,-s*.85);c.lineTo(0,0);c.closePath();c.moveTo(0,0);c.lineTo(s*.42,s*.85);c.lineTo(-s*.42,s*.85);c.closePath();c.stroke();
     c.beginPath();c.moveTo(-s*.2,s*.85);c.lineTo(0,s*.45);c.lineTo(s*.2,s*.85);c.closePath();c.fill();}
