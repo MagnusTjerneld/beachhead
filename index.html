@@ -5404,7 +5404,10 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
   /* the islets and skerries get the main island's rock (decided 19 okt, issue 48): the ground's tone steps, grey and yellow lichen and
      the black lichen band at the water, read off the face's own slope (they are scaled unevenly, which tilts a transformed normal),
      then the snow and the sea's dark under the surface as before */
-  F.islet=F.ground.split('diffuseColor.rgb=c;}')[0].replace('vec3 n3=normalize(vSWN);','vec3 n3=normalize(cross(dFdx(vSWP),dFdy(vSWP)));n3*=sign(n3.y+1e-4);')+'diffuseColor.rgb=c;}'+F.snowtop;
+  /* (prov 19 okt: the first try did nothing to see, since most of the main island's rock is in its colour map, not in this shader)
+     first the colour map's granite drawn here: pink-grey and grey-green slabs and dark lichen fields, at the islet's own brightness */
+  F.islet=`{vec3 c0=diffuseColor.rgb;float lum=dot(c0,vec3(.3333))/.53;float li=smoothstep(.42,.58,mdN(vSWP.xz/3.0+3.0+vSWP.y*.25));vec3 g=mix(vec3(.7,.66,.6),vec3(.57,.57,.53),li);
+      float ln=smoothstep(.55,.66,mdN(vSWP.xz/2.0+7.0-vSWP.y*.3))*.7;g=mix(g,vec3(.42,.42,.38),ln);diffuseColor.rgb=g*lum;}`+F.ground.split('diffuseColor.rgb=c;}')[0].replace('vec3 n3=normalize(vSWN);','vec3 n3=normalize(cross(dFdx(vSWP),dFdy(vSWP)));n3*=sign(n3.y+1e-4);')+'diffuseColor.rgb=c;}'+F.snowtop;
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
 /* the season's values into the uniforms and the water's ice, once per date */
