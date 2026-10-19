@@ -119,6 +119,15 @@ function bake(root){
       const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));bg.computeBoundingSphere();r.add(new THREE.Mesh(bg,m));}};
   pass(root);for(const k of keep)if(!k.isMesh)pass(k);
   return root;}
+let BLOB=null;
+function contactShadow(g,y,k){
+  if(!BLOB){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,4,32,32,32);
+    gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.6,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
+    const mt=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,opacity:.78,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});mt.userData.shared=true;
+    BLOB={geo:new THREE.PlaneGeometry(1,1).rotateX(-PI/2),mat:mt};}
+  g.updateMatrixWorld(true);const b=new THREE.Box3();g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();b.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));}});
+  if(b.isEmpty())return g;k=k||1;const m=new THREE.Mesh(BLOB.geo,BLOB.mat);m.scale.set((b.max.x-b.min.x)*1.15*k,1,(b.max.z-b.min.z)*1.45*k);
+  m.position.set((b.min.x+b.max.x)/2,y,(b.min.z+b.max.z)/2);m.castShadow=false;m.receiveShadow=false;m.userData.noShadow=true;m.renderOrder=2;g.add(m);g.userData.blob=m;g.userData.blobY=y;return g;}
 function mkUnitMesh(u){
   const g=new THREE.Group();
   if(u.kind==='mus'){
@@ -318,6 +327,8 @@ function mkEnemyMesh(e){
   {const r=sh(bake(g));if(e.kind==='tank'||e.kind==='light'||e.kind==='aa'){contactShadow(r,.02);r.scale.setScalar(.8);}/* ground vehicles at 0.8, like ours */return r;}
 }
 const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x3a3826})};
+
+const HOVER_Y=.05;
 
 const ENEMY={
   turret:{hp:120,range:140,airRange:130,vision:150,dmg:9,rate:1/1.2,acc:.8,value:100,label:'Bunker',cls:'armor',camo:true,canAir:true,canGround:true},
