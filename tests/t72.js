@@ -2,7 +2,7 @@
 // drives on when no known threat is in reach; a move the captain gives during the fight is carried out; fire it cannot answer makes
 // it pull out of reach and wait there
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.LOS.on=false;/* laid out before the line of sight (issue 38), which t76 tries */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(let i=0;i<40;i++)B.step(.05);return G;};
 const foe=(G,kind,x,y)=>{const e=B.makeEnemy({id:'Q'+kind,kind,x,y});e.seen=true;e.lx=x;e.ly=y;e.mobile=false;e.speed=0;G.enemies.push(e);return e;};
 // a start on the first point and a line out from it that a VARG can drive, with the foe beside the line halfway

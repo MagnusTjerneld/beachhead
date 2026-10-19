@@ -1863,7 +1863,7 @@ function step(dt){
     e.reveal=Math.max(0,e.reveal-dt);
     let spot=null;const camo=!!e.camo;
     const flash=e.reveal>0,hid=camo&&hides(e);
-    let spotIn=null;for(const u of G.units){if(u.dead||u.carried)continue;const rr=!camo||flash||u.kind==='mus'?u.vision:u.air?(hid?Math.min(HIDE_AIR,u.vision):u.vision):60;if(dist(u,e)<rr||(flash&&e.flashOn===u)){if(!spot)spot=u;if(netOf(u)){spotIn=u;break;}}}
+    let spotIn=null;for(const u of G.units){if(u.dead||u.carried)continue;const rr=!camo||flash||u.kind==='mus'?u.vision:u.air?(hid?Math.min(HIDE_AIR,u.vision):u.vision):60;if(dist(u,e)<rr&&sees(u,e)||(flash&&e.flashOn===u)){if(!spot)spot=u;if(netOf(u)){spotIn=u;break;}}}
     /* the one being shot at always sees the shooter while the flash lasts, however far it is (decided 14 okt): nobody fires from where
        its target cannot see it */
     let vis=!!spot,rep=!!spotIn;if(spotIn)spot=spotIn;
@@ -2406,12 +2406,12 @@ function hokWeave(u,dt){const t=u.target,tx=t.lx??t.x,ty=t.ly??t.y,dx=tx-u.x,dy=
   u.x=clamp(nx,6,WW-6);u.y=clamp(ny,6,WH-6);u.state='Bekämpar '+(t.isStruct?slabel(t):ename(t))+' i rörelse';return true;}
 function tankCombat(u,dt,post){
   let tgt=null;const o=u.orders[0],R=effRange(u);
-  if(o&&o.type==='attack'){if(o.enemy.dead){attackDone(u);}else if(o.enemy.visibleNow&&dist(u,o.enemy)<=(u.kind==='drone'?reachR(u,o.enemy):R)&&canHit(u,o.enemy,true))tgt=o.enemy;}
+  if(o&&o.type==='attack'){if(o.enemy.dead){attackDone(u);}else if(o.enemy.visibleNow&&dist(u,o.enemy)<=(u.kind==='drone'?reachR(u,o.enemy):R)&&canHit(u,o.enemy,true)&&sees(u,o.enemy))tgt=o.enemy;}
   {const mk=markOf(o);if(!tgt&&mk&&mk.visibleNow&&canHit(u,mk,true)&&dist(u,mk)<=(u.kind==='drone'?reachR(u,mk):R))tgt=mk;}
   if(!tgt&&!u.rtb&&post!=='dold'){
     let bd=1e9;
     for(const e of G.enemies){
-      if(e.dead||!e.visibleNow||!canHit(u,e))continue;const d=dist(u,e);if(d>(u.kind==='drone'?reachR(u,e):R)||d>=bd)continue;
+      if(e.dead||!e.visibleNow||!canHit(u,e))continue;const d=dist(u,e);if(d>(u.kind==='drone'?reachR(u,e):R)||d>=bd||!sees(u,e))continue;
       if(post==='off'||(u.hitBy[e.id]&&G.time-u.hitBy[e.id]<5)||(u.kind==='tank'&&mateHit(u,e))||(e===u.escTgt&&o&&o.escort)){bd=d;tgt=e;}
     }
   }
@@ -2594,6 +2594,7 @@ function move(u,dt){
     if(G.time>o.search){say(u,'Hittar inte '+ename(o.enemy)+' kring senast kända plats. Avbryter.');u.orders.shift();u.path=null;u.orbit=null;return;}
     u.orbit={x:o.enemy.lx,y:o.enemy.ly};orbit(u,dt,o.searchR||55);u.state='Söker '+ename(o.enemy)+' kring senast kända plats';return;}
   else if(o.type==='attack'){if(o.enemy.dead){attackDone(u);return;}if(o.search&&o.enemy.visibleNow)o.search=0;if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;o.arc=null;u.path=null;}
+    if(!o.fp&&!u.air&&LOS.on&&o.enemy.visibleNow&&dist(u,o.enemy)<=effRange(u)&&!sees(u,o.enemy)&&G.time>=(o.losT||0)){o.losT=G.time+2;const fp=firingPoint(u,o.enemy,o.close);if(fp){o.fp=fp;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}}/* in reach but behind the ground: a spot with a clear line (issue 38) */
     if(!o.fp&&u.kind==='tank'&&!o.close&&(o.enemy.visibleNow||!o.enemy.camo)&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=arcPoint(u,o);if(ap){o.fp=ap;o.arc=ap;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}}
     let stg=null;if(o.fp&&o.arc&&o.arc.st&&!o.go){const st=assaultStage(u,o);if(st){tx=st.x;ty=st.y;arr=8;stg=u.state;}}
     if(stg){}else if(o.fp&&(!o.arc||!o.arc.st||o.go)){tx=o.fp.x;ty=o.fp.y;arr=6;/* no sliding along the arc any more (decided 19 okt, Magnus: too slow to throw a bunker off, and a VARG keeps its front to the target) */}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow?(u.kind==='scout'?GETING.diveR*.8:u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):u.air?Math.min(45,airSeeR(u,o.enemy)*.75):45;}u.state=stg||('Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':''));if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400){o.spotAsk=1;requestSpot(u,o.enemy);}if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
@@ -2759,7 +2760,7 @@ function updateEnemy(e,dt){
   const SCo=SCOOT[e.kind],hold=u=>SCo&&!e.seen&&!e.firedHere&&u.kind==='scout'&&!u.dive&&dist(u,e)>(hides(e)?HIDE_AIR:u.vision)+5;/* a SPARV that has not seen it is not worth giving it away */
   let tgt=null,bd=1e9,bs=-1e9,keep=null,kd=0,ks=0;const look=e.mobile?e.vision:Math.max(e.range,e.airRange||0);
   if(e.canAir)for(const k of G.kroks){if(k.dead)continue;const d=dist(k,e);if(d<=Math.max(look,rVs(e,k))){if(k===e.tgtU){keep=k;kd=d;}if(d<bd){bd=d;tgt=k;}}}
-  for(const u of G.units){if(u.dead||u.carried)continue;if(flying(u)?!e.canAir:!e.canGround)continue;if(hold(u))continue;if(u.kind==='scout'&&e.kind==='rb')continue;/* the MANPADS is for helicopters and larger drones, not a GETING (16 okt) */const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim){const sc=d<=rVs(e,u)?expHit(e,u):-d*1e-3;if(u===e.tgtU){keep=u;kd=d;ks=sc;}if(sc>bs){bs=sc;bd=d;tgt=u;}}}
+  for(const u of G.units){if(u.dead||u.carried)continue;if(flying(u)?!e.canAir:!e.canGround)continue;if(hold(u))continue;if(u.kind==='scout'&&e.kind==='rb')continue;/* the MANPADS is for helicopters and larger drones, not a GETING (16 okt) */if(!sees(e,u))continue;const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim){const sc=d<=rVs(e,u)?expHit(e,u):-d*1e-3;if(u===e.tgtU){keep=u;kd=d;ks=sc;}if(sc>bs){bs=sc;bd=d;tgt=u;}}}
   /* (decided 19 okt, issue 44) the target it can expect to hurt most per shot, by its weapon, the range, the target's size, armour
      and speed across the line; it keeps its target until another is clearly better, a third more, since turning the gun costs time */
   if(keep&&kd<=rVs(e,keep)&&ks>=bs*.75){tgt=keep;bd=kd;}e.tgtU=tgt;
@@ -2819,6 +2820,17 @@ function canopyTop(x,y){
     const D=WORLD.decor;if(D){if(D.light)put(D.light.x,D.light.y,18);for(const v of D.villas||[])put(v.x,v.y,10);for(const c of D.cabins||[])put(c.x,c.y,7);}}
   const gx=Math.floor(x/CELL),gy=Math.floor(y/CELL);let m=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=gx+dx,ny=gy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const v=canopyA[ny*GW+nx];if(v>m)m=v;}return m;}
 const flyAlt=(x,y,base,margin)=>{const g=groundY(x,y);return Math.max(g+base,canopyTop(x,y)+margin);};
+/* line of sight against the ground (decided 18 and 19 okt, issue 38): units that see each other can hit each other whatever the
+   difference in height, but a ridge or a cliff edge between them hides them from each other, so a missile team on a plateau must
+   come to the edge to see and hit what is on the level below, and the other way round. Sampled every LOS.step m between the eyes
+   (hOf: the gun of a vehicle, a man's head, an aircraft's height), clear by LOS.margin m; a pair is worked out at most every half
+   second. Trees and buildings do not block it yet */
+const LOS={on:true,step:5,margin:.5,c:new Map(),g:null};
+function losClear(ax,ay,ah,bx,by,bh){const d=Math.hypot(bx-ax,by-ay),n=Math.ceil(d/LOS.step);for(let k=1;k<n;k++){const t=k/n,h=Math.max(0,heightAt(ax+(bx-ax)*t,ay+(by-ay)*t));if(h+LOS.margin>ah+(bh-ah)*t)return false;}return true;}
+function sees(a,b){if(!LOS.on)return true;if(LOS.g!==G){LOS.g=G;LOS.c.clear();}const k=a.id+'|'+b.id,c=LOS.c.get(k);if(c&&G.time-c.t<.5&&Math.abs(c.x-a.x)+Math.abs(c.y-a.y)+Math.abs(c.bx-b.x)+Math.abs(c.by-b.y)<4)return c.v;
+  const v=losClear(a.x,a.y,hOf(a),b.x,b.y,hOf(b));LOS.c.set(k,{t:G.time,x:a.x,y:a.y,bx:b.x,by:b.y,v});if(LOS.c.size>4000)LOS.c.clear();return v;}
+/* a height bonus to weigh (Magnus 19 okt): a gun firing down on its target hits a little more often; off until it has been tried */
+const HEIGHT_F={on:0,per:.01,max:.15};
 function hOf(o){const g=groundY(o.x,o.y);if(o.kind==='mus')return g+.6;if(o.kind==='krok')return flyAlt(o.x,o.y,28,6);if(o.air)return flyAlt(o.x,o.y,o.kind==='scout'?12:24,o.kind==='scout'?4:6);if(o.isStruct)return g+3;if(o.kind==='inf'||o.kind==='at'||o.kind==='rb')return g+1.2;return g+2.7;}
 function launch(a,t,x2,y2,h2,ws,side,hit,dmg,w){
   const W=WSPEC[ws],dx=x2-a.x,dy=y2-a.y,d=Math.hypot(dx,dy)||1,ang=a.turret!=null&&a.kind==='tank'?a.turret:a.aim!=null&&!a.mobile?a.aim:Math.atan2(dy,dx);
@@ -2839,6 +2851,7 @@ function rangeF(a,t,side,w){if(!RANGE_F.on||!t)return 1;let R=0;
   if(!(R>0))return 1;return 1+RANGE_F.max*clamp((R-dist(a,t))/(R*2/3),0,1);}
 function shoot(a,t,dmg,acc,side,w){
   {const f=rangeF(a,t,side,w||(side==='f'?null:'e'));if(f!==1){acc=Math.min(.98,acc*f);dmg*=f;}}
+  if(HEIGHT_F.on&&w!=='rocket'&&t){const dh=hOf(a)-hOf(t);if(dh>0)acc=Math.min(.98,acc*(1+Math.min(HEIGHT_F.max,dh*HEIGHT_F.per)));}
   const hit=Math.random()<acc;
   if(side==='e')t.hitBy[a.id]=G.time;
   else for(const m of G.enemies)if(m.mobile&&!m.dead&&dist(m,t)<320)m.alert={x:a.x,y:a.y,t:G.time};
@@ -2950,7 +2963,7 @@ function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried
   const base=Math.atan2(cy-e.ly,cx-e.lx),R=Math.min(effRange(u)*.85,e.visibleNow?1e9:u.vision*.9),/* unspotted: close enough to see it ourselves */want=base+(i-(n-1)/2)*.85,others=G.enemies.filter(f=>f!==e&&!f.dead&&f.seen&&f.canGround);
   /* only spots on ground the VARG can drive to from where it stands: a spot behind a barrier or a cliff took them round the island by sea */
   const reach=passLand(cellIdx(u.x,u.y))?landReach(u):null;
-  const exp=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20).length,okAt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)]);
+  const exp=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20).length,okAt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)])&&(!LOS.on||losClear(q.x,q.y,Math.max(0,heightAt(q.x,q.y))+2.7,e.lx,e.ly,hOf(e)));/* and a clear line to the target (issue 38) */
   // the spot on the arc that the fewest other known weapons reach (none if possible): guns that cover each other still get a planned attack
   /* and not a spot, or a staging point, that takes it the long way (fixed 17 okt, issue 12: of two VARG attacking from the water,
      one was given a staging point on land across a bay and drove off away from the target): the way there may be at most half as
@@ -2990,7 +3003,7 @@ function firingPoint(u,e,close){
   for(const[lo,R]of tries){
     let best=null,bd=1e9;
     const x0=Math.max(0,Math.floor((e.lx-R)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+R)/CELL)),y0=Math.max(0,Math.floor((e.ly-R)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+R)/CELL));
-    for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const i=gy*GW+gx;if(!r[i]||g[i]<=SHAL)continue;const c=cellCenter(i),d=Math.hypot(c.x-e.lx,c.y-e.ly);if(d<lo||d>R)continue;if(d<bd){bd=d;best=c;}}
+    for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const i=gy*GW+gx;if(!r[i]||g[i]<=SHAL)continue;const c=cellCenter(i),d=Math.hypot(c.x-e.lx,c.y-e.ly);if(d<lo||d>R)continue;if(d<bd&&(!LOS.on||u.air||losClear(c.x,c.y,Math.max(0,heightAt(c.x,c.y))+2.7,e.lx,e.ly,hOf(e)))){bd=d;best=c;}}/* only where the target can be seen from (issue 38) */
     if(best)return best;
   }
   return null;
@@ -3612,7 +3625,7 @@ function saveState(){const enc=graphEnc(G);return{fmt:'uppdrag-arkipelag-sparnin
   when:G.start,carrier:{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a},grid:b64(WORLD.grid),g:enc.tab};}
 /* the state of a save put back over a freshly built island of the same number (the caller has built it) */
 function applySave(sv){G=graphDec(sv.g);WORLD.grid.set(unb64(sv.grid));Object.assign(CARRIER,sv.carrier);G.running=true;G.paused=true;}
-if(typeof globalThis!=='undefined')globalThis.__BH={RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={LOS,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;

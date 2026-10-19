@@ -1,6 +1,6 @@
 global.performance={now:()=>0};
 require('./g2.js');
-const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;/* before any island is built: the piles get their value then */
+const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;if(process.env.LOS)B.LOS.on=process.env.LOS!=='0';if(process.env.HEIGHT)B.HEIGHT_F.on=+process.env.HEIGHT;if(process.env.RANGEAIR)B.RANGE_F.air=+process.env.RANGEAIR;/* before any island is built: the piles get their value then */
 const V=process.argv[2]||'base';
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
