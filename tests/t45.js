@@ -53,7 +53,10 @@ function play(seed,limit){
     reachVer();
     for(const e of defs0){if(!t0){tgt=e;break;}if(reach(t0.x,t0.y,e.x,e.y)||fpOK(t0,e)){tgt=e;break;}}
     if(tgt)tgt.seen=true;
-    for(const t of tanks){if(t.rtb||t.awaitRep||(t.orders[0]&&t.orders[0].toRep)||t.hp<t.maxhp*.3)continue;if(tgt&&(!t.orders[0]||t.orders[0].enemy!==tgt)){t.orders=[];B.giveOrder(t,{type:'attack',enemy:tgt,post:'off'},false);}}
+    /* service costs material (19 okt): with none left a VARG on the plate waits for good, so the bot sends it out unrepaired, as a
+       player would; below 30 % it stays */
+    const stuck=t=>t.rtb&&t.onPad&&t.noResT!=null&&G.res<2&&t.hp>=t.maxhp*.3;
+    for(const t of tanks){if((t.rtb&&!stuck(t))||t.awaitRep||(t.orders[0]&&t.orders[0].toRep)||t.hp<t.maxhp*.3)continue;if(tgt&&(!t.orders[0]||t.orders[0].enemy!==tgt)){t.orders=[];B.giveOrder(t,{type:'attack',enemy:tgt,post:'off'},false);}}
     if(V!=='rush'&&tgt&&!tgt.visibleNow&&tgt.kind==='aa'){const h=alive.find(u=>u.kind==='drone');if(h&&!h.rtb&&h.hp>h.maxhp*.6&&tanks.some(t=>d(t,tgt)<t.range)){const dir=Math.atan2(cen.y-tgt.y,cen.x-tgt.x),p={x:tgt.x+Math.cos(dir)*165,y:tgt.y+Math.sin(dir)*165};const o=h.orders[0];if(!o||o.type!=='obs'||d(o,p)>25||o.post!=='off'){h.orders=[];B.giveOrder(h,{type:'obs',x:p.x,y:p.y,post:'off'},false);}}}
     else if(V!=='rush'&&tgt&&!tgt.visibleNow){
       const dir=Math.atan2(cen.y-tgt.y,cen.x-tgt.x);
