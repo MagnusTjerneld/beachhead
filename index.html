@@ -2835,7 +2835,7 @@ const RANGE_F={on:true,max:.25,air:0};/* not against aircraft for now: in the sa
 function expHit(e,u){if(u.kind==='mus'&&(e.kind==='inf'||e.kind==='at'))return ROVER.rifle.dmg*ROVER.rifle.acc;
   const a0=u.air&&e.kind==='turret'?e.acc*.55:u.air&&e.airAcc?e.airAcc:e.acc;return e.dmg*Math.min(.98,a0*(SIZE_ACC[u.kind]||1)*moveDef(e,u)*rangeF(e,u,'e'))*dmgMult(e,u);}
 function rangeF(a,t,side,w){if(!RANGE_F.on||!t)return 1;let R=0;
-  if(side==='f'){if(w==='cannon')R=a.range;else if(w==='mg')R=MG.range;else return 1;}else{if(!MOVE_DEF.ball.has(a.kind)||t.air&&!RANGE_F.air)return 1;R=rVs(a,t);}
+  if(side==='f'){if(w==='cannon')R=a.range;else if(w==='mg')R=MG.range;else return 1;}else{if(!MOVE_DEF.ball.has(a.kind)||t.air&&!RANGE_F.air||t.kind==='mus'&&w!=='e_rifle')return 1;R=rVs(a,t);}/* a heavy gun rarely hits a MUS however close it is */
   if(!(R>0))return 1;return 1+RANGE_F.max*clamp((R-dist(a,t))/(R*2/3),0,1);}
 function shoot(a,t,dmg,acc,side,w){
   {const f=rangeF(a,t,side,w||(side==='f'?null:'e'));if(f!==1){acc=Math.min(.98,acc*f);dmg*=f;}}
