@@ -1327,8 +1327,8 @@ function buildWorldTry(seed,tryK,type,move){
     const site=yard.length?farmSite(i,core,anchor):null;
     if(site)layOut(site,yard,i,m,core);
     else for(const kind of yard){const p=findSpot(anchor,30,130,i,false,false);if(p&&!(kind==='fuel'&&relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85)))addS(kind,p,m);}
-    for(const kind of kinds)if(kind==='mast'){let best=null,bs=-1e9;for(let gy=1;gy<GH-1;gy+=2)for(let gx=1;gx<GW-1;gx+=2){const c=gy*GW+gx;if(zid[c]!==i||grid[c]!==LAND)continue;const p=cellCenter(c);if(!spotOK(p.x,p.y,i,false,false))continue;const sc=eg[c]+R()*3;if(sc>bs){bs=sc;best=p;}}
-      if(best)addS('mast',best,m);}
+    for(const kind of kinds)if(kind==='mast'){let best=null,bs=-1e9;for(let gy=1;gy<GH-1;gy+=2)for(let gx=1;gx<GW-1;gx+=2){const c=gy*GW+gx;if(zid[c]!==i||grid[c]!==LAND)continue;const p=cellCenter(c);if(!spotOK(p.x,p.y,i,false,false))continue;const sc=eg[c]+R()*3;if(sc>bs&&!STR.some(q=>q.kind==='mast'&&Math.hypot(q.x-p.x,q.y-p.y)<MAST.gap)){bs=sc;best=p;}}
+      if(best)addS('mast',best,m);}/* at least MAST.gap apart (prov 19 okt: two masts in a zone took the same top, 28 to 60 m apart, and a relay reaching 250 m next to another adds nothing) */
     const nc=2;for(let k=0;k<nc;k++){const p=findSpot(anchor,20,150,i,true,false);if(p)DEB.push({x:p.x,y:p.y,kind:'crate',value:r5(20*m)});}
   }
   for(const zi of[r2z,r3z]){const g=E.find(e=>(e.kind==='turret'||e.kind==='aa')&&zid[cellIdx(e.x,e.y)]===zi);if(g){const p=findSpot(g,26,46,zi,false,false);if(p&&!relays.some(r=>Math.hypot(r.x-p.x,r.y-p.y)<85))addS('fuel',p,zoneVal(zi));}}
@@ -3155,7 +3155,7 @@ function workBarrier(b,u,dt){b.prog=Math.min(1,b.prog+dt/10);u.state='Spränger 
    couples a mast inside the net in like a point, an order of MAST.t s, when no enemy is left alive in its zone, and from then on
    the place reaches NET.mast for good, as if a VARG stood there: the net does not shrink if the mast is torn down later, and a mast
    torn down before it was coupled in only gives no new reach. BÄVER has to be out in the field anyway, to tear down and to repair */
-const NET={ship:850,point:500,mast:250},MAST={t:5};
+const NET={ship:850,point:500,mast:250},MAST={t:5,gap:180};
 const mastFree=s=>!!s&&s.kind==='mast'&&!s.dead&&!s.relay;
 function mastFoes(s){const zid=WORLD.zid,z=zid[cellIdx(s.x,s.y)];return G.enemies.filter(e=>!e.dead&&zid[cellIdx(e.x,e.y)]===z).length;}
 function workMast(o,u,dt){const s=o.s;u.path=null;
@@ -3534,7 +3534,7 @@ function defaultOrder(u,pk,post){
   if(u.air&&pk.enemy&&!pk.enemy.dead){const e=pk.enemy,d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=Math.min(u.vision*.8,d);return{type:'obs',x:e.lx+(u.x-e.lx)/d*r,y:e.ly+(u.y-e.ly)/d*r,post};}
   if(u.kind==='scout'&&pk.enemy&&!pk.enemy.dead){const e=pk.enemy,d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=Math.min(u.vision*.8,d);return{type:'obs',x:e.lx+(u.x-e.lx)/d*r,y:e.ly+(u.y-e.ly)/d*r,post};}
   if(u.kind==='eng'&&pk.unit&&pk.unit!==u&&!pk.unit.dead&&!pk.unit.air&&(pk.unit.kind==='tank'||pk.unit.kind==='eng')&&pk.unit.hp<pk.unit.maxhp*REP.cap-1)return{type:'repair',unit:pk.unit,post};
-  if(u.kind==='eng'&&mastFree(pk.struct))return{type:'mast',s:pk.struct,post};
+  if(u.kind==='eng'&&mastFree(pk.struct)&&!pk.raze)return{type:'mast',s:pk.struct,post};
   if(pk.struct&&!pk.struct.dead&&u.kind!=='scout')return u.kind==='eng'?{type:'demolish',s:pk.struct,post}:{type:'raze',s:pk.struct,post};
   if(!pk.world)return null;
   return{type:'move',x:clamp(pk.world.x,10,WW-10),y:clamp(pk.world.y,10,WH-10),post};
@@ -3619,7 +3619,7 @@ function groupOrder(pk,append,postOverride){
     else if(pk.mine&&!pk.mine.cleared&&u.kind==='eng')o={type:'demine',mine:pk.mine,post};
     else if(pk.enemy&&!pk.enemy.dead&&(u.kind==='tank'||u.kind==='drone')&&canHit(u,pk.enemy,true))o={type:'attack',enemy:pk.enemy,post:'off'};
     else if(pk.struct&&!pk.struct.dead){const only=pk.only||(us.some(v=>v.kind==='eng')?'eng':'gun');
-      if(only==='eng'?u.kind==='eng':(u.kind==='tank'||u.kind==='drone'))o=u.kind==='eng'?(mastFree(pk.struct)?{type:'mast',s:pk.struct,post}:{type:'demolish',s:pk.struct,post}):{type:'raze',s:pk.struct,post};
+      if(only==='eng'?u.kind==='eng':(u.kind==='tank'||u.kind==='drone'))o=u.kind==='eng'?(mastFree(pk.struct)&&!pk.raze?{type:'mast',s:pk.struct,post}:{type:'demolish',s:pk.struct,post}):{type:'raze',s:pk.struct,post};
       else{const st=pk.struct,dd=Math.hypot(u.x-st.x,u.y-st.y)||1,r=Math.min(60,dd);o={type:'move',x:st.x+(u.x-st.x)/dd*r+offs[i].x,y:st.y+(u.y-st.y)/dd*r+offs[i].y,post};}}
     else if(pk.enemy){const e=pk.enemy,d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,r=Math.min(u.vision*.8,d);o={type:'obs',x:e.lx+(u.x-e.lx)/d*r,y:e.ly+(u.y-e.ly)/d*r,post};}
     else o={type:'move',x:clamp(tp.x+offs[i].x,10,WW-10),y:clamp(tp.y+offs[i].y,10,WH-10),post,player:true};
@@ -6161,8 +6161,11 @@ function openWheel(sx,sy,pk,srcEl,pick){
   }else if(pk.struct){
     const st=pk.struct,T=STRUCT[st.kind];title=T.label.toUpperCase()+' '+st.id;sub='värd '+st.value+(T.boom?' · exploderar':'');if(u)wheelPost=u.post;
     const us=selUnits(),hasEng=us.some(v=>v.kind==='eng'),hasGun=us.some(v=>v.kind==='tank'||v.kind==='drone');
-    if(hasEng)items.push({l:'Riv',f:()=>groupOrder({struct:st,only:'eng'},false,wheelPost)});
-    if(hasEng)items.push({l:'Riv + beställ KROK',f:()=>{st.krok=true;groupOrder({struct:st,only:'eng'},false,wheelPost);}});
+    /* a free radio mast: couple it in, or tear it down (prov 19 okt: the wheel said Riv and the order coupled it in, and a mast could not
+       be torn down before it was coupled) */
+    if(hasEng&&mastFree(st))items.push({l:'Koppla in radiomasten'+(inNet(st.x,st.y)?'':' (utanför nätet)'),off:!inNet(st.x,st.y),f:()=>groupOrder({struct:st,only:'eng'},false,wheelPost)});
+    if(hasEng)items.push({l:'Riv',f:()=>groupOrder({struct:st,only:'eng',raze:true},false,wheelPost)});
+    if(hasEng)items.push({l:'Riv + beställ KROK',f:()=>{st.krok=true;groupOrder({struct:st,only:'eng',raze:true},false,wheelPost);}});
     if(hasGun)items.push({l:'Skjut sönder ('+(T.boom?30:60)+' %)',danger:!T.boom,f:()=>groupOrder({struct:st,only:'gun'},false,'off')});
     items.push({l:st.krok?'Ingen KROK efteråt':'KROK efteråt',f:()=>{st.krok=!st.krok;say(null,st.krok?'KROK hämtar rasmassorna när '+slabel(st)+' är riven.':'KROK hämtar inte '+slabel(st)+' automatiskt.');}});
   }else if(pk.unit&&u&&pk.unit.id!==u.id){
