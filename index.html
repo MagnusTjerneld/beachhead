@@ -1854,6 +1854,7 @@ function moveCarrier(x,y,a){
   for(const o of carry){const q=wp(o.l);o.u.x=q.x;o.u.y=q.y;o.u.heading+=da;if(o.to)o.u.deckTo=wp(o.to);if(o.path)o.u.deckPath=o.path.map(wp);}
   for(const o of ks){const q=wp(o.pad);o.k.pad=q;if(o.home){o.k.x=q.x;o.k.y=q.y;o.k.heading+=da;}}}
 function step(dt){
+  for(const u of G.units.concat(G.kroks)){if(u._px!=null&&dt>0){u.vx=(u.x-u._px)/dt;u.vy=(u.y-u._py)/dt;}u._px=u.x;u._py=u.y;}/* for MOVE_DEF */
   G.time+=dt;G.tod+=dt/240;if(G.tod>=24){G.tod-=24;G.doy=G.doy%DAYS+1;}harborTick(dt);rampTick(dt);
   const cap=G.relays.filter(r=>r.captured&&r.type!=='hamn').length;
   G.res+=dt*(INCOME.base+INCOME.relay*cap);
@@ -2114,6 +2115,7 @@ function updateUnit(u,dt){
   const post=curPost(u);
   // combat units fire on the move: only attack, raze, observe and an escort engagement stop them
   u.fighting=(u.kind==='tank'||u.kind==='drone')&&tankCombat(u,dt,post);
+  if(u.kind==='drone'&&u.fighting&&u.target&&G.ctrl!==u.id&&u.orders[0]&&u.orders[0].type==='attack'&&hokWeave(u,dt))return;/* escorts pick their targets in move() */
   if(u.fighting){const o0=u.orders[0];if(!o0||(o0.type==='attack'&&!o0.arc)||o0.type==='raze'||o0.type==='obs'||(o0.type==='follow'&&u.escTgt))return;}
   if(u.kind==='tank'&&fireHold(u,dt))return;
   if(u.kind==='eng'){
@@ -2394,6 +2396,14 @@ function supportTick(u){
   const s=supportTarget(u);if(!s)return;const e=s.e;
   if(e.visibleNow&&dist(u,e)<=effRange(u))return;   // already in reach: tankCombat takes it
   u.orders.unshift({type:'attack',enemy:e,post:'def',support:true,t:G.time});u.path=null;say(u,'Stöttar '+s.m.name+' mot '+ename(e)+'.');}
+/* a HÖK in a fight does not hang still in the air (decided 19 okt, Magnus, issue 58): it slides across the line to its target, 30 m
+   either way at 60 % of its speed, and keeps its distance, but never into the reach of another known air threat */
+const WEAVE={amp:30,f:.6};
+function hokWeave(u,dt){const t=u.target,tx=t.lx??t.x,ty=t.ly??t.y,dx=tx-u.x,dy=ty-u.y,d=Math.hypot(dx,dy)||1,R=reachR(u,t)*.85;
+  if(u.weaveA==null)u.weaveA=hash2(u.id.length,u.id.charCodeAt(u.id.length-1),5)*TAU;u.weaveA+=dt*u.speed*WEAVE.f/WEAVE.amp;
+  const lat=Math.cos(u.weaveA)*u.speed*WEAVE.f,rad=clamp((d-R)*.8,-u.speed*.5,u.speed*.5),nx=u.x+(dx/d*rad-dy/d*lat)*dt,ny=u.y+(dy/d*rad+dx/d*lat)*dt;
+  if(G.enemies.some(e=>!e.dead&&e!==t&&e.seen&&e.canAir&&Math.hypot(nx-e.lx,ny-e.ly)<airThreatR(u,e)))return false;
+  u.x=clamp(nx,6,WW-6);u.y=clamp(ny,6,WH-6);u.state='Bekämpar '+(t.isStruct?slabel(t):ename(t))+' i rörelse';return true;}
 function tankCombat(u,dt,post){
   let tgt=null;const o=u.orders[0],R=effRange(u);
   if(o&&o.type==='attack'){if(o.enemy.dead){attackDone(u);}else if(o.enemy.visibleNow&&dist(u,o.enemy)<=(u.kind==='drone'?reachR(u,o.enemy):R)&&canHit(u,o.enemy,true))tgt=o.enemy;}
@@ -2595,7 +2605,7 @@ function move(u,dt){
     if(o.escort&&(!o.unit||o.unit.dead)){const nx=(o.group||[]).map(id=>G.units.find(v=>v.id===id&&!v.dead&&!v.carried)).filter(Boolean).sort((a,b)=>dist(a,u)-dist(b,u))[0];if(nx){o.unit=nx;say(u,'Eskortmålet förlorat. Eskorterar nu '+nx.name+'.');}}
     const t=o.unit;if(!t||t.dead){u.orders.shift();u.path=null;u.escTgt=null;if(u.mission===o)u.mission=null;if(o.escort)say(u,'Ingen kvar att eskortera.');return;}
     if(o.escort&&u.air){const e=escortTarget(u,o);u.escTgt=e;
-      if(e){const R=effRange(u),d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,k=Math.min(d,R*.75);tx=e.lx+(u.x-e.lx)/d*k;ty=e.ly+(u.y-e.ly)/d*k;arr=8;u.state='Eskort · bekämpar '+ename(e)+' åt '+t.name;}
+      if(e){const R=effRange(u),d=Math.hypot(u.x-e.lx,u.y-e.ly)||1,k=Math.min(d,R*.75),sw=Math.sin(G.time*.4+u.id.charCodeAt(u.id.length-1))*WEAVE.amp;/* the escort's firing point slides across the line too (issue 58) */tx=e.lx+(u.x-e.lx)/d*k-(u.y-e.ly)/d*sw;ty=e.ly+(u.y-e.ly)/d*k+(u.x-e.lx)/d*sw;arr=4;u.state='Eskort · bekämpar '+ename(e)+' åt '+t.name;}
       else{const gg=(o.group||[t.id]).map(id=>G.units.find(v=>v.id===id&&!v.dead&&!v.carried&&!v.air)).filter(Boolean);if(!gg.length)gg.push(t);
         let cx=0,cy=0,hx=0,hy=0;for(const v of gg){cx+=v.x;cy+=v.y;hx+=Math.cos(v.heading);hy+=Math.sin(v.heading);}cx/=gg.length;cy/=gg.length;const hd=hx||hy?Math.atan2(hy,hx):t.heading;
         const key=(o.group||[]).join(),mates2=G.units.filter(v=>v.air&&!v.dead&&v.orders[0]&&v.orders[0].type==='follow'&&v.orders[0].escort&&(v.orders[0].group||[]).join()===key).sort((a,b)=>a.id<b.id?-1:1),si=Math.max(0,mates2.indexOf(u)),lat=(si-(mates2.length-1)/2)*30;
@@ -2714,6 +2724,12 @@ const TRAV={turret:.7,tank:.9,light:1.3,aa:1.6,rb:3,at:3,inf:3.5},trav=e=>TRAV[e
    and fades; after 40 s unseen it is forgotten. Hit chance against aircraft follows their size */
 const SCOOT={aa:{pack:6,setup:8,min:60,max:120,quiet:5,flee:150,fleeGap:20},rb:{pack:3,setup:4,min:40,max:90}};
 const SIZE_ACC={krok:1.1,drone:1,scout:.5};
+/* movement is cover against ballistic weapons (decided 19 okt, Magnus, issue 58): a shell, a flak burst or a grenade has to be aimed
+   ahead of a target crossing the line of fire, so the hit chance falls with the target's speed across that line, by up to MOVE_DEF.max
+   at MOVE_DEF.full m/s; homing missiles (the missile team's and the anti-tank team's) follow the target and are not put off */
+const MOVE_DEF={on:true,max:.3,full:12,ball:new Set(['turret','tank','aa','light','inf'])};
+function moveDef(e,t){if(!MOVE_DEF.on||!MOVE_DEF.ball.has(e.kind)||!t.vx&&!t.vy)return 1;const dx=t.x-e.x,dy=t.y-e.y,d=Math.hypot(dx,dy)||1,lat=Math.abs(t.vx*dy-t.vy*dx)/d;
+  return 1-MOVE_DEF.max*clamp(lat/MOVE_DEF.full,0,1);}
 const STALE_FORGET=40;
 function startScoot(e,away){
   const C=SCOOT[e.kind];if(!C||e.sc)return false;const z=WORLD.zid[cellIdx(e.px,e.py)];let best=null,bs=-1e9;
@@ -2752,8 +2768,8 @@ function updateEnemy(e,dt){
     const ta=Math.atan2(tgt.y-e.y,tgt.x-e.x);e.aim=turnTo(e.aim,ta,trav(e)*dt);
     if(bd<=rVs(e,tgt)&&e.cd<=0&&Math.abs(angWrap(ta-e.aim))<AIM_TOL){
       e.reveal=1.6;e.flashOn=tgt;
-      if(tgt.kind==='mus'){const rf=e.kind==='inf'||e.kind==='at';e.cd=rf?ROVER.rifle.cd:1/e.rate;shoot(e,tgt,rf?ROVER.rifle.dmg:e.dmg,rf?ROVER.rifle.acc:e.acc*ROVER.heavyAcc,'e',rf?'e_rifle':null);}
-      else{e.cd=1/e.rate;const a0=tgt.air&&e.kind==='turret'?e.acc*.55:tgt.air&&e.airAcc?e.airAcc:e.acc;shoot(e,tgt,e.dmg,Math.min(.98,a0*(SIZE_ACC[tgt.kind]||1)),'e');
+      if(tgt.kind==='mus'){const rf=e.kind==='inf'||e.kind==='at';e.cd=rf?ROVER.rifle.cd:1/e.rate;shoot(e,tgt,rf?ROVER.rifle.dmg:e.dmg,(rf?ROVER.rifle.acc:e.acc*ROVER.heavyAcc)*(rf?1-MOVE_DEF.max*clamp(Math.hypot(tgt.vx||0,tgt.vy||0)/MOVE_DEF.full,0,1):moveDef(e,tgt)),'e',rf?'e_rifle':null);}/* a rifle is aimed by hand: a MUS on the move is harder to hit too */
+      else{e.cd=1/e.rate;const a0=tgt.air&&e.kind==='turret'?e.acc*.55:tgt.air&&e.airAcc?e.airAcc:e.acc;shoot(e,tgt,e.dmg,Math.min(.98,a0*(SIZE_ACC[tgt.kind]||1)*moveDef(e,tgt)),'e');
         if(e.mag){e.ammo--;if(e.ammo<=0){e.cd=e.reload;startScoot(e);}}}
       e.firedHere=true;e.lastFire=G.time;
       if(!tgt.dead&&G.time-tgt.lastHitMsg>7){tgt.lastHitMsg=G.time;const ee=e;say(tgt,'Beskjuts av '+(e.seen?ename(e):'dold fiende')+', ruta '+sq(e.x,e.y)+'.',tgt.kind==='krok'?null:[{l:'Luftstöd',f:()=>callIn('air',ee.seen?{enemy:ee}:{world:{x:ee.x,y:ee.y}})},{l:'Visa',f:()=>focusUnit(tgt)}]);}
