@@ -3695,7 +3695,7 @@ function saveState(){const enc=graphEnc(G);return{fmt:'uppdrag-arkipelag-sparnin
   when:G.start,carrier:{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a},grid:b64(WORLD.grid),g:enc.tab};}
 /* the state of a save put back over a freshly built island of the same number (the caller has built it) */
 function applySave(sv){G=graphDec(sv.g);WORLD.grid.set(unb64(sv.grid));Object.assign(CARRIER,sv.carrier);G.running=true;G.paused=true;}
-if(typeof globalThis!=='undefined')globalThis.__BH={MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={sync3D,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -4253,8 +4253,13 @@ function mkUnitMesh(u){
     for(const z of[-1,1]){strut([-3.4,.55,z*1.85],[-3.4,-2.4,z*2.15],.2);strut([-1.4,.3,z*.6],[-3.3,-1.2,z*2.05],.11);wheel(-3.4,-2.55,z*2.15);}
     // winch under the bay, lamp and anti-collision light
     g.add(mesh(box(.9,.5,.9),DK,1.2,-.1,0));g.add(mesh(box(.5,.2,.5),R3.lampMat,5.2,-1.45,0));g.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.2,1.6,0));
-    const hook=mesh(box(1,1,1),mat(0x2a2a2a),0,-6,0);hook.visible=false;g.add(hook);g.userData.hook=hook;
-    const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-3,0);cable.visible=false;g.add(cable);g.userData.cable=cable;
+    /* the wire hangs from a swing point under the winch (decided 19 okt, issue 49): wire, hook and load swing together. The hook is
+       a crane hook: a sheave block, a short shank and an open hook, KROK_HOOK_H long from the wire to the bite */
+    const sw=new THREE.Group();sw.position.y=-.5;g.add(sw);g.userData.sw=sw;
+    const hook=new THREE.Group();hook.add(mesh(box(.55,.75,.36),Y,0,-.42,0));for(const z of[-.19,.19])hook.add(mesh(box(.42,.55,.04),DK,0,-.42,z));
+    hook.add(mesh(cyl(.06,.06,.4,6),MET,0,-.98,0));const bite=mesh(new THREE.TorusGeometry(.26,.07,5,12,PI*1.4),DK,0,-1.38,0);bite.rotation.z=PI/2;hook.add(bite);
+    hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
+    const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
   }
   {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
@@ -4677,16 +4682,56 @@ function hedgehog(rn,x,z){const h=new THREE.Group(),R=mat(rn()<.5?0x5a3e2c:0x6a4
 /* old wrecks go to rust, not to soot */
 function rusted(g,rn){const M=[mat(0x6b4a32),mat(0x5a3e2c),mat(0x7a5638)];g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=M[Math.floor(rn()*3)];});return g;}
 /* KROK's load (decided 19 okt, issue 60): the wire is paid out to the wreck while it couples, the wreck's own model (scaled down
-   only past 7 m) hangs under the hook and is hoisted up in 2.5 s, and at the pad it is lowered before it counts */
-function krokLoad3D(k,km){const ud=km.userData,ky=km.position.y;let L=5;
-  if(k.state==='hook'&&k.target){L=Math.max(1,ky-groundY(k.target.x,k.target.y)-1)*Math.min(1,(k.t||0)/1.2);}
-  else if(k.carry){const low=Math.max(6,ky-groundY(k.x,k.y)-.6),up=clamp((G.time-(k.carryT??-99))/2.5,0,1);L=k.dropT!=null?lerp(6,low,clamp(k.dropT/KROK_DROP,0,1)):lerp(low,6,up*up*(3-2*up));}
-  ud.cable.scale.y=L/5;ud.cable.position.y=-.5-L/2;ud.hook.position.y=-.5-L;
-  if(k.carry){if(ud.loadW!==k.carry){if(ud.load)km.remove(ud.load);const c=mkWreckMesh(Object.assign({},k.carry,{x:k.x,y:k.y}));c.position.set(0,0,0);c.rotation.set(0,0,0);
-      c.traverse(o=>{if(o.isMesh&&BLOB&&o.material===BLOB.mat)o.visible=false;});const bb=new THREE.Box3().setFromObject(c),sz=bb.getSize(new THREE.Vector3()),sc=Math.min(1,7/Math.max(sz.x,sz.z,1));c.scale.setScalar(sc);
-      ud.load=c;ud.loadH=sz.y*sc;ud.loadW=k.carry;km.add(c);}
-    ud.load.position.y=-.5-L-ud.loadH*.9;ud.hook.visible=false;}
-  else if(ud.load){km.remove(ud.load);ud.load=null;ud.loadW=null;}}
+   only past 7 m) hangs under the hook and is hoisted up in 2.5 s, and at the pad it is lowered before it counts.
+   The load hangs level in four slings from the hook, taken at half its height with its centre of gravity under the hook, and wire, hook and load swing a little
+   after KROK's acceleration and settle (decided 19 okt, issue 49). Only the picture: where the load goes and how KROK flies is as
+   before. A lifted vehicle hangs the same way */
+const KROK_HOOK_H=1.65,KROK_SLING=1.4,SWING={on:true,k:.6,damp:.3,max:.35};
+const _kq=new THREE.Quaternion(),_kq2=new THREE.Quaternion(),_kv=new THREE.Vector3(),_kup=new THREE.Vector3(0,1,0);
+/* the box of a model as built, before it is placed: its centre and top */
+function krokBox(o){if(o.userData.kbox)return o.userData.kbox;const p=o.position.clone(),q=o.quaternion.clone(),pr=o.parent;if(pr)pr.remove(o);
+  o.position.set(0,0,0);o.quaternion.identity();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(o),c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());
+  o.position.copy(p);o.quaternion.copy(q);if(pr)pr.add(o);return o.userData.kbox={c,h:sz.y,hx:sz.x/2,hz:sz.z/2};}
+function krokSwing(ud,km,dtr,len){if(!SWING.on||!dtr){return;}const dt=Math.min(dtr,.05),p=km.position;
+  if(!ud.pp){ud.pp=p.clone();ud.pv=new THREE.Vector3();ud.acc=new THREE.Vector3();ud.th=[0,0,0,0];}
+  const v=p.clone().sub(ud.pp).divideScalar(dt);ud.pp.copy(p);
+  /* a jump (a loaded game, KROK put back on the pad) is not an acceleration */
+  if(v.length()>80){ud.pv.set(0,0,0);ud.acc.set(0,0,0);ud.th.fill(0);return;}
+  ud.acc.lerp(v.clone().sub(ud.pv).divideScalar(dt),Math.min(1,dt*6));ud.pv.copy(v);
+  const w2=9.8/len,z=2*SWING.damp*Math.sqrt(w2),T=ud.th;
+  for(let i=0;i<2;i++){const a=i?ud.acc.z:ud.acc.x;T[i+2]+=(-w2*Math.sin(T[i])-SWING.k*a/len*Math.cos(T[i])-z*T[i+2])*dt;T[i]=clamp(T[i]+T[i+2]*dt,-SWING.max,SWING.max);}
+  // from the world's x and z into KROK's own frame (it turns about y only)
+  const f=km.rotation.y,c=Math.cos(f),s=Math.sin(f),lx=T[0]*c-T[1]*s,lz=T[0]*s+T[1]*c;ud.sw.rotation.set(-lz,0,lx);}
+function krokSlings(ud,on,yh,yt,hx,hz){if(!ud.slings){ud.slings=[];const M=mat(0x2a2620);for(let i=0;i<4;i++){const m=mesh(cyl(.035,.035,1,4),M,0,0,0);ud.sw.add(m);ud.slings.push(m);}}
+  ud.slings.forEach((m,i)=>{m.visible=on;if(!on)return;const a=new THREE.Vector3(0,yh,0),b=new THREE.Vector3((i&1?1:-1)*hx*.55,yt,(i&2?1:-1)*hz*.55),d=b.clone().sub(a),l=d.length();
+    m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(_kup,d.divideScalar(l||1));m.scale.set(1,l,1);});}
+function krokLoad3D(k,km,dtr){const ud=km.userData,ky=km.position.y;let L=4,ld=null;
+  if(!ud.sw)return;
+  const cg=k.cargo&&R3.units.get(k.cargo.id);
+  if(k.carry){if(ud.loadW!==k.carry){if(ud.load)ud.sw.remove(ud.load);const c=mkWreckMesh(Object.assign({},k.carry,{x:k.x,y:k.y}));c.position.set(0,0,0);c.rotation.set(0,0,0);
+      c.traverse(o=>{if(o.isMesh&&BLOB&&o.material===BLOB.mat)o.visible=false;});
+      /* level: the wreck's lean on the ground goes when it hangs */
+      for(const ch of c.children)if(!ch.isMesh){ch.rotation.x=0;ch.rotation.z=0;}
+      const bb=krokBox(c),sc=Math.min(1,7/Math.max(bb.hx*2,bb.hz*2,1));c.scale.setScalar(sc);
+      ud.load=c;ud.loadS=sc;ud.loadW=k.carry;ud.sw.add(c);}
+    ld={o:ud.load,b:ud.load.userData.kbox,s:ud.loadS};}
+  else if(ud.load){ud.sw.remove(ud.load);ud.load=null;ud.loadW=null;}
+  if(cg)ld={o:cg,b:krokBox(cg),s:1,unit:true};
+  /* the slings take the load at half its height, long enough that the hook stays above its top */
+  const lh=ld?ld.b.h*ld.s:0,sl=Math.max(KROK_SLING,lh*.5+1),below=ld?KROK_HOOK_H+sl+lh*.5:KROK_HOOK_H;
+  if(k.state==='hook'&&k.target){L=Math.max(1,ky-groundY(k.target.x,k.target.y)-.5-KROK_HOOK_H-1.5)*Math.min(1,(k.t||0)/1.2);}
+  else if(k.carry){const low=Math.max(4,ky-groundY(k.x,k.y)-.5-below+.15),up=clamp((G.time-(k.carryT??-99))/2.5,0,1);L=k.dropT!=null?lerp(4,low,clamp(k.dropT/KROK_DROP,0,1)):lerp(low,4,up*up*(3-2*up));}
+  else if(cg)L=2.5;
+  ud.cable.scale.y=L/5;ud.cable.position.y=-L/2;ud.hook.position.y=-L;ud.hook.visible=ud.cable.visible;
+  krokSwing(ud,km,dtr,L+.5+below*.7);
+  const yh=-L-KROK_HOOK_H,yt=yh-sl;
+  krokSlings(ud,!!ld,yh,yt,ld?ld.b.hx*ld.s:0,ld?ld.b.hz*ld.s:0);
+  if(!ld)return;
+  // the centre of gravity under the hook: the middle of the model's box where the slings take it
+  _kv.set(-ld.b.c.x*ld.s,yt-ld.b.c.y*ld.s,-ld.b.c.z*ld.s);
+  if(!ld.unit){ld.o.position.copy(_kv);return;}
+  ud.sw.updateMatrixWorld(true);ud.sw.localToWorld(_kv);const pr=ld.o.parent;if(pr){pr.updateMatrixWorld(true);pr.worldToLocal(_kv);}ld.o.position.copy(_kv);
+  ud.sw.getWorldQuaternion(_kq);if(pr){pr.getWorldQuaternion(_kq2);_kq.premultiply(_kq2.invert());}ld.o.quaternion.copy(_kq);ld.o.userData.hung=true;}
 function charred(g){if(!CHAR_M){CHAR_M=new THREE.MeshLambertMaterial({color:0x1f1c1a});CHAR_M2=new THREE.MeshLambertMaterial({color:0x3a2a22});CHAR_M.userData.shared=CHAR_M2.userData.shared=true;}
   g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.material=CHAR_M;});return g;}
 const headOf=m=>m.userData.head||m.userData.tur||null;
@@ -5547,6 +5592,7 @@ function sync3D(dtr){
     let m=R3.units.get(u.id);if(!m){m=mkUnitMesh(u);D.add(m);R3.units.set(u.id,m);}
     m.visible=!(u.kind==='mus'&&u.carried);if(!m.visible)continue;
     if(u.carried){const kk=G.kroks.find(x=>x.id===u.carried);if(kk){m.position.set(kk.x,unitY(kk,0)-8,kk.y);m.rotation.y=-kk.heading;continue;}}
+    /* set down: the swing under the hook goes */if(m.userData.hung){m.rotation.x=m.rotation.z=0;m.userData.hung=false;}
     m.position.set(u.x,unitY(u,dtr),u.y);m.rotation.y=-u.heading;
     if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
     if(m.userData.rockets)m.userData.rockets.forEach((r,i)=>r.visible=i<u.ammo);
@@ -5562,7 +5608,7 @@ function sync3D(dtr){
     for(const id of R3.uwake.keys())if(!live.has(id))R3.uwake.delete(id);}
   for(const[id,m]of R3.units)if(!seen.has(id)){const u=G.units.find(v=>v.id===id);if(u&&u.dead&&WRECK_KINDS.own.has(u.kind))blowApart(m,null,headOf(m));D.remove(m);R3.units.delete(id);}
   for(const ke of G.kroks){let km=R3.kroks.get(ke.id);if(!km){km=mkUnitMesh(ke);D.add(km);R3.kroks.set(ke.id,km);}
-    km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;km.userData.hook.visible=!!ke.carry;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;krokLoad3D(ke,km);}
+    km.position.set(ke.x,unitY(ke,dtr),ke.y);km.rotation.y=-ke.heading;for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;km.userData.cable.visible=!!ke.carry||ke.state==='hook'||!!ke.cargo||ke.low;km.visible=!ke.dead;krokLoad3D(ke,km,dtr);}
   if(TITLE.on&&TITLE.land)titleLandingApply(dtr);
   seen.clear();
   for(const st of G.structs){if(st.dead)continue;seen.add(st.id);if(!R3.structs.has(st.id)){const m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}}

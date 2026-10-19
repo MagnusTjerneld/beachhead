@@ -245,8 +245,13 @@ function mkUnitMesh(u){
     for(const z of[-1,1]){strut([-3.4,.55,z*1.85],[-3.4,-2.4,z*2.15],.2);strut([-1.4,.3,z*.6],[-3.3,-1.2,z*2.05],.11);wheel(-3.4,-2.55,z*2.15);}
     // winch under the bay, lamp and anti-collision light
     g.add(mesh(box(.9,.5,.9),DK,1.2,-.1,0));g.add(mesh(box(.5,.2,.5),R3.lampMat,5.2,-1.45,0));g.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.2,1.6,0));
-    const hook=mesh(box(1,1,1),mat(0x2a2a2a),0,-6,0);hook.visible=false;g.add(hook);g.userData.hook=hook;
-    const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-3,0);cable.visible=false;g.add(cable);g.userData.cable=cable;
+    /* the wire hangs from a swing point under the winch (decided 19 okt, issue 49): wire, hook and load swing together. The hook is
+       a crane hook: a sheave block, a short shank and an open hook, KROK_HOOK_H long from the wire to the bite */
+    const sw=new THREE.Group();sw.position.y=-.5;g.add(sw);g.userData.sw=sw;
+    const hook=new THREE.Group();hook.add(mesh(box(.55,.75,.36),Y,0,-.42,0));for(const z of[-.19,.19])hook.add(mesh(box(.42,.55,.04),DK,0,-.42,z));
+    hook.add(mesh(cyl(.06,.06,.4,6),MET,0,-.98,0));const bite=mesh(new THREE.TorusGeometry(.26,.07,5,12,PI*1.4),DK,0,-1.38,0);bite.rotation.z=PI/2;hook.add(bite);
+    hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
+    const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
   }
   {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
