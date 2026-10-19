@@ -1,6 +1,6 @@
 // Field test (16 okt): wings on real islands, ordered through the same function as a click on the chart (groupOrder), with the enemy
 // known as after scouting. Five missions on each island: two VARG at the nearest air defence, three VARG and an offensive HÖK at the
-// nearest bunker, two VARG to the far relay, VARG and BÄVER to the same point, and a SPARV out 350 m inland and back. For each unit it
+// nearest bunker, two VARG to the far relay, VARG and BÄVER to the same point, and a GETING out 350 m inland and back. For each unit it
 // measures the first planned route (length and share over water), the distance driven while advancing (Anfaller, Samlas, Söker, På väg;
 // retreats and service trips are not counted), time in the water, the longest time standing still with an order, how close an aircraft
 // came to air defence it was not attacking, and time with no way through. It flags what looks wrong; a flag is a lead, not a failure.
@@ -62,7 +62,7 @@ for(const seed of SEEDS){let G=setup(seed);const L=B.W.landing,start=()=>{const 
   if(want('punkt')){G=setup(seed);const us=place(G,[TANK,TANK]);select(G,us,true);B.groupOrder({world:tp});run(G,'2 VARG till punkt'+bak(tp),seed,us,dist(start(),tp),()=>us.every(u=>u.dead||dist(u,tp)<40));}
   if(want('baver')){G=setup(seed);const us=place(G,[TANK,BV]);select(G,us,true);B.groupOrder({world:tp});run(G,'VARG och BÄVER till punkt'+bak(tp),seed,us,dist(start(),tp),()=>us.every(u=>u.dead||dist(u,tp)<40));}
   if(want('sparv')){G=setup(seed);const c={x:1100,y:1100},d=dist(L,c)||1,sp0={x:L.x+(c.x-L.x)/d*350,y:L.y+(c.y-L.y)/d*350};const us=place(G,[SP,TANK]),sp=us[0];select(G,[sp],false);B.groupOrder({world:sp0});let back=false,bt=0;
-    run(G,'SPARV ut och hem',seed,[sp],2*dist(start(),sp0),t=>back&&(sp.dead||dist(sp,L)<40||!sp.orders.length)&&t-bt>5,t=>{if(!back&&(dist(sp,sp0)<30||t>60)){back=true;bt=t;select(G,[sp],false);B.groupOrder({world:{x:L.x,y:L.y}});}});}
+    run(G,'GETING ut och hem',seed,[sp],2*dist(start(),sp0),t=>back&&(sp.dead||dist(sp,L)<40||!sp.orders.length)&&t-bt>5,t=>{if(!back&&(dist(sp,sp0)<30||t>60)){back=true;bt=t;select(G,[sp],false);B.groupOrder({world:{x:L.x,y:L.y}});}});}
 }
 out('ö | uppdrag | enhet | första planerade väg | körd i framryckning | körd totalt | fågelväg | | tid | vanligaste lägen');for(const r of rows)out(r);
 out('\nFLAGGOR ('+flags.length+'):');for(const f of flags)out(f);
