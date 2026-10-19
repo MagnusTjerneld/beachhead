@@ -46,7 +46,13 @@ function run(G,name,seed,us,straight,done,extra){
     rows.push([seed,name,u.kind,'plan '+(r.plan==null?'-':r.plan+' m ('+r.planWet+' % vatten)'),'fram '+Math.round(r.atk)+' m','totalt '+Math.round(r.len)+' m','fågelväg '+Math.round(straight)+' m',u.dead?'död':'',Math.round(t)+' s',top].join(' | '));
     if(f.length)flags.push(seed+' '+name+' '+u.kind+' '+u.id+': '+f.join(', ')+'  ['+top+']');}}
 /* a target behind an unblown barrier: "ingen väg" is then the game saying so, not a fault (19 okt, issue 63) */
-const bak=t=>B.lockedAt(t.lx??t.x,t.ly??t.y)?' (målet bakom spärr)':'';
+/* the way there can run through a barrier also when the target is not in a locked zone: the route then goes round it, often by sea
+   (ö 1234, 19 okt: 2.5 km against 0.9 km with the barriers blown). The route from the landing with and without unblown barriers */
+const viaBarrier=t=>{const L=B.W.landing,c={x:1100,y:1100},d=dist(L,c)||1,a={x:L.x+(c.x-L.x)/d*40,y:L.y+(c.y-L.y)/d*40},tx=t.lx??t.x,ty=t.ly??t.y;
+  const g=B.W.grid,pass=i=>g[i]!==4&&g[i]!==5,len=p=>{if(!p)return null;let n=0,q=a;for(const r of p){n+=dist(q,r);q=r;}return n;};
+  const with_=len(B.astar(a.x,a.y,tx,ty,pass,()=>1)),kept=[];for(const b of B.G.barriers)if(!b.cleared)for(const i of b.cells){kept.push([i,g[i]]);g[i]=B.W.baseGrid[i];}
+  const without=len(B.astar(a.x,a.y,tx,ty,pass,()=>1));for(const[i,v]of kept)g[i]=v;return without!=null&&(with_==null||with_>Math.max(without*1.5,without+300));};
+const bak=t=>B.lockedAt(t.lx??t.x,t.ly??t.y)?' (målet bakom spärr)':viaBarrier(t)?' (vägen går genom spärr)':'';
 const TANK='tank',HOK='drone',SP='scout',BV='eng';
 for(const seed of SEEDS){let G=setup(seed);const L=B.W.landing,start=()=>{const c={x:1100,y:1100},d=dist(L,c)||1;return{x:L.x+(c.x-L.x)/d*40,y:L.y+(c.y-L.y)/d*40};};
   const near=k=>G.enemies.filter(e=>!e.dead&&e.kind===k).sort((a,b)=>dist(a,L)-dist(b,L))[0];
