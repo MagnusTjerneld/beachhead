@@ -1026,6 +1026,20 @@ function buildWorldTry(seed,tryK,type,move){
        the least sideways she can */
     let viaC=!!Bq;if(!Bq){let bs=9;for(let lt=KAJ.app;lt<=KAJ.p0;lt+=15)for(let li=-60;li>=-150;li-=15){const q=KP(li,lt),sc=Math.atan2(-KAJ.off-li,Math.abs(KAJ.c-lt)+1);if(sc>=bs||q.x<60||q.y<60||q.x>WW-60||q.y>WH-60)continue;if(roomOK(q)&&glideOK(q,dock,2)){bs=sc;Bq=q;}}}
     let noBerth=false;if(!Bq){Bq=KP(-70,KAJ.app-20);viaC=true;noBerth=true;}/* none clear: the old way in, and the island is tried again (validWorld) */
+    /* the slanting way in (20 okt, Magnus: she still turned too close to land, and with thrusters she can come in sideways or at a
+       slant). She runs in on one straight line at a slant to the quay, bow first, from open water (E) to Cq off the quay; from Bq on,
+       her thrusters turn her parallel to the quay while she keeps to the line, so she makes no turn near land at all. Where land
+       near the quay leaves no room to turn there, she turns further out and crabs the last Ls metres, sideways or at a slant,
+       parallel to the quay. The line is the one with the most room between her hull, at each point's heading, and land (less
+       close to Cq, where the quay is), and of those the least slanting, then the shortest crab. The turn on the spot above is kept
+       for a harbour where no line is clear */
+    const turnH=(f,h0)=>h0+angWrap(dock.a-h0)*(f<=0?0:f>=1?1:f*f*(3-2*f));let D=null;
+    for(const m of[15,10,6]){for(const th of[20,30,40,50,60,75,90]){for(const Ls of[0,40,80,120]){const ta=th*PI/180,ux=Math.cos(ta)*H.ny-Math.sin(ta)*H.nx,uy=-Math.cos(ta)*H.nx-Math.sin(ta)*H.ny,h0=Math.atan2(uy,ux)+PI;
+        const Lr=clamp(th*2.5,60,150),Li=140,L=Ls+Lr+Li,E={x:Cq.x-ux*L,y:Cq.y-uy*L},Bd={x:Cq.x-ux*(Ls+Lr),y:Cq.y-uy*(Ls+Lr)};
+        if(E.x<60||E.y<60||E.x>WW-60||E.y>WH-60||Dc[cellIdx(E.x,E.y)]<4||!lineWet(E,Cq))continue;
+        let ok=true;const n=Math.ceil(L/6);for(let k=0;k<=n&&ok;k++){const d=L*(1-k/n),x=Cq.x-ux*d,y=Cq.y-uy*d;if(!hullOK(x,y,d>Ls+Lr?h0:turnH(1-(d-Ls)/Lr,h0),Math.min(m,3+d*.25)))ok=false;}
+        if(ok&&glideOK(Cq,dock,0)){D={E,Bq:Bd,h0,Ls};break;}}if(D)break;}if(D)break;}
+    if(D){A=D.E;Bq=D.Bq;viaC=true;noBerth=false;}
     if(A&&lineWet(A,Bq)&&lineWet(Bq,Cq)&&lineWet(Cq,dock)){const ok=i=>Dc[i]>=4,cells=astarCells(cellIdx(CARRIER.x,CARRIER.y),cellIdx(A.x,A.y),ok,i=>1+(Dc[i]<8?(8-Dc[i])*.5:0));
       if(cells){let pts=[{x:CARRIER.x,y:CARRIER.y},...cells.map(cellCenter)];pts[pts.length-1]=A;
         // straighten (longest clear runs), then round the corners
@@ -1034,9 +1048,10 @@ function buildWorldTry(seed,tryK,type,move){
         // cut the long legs into 40 m pieces before rounding: rounding a corner between two 400 m legs cuts up to 100 m off it,
         // straight across the headland the corner went round (fixed 14 okt)
         const sub=[];for(const q of[...sp,Bq]){const l=sub[sub.length-1];if(l){const d=Math.hypot(q.x-l.x,q.y-l.y),n=Math.ceil(d/40);for(let k=1;k<n;k++)sub.push({x:l.x+(q.x-l.x)*k/n,y:l.y+(q.y-l.y)*k/n});}sub.push(q);}
-        /* rounded up to Bq; the glide from Bq is straight */
+        /* rounded up to Bq, so the corner where the slanting line starts at E is rounded too; the glide from Bq is straight */
         pts=chaikin(chaikin(chaikin(sub)));if(viaC)pts.push(Bq,Cq,dock);else pts.push(Bq,dock);
-        const len=[0];for(let k=1;k<pts.length;k++)len.push(len[k-1]+Math.hypot(pts[k].x-pts[k-1].x,pts[k].y-pts[k-1].y));W.birkaPath={pts,len,L:len[len.length-1],sB:len[len.length-(viaC?3:2)],noBerth};}}}
+        const len=[0];for(let k=1;k<pts.length;k++)len.push(len[k-1]+Math.hypot(pts[k].x-pts[k-1].x,pts[k].y-pts[k-1].y));W.birkaPath={pts,len,L:len[len.length-1],sB:len[len.length-(viaC?3:2)],noBerth};
+        if(D)Object.assign(W.birkaPath,{slant:true,sC:len[len.length-2],sR:len[len.length-2]-D.Ls,h0:D.h0});}}}
   // distance to the path's segments, not just its corner points: a straightened leg can be 800 m long with nothing in between,
   // and a holm placed in the middle of one put Birka's way over land (fixed 14 okt)
   const segD=(px,py,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy||1;let t=((px-a.x)*dx+(py-a.y)*dy)/l2;t=t<0?0:t>1?1:t;return Math.hypot(a.x+dx*t-px,a.y+dy*t-py);};
@@ -1900,11 +1915,19 @@ function harborTick(dt){const H=G.harbor;if(!H||H.docked)return;
   /* she sails bow first, and her bow is the model's -z end, so CARRIER.a points against the way she goes (decided 18 okt) */
   /* from Bq (P.sB) she holds the berth's heading and glides in on her thrusters, at most M.glide m/s; before it she slows so that she
      has turned to that heading when she gets there */
-  const rem=P.L-H.s,gl=P.sB!=null&&H.s>=P.sB-1,p0=at(H.s),p1=at(H.s+20),tgt=rem>20&&!gl?Math.atan2(p1.y-p0.y,p1.x-p0.x)+PI:WORLD.harbor.dock.a,err=angWrap(tgt-CARRIER.a);
+  const rem=P.L-H.s,gl=P.sB!=null&&H.s>=P.sB-1,p0=at(H.s),p1=at(H.s+20),da=WORLD.harbor.dock.a;
+  /* on the slanting way in she turns parallel to the quay between Bq and Cq while she keeps to the line, smoothly */
+  const sf=P.slant&&gl?clamp((H.s-P.sB)/((P.sR-P.sB)||1),0,1):0,tgt=P.slant&&gl?P.h0+angWrap(da-P.h0)*sf*sf*(3-2*sf):rem>20&&!gl?Math.atan2(p1.y-p0.y,p1.x-p0.x)+PI:da,err=angWrap(tgt-CARRIER.a);
   let vt=M.vmax*clamp(1-Math.abs(err)/(PI/3),.15,1);vt=Math.min(vt,Math.sqrt(2*M.dec*Math.max(0,rem)));
   /* and slowly enough in a bend that her turn rate keeps up with it: at 20 knots her stern swung over a shore in a tight bend */
-  if(!gl){const p2=at(H.s+45),p3=at(H.s+70),k=Math.abs(angWrap(Math.atan2(p3.y-p2.y,p3.x-p2.x)-Math.atan2(p1.y-p0.y,p1.x-p0.x)));if(k>.02)vt=Math.min(vt,Math.max(1.5,M.turn*PI/180*50/k*.7));}
-  if(P.sB!=null){const toB=P.sB-H.s,eB=Math.abs(angWrap(WORLD.harbor.dock.a-CARRIER.a));if(gl)vt=Math.min(vt,M.glide*clamp(1-eB/(PI/12),0,1));/* at Bq she turns on the spot with her thrusters before gliding */else vt=Math.min(vt,Math.sqrt(2*M.dec*Math.max(0,toB))+M.glide);}
+  if(!gl){const p2=at(H.s+45),p3=at(H.s+70),k=Math.abs(angWrap(Math.atan2(p3.y-p2.y,p3.x-p2.x)-Math.atan2(p1.y-p0.y,p1.x-p0.x)));if(k>.02)vt=Math.min(vt,Math.max(1.5,M.turn*PI/180*50/k*.7));
+    /* and from her heading as it is now: a sharp corner where she slows too late leaves her drifting sideways through it (20 okt) */
+    for(let d=0;d<=160;d+=20){const q0=at(H.s+d),q1=at(H.s+d+15),e2=Math.abs(angWrap(Math.atan2(q1.y-q0.y,q1.x-q0.x)+PI-CARRIER.a));if(e2>.05){const vc=Math.max(1.5,M.turn*PI/180*40/e2*.8);vt=Math.min(vt,Math.sqrt(vc*vc+2*M.dec*1.5*d));}}}
+  if(P.slant){/* sideways she goes at most M.glide m/s on her thrusters: on the line she is slowed, from Bq on, to what keeps her
+       sideways speed under it once she has turned, and she turns no faster than her turn rate lets her */
+    const th=Math.abs(angWrap(da-P.h0)),vS=Math.min(M.vmax,M.glide/Math.max(.2,Math.sin(Math.min(th,PI/2))),Math.max(1.5,M.turn*PI/180*(P.sR-P.sB)/Math.max(.05,th)*.8));
+    if(gl&&H.s<P.sC)vt=Math.min(vt,vS);else if(gl)vt=Math.min(vt,M.glide);else vt=Math.min(vt,Math.sqrt(2*M.dec*Math.max(0,P.sB-H.s))+vS);}
+  else if(P.sB!=null){const toB=P.sB-H.s,eB=Math.abs(angWrap(WORLD.harbor.dock.a-CARRIER.a));if(gl)vt=Math.min(vt,M.glide*clamp(1-eB/(PI/12),0,1));/* at Bq she turns on the spot with her thrusters before gliding */else vt=Math.min(vt,Math.sqrt(2*M.dec*Math.max(0,toB))+M.glide);}
   H.v=H.v<vt?Math.min(vt,H.v+M.acc*dt):Math.max(vt,H.v-M.dec*2*dt);H.s=Math.min(P.L,H.s+H.v*dt);
   const p=at(H.s),na=CARRIER.a+clamp(err,-M.turn*PI/180*dt,M.turn*PI/180*dt);moveCarrier(p.x,p.y,na);
   if(P.L-H.s<.3&&H.v<.25&&Math.abs(angWrap(WORLD.harbor.dock.a-CARRIER.a))<.03){const d=WORLD.harbor.dock;moveCarrier(d.x,d.y,d.a);H.docked=true;H.v=0;H.dockT=G.time;
@@ -3778,7 +3801,7 @@ globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return 
    object), the island's grid as it stands and Birka's place. A save in another save format is not loaded: the game says so instead.
    SAVE.ver is raised by hand whenever what a save holds, or the island built from a number, changes (decided 19 okt, Magnus), so
    most saves outlive a new version of the game */
-const SAVE={ver:2,/* 2: 19 okt, Birkas väg in till kajen och öar där hon inte kan lägga till görs om */pre:'bh.save.',auto:['a0','a1','a2'],man:'m',every:60,lastT:-1,wasPaused:false};
+const SAVE={ver:3,/* 2: 19 okt, Birkas väg in till kajen och öar där hon inte kan lägga till görs om; 3: 20 okt, den sneda angöringen */pre:'bh.save.',auto:['a0','a1','a2'],man:'m',every:60,lastT:-1,wasPaused:false};
 const GAME_VER='s'+SAVE.ver;
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return typeof btoa!=='undefined'?btoa(s):Buffer.from(s,'binary').toString('base64');};
 const unb64=t=>{const s=typeof atob!=='undefined'?atob(t):Buffer.from(t,'base64').toString('binary'),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
