@@ -166,23 +166,31 @@ function mkUnitMesh(u){
     tur.add(mesh(box(.6,.7,.9),GUN,1.75,.1,0));const b=mesh(cyl(.2,.22,4.4,8),GUN,3.6,.1,0);b.rotation.z=PI/2;tur.add(b);tur.add(mesh(box(.5,.34,.42),GUN,5.75,.1,0));
     tur.add(mesh(cyl(.025,.025,1.8,4),DK,-1.3,1.5,.9));g.add(tur);g.userData.tur=tur;}
   else if(u.kind==='eng'){
-    // BÄVER: the engineer vehicle. Six wheels with fenders, a dozer blade in front, a cab with windows and a roof beacon,
-    // a jib crane with hook block, ladder, toolboxes, exhaust stack
-    const Y=mat(0xe0b02e),Y2=mat(0xc89a24),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),GL=mat(0x9fd3e6),T=mat(u.color),MET=mat(0x7d7a72);
-    g.add(mesh(box(6,1.0,3.4),DK,0,1.05,0));
-    for(const x of[-2.1,0,2.1])for(const z of[-1.75,1.75]){const w=mesh(cyl(.75,.75,.55,12),BLK,x,.75,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.3,.3,.58,8),MET,x,.75,z);hb.rotation.x=PI/2;g.add(hb);}
-    for(const z of[-1.75,1.75])g.add(mesh(box(6.2,.12,.75),Y2,0,1.62,z));
-    g.add(mesh(box(5.6,1.4,4),Y,0,2.25,0));g.add(mesh(box(5.66,.4,4.06),T,0,3.05,0));
-    g.add(mesh(box(2.2,2,3.2),mat(0xe8c24a),2,4,0));g.add(mesh(box(.9,.9,3),GL,3.2,4.3,0));for(const z of[-1.62,1.62])g.add(mesh(box(1.3,.7,.06),GL,1.9,4.35,z));
-    g.add(mesh(box(2.3,.12,3.3),Y2,2,5.06,0));g.add(mesh(cyl(.18,.2,.25,8),mat(0xf0a020),1.5,5.25,-1));
-    for(const z of[-1.4,1.4])g.add(mesh(box(.2,.36,.6),R3.lampMat,3.06,1.2,z));
-    const bl=mesh(box(.35,1.3,4.6),Y2,3.75,.85,0);bl.rotation.z=.18;g.add(bl);g.add(mesh(box(.15,.2,4.6),MET,3.95,.25,0));
-    for(const z of[-1.4,1.4]){const arm=mesh(box(1.1,.2,.25),DK,3.2,1.0,z);arm.rotation.z=-.3;g.add(arm);}
-    g.add(mesh(box(.5,3.6,.5),Y,-1.6,4.8,1.7));const jib=mesh(box(5.6,.4,.4),Y,.8,6.3,1.7);jib.rotation.z=-.22;g.add(jib);
-    const brace=mesh(box(2.2,.18,.18),Y2,-.6,5.6,1.7);brace.rotation.z=.6;g.add(brace);
-    g.add(mesh(cyl(.05,.05,2.2,4),mat(0x222222),3.4,4.6,1.7));g.add(mesh(box(.7,.5,.7),mat(0x2a2a2a),3.4,3.4,1.7));g.add(mesh(box(.25,.35,.25),MET,3.4,3.0,1.7));
-    for(let i=0;i<5;i++)g.add(mesh(box(.06,.06,.5),MET,-2.85,1.8+i*.4,-1.2));for(const z of[-1.45,-.95])g.add(mesh(box(.06,2,.06),MET,-2.85,2.6,z));
-    g.add(mesh(box(1.2,.6,.7),DK,-1.8,3.55,-1.3));g.add(mesh(cyl(.12,.12,1.6,6),BLK,-.4,4.0,-1.75));}
+    /* BÄVER: an engineer vehicle in field olive (decided 21 okt, Magnus, issue 68: more of an engineer unit, and not bright yellow,
+       which shows too much in the field). An armoured six-wheeler with a sloped glacis, a dozer blade with a yellow and black warning
+       edge, an excavator arm lying along the roof with its yellow bucket down at the front, a low armoured cab on the left with narrow
+       vision blocks, stowage boxes, a rear winch, an amber beacon, an antenna and a band in its own colour; yellow only as a warning */
+    const OL=mat(0x4f5b38),OL2=mat(0x434d30),OL3=mat(0x5b6842),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),GL=mat(0x5d7a86),YE=mat(0xe0b02e),T=mat(u.color);
+    for(const x of[-2.1,0,2.1])for(const z of[-1.75,1.75]){const w=mesh(cyl(.78,.78,.55,12),BLK,x,.78,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.3,.3,.58,8),MET,x,.78,z);hb.rotation.x=PI/2;g.add(hb);}
+    g.add(mesh(box(6,1.0,3.0),OL2,0,1.15,0));
+    g.add(mesh(box(4.8,1.3,3.6),OL,-.5,2.25,0));const gl=mesh(box(1.8,1.25,3.6),OL,2.35,2.0,0);gl.rotation.z=-.62;g.add(gl);
+    for(const z of[-1.82,1.82])g.add(mesh(box(6.1,.5,.12),OL3,0,1.75,z));
+    g.add(mesh(box(4.86,.1,3.66),T,-.5,2.92,0));
+    for(const z of[-1.35,1.35])g.add(mesh(box(.2,.3,.5),R3.lampMat,3.02,1.55,z));
+    g.add(mesh(box(1.9,1.0,1.9),OL3,.8,3.4,-.75));g.add(mesh(box(.08,.22,1.4),GL,1.76,3.55,-.75));g.add(mesh(box(.9,.2,.06),GL,.9,3.55,-1.71));
+    g.add(mesh(cyl(.17,.19,.24,8),mat(0xf0a020),.4,4.02,-1.2));g.add(mesh(cyl(.025,.025,2.2,4),DK,-.3,5.0,-1.4));
+    const bl=mesh(box(.32,1.2,4.0),OL2,3.85,.95,0);bl.rotation.z=.15;g.add(bl);
+    for(let i=0;i<8;i++)g.add(mesh(box(.34,.22,.5),i%2?BLK:YE,3.95,1.62,-1.75+i*.5));
+    g.add(mesh(box(.14,.18,4.0),MET,4.0,.32,0));for(const z of[-1.2,1.2]){const a=mesh(box(1.3,.22,.25),DK,3.2,1.05,z);a.rotation.z=-.25;g.add(a);}
+    g.add(mesh(cyl(.6,.65,.45,12),OL3,-2.0,3.12,.85));const boom=mesh(box(4.0,.44,.5),OL,0,3.62,.85);boom.rotation.z=.03;g.add(boom);
+    g.add(mesh(cyl(.08,.08,2.6,6),MET,-.3,3.95,.85).rotateZ(PI/2));
+    const st=mesh(box(1.5,.38,.42),OL,2.15,3.15,.85);st.rotation.z=-1.05;g.add(st);
+    const bk=mesh(box(.75,.6,.95),YE,2.75,2.55,.85);bk.rotation.z=-.4;g.add(bk);for(let i=0;i<4;i++)g.add(mesh(box(.12,.18,.12),MET,3.05,2.25,.52+i*.22));
+    g.add(mesh(box(1.2,.55,.6),OL3,-.9,3.15,-1.35));g.add(mesh(box(1.0,.5,1.0),OL3,-2.4,3.12,-.8));
+    for(const z of[-.5,0,.5])g.add(mesh(box(.12,.5,.36),OL2,-3.0,2.4,z));
+    g.add(mesh(cyl(.3,.3,1.4,10),DK,-3.05,1.35,0).rotateX(PI/2));
+    for(let i=0;i<6;i++)g.add(mesh(box(.06,.18,.45),i%2?BLK:YE,-3.04,1.8,-1.25+i*.5));
+    for(const z of[-1.3,1.3])g.add(mesh(box(.06,.2,.3),mat(0xb02a20),-3.04,1.25,z));}
   else if(u.kind==='scout'){
     // SPARV: a small quadcopter with arms, rotor guards, a camera gimbal, a battery pack and four thin legs
     const D=mat(0x30363c),M=mat(0x6a737a);g.userData.spin=[];
