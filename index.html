@@ -3129,6 +3129,13 @@ function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried
   const D=wayFrom(u),du=Math.hypot(u.x-e.lx,u.y-e.ly),far=(q,rq)=>{const w=D[cellIdx(q.x,q.y)];return !(w<=Math.max(0,du-rq)*1.5+60);};
   let best=null,bx=1e9;
   for(const da of[0,.25,-.25,.5,-.5,.8,-.8])for(const rr of[R,R*.9]){const a=want+da,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};if(!okAt(p)||far(p,rr))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break;}
+  /* every spot near its own place is covered by another known gun (prov 20 okt, ö 9949: T8 stood 60 m from T10 and reached all of
+     VARG-1's side, and it stood 126 m from T8 while VARG-2 had a free spot on the far side): it looks round the whole arc, nearest its
+     own place first, the same rule for the way there, and not on a spot another VARG has; two on the same safe side beat one in a
+     crossfire */
+  if(best&&bx>0){const taken=atk.filter(v=>v!==u&&v.orders[0].arc).map(v=>v.orders[0].arc);
+    wide:for(let k=4;k<=12;k++)for(const sg of[1,-1])for(const rr of[R,R*.9]){const a=want+sg*k*.25,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};
+      if(!okAt(p)||far(p,rr)||taken.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<25))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break wide;}}
   if(!best)return null;const{p,a,rr}=best;
   // the staging point on the same bearing, just outside the target's own reach, pushed further out while other known weapons cover it;
   // a target that cannot fire on vehicles (air defence: its range is against aircraft) needs no staging, so they go straight in

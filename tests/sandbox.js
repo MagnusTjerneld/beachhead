@@ -37,6 +37,7 @@ const SC={
   pvlv:{txt:'2 VARG mot två pansarvärnslag under ett luftvärn (som vid spärren i inspelningen på ö 1234, skog utan skydd)',own:{tank:2},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],need:[0,1]},
   pvdold:{txt:'2 VARG (Offensiv) kör till en punkt 100 m framför två dolda pansarvärnslag som ingen sett (som på ö 9949, 19 okt: de syns bara när de skjuter)',own:{tank:2},def:[['at',0,-30],['at',10,40]],plan:'point',to:-100,hide:[0,1]},
   getpvlv:{txt:'som pvlv, och kaptenen skickar en GETING på vart och ett av pansarvärnslagen',own:{tank:2,get:['def','def']},def:[['at',0,-30],['at',10,40],['aa',100,0]],plan:'chain',order:[0,1],need:[0,1],getOn:[0,1]},
+  korseld:{txt:'2 VARG mot två bunkrar 60 m isär, anfall på den ena först (som T10 och T8 på ö 9949, 20 okt: VARG-1 ställde sig där T8 nådde; en HÖK spanar, som GETING där)',own:{tank:2,hok:['def']},def:[['turret',0,0],['turret',10,60]],plan:'chain',order:[0,1]},
   motanfall:{txt:'3 VARG står kvar och tar emot två stridsvagnar och ett lätt pansarfordon som rycker ut mot dem',
     own:{tank:3},def:[['tank',0,-30],['tank',0,30],['light',20,0]],plan:'hold',dist:330}
 };
