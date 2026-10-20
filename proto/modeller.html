@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><title>Nya modeller: KROK och BÄVER</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#cfd8de;overflow:hidden;font:14px system-ui,sans-serif}#lbl{position:fixed;left:12px;top:10px;color:#1b2630;font-weight:600}</style>
+</head><body><div id="lbl"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Prototypes for issue 68 (Magnus 20 okt): KROK as an unmanned tandem-rotor helicopter in the spirit of the Swedish Hkp 4, and BÄVER
+   as an engineer vehicle in field olive with yellow warning details. Pictures only (decided 20 okt): nothing here is in the game yet.
+   The helpers, light and scale are the game's, so the models read as they would there. No real names, logos or copied shapes. */
+const PI=Math.PI,TAU=PI*2,MATS=new Map(),GEOS=new Map();
+function mat(c){const key='#'+c.toString(16).padStart(6,'0');if(!MATS.has(key))MATS.set(key,new THREE.MeshLambertMaterial({color:new THREE.Color(key)}));return MATS.get(key);}
+function box(w,h,d){const k='b'+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
+function cyl(a,b,h,n){const k='c'+a+','+b+','+h+','+n;if(!GEOS.has(k))GEOS.set(k,new THREE.CylinderGeometry(a,b,h,n));return GEOS.get(k);}
+function mesh(geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x||0,y||0,z||0);return o;}
+function rotor(n,len,w,tip,col){const r=new THREE.Group();r.add(mesh(cyl(w*.9,w*.9,w*.8,8),mat(0x22282e),0,0,0));
+  for(let i=0;i<n;i++){const b=new THREE.Group();b.rotation.y=i*TAU/n;b.add(mesh(box(len,w*.3,w),mat(col||0x22282e),len/2,0,0));b.add(mesh(box(len*.12,w*.32,w*1.02),mat(tip||0xd8dde0),len*.94,0,0));r.add(b);}
+  return r;}
+
+/* KROK, tandem: a long boxy fuselage with a rounded unmanned nose (a sensor ball instead of a cockpit), a low forward rotor pylon and a
+   tall aft pylon with the two engines on its flanks, two three-blade rotors that overlap with the aft one higher, side sponsons
+   with the main wheels, twin nose wheels, the loading ramp at the back and the cargo hook under the middle of the belly */
+function krokTandem(){const g=new THREE.Group(),Y=mat(0xd9a63a),Y2=mat(0xc4922e),DK=mat(0x2a2c30),MET=mat(0x7d7a72),BLK=mat(0x1b1c1e),SEN=mat(0x111418),RED=mat(0xd03a2a);
+  g.add(mesh(box(10.6,2.3,2.3),Y,0,1.75,0));
+  const nose=mesh(new THREE.SphereGeometry(1.25,12,10),Y,5.3,1.65,0);nose.scale.set(1.15,.92,.92);g.add(nose);
+  g.add(mesh(box(1.4,.5,2.1),DK,5.0,2.55,0));                                          // a dark sensor band where a windscreen would be
+  g.add(mesh(new THREE.SphereGeometry(.38,10,8),SEN,6.2,.95,0));                         // sensor ball under the nose
+  g.add(mesh(box(10.4,.14,2.34),Y2,0,1.0,0));                                            // a belt line
+  // the forward pylon, low, and its rotor
+  g.add(mesh(box(2.4,.8,1.5),Y,3.9,3.2,0));g.add(mesh(cyl(.25,.3,.6,8),DK,4.3,3.75,0));
+  const r1=rotor(3,6.4,.42,0xd9a63a);r1.position.set(4.3,4.05,0);g.add(r1);
+  // the aft pylon rising out of the fuselage, the engines on its flanks, its rotor higher than the forward one
+  const py=mesh(box(3.2,2.2,1.6),Y,-4.3,3.6,0);g.add(py);const pt=mesh(box(1.6,1.2,1.4),Y,-4.8,5.0,0);pt.rotation.z=.25;g.add(pt);
+  for(const z of[-1.05,1.05]){const e=mesh(cyl(.42,.42,2.6,10),Y2,-3.8,3.7,z);e.rotation.z=PI/2;g.add(e);g.add(mesh(cyl(.3,.3,.08,10),BLK,-2.48,3.7,z).rotateZ(PI/2));g.add(mesh(cyl(.32,.25,.5,8),DK,-5.3,3.7,z).rotateZ(PI/2));}
+  g.add(mesh(cyl(.25,.3,.6,8),DK,-5.0,5.75,0));const r2=rotor(3,6.4,.42,0xd9a63a);r2.position.set(-5.0,6.05,0);r2.rotation.y=PI/3;g.add(r2);
+  // the loading ramp under the tail, a dark seam round it
+  const rp=mesh(box(.12,1.7,2.0),DK,-5.32,1.45,0);rp.rotation.z=-.35;g.add(rp);
+  // side sponsons with the main wheels, twin nose wheels
+  for(const z of[-1.5,1.5]){g.add(mesh(box(4.2,.9,.8),Y2,-1.4,1.05,z));
+    const w=mesh(cyl(.5,.5,.35,12),BLK,-1.6,.5,z*1.18);w.rotation.x=PI/2;g.add(w);g.add(mesh(box(.15,.6,.15),MET,-1.6,.85,z*1.12));}
+  for(const z of[-.4,.4]){const w=mesh(cyl(.4,.4,.28,12),BLK,3.9,.4,z);w.rotation.x=PI/2;g.add(w);}g.add(mesh(box(.15,.7,.5),MET,3.9,.8,0));
+  // the cargo hook in the middle of the belly, with its winch fairing
+  g.add(mesh(box(1.1,.35,.9),DK,-.3,.48,0));g.add(mesh(cyl(.04,.04,.6,4),MET,-.3,.05,0));g.add(mesh(box(.3,.35,.15),MET,-.3,-.35,0));
+  // an orange beacon and red-white rotor-tip warning on the aft pylon, an antenna
+  g.add(mesh(cyl(.14,.16,.22,8),mat(0xf0a020),-2.2,3.0,0));g.add(mesh(box(.5,.08,.06),RED,-5.9,4.6,0));g.add(mesh(cyl(.02,.02,.9,4),DK,1.2,3.3,.6));
+  return g;}
+
+/* BÄVER, engineer vehicle: an armoured six-wheeler with a sloped glacis, a dozer blade with yellow and black warning edge, a folded
+   excavator arm on the roof with a yellow bucket, a low armoured cab with narrow vision blocks, stowage boxes, a rear winch,
+   an amber beacon and an antenna; the hull is field olive */
+function baverIng(){const g=new THREE.Group(),OL=mat(0x4f5b38),OL2=mat(0x434d30),OL3=mat(0x5b6842),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),GL=mat(0x5d7a86),YE=mat(0xe0b02e);
+  // wheels and lower hull
+  for(const x of[-2.1,0,2.1])for(const z of[-1.75,1.75]){const w=mesh(cyl(.78,.78,.55,12),BLK,x,.78,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.3,.3,.58,8),MET,x,.78,z);hb.rotation.x=PI/2;g.add(hb);}
+  g.add(mesh(box(6,1.0,3.0),OL2,0,1.15,0));
+  // the armoured upper hull, sloped at the front, with side skirts over the wheels
+  g.add(mesh(box(4.8,1.3,3.6),OL,-.5,2.25,0));const gl=mesh(box(1.8,1.25,3.6),OL,2.35,2.0,0);gl.rotation.z=-.62;g.add(gl);
+  for(const z of[-1.82,1.82])g.add(mesh(box(6.1,.5,.12),OL3,0,1.75,z));
+  // the cab, low and armoured, on the left with narrow vision blocks, so the arm can lie along the right
+  g.add(mesh(box(1.9,1.0,1.9),OL3,.8,3.4,-.75));g.add(mesh(box(.08,.22,1.4),GL,1.76,3.55,-.75));g.add(mesh(box(.9,.2,.06),GL,.9,3.55,-1.71));
+  g.add(mesh(cyl(.17,.19,.24,8),mat(0xf0a020),.4,4.02,-1.2));g.add(mesh(cyl(.025,.025,2.2,4),DK,-.3,5.0,-1.4));
+  // the dozer blade on two arms, warning edge in yellow and black blocks
+  const bl=mesh(box(.32,1.2,4.0),OL2,3.85,.95,0);bl.rotation.z=.15;g.add(bl);
+  for(let i=0;i<8;i++)g.add(mesh(box(.34,.22,.5),i%2?BLK:YE,3.95,1.62,-1.75+i*.5));
+  g.add(mesh(box(.14,.18,4.0),MET,4.0,.32,0));for(const z of[-1.2,1.2]){const a=mesh(box(1.3,.22,.25),DK,3.2,1.05,z);a.rotation.z=-.25;g.add(a);}
+  // the excavator arm on a slewing base at the rear right, lying along the roof, the stick folded down at the front and the bucket,
+  // yellow as a warning, resting above the glacis
+  g.add(mesh(cyl(.6,.65,.45,12),OL3,-2.0,3.12,.85));const boom=mesh(box(4.0,.44,.5),OL,0,3.62,.85);boom.rotation.z=.03;g.add(boom);
+  g.add(mesh(cyl(.08,.08,2.6,6),MET,-.3,3.95,.85).rotateZ(PI/2));
+  const st=mesh(box(1.5,.38,.42),OL,2.15,3.15,.85);st.rotation.z=-1.05;g.add(st);
+  const bk=new THREE.Group();bk.position.set(2.75,2.55,.85);bk.rotation.z=-.4;bk.add(mesh(box(.75,.6,.95),YE,0,0,0));for(let i=0;i<4;i++)bk.add(mesh(box(.12,.18,.12),MET,.34,-.36,-.33+i*.22));g.add(bk);
+  // stowage boxes, a jerrycan rack, the rear winch, tail lights, and a yellow and black warning panel at the back
+  g.add(mesh(box(1.2,.55,.6),OL3,-.9,3.15,-1.35));g.add(mesh(box(1.0,.5,1.0),OL3,-2.4,3.12,-.8));
+  for(const z of[-.5,0,.5])g.add(mesh(box(.12,.5,.36),OL2,-3.0,2.4,z));
+  g.add(mesh(cyl(.3,.3,1.4,10),DK,-3.05,1.35,0).rotateX(PI/2));
+  for(let i=0;i<6;i++)g.add(mesh(box(.06,.18,.45),i%2?BLK:YE,-3.04,1.8,-1.25+i*.5));
+  for(const z of[-1.3,1.3])g.add(mesh(box(.06,.2,.3),mat(0xb02a20),-3.04,1.25,z));
+  return g;}
+
+const W=innerWidth,H=innerHeight,ren=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});ren.setSize(W,H);ren.setPixelRatio(1);ren.shadowMap.enabled=true;document.body.appendChild(ren.domElement);
+const sc=new THREE.Scene();sc.background=new THREE.Color(0xcfd8de);sc.fog=new THREE.Fog(0xcfd8de,80,220);
+sc.add(new THREE.HemisphereLight(0xdfe9f2,0x6b6a55,.75));const sun=new THREE.DirectionalLight(0xfff2dc,.85);sun.position.set(30,45,22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20});sc.add(sun);
+const gr=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0x7d8a5a));gr.rotation.x=-PI/2;gr.receiveShadow=true;sc.add(gr);
+const q=new URLSearchParams(location.search),v=q.get('v')||'krok-sida';
+const kind=v.split('-')[0],m=kind==='krok'?krokTandem():baverIng();m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+if(kind==='krok'&&!/mark/.test(v))m.position.y=6;sc.add(m);
+const views={'krok-sida':[0,7.5,22,0,7,0],'krok-snett':[15,13,16,0,7,0],'krok-under':[9,2,11,0,7,0],'krok-ovan':[2,30,6,0,6,0],'krok-mark':[13,6,14,0,2.5,0],
+  'baver-sida':[0,3.5,13,0,2,0],'baver-snett':[9,6,9,.5,2,0],'baver-bak':[-9,5,7,0,2,0],'baver-ovan':[1,14,3,0,2,0]};
+const c=views[v]||views['krok-sida'],cam=new THREE.PerspectiveCamera(38,W/H,.1,500);cam.position.set(c[0],c[1],c[2]);cam.lookAt(c[3],c[4],c[5]);
+ren.render(sc,cam);document.getElementById('lbl').textContent=v;window.DONE=true;
+</script></body></html>
