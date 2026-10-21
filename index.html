@@ -8014,7 +8014,7 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
     if(v.rel==='station'){const r=G.relays.find(q=>q.type==='verkstad'||q.type==='varv'),pd=servicePads(r),b=pointBld(r),m={x:pd.reduce((a,q)=>a+q.x,0)/pd.length,y:pd.reduce((a,q)=>a+q.y,0)/pd.length},a=Math.atan2(m.y-b.y,m.x-b.x);
       return{x:m.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:m.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}
     return{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z};},c=P(o.cam),t=P(o.look);
-  const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);};
+  const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);/* fov: a longer lens draws the backdrop islands nearer */if(o.fov&&R3.cam.fov!==o.fov){R3.cam.fov=o.fov;R3.cam.updateProjectionMatrix();}};
   put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL(o.png?'image/png':'image/jpeg',o.q||.85);};
 globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt

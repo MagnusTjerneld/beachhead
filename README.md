@@ -181,9 +181,10 @@ Scenarierna: `bunker` (bunker med två pansarvärnslag), `pansar` (två stridsva
 node tests/arstider.js                        ö 2024, kameran över viken med bryggan, 3402 px bred
 node tests/arstider.js 9052 ut/arstider       en annan ö; filerna blir ut/arstider_strimlor.png och ut/arstider_<årstid>.png
 node tests/arstider.js 2024 ut --cam 471,150,704 --look 836,0,713 --klocka 13:00 --moln 15 --bredd 3402 --datum var=04-25
+node tests/arstider.js 9052 ut --cam 1100,170,300 --look -400,-90,1500 --fov 30   långt in i skärgården: skog i förgrunden, skogsöarna bakom sundet (21 okt)
 ```
 
-Stillbilderna (`__BHstill`, som årstidsbilden och `tests/stills.js` använder) ritas alltid i full upplösning: den dynamiska upplösningen stängs av för dem, eftersom den annars gjorde de senare bilderna i en serie mindre (21 okt). Årstidsbilden går också att köra lokalt på grafikkortet.
+Stillbilderna (`__BHstill`, som årstidsbilden och `tests/stills.js` använder) ritas alltid i full upplösning: den dynamiska upplösningen stängs av för dem, eftersom den annars gjorde de senare bilderna i en serie mindre (21 okt). Årstidsbilden går också att köra lokalt på grafikkortet. `--fov` ger en längre brännvidd (stillbildernas `fov`, grader lodrätt), som drar bakgrundens öar närmare. Bakgrundsöarna beror på var ön ligger i skärgården: ö 9052 ligger längst in, med täta, höga skogsöar runt omkring.
 
 Affischen (`tests/poster.js`, 21 okt, Magnus val): en drönarbild från skogen på ön ut över fyren och havet med alla enheter i bild, tre VARG på väg in mot udden, KROK med BÄVER i kroken, två HÖK, GETING vid stranden och MUS på hällen vid fyren, och Birka på redden med de andra öarna bakom, stående 2:3 med logotypen, raden och upphovsrätten. Den ställs upp i trailerns filmläge (ön 7341) med filmens egna aktörer och effekter: en scen tar en bilds plats i manuset, filmen stegas fram på sin egen klocka och bilden renderas och sätts ihop med logotypen. Fyren står där spelet har den, på udden, och Birka är flyttad in till 520 m. Egna scener går att ge i en fil, med filmens hjälpare och affischens egna (kameran ur bäring och avstånd från fyren, enheterna utplacerade efter var de ska synas i bilden).
 
