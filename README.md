@@ -183,6 +183,16 @@ node tests/arstider.js 9052 ut/arstider       en annan ö; filerna blir ut/arsti
 node tests/arstider.js 2024 ut --cam 471,150,704 --look 836,0,713 --klocka 13:00 --moln 15 --bredd 3402 --datum var=04-25
 ```
 
+Stillbilderna (`__BHstill`, som årstidsbilden och `tests/stills.js` använder) ritas alltid i full upplösning: den dynamiska upplösningen stängs av för dem, eftersom den annars gjorde de senare bilderna i en serie mindre (21 okt). Årstidsbilden går också att köra lokalt på grafikkortet.
+
+Affischen (`tests/poster.js`, 21 okt, Magnus val): en drönarbild från skogen på ön ut över fyren och havet med alla enheter i bild, tre VARG på väg in mot udden, KROK med BÄVER i kroken, två HÖK, GETING vid stranden och MUS på hällen vid fyren, och Birka på redden med de andra öarna bakom, stående 2:3 med logotypen, raden och upphovsrätten. Den ställs upp i trailerns filmläge (ön 7341) med filmens egna aktörer och effekter: en scen tar en bilds plats i manuset, filmen stegas fram på sin egen klocka och bilden renderas och sätts ihop med logotypen. Fyren står där spelet har den, på udden, och Birka är flyttad in till 520 m. Egna scener går att ge i en fil, med filmens hjälpare och affischens egna (kameran ur bäring och avstånd från fyren, enheterna utplacerade efter var de ska synas i bilden).
+
+```
+node tests/poster.js poster.jpg                    affischen, 2400 x 3600
+node tests/poster.js poster.jpg --utan-logga       bara bilden
+node tests/poster.js ut.jpg --scener egna.js       egna scener, ut_<namn>.jpg
+```
+
 | Test | Prövar |
 |---|---|
 | `t23.js` | Kartgeneratorn och fiendens försvarsplan på tio öar |

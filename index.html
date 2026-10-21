@@ -7276,12 +7276,13 @@ const FX={parts:[],tr:[],ms:[],lts:[],tex:null};
 const FILM={on:false,t:-1,i:-1,state:'idle',clock:'audio',fov:40,pre:.4,act:{},parts:[],lts:[],tr:[],ms:[],fires:[],seed:7341,S:null,useMovers:false,map:false};
 /* the light over the film: hour of the day at each point (golden hour, sunset, dusk during the firefight, night for the logo) */
 const FILM_TOD=[[0,17.72],[fk(13),17.92],[fk(20),18.1],[fk(26),18.32],[fk(31),18.75],[fk(33),19.15],[fk(36),19.5],[fk(40),20.25],[999,20.6]];
-function filmTodAt(t){const T=FILM_TOD;let i=0;while(i<T.length-2&&T[i+1][0]<=t)i++;const a=T[i],b=T[i+1];return lerp(a[1],b[1],clamp((t-a[0])/(b[0]-a[0]),0,1));}
+/* FILM.tod holds the hour for the poster tool (tests/poster.js) */
+function filmTodAt(t){if(FILM.tod!=null)return FILM.tod;const T=FILM_TOD;let i=0;while(i<T.length-2&&T[i+1][0]<=t)i++;const a=T[i],b=T[i+1];return lerp(a[1],b[1],clamp((t-a[0])/(b[0]-a[0]),0,1));}
 /* seeded slumpen (mulberry32), reset at the start of each play */
 function filmSeed(s){let a=s>>>0;Math.random=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 
 function filmStart(){
-  const q=BOOTQ;FILM.on=true;FILM.clock=q.has('render')?'frame':'audio';globalThis.__FILM={FILM,R3:()=>R3,seek:filmSeek,EXP:FILM_EXP,exp:filmExport,SHOTS:FILM_SHOTS,shotT:filmShotT,END:FILM_END,frame:filmFrame,compose:filmCompose,seed:filmSeed,clear:filmClear,warm:filmWarm,step:dt=>{sync3D(dt);filmCam(dt);},music:filmMusic,BAR:FILM_BAR,fk,W:()=>WORLD,G:()=>G,gy:groundY,hAt:heightAt,clearAt:filmClearAt,fGround};
+  const q=BOOTQ;FILM.on=true;FILM.clock=q.has('render')?'frame':'audio';globalThis.__FILM={FILM,R3:()=>R3,seek:filmSeek,EXP:FILM_EXP,exp:filmExport,SHOTS:FILM_SHOTS,shotT:filmShotT,END:FILM_END,frame:filmFrame,compose:filmCompose,seed:filmSeed,clear:filmClear,warm:filmWarm,step:dt=>{sync3D(dt);filmCam(dt);},music:filmMusic,BAR:FILM_BAR,/* the actors, effects and camera for tests/poster.js */fx:()=>({fA,fVarg,fUnit,fEnemy,fPlace,fPath,fCam,fDir,fP,fLight,fxFire,fxSmoke,fxBoom,fxTracer,fxFlash,fxMissile,fxDust,fxWreck,krokLegs,vargSpray,fVargWater,mkUnitMesh,HOVER_Y,DECK_Y,PAL,FILM,WORLD,R3,G,CARRIER,shipPos,groundY,heightAt,fGround,lerp,sm,clamp,PI,TAU,fr,THREE,drawLogo,filmBirka,vDir,CLOUD}),fk,W:()=>WORLD,G:()=>G,gy:groundY,hAt:heightAt,clearAt:filmClearAt,fGround};
   $('title').classList.add('clean');$('tPress').hidden=true;DYNRES.on=false;DYNRES.scale=1;applyRes();
   FILM.b0={x:CARRIER.x,y:CARRIER.y,a:CARRIER.a};G.known.fill(1);G.knownV=(G.knownV||0)+1;document.querySelector('.tfoot').style.display='none';filmLighthouse();filmClearings();
   // a black veil for fades, and the play button
@@ -8005,6 +8006,7 @@ function frameBody(now,P){
 /* a still for review (tests/stills.js): the same steps as a frame of the game, the tree culling included, at a given date, hour,
    cloud cover and camera. Without the culling the first still of a series kept the title camera's tiles and showed no trees */
 globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP.on=false;$('opStage').hidden=true;placePanes();}
+  /* stills are always drawn at full resolution: the dynamic resolution cut the later pictures of a series smaller (21 okt) */if(DYNRES.on||DYNRES.scale!==1){DYNRES.on=false;DYNRES.scale=1;applyRes();}
   G.paused=true;R3.allOn=!!o.fyrar;/* stills can hold every flashing light in its lit phase */if(o.doy!=null)G.doy=o.doy;if(o.tod!=null)G.tod=o.tod;if(o.moln!=null)CLOUD.force=o.moln/100;if(G.mainMode!=='cam'){G.mainMode='cam';placePanes();}
   /* rel: true for the landing beach, 'birka' for Birka's own frame (x across, z forward), 'station' for the field station's plates
      (z out from the building through the plates, x across) */
