@@ -1,7 +1,8 @@
 // Field test (16 okt): wings on real islands, ordered through the same function as a click on the chart (groupOrder), with the enemy
 // known as after scouting. Six missions on each island: two VARG at the nearest air defence, three VARG and an offensive HÖK at the
 // nearest bunker, two VARG to the far relay, VARG and BÄVER to the same point, a GETING out 350 m inland and back, and
-// two VARG from the sea at each of two bunkers in the open within 90 m of each other, counting the hits from the other one (korseld,
+// two VARG from the sea at each of two bunkers in the open within 90 m of each other, counting the hits from the side, from the bunker
+// it is not fighting at the moment, until both are out (korseld,
 // prov 20 okt, ö 9949). For each unit it
 // measures the first planned route (length and share over water), the distance driven while advancing (Anfaller, Samlas, Söker, På väg;
 // retreats and service trips are not counted), time in the water, the longest time standing still with an order, how close an aircraft
@@ -73,11 +74,13 @@ for(const seed of SEEDS){let G=setup(seed);const L=B.W.landing,start=()=>{const 
     if(pA)for(const[ia,ib]of[[pA,pB],[pB,pA]])for(const da of[0,-50,50]){G=setup(seed);const tA=G.enemies.find(e=>e.id===ia),tB=G.enemies.find(e=>e.id===ib);
       const a0=Math.atan2(L.y-tA.ly,L.x-tA.lx)+da*Math.PI/180,f={x:Math.cos(a0),y:Math.sin(a0)},s0={x:tA.lx+f.x*320,y:tA.ly+f.y*320};if(!wet(s0.x,s0.y))continue;
       const us=[TANK,TANK].map((k,i)=>{const u=B.makeUnit(k,s0.x-f.y*(i-.5)*22,s0.y+f.x*(i-.5)*22);u.heading=u.turret=Math.atan2(-f.y,-f.x);G.units.push(u);return u;});
-      select(G,us,true);B.groupOrder({enemy:tA});const hits=us.map(()=>0),inB=us.map(()=>0),last=us.map(u=>u.hitBy[tB.id]),nm='2 VARG mot '+tA.id+' från '+(da>0?'+':'')+da+' grader, '+tB.id+' '+Math.round(Math.hypot(tB.lx-tA.lx,tB.ly-tA.ly))+' m bort'+bak(tA);
-      run(G,nm,seed,us,200,()=>tA.dead,()=>{if(tA.dead)return;
-        us.forEach((u,i)=>{if(u.dead)return;const h=u.hitBy[tB.id];if(h!=null&&h!==last[i]){hits[i]++;last[i]=h;}if(!tB.dead&&Math.hypot(u.x-tB.lx,u.y-tB.ly)<tB.range)inB[i]+=.05;});});
-      us.forEach((u,i)=>{const r=seed+' '+nm+' '+u.id+': '+hits[i]+' träffar från '+tB.id+', '+Math.round(inB[i])+' s i dess räckvidd innan '+tA.id+' föll'+(tA.dead?'':' (föll inte)');rows.push(r);
-        if(hits[i]||tA.dead&&inB[i]>5)flags.push(r);});}}
+      const log0=G.log.length;select(G,us,true);B.groupOrder({enemy:tA});const hits=us.map(()=>0),last=us.map(u=>Object.assign({},u.hitBy)),nm='2 VARG mot '+tA.id+' från '+(da>0?'+':'')+da+' grader, '+tB.id+' '+Math.round(Math.hypot(tB.lx-tA.lx,tB.ly-tA.ly))+' m bort'+bak(tA);
+      /* a hit from anything but the unit's own target of the moment is a hit from the side: the crossfire the wing should keep out of */
+      let both=null;run(G,nm,seed,us,200,t=>tA.dead&&tB.dead,t=>{if(both==null&&tA.dead&&tB.dead)both=t;
+        us.forEach((u,i)=>{if(u.dead)return;const q=u.orders[0],own=q&&q.type==='attack'?q.enemy.id:null;for(const id in u.hitBy){if(u.hitBy[id]!==last[i][id]){if(id!==own&&(id===tA.id||id===tB.id))hits[i]++;last[i][id]=u.hitBy[id];}}});});
+      const said=G.log.slice(log0).map(l=>l.text).filter(t=>/täcker|eldställning/.test(t)).slice(0,1);
+      us.forEach((u,i)=>{const r=seed+' '+nm+' '+u.id+': '+hits[i]+' träffar från sidan, skrov '+Math.round(u.hp/u.maxhp*100)+' %, '+(both!=null?'båda ute efter '+Math.round(both)+' s':'inte båda ute')+(i===0&&said.length?'  ['+said[0]+']':'');rows.push(r);
+        if(hits[i])flags.push(r);});}}
   if(want('sparv')){G=setup(seed);const c={x:1100,y:1100},d=dist(L,c)||1,sp0={x:L.x+(c.x-L.x)/d*350,y:L.y+(c.y-L.y)/d*350};const us=place(G,[SP,TANK]),sp=us[0];select(G,[sp],false);B.groupOrder({world:sp0});let back=false,bt=0;
     run(G,'GETING ut och hem',seed,[sp],2*dist(start(),sp0),t=>back&&(sp.dead||dist(sp,L)<40||!sp.orders.length)&&t-bt>5,t=>{if(!back&&(dist(sp,sp0)<30||t>60)){back=true;bt=t;select(G,[sp],false);B.groupOrder({world:{x:L.x,y:L.y}});}});}
 }

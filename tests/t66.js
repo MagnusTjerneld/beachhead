@@ -1,5 +1,6 @@
 // livelier fights (decided 14 okt): enemy guns turn at their own pace and fire only when on target, keep their target while it stays
-// in reach, several VARG on one target spread on an arc clear of other known weapons, and slide along it while they fire
+// in reach, several VARG on one target take firing positions clear of other known weapons (since 21 okt the best spots, kept 25 m
+// apart and gladly on the same safe side, no longer spread round an arc), and stand with their front to it while they fire
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;B.LOS.on=false;/* laid out before the line of sight (issue 38), which t76 tries */B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 /* the scenarios were laid out round R1 as it stood before 19 okt (issue 57 moved it into its yard), so they keep that spot */
@@ -20,7 +21,7 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
   run(2);const f1=v1.orders[0].fp,f2=v2.orders[0].fp;
   ok(f1&&f2&&v1.orders[0].arc&&v2.orders[0].arc,'both get a firing position on the arc');
   if(f1&&f2){const a1=Math.atan2(f1.y-t.y,f1.x-t.x),a2=Math.atan2(f2.y-t.y,f2.x-t.x),sep=Math.abs(Math.atan2(Math.sin(a1-a2),Math.cos(a1-a2)));
-    ok(sep>.55,'they are spread '+Math.round(sep*57)+' degrees round the target');
+    ok(Math.hypot(f1.x-f2.x,f1.y-f2.y)>=B.FIRE.gap-1,'they stand '+Math.round(Math.hypot(f1.x-f2.x,f1.y-f2.y))+' m apart ('+Math.round(sep*57)+' degrees round the target)');
     ok([f1,f2].every(f=>Math.hypot(f.x-other.lx,f.y-other.ly)>other.range+19),'both stay out of the other weapon\'s reach');
     const r1=Math.hypot(f1.x-t.x,f1.y-t.y);ok(r1<v1.range&&r1>v1.range*.6,'inside their reach ('+Math.round(r1)+' m; 85 % of it, or 90 % of their sight while nobody else sees the target)');}
   run(25);const p0={x:v1.x,y:v1.y};run(5);const moved=Math.hypot(v1.x-p0.x,v1.y-p0.y);
@@ -34,9 +35,9 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
   let waited=false,minD=1e9;for(let i=0;i<120&&!v1.orders[0].go;i++){run(.5);minD=Math.min(minD,Math.hypot(v1.x-t.x,v1.y-t.y));if(/väntar på resten/.test(v1.state))waited=true;}
   ok(waited,'VARG-1 waits in position for VARG-2');ok(minD>t.range,'and stays out of the bunker\'s reach meanwhile (closest '+Math.round(minD)+' m)');
   ok(v1.orders[0].go&&v2.orders[0].go,'they go in together');ok(G.log.some(l=>/Alla i position/.test(l.text)),'the log says all are in position');}
-// 3. a lone attacker still uses the ordinary firing logic
+// 3. a lone attacker picks its firing position the same way (since 21 okt), but has nobody to stage for
 {const G=setup();const L=OLD_R1,[v1]=G.units.filter(u=>u.kind==='tank');const t=live(G,'turret',L.x+200,L.y);v1.x=t.x-260;v1.y=t.y;v1.orders=[{type:'attack',enemy:t,post:'off'}];run(1);
-  ok(!v1.orders[0].arc,'one VARG alone does not take an arc position');}
+  const f=v1.orders[0].fp;ok(f&&Math.hypot(f.x-t.x,f.y-t.y)<v1.range,'one VARG alone takes a firing position in its reach');run(3);ok(!/Samlas|väntar på resten/.test(v1.state),'and goes straight there, without staging ('+v1.state+')');}
 // 4. a VARG pulling back with heavy damage keeps firing on what it sees and reaches, without stopping
 {const G=setup();const L=OLD_R1,[v1]=G.units.filter(u=>u.kind==='tank');v1.x=L.x+150;v1.y=L.y;v1.orders=[];v1.hp=v1.maxhp*.25;v1.lastHit=G.time;
   const e=live(G,'light',v1.x+110,v1.y);e.mobile=false;e.speed=0;e.hp=e.maxhp=1e4;const p0={x:v1.x,y:v1.y};run(3);

@@ -2069,7 +2069,7 @@ function deckExitPt(u){const m=shipLocal(u.x,u.y),P=(a,b)=>{const q=shipPos(a,b)
 /* Birka's hull is no way for a vehicle (decided 18 okt, issue 34): VARG used to plan straight through the ship; now it comes aboard
    and leaves only by the bow ramp, and its routes go round the hull */
 const hullCell=i=>{const c=cellCenter(i),m=shipLocal(c.x,c.y);return Math.abs(m.lat)<21&&Math.abs(m.fwd)<51;};
-const passTank=i=>passAmph(i)&&!hullCell(i);
+const passTank=i=>passAmph(i)&&!hullCell(i);const PT=passTank;
 /* Birka's two ramps (decided 18 okt, issue 34): the bow ramp to the service pads and a side ramp from the build bay on the
    port side. Both fold up while she is under way and come down when she lies still: into the water at anchor, onto the
    quay in the harbour, where she lies with her bow to the inner quay and her port side to a long one. G.ramp is
@@ -2583,7 +2583,10 @@ function costFor(post,tgt,w){
     for(const e of av){const r=e.range+15;const x0=Math.max(0,Math.floor((e.lx-r)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+r)/CELL)),y0=Math.max(0,Math.floor((e.ly-r)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+r)/CELL));
       for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const cx=gx*CELL+5,cy=gy*CELL+5;if(Math.hypot(cx-e.lx,cy-e.ly)<r)dz[gy*GW+gx]+=w||6;}}
   }
-  return i=>{let c=1;/* water costs as much as land, now that VARG is as fast on it (17 okt; it was 1.35 for 0.7 speed) */if(road[i])c*=post==='dold'?1.7:.6;return dz?c+dz[i]:c;};
+  /* unscouted land costs half as much again (decided 21 okt, Magnus): a way over ground nobody has looked at is taken only when the
+     scouted way is a good deal longer; the sea is open and costs the same */
+  const kn=G.known;
+  return i=>{let c=1;/* water costs as much as land, now that VARG is as fast on it (17 okt; it was 1.35 for 0.7 speed) */if(road[i])c*=post==='dold'?1.7:.6;if(!kn[i]&&(g[i]===LAND||g[i]===BEACH))c*=FIRE.unk;return dz?c+dz[i]:c;};
 }
 function orderPt(o){if(o.type==='explore')return o.tgt||{x:o.ux||CARRIER.x,y:o.uy||CARRIER.y};if(o.type==='move'||o.type==='obs')return o;if(o.type==='clear')return{x:o.barrier.x,y:o.barrier.y};if(o.type==='demine')return{x:o.mine.x,y:o.mine.y};if(o.type==='capture')return o.relay;if(o.type==='attack')return{x:o.enemy.lx,y:o.enemy.ly};if(o.type==='follow')return o.unit;if(o.type==='raze'||o.type==='demolish'||o.type==='mast')return o.s;if(o.type==='repair')return o.unit;return o.hp||CARRIER;}
 
@@ -2758,7 +2761,12 @@ function move(u,dt){
     u.orbit={x:o.enemy.lx,y:o.enemy.ly};orbit(u,dt,o.searchR||55);u.state='Söker '+ename(o.enemy)+' kring senast kända plats';return;}
   else if(o.type==='attack'){if(o.enemy.dead){attackDone(u);return;}if(o.search&&o.enemy.visibleNow)o.search=0;if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;o.arc=null;u.path=null;}
     if(!o.fp&&!u.air&&LOS.on&&o.enemy.visibleNow&&dist(u,o.enemy)<=effRange(u)&&!sees(u,o.enemy)&&G.time>=(o.losT||0)){o.losT=G.time+2;const fp=firingPoint(u,o.enemy,o.close);if(fp){o.fp=fp;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}else if(u.kind==='tank')losCall(u,o.enemy);}/* in reach but behind the ground: a spot with a clear line (issue 38), or a HÖK when there is none */
-    if(!o.fp&&u.kind==='tank'&&!o.close&&(o.enemy.visibleNow||!o.enemy.camo)&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=arcPoint(u,o);if(ap){o.fp=ap;o.arc=ap;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}}
+    /* out of shells it has only the machine gun: no firing position for the gun, it closes in as before */
+    if(!o.fp&&u.kind==='tank'&&!o.close&&!(u.maxAmmo&&u.ammo<1)&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=fireSpot(u,o);if(ap.none||ap.exp&&u.post!=='off'&&!o.accept){spotFail(u,o,ap);return;}
+      /* a lone VARG on a target that moves keeps driving at it as before: a spot reckoned on where a tank stood is stale in seconds; the
+         search still tells whether it can be reached on a fair way (sandbox overmakt, 21 okt: 0.25 VARG lost a round on the spot, 0.07 before) */
+      if(o.enemy.mobile&&groupAtk(o.enemy).length<2){o.arcT=G.time+5;}else{o.fp=ap;o.arc=ap;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}
+      if(ap.exp&&!o.expTold&&!o.auto&&!o.support&&!o.accept){o.expTold=1;say(u,'Eldställningen mot '+ename(o.enemy)+' nås också av '+ap.by+'. Anfaller ändå.');}}
     let stg=null;if(!o.go&&!o.support&&u.kind==='tank'&&groupAtk(o.enemy).length>=2){const sp=stagePt(u,o);if(sp){const st=assaultStage(u,o,sp);if(st){tx=st.x;ty=st.y;arr=8;stg=u.state;}}}
     if(stg){}else if(o.fp&&(!o.arc||!o.arc.st||o.go)){tx=o.fp.x;ty=o.fp.y;arr=6;/* no sliding along the arc any more (decided 19 okt, Magnus: too slow to throw a bunker off, and a VARG keeps its front to the target) */}else{tx=o.enemy.lx;ty=o.enemy.ly;arr=o.enemy.visibleNow||(u.kind==='tank'&&areaKnown(o.enemy))?(u.kind==='scout'?GETING.diveR*.8:u.kind==='drone'&&u.ammo>=1?reachR(u,o.enemy)*.88:effRange(u)*.8):u.air?Math.min(45,airSeeR(u,o.enemy)*.75):45;}u.state=stg||('Anfaller '+ename(o.enemy)+(u.kind==='drone'&&reachR(u,o.enemy)>u.range?' · målet utpekat, skjuter på avstånd':''));if(!u.air&&o.enemy.camo&&!o.enemy.visibleNow){if(!o.spotAsk&&dist(u,o.enemy)<400&&!(u.kind==='tank'&&areaKnown(o.enemy))){o.spotAsk=1;requestSpot(u,o.enemy);}/* the spot it just fired from is enough to answer with area fire */if(!o.close&&!o.fp&&spotterFor(o.enemy)){arr=Math.max(o.enemy.range+8,effRange(u)*.9);u.state='Väntar på spaning mot '+ename(o.enemy)+' utom räckhåll';}}}
   else if(o.type==='clear'){const b=o.barrier;if(b.cleared){u.orders.shift();u.path=null;return;}const bd=barrierDist(b,u);if(bd<12){workBarrier(b,u,dt);return;}/* charges are laid by hand: BÄVER drives right up to the barrier, through its side of the pass to the cell next to it */if(!o.sd||(u.waitT&&G.time<u.waitT)){o.sd=barrierSide(b,u);o.at=barrierFoot(b,o.sd);}const sd=o.at||o.sd;tx=sd.x;ty=sd.y;arr=o.at?1.5:3;u.state='På väg mot spärr '+b.id;}
@@ -3143,42 +3151,77 @@ function hokHold(u,o){const e=o.enemy,gs=o.withWing.map(id=>G.units.find(v=>v.id
   let cx=0,cy=0;for(const v of mine){cx+=v.x;cy+=v.y;}cx/=mine.length;cy/=mine.length;const a=Math.atan2(cy-e.ly,cx-e.lx),r=Math.max(e.range||0,airR(e)||0)+40;
   let p={x:clamp(e.lx+Math.cos(a)*r,20,WW-20),y:clamp(e.ly+Math.sin(a)*r,20,WH-20)};if(airDanger(u,p.x,p.y)){const sp=safePoint(u,p.x,p.y);if(sp)p=sp;}
   o.hold={x:p.x,y:p.y,s:'Väntar på VARG innan anfallet mot '+ename(e)};return true;}
-function arcPoint(u,o){const e=o.enemy,atk=G.units.filter(v=>!v.dead&&!v.carried&&v.kind==='tank'&&v.orders[0]&&v.orders[0].type==='attack'&&v.orders[0].enemy===e).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
-  if(atk.length<2||!atk.includes(u))return null;const n=atk.length,i=atk.indexOf(u);let cx=0,cy=0;for(const v of atk){cx+=v.x;cy+=v.y;}cx/=n;cy/=n;
-  const base=Math.atan2(cy-e.ly,cx-e.lx),R=Math.min(effRange(u)*.85,e.visibleNow?1e9:u.vision*.9),/* unspotted: close enough to see it ourselves */want=base+(i-(n-1)/2)*.85,others=G.enemies.filter(f=>f!==e&&!f.dead&&f.seen&&f.canGround);
-  /* only spots on ground the VARG can drive to from where it stands: a spot behind a barrier or a cliff took them round the island by sea */
-  const reach=passLand(cellIdx(u.x,u.y))?landReach(u):null;
-  const exp=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20).length,okAt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)])&&(!LOS.on||losClear(q.x,q.y,Math.max(0,heightAt(q.x,q.y))+2.7,e.lx,e.ly,hOf(e)));/* and a clear line to the target (issue 38) */
-  // the spot on the arc that the fewest other known weapons reach (none if possible): guns that cover each other still get a planned attack
-  /* and not a spot, or a staging point, that takes it the long way (fixed 17 okt, issue 12: of two VARG attacking from the water,
-     one was given a staging point on land across a bay and drove off away from the target): the way there may be at most half as
-     long again as the drive straight in to that distance from the target, plus 60 m; with no such spot it takes an ordinary firing
-     point as a lone VARG does, and with no such staging point it goes in without one */
-  const D=wayFrom(u),du=Math.hypot(u.x-e.lx,u.y-e.ly),far=(q,rq)=>{const w=D[cellIdx(q.x,q.y)];return !(w<=Math.max(0,du-rq)*1.5+60);};
-  let best=null,bx=1e9;
-  for(const da of[0,.25,-.25,.5,-.5,.8,-.8])for(const rr of[R,R*.9]){const a=want+da,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};if(!okAt(p)||far(p,rr))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break;}
-  /* every spot near its own place is covered by another known gun (prov 20 okt, ö 9949: T8 stood 60 m from T10 and reached all of
-     VARG-1's side, and it stood 126 m from T8 while VARG-2 had a free spot on the far side): it looks round the whole arc, nearest its
-     own place first, the same rule for the way there, and not on a spot another VARG has; two on the same safe side beat one in a
-     crossfire */
-  if(best&&bx>0){const taken=atk.filter(v=>v!==u&&v.orders[0].arc).map(v=>v.orders[0].arc);
-    wide:for(let k=4;k<=12;k++)for(const sg of[1,-1])for(const rr of[R,R*.9]){const a=want+sg*k*.25,p={x:e.lx+Math.cos(a)*rr,y:e.ly+Math.sin(a)*rr};
-      if(!okAt(p)||far(p,rr)||taken.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<25))continue;const x=exp(p);if(x<bx){bx=x;best={p,a,rr};}if(!x)break wide;}}
-  if(!best)return null;const{p,a,rr}=best;
-  // the staging point on the same bearing, just outside the target's own reach, pushed further out while other known weapons cover it;
-  // a target that cannot fire on vehicles (air defence: its range is against aircraft) needs no staging, so they go straight in
-  const gr=e.canGround?(e.range||0):0;
-  /* the staging point needs no clear line to the target, only the firing spot does (prov 19 okt, ö 9949: with the line required no
-     staging point was found and VARG-1 went in before VARG-2 was in place); with none, stagePt gives one on the line from the
-     target (waiting where it stood counted a far VARG as in place at once, and they went in from different distances) */
-  const okSt=q=>q.x>10&&q.y>10&&q.x<WW-10&&q.y<WH-10&&passAmph(cellIdx(q.x,q.y))&&(!reach||reach[cellIdx(q.x,q.y)]);
-  let st=null,sx=1e9;if(gr)for(let sr=gr+25;sr<=gr+145;sr+=20){if(sr<=rr+10)continue;const q={x:e.lx+Math.cos(a)*sr,y:e.ly+Math.sin(a)*sr};if(!okSt(q)||far(q,sr))continue;const x=exp(q);if(x<sx){sx=x;st=q;}if(!x)break;}
-  return{x:p.x,y:p.y,a,st};}
-/* the length of the way from a unit to every cell it can drive to, water included (Dijkstra over the grid, 8 neighbours) */
-function wayFrom(u){const N=GW*GH,D=new Float32Array(N).fill(Infinity),g=WORLD.grid,s0=cellIdx(u.x,u.y),H=new Heap();D[s0]=0;H.push(s0,0);
-  while(H.size){const c=H.pop(),dc=D[c],x=c%GW,y=(c/GW)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;
-      const n=ny*GW+nx;if(!isGround(g[n])||(dx&&dy&&(!isGround(g[y*GW+nx])||!isGround(g[ny*GW+x]))))continue;const nd=dc+(dx&&dy?CELL*1.4142:CELL);if(nd<D[n]){D[n]=nd;H.push(n,nd);}}}
-  return D;}
+/* the firing position, chosen as a crew would choose it (decided 21 okt, Magnus; it replaces the arc round the target, the staging
+   point on the straight line from the target and the drive at the target itself, which on real ground put a VARG 120 m from a
+   second bunker, a staging point on a height behind a steep shore 140 m off and a way of 3 km round the island to a bunker 200 m
+   away): the way from the unit to every cell is reckoned once with the attack's own costs (known threats, unscouted land), and of
+   every spot in range with a clear line to the target's last known place the best is taken: the way there, plus FIRE.expW m for
+   every other known gun reaching the spot, in proportion to the hull it has left (a crew goes round for a whole bunker, not for a
+   tank that is nearly beaten). A spot whose way is more than FIRE.cap times its distance as the crow flies (and FIRE.add m longer)
+   is never taken, and a spot another VARG on the same target has is kept FIRE.gap m clear of. The staging point is the last point on
+   the way there outside the target's reach, so it always lies on the way. With no spot at all the unit reports why instead of going */
+const FIRE={cap:5,add:300,gap:25,unk:1.5,expW:300};
+/* a VARG standing in the cells of a wreck that just fell beside it may drive out of them: within 20 m of where it stands any ground will do */
+/* the reach of the other known guns costs as on the way to an attack, in proportion to the hull each has left */
+function wayCost(u,e){const N=GW*GH,C=new Float32Array(N).fill(Infinity),L=new Float32Array(N),P=new Int32Array(N).fill(-1),c0=costFor('off'),dz=new Float32Array(N),s0=cellIdx(u.x,u.y),H=new Heap(),X0=s0%GW,Y0=(s0/GW)|0,
+    cf=n=>c0(n)+dz[n],
+    passTank=n=>PT(n)||Math.abs(n%GW-X0)<=2&&Math.abs(((n/GW)|0)-Y0)<=2&&passAmph(n);
+  for(const f of G.enemies){if(f===e||f.dead||!f.seen||!f.canGround)continue;const r=f.range+15,w=6*f.hp/f.maxhp,x0=Math.max(0,Math.floor((f.lx-r)/CELL)),x1=Math.min(GW-1,Math.floor((f.lx+r)/CELL)),y0=Math.max(0,Math.floor((f.ly-r)/CELL)),y1=Math.min(GH-1,Math.floor((f.ly+r)/CELL));
+    for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++)if(Math.hypot(gx*CELL+5-f.lx,gy*CELL+5-f.ly)<r)dz[gy*GW+gx]+=w;}
+  C[s0]=0;H.push(s0,0);
+  while(H.size){const c=H.pop(),cc=C[c],x=c%GW,y=(c/GW)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;
+      const n=ny*GW+nx;if(!passTank(n)||(dx&&dy&&(!passTank(y*GW+nx)||!passTank(ny*GW+x))))continue;const st=dx&&dy?CELL*1.4142:CELL,nc=cc+st*cf(n);if(nc<C[n]){C[n]=nc;L[n]=L[c]+st;P[n]=c;H.push(n,nc);}}}
+  return{C,L,P};}
+function fireSpot(u,o,W){const e=o.enemy;W=W||wayCost(u,e);
+  const R=Math.min(effRange(u)*.85,e.visibleNow?1e9:u.vision*.9),others=G.enemies.filter(f=>f!==e&&!f.dead&&f.seen&&f.canGround),
+    reach=q=>others.filter(f=>Math.hypot(q.x-f.lx,q.y-f.ly)<f.range+20),
+    taken=G.units.filter(v=>v!==u&&!v.dead&&v.orders[0]&&v.orders[0].type==='attack'&&v.orders[0].enemy===e&&v.orders[0].arc).map(v=>v.orders[0].arc);
+  let best=null,bs=Infinity,far=0;
+  const x0=Math.max(0,Math.floor((e.lx-R)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+R)/CELL)),y0=Math.max(0,Math.floor((e.ly-R)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+R)/CELL));
+  for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const i=gy*GW+gx;if(!isFinite(W.C[i]))continue;const c=cellCenter(i),d=Math.hypot(c.x-e.lx,c.y-e.ly);if(d<Math.min(40,R*.5)||d>R)continue;
+    const cr=Math.hypot(c.x-u.x,c.y-u.y);if(W.L[i]>Math.max(FIRE.cap*cr,cr+FIRE.add)){far++;continue;}
+    if(taken.some(q=>Math.hypot(q.x-c.x,q.y-c.y)<FIRE.gap))continue;
+    const rc=reach(c),ex=rc.length,sc=W.C[i]+rc.reduce((a,f)=>a+FIRE.expW*f.hp/f.maxhp,0)+(R-d)*.5;if(sc>=bs)continue;/* a little further off is better, at the same cost */
+    if(LOS.on&&!losClear(c.x,c.y,Math.max(0,heightAt(c.x,c.y))+2.7,e.lx,e.ly,hOf(e)))continue;/* only where the target can be seen from (issue 38) */
+    bs=sc;best={x:c.x,y:c.y,i,exp:ex};}
+  if(!best)return{none:true,far};
+  const gr=e.canGround?(e.range||0):0;let st=null;
+  if(gr){for(let k=best.i;k>=0;k=W.P[k]){const q=cellCenter(k);if(Math.hypot(q.x-e.lx,q.y-e.ly)>=gr+25){st=q;break;}}if(!st)st={x:u.x,y:u.y};}
+  return{x:best.x,y:best.y,a:Math.atan2(best.y-e.ly,best.x-e.lx),st,exp:best.exp,by:best.exp?reach(best).map(ename).join(' och '):''};}
+const ucf=s=>s.charAt(0).toUpperCase()+s.slice(1);
+/* no firing position, or only ones other known guns reach on Defensiv: the unit drops the order and says why, once for the wing,
+   with what would solve it (decided 21 okt, Magnus: a crew that cannot do it reports and proposes; nobody drives 3 km round an
+   island to a bunker 200 m away, and the captain cannot force it either: blow the barrier or give shorter orders) */
+function spotFail(u,o,ap){const e=o.enemy,quiet=o.auto||o.support;u.orders.shift();u.path=null;if(quiet)return;
+  const S=G.spotSaid||(G.spotSaid={}),k=e.id+(ap.none?'n':'x'),fresh=!S[k]||G.time-S[k].t>20;if(fresh)S[k]={t:G.time,who:[]};S[k].who.push(u);if(!fresh)return;
+  if(!ap.none){say(u,ucf(ename(e))+' går bara att nå från lägen som '+ap.by+' också når. Anfalla ändå?',[{l:'Anfall ändå',f:()=>{for(const v of S[k].who)if(!v.dead)giveOrder(v,{type:'attack',enemy:e,post:'off',accept:true},false);}}]);return;}
+  const ob=obstacleFor(u,e.lx,e.ly);let bar=false;
+  if(ob&&ob.pk.barrier){const g=WORLD.grid,kept=ob.pk.barrier.cells.map(c=>[c,g[c]]);for(const c of ob.pk.barrier.cells)g[c]=WORLD.baseGrid[c];bar=!fireSpot(u,o).none;for(const[c,v]of kept)g[c]=v;}
+  if(bar)say(u,'Kan inte nå en eldställning mot '+ename(e)+' härifrån: '+ob.l+' står i vägen. Spräng den eller ge kortare order.',[{l:'Skicka BÄVER',f:()=>callIn('eng',ob.pk)}]);
+  else say(u,'Kan inte nå en eldställning mot '+ename(e)+' på en rimlig väg härifrån. Kör närmare eller anfall från ett annat håll.');}
+/* an attack on a target that another known gun covers (decided 21 okt, Magnus): guns that cover each other are one defence, and
+   a line of them is rolled up from the flank. When every firing position against the target is reached by another gun, the wing
+   follows the cover back (the gun covering that one, and so on, up to four) to one it can fight from outside the others' reach, and
+   proposes taking them in that order; on Offensiv it does so at once. When they all cover each other it says so and goes on
+   Offensiv, asks on Defensiv. An order the captain already chained to one of them is left as it is */
+function coverCheck(u,e){const ch=[e];let cur=e;
+  for(let k=0;k<4;k++){const b=fireSpot(u,{enemy:cur});if(b.none)return ch.length>1?{ch:ch.slice(0,-1),free:false}:null;if(!b.exp)return ch.length>1?{ch,free:true}:null;
+    const f=G.enemies.filter(x=>!ch.includes(x)&&!x.dead&&x.seen&&x.canGround&&Math.hypot(b.x-x.lx,b.y-x.ly)<x.range+20).sort((p,q)=>Math.hypot(p.lx-cur.lx,p.ly-cur.ly)-Math.hypot(q.lx-cur.lx,q.ly-cur.ly))[0];
+    if(!f)return{ch:ch.length>1?ch:[e,G.enemies.find(x=>x!==e&&!x.dead&&x.seen&&x.canGround&&Math.hypot(b.x-x.lx,b.y-x.ly)<x.range+20)].filter(Boolean),free:false};ch.push(f);cur=f;}
+  return{ch,free:false};}
+function coverAsk(us,pk,append,po){const e=pk.enemy;if(e.dead||!e.canGround)return false;
+  const tk=us.filter(u=>u.kind==='tank'&&!u.carried&&!u.rtb&&canHit(u,e,true));if(!tk.length)return false;
+  const cc=coverCheck(tk[0],e);if(!cc||cc.ch.length<2)return false;const ch=cc.ch,seq=ch.slice().reverse();
+  if(tk.some(u=>u.orders.some(q=>q.type==='attack'&&ch.includes(q.enemy)&&q.enemy!==e)))return false;
+  const list=a=>a.length>1?a.slice(0,-1).join(', ')+' och '+a[a.length-1]:a[0];
+  const go=first=>{if(first){const live=seq.filter(x=>!x.dead);live.forEach((x,n)=>groupOrder({enemy:x,force:true,us},append||n>0,po));}else groupOrder({enemy:e,force:true,accept:true,us},append,po);};
+  const off=tk.every(u=>u.post==='off'),who=tk[0];
+  if(cc.free){const what=ch.length===2?ucf(ename(ch[1]))+' täcker '+ename(e)+'.':ucf(list(seq.map(ename)))+' täcker varandra i en linje.',
+      plan=ch.length===2?'Tar '+ename(ch[1])+' först, sedan '+ename(e)+'.':'Tar dem från flanken: '+list(seq.map(x=>x.id))+'.';
+    if(off){say(who,what+' '+plan);go(true);}
+    else say(who,what+' '+(ch.length===2?'Ta '+ename(ch[1])+' först?':'Ta dem från flanken, '+list(seq.map(x=>x.id))+'?'),[{l:ch.length===2?'Ta '+ch[1].id+' först':'Från flanken',f:()=>go(true)},{l:'Anfall '+e.id+' ändå',f:()=>go(false)}]);return true;}
+  const both=ucf(list(ch.map(ename)))+' täcker varandra, och ingen eldställning ligger utanför dem.';
+  if(off){say(who,both+' Anfaller '+ename(e)+'.');go(false);}else say(who,both+' Anfalla ändå?',[{l:'Anfall '+e.id+' ändå',f:()=>go(false)}]);return true;}
 /* the land a vehicle can drive to from where it stands without going into the water: not across a barrier, a cliff or a strait */
 function landReach(u){const N=GW*GH,r=new Uint8Array(N),s0=cellIdx(u.x,u.y),st=[s0];r[s0]=1;
   while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(let k=0;k<4;k++){const nx=x+(k===0?1:k===1?-1:0),ny=y+(k===2?1:k===3?-1:0);if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||!passLand(n))continue;r[n]=1;st.push(n);}}
@@ -3669,9 +3712,10 @@ function rejoinWing(u,pre){pre=pre||'';const k=wingOf(u.id);if(!k||u.kind==='mus
   const h=ld.heading||0,x=ld.air?ld.x:ld.x-Math.cos(h)*16,y=ld.air?ld.y:ld.y-Math.sin(h)*16;
   giveOrder(u,{type:'move',x:clamp(x,10,WW-10),y:clamp(y,10,WH-10),post:u.post},false);say(u,pre+u.name+' återansluter till wing '+k+' vid '+ld.name+'.');return true;}
 function groupOrder(pk,append,postOverride){
-  let us=noContact(selUnits());if(!us.length)return;
+  let us=noContact(pk.us||selUnits());if(!us.length)return;
+  if(pk.enemy&&!pk.force&&coverAsk(us,pk,append,postOverride))return;
   const nwt=pk.relay||(pk.enemy?{x:pk.enemy.lx,y:pk.enemy.ly}:null)||pk.struct||pk.barrier||pk.mine||pk.world;
-  if(us.length===1){netWarn(us,nwt);const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;if(o&&append&&u.rtb)o.own=true;giveOrder(u,markRetreat(u,o),append);return;}
+  if(us.length===1){netWarn(us,nwt);const u=us[0],o=defaultOrder(u,pk,postOverride||(append?lastPost(u):u.post));if(o&&o.type==='move')o.player=true;if(o&&pk.accept)o.accept=true;if(o&&append&&u.rtb)o.own=true;giveOrder(u,markRetreat(u,o),append);return;}
   /* a unit on its way to or at service or field repair keeps going when the order is to the group or the wing (18 okt, issue 25:
      every click on the wing sent a VARG with 5 % hull back in; widened the same day after test round 9949, where an order to the
      group took a VARG off its service order); an order to it alone still sends it */
@@ -3703,7 +3747,7 @@ function groupOrder(pk,append,postOverride){
     if(pk.relay&&u.kind==='eng'&&!pk.relay.captured)o={type:'capture',relay:pk.relay,post};
     else if(pk.barrier&&!pk.barrier.cleared&&u.kind==='eng')o={type:'clear',barrier:pk.barrier,post};
     else if(pk.mine&&!pk.mine.cleared&&u.kind==='eng')o={type:'demine',mine:pk.mine,post};
-    else if(pk.enemy&&!pk.enemy.dead&&(u.kind==='tank'||u.kind==='drone')&&canHit(u,pk.enemy,true))o={type:'attack',enemy:pk.enemy,post:'off'};
+    else if(pk.enemy&&!pk.enemy.dead&&(u.kind==='tank'||u.kind==='drone')&&canHit(u,pk.enemy,true))o={type:'attack',enemy:pk.enemy,post:'off',accept:!!pk.accept};
     else if(pk.struct&&!pk.struct.dead){const only=pk.only||(us.some(v=>v.kind==='eng')?'eng':'gun');
       if(only==='eng'?u.kind==='eng':(u.kind==='tank'||u.kind==='drone'))o=u.kind==='eng'?(mastFree(pk.struct)&&!pk.raze?{type:'mast',s:pk.struct,post}:{type:'demolish',s:pk.struct,post}):{type:'raze',s:pk.struct,post};
       else{const st=pk.struct,dd=Math.hypot(u.x-st.x,u.y-st.y)||1,r=Math.min(60,dd);o={type:'move',x:st.x+(u.x-st.x)/dd*r+offs[i].x,y:st.y+(u.y-st.y)/dd*r+offs[i].y,post};}}
@@ -3875,7 +3919,7 @@ function saveState(){const enc=graphEnc(G);return{fmt:'uppdrag-arkipelag-sparnin
   when:G.start,carrier:{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a},grid:b64(WORLD.grid),g:enc.tab};}
 /* the state of a save put back over a freshly built island of the same number (the caller has built it) */
 function applySave(sv){G=graphDec(sv.g);WORLD.grid.set(unb64(sv.grid));Object.assign(CARRIER,sv.carrier);G.running=true;G.paused=true;}
-if(typeof globalThis!=='undefined')globalThis.__BH={krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_COST,heightAt,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_COST,heightAt,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
