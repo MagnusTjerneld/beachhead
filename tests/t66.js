@@ -30,7 +30,7 @@ const live=(G,kind,x,y)=>{const e=G.enemies.find(q=>q.dead&&q.kind===kind);e.dea
 // 2b. a coordinated attack: the VARG that arrives first waits at its staging point outside the bunker's reach until the other is
 //     in place, then both go in together
 {const G=setup();const L=OLD_R1,[v1,v2]=G.units.filter(u=>u.kind==='tank');const t=live(G,'turret',L.x+200,L.y);t.hp=t.maxhp=5000;t.camo=false;
-  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-520;v2.y=t.y+20;for(const v of[v1,v2]){v.hp=v.maxhp=1e5;v.orders=[{type:'attack',enemy:t,post:'off'}];}
+  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-470;v2.y=t.y+20;for(const v of[v1,v2]){v.hp=v.maxhp=1e5;v.orders=[{type:'attack',enemy:t,post:'off'}];}
   run(2);const st=v1.orders[0].arc&&v1.orders[0].arc.st;ok(!!st&&Math.hypot(st.x-t.x,st.y-t.y)>t.range+20,'VARG-1 has a staging point outside the bunker\'s reach');
   let waited=false,minD=1e9;for(let i=0;i<120&&!v1.orders[0].go;i++){run(.5);minD=Math.min(minD,Math.hypot(v1.x-t.x,v1.y-t.y));if(/väntar på resten/.test(v1.state))waited=true;}
   ok(waited,'VARG-1 waits in position for VARG-2');ok(minD>t.range,'and stays out of the bunker\'s reach meanwhile (closest '+Math.round(minD)+' m)');
