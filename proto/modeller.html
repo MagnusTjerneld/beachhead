@@ -59,12 +59,15 @@ function krok02(col,load){col=col||0xe8b224;const g=new THREE.Group(),Y=mat(col)
   g.add(strut(V(-1.15,.47,0),V(-.6,.02,0),.12,DK));g.add(strut(V(-.05,.47,0),V(-.6,.02,0),.12,DK));g.add(mesh(box(1.4,.12,.4),DK,-.6,.48,0));
   const pl=mesh(cyl(.13,.13,.2,10),MET,-.6,0,0);pl.rotation.x=PI/2;g.add(pl);
   for(let i=0;i<4;i++)g.add(mesh(box(.36,.12,.3),i%2?BLK:Y,-.6,-.2-.12*i,0));
-  const hk=mesh(new THREE.TorusGeometry(.14,.045,6,14,PI*1.5),DK,-.6,-.84,0);hk.rotation.z=PI*.75;g.add(hk);
+  // the hook itself is today's crane hook in the game, KROK's mark (Magnus 21 okt): a shank, then a bite closed up to the shank and
+  // open to one side, with a knob on the tip
+  g.add(mesh(cyl(.06,.06,.34,6),MET,-.6,-.75,0));const hk=mesh(new THREE.TorusGeometry(.26,.07,5,12,PI*1.4),DK,-.6,-1.18,0);hk.rotation.z=PI/2;g.add(hk);
+  g.add(mesh(new THREE.SphereGeometry(.09,8,6),DK,-.6+.26*Math.cos(PI*1.9),-1.18+.26*Math.sin(PI*1.9),0));
   if(load){const gy=-2.85,OL=mat(0x4f5b38),WD=mat(0x8a6038);
     g.add(mesh(box(1.8,.14,1.25),WD,-.6,gy+.07,0));for(const z of[-.5,0,.5])g.add(mesh(box(1.8,.06,.14),WD,-.6,gy+.17,z));
     g.add(mesh(facet([[.25,gy+.2],[.25,gy+.95],[-1.45,gy+.95],[-1.45,gy+.2]],1.15,.06),OL));
     for(const x of[-1.1,-.1])g.add(mesh(box(.08,.78,1.19),BLK,x,gy+.58,0));
-    for(const[x,z]of[[.18,.5],[.18,-.5],[-1.38,.5],[-1.38,-.5]])g.add(strut(V(-.6,-.95,0),V(x,gy+.96,z),.04,BLK));}
+    for(const[x,z]of[[.18,.5],[.18,-.5],[-1.38,.5],[-1.38,-.5]])g.add(strut(V(-.6,-1.42,0),V(x,gy+.96,z),.04,BLK));}
   return g;}
 
 /* BÄVER, engineer vehicle: an armoured six-wheeler with a sloped glacis, a dozer blade with yellow and black warning edge, a folded
@@ -104,10 +107,10 @@ sc.add(new THREE.HemisphereLight(0xdfe9f2,0x6b6a55,.75));const sun=new THREE.Dir
 Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20});sc.add(sun);
 const gr=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0x7d8a5a));gr.rotation.x=-PI/2;gr.receiveShadow=true;sc.add(gr);
 const q=new URLSearchParams(location.search),v=q.get('v')||'krok-sida';
-const kind=v.split('-')[0],m=kind==='krok'?krok02(/oliv/.test(v)?0x4f5b38:0,/last/.test(v)):baverIng();m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});m.traverse(o=>{if(o.userData.rotor)o.traverse(c=>c.castShadow=false);});  // the rotors spin in the game; a still blade's shadow only reads as stripes
+const kind=v.split('-')[0],m=kind==='krok'?krok02(/oliv/.test(v)?0x4f5b38:0,/last|krokl/.test(v)):baverIng();m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});m.traverse(o=>{if(o.userData.rotor)o.traverse(c=>c.castShadow=false);});  // the rotors spin in the game; a still blade's shadow only reads as stripes
 if(kind==='krok')m.position.y=/under/.test(v)?0:2.85;if(/under/.test(v))gr.visible=false;sc.add(m);
 const views={'krok-fram':[26,3.6,0,0,3.3,0],'krok-bak':[-26,3.6,0,0,3.3,0],'krok-sida':[0,3.4,28,0,3.2,0],'krok-ovan':[0,32,.01,0,0,0],'krok-under':[0,-30,.01,0,0,0],
-  'krok-snett':[17,11,19,0,3,0],'krok-last':[9,3.2,19,-.5,2.6,0],'krok-mark':[13,6,14,0,2.5,0],
+  'krok-snett':[17,11,19,0,3,0],'krok-last':[9,3.2,19,-.5,2.6,0],'krok-mark':[13,6,14,0,2.5,0],'krok-krok':[-.3,1.6,4.2,-.6,1.5,0],'krok-krokl':[-.3,1.2,4.6,-.6,1.0,0],
   'baver-sida':[0,3.5,13,0,2,0],'baver-snett':[9,6,9,.5,2,0],'baver-bak':[-9,5,7,0,2,0],'baver-ovan':[1,14,3,0,2,0]};
 const c=views[v]||views['krok-sida'],cam=new THREE.PerspectiveCamera(38,W/H,.1,500);cam.position.set(c[0],c[1],c[2]);cam.lookAt(c[3],c[4],c[5]);
 ren.render(sc,cam);document.getElementById('lbl').textContent=v;window.DONE=true;
