@@ -6892,10 +6892,10 @@ function mkVoice(u){
     const a=st(c.createOscillator());a.type='triangle';a.frequency.value=520;const g=c.createGain();g.gain.value=.18;a.connect(g);g.connect(out);
     const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=3200;nf.Q.value=1.2;const ng=c.createGain();ng.gain.value=.08;n.connect(nf);nf.connect(ng);ng.connect(out);
     V.set=(sp,mv)=>{a.frequency.setTargetAtTime(520+680*mv,c.currentTime,.15);};V.base=.16;
-  }else{ // KROK: rotor thump plus turbine
-    const n=st(noiseSrc()),f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=230;n.connect(f);const am=c.createGain();am.gain.value=.38;f.connect(am);
-    const lfo=st(c.createOscillator());lfo.frequency.value=4.6;const ld=c.createGain();ld.gain.value=.32;lfo.connect(ld);ld.connect(am.gain);am.connect(out);
-    const tb=st(c.createOscillator());tb.type='sine';tb.frequency.value=1180;const tg=c.createGain();tg.gain.value=.035;tb.connect(tg);tg.connect(out);
+  }else{ /* KROK: rotor thump only, darker since 21 okt (Magnus): the constant 1180 Hz turbine tone read as a shrill beep and is gone,
+       and the thump is filtered lower and a little stronger so it keeps its weight */
+    const n=st(noiseSrc()),f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=150;n.connect(f);const am=c.createGain();am.gain.value=.48;f.connect(am);
+    const lfo=st(c.createOscillator());lfo.frequency.value=4.6;const ld=c.createGain();ld.gain.value=.38;lfo.connect(ld);ld.connect(am.gain);am.connect(out);
     V.set=(sp,mv)=>{lfo.frequency.setTargetAtTime(4.6+.6*mv,c.currentTime,.4);};V.base=.6;
   }
   return V;
