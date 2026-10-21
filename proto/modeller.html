@@ -34,9 +34,10 @@ function krok02(col,load){col=col||0xe8b224;const g=new THREE.Group(),Y=mat(col)
   g.add(mesh(facet([[1.6,.5],[2.2,0],[4.2,0],[4.2,1.95],[1.6,1.95]],2.3,.42),Y));g.add(mesh(facet([[4.2,0],[6.2,0],[6.75,.5],[6.75,1.0],[5.6,1.55],[4.2,1.95]],2.3,.42,nose),Y));
   g.add(mesh(facet([[2.0,.45],[2.0,1.9],[-3.3,1.9],[-3.3,.45]],2.05,.36),Y));
   g.add(mesh(facet([[-2.8,.45],[-2.8,1.95],[-5.4,1.95],[-5.4,0],[-3.3,0]],2.3,.42),Y));g.add(mesh(facet([[-5.4,1.95],[-6.1,1.95],[-6.7,1.35],[-6.7,.55],[-6.2,0],[-5.4,0]],2.3,.42,tail),Y));
-  // the dark sensor window round the nose with a light at each corner, the dark tail with red lights
-  g.add(mesh(facet([[5.95,.18],[6.86,.42],[6.86,1.06],[6.0,1.33]],1.72,.12),SEN));
-  for(const z of[-.62,.62])g.add(mesh(box(.12,.1,.14),WH,6.78,.6,z));
+  // the dark sensor window across the front of the nose and round its sides, a light at each corner; the dark tail with red lights
+  // (the body's bevel grows the profile by .42, so the nose's front face sits at x 7.17 and the window reaches past it)
+  g.add(mesh(facet([[5.95,.0],[7.24,.38],[7.24,1.12],[6.0,1.45]],1.6,.12),SEN));
+  for(const z of[-.66,.66])g.add(mesh(box(.12,.1,.14),WH,7.3,.5,z));
   g.add(mesh(facet([[-6.45,.42],[-6.79,.6],[-6.79,1.32],[-6.45,1.58]],1.86,.1),SEN));
   for(const z of[-.8,.8])g.add(mesh(box(.1,.1,.12),RED,-6.8,1.25,z));
   // the short forward pylon and the tall aft pylon, so the aft rotor runs well above the forward one
