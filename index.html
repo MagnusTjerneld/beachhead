@@ -510,11 +510,13 @@ const STRUCT={
 };
 const DEBRIS={crate:'Materiel',hulk:'Gammalt vrak',rubble:'Rasmassor'};
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
-/* the legs come down before a pickup and at service, and are up in flight: within KROK_LEGS_R of the vehicle or pile it is going for,
-   while coupling or setting down low, and on the way down to its spot for repair */
+/* the legs come down before a pickup, before setting down and at service, and are up in flight (Magnus 21 okt): within KROK_LEGS_R
+   of the vehicle or pile it is going for, of the place a vehicle is to be set down, of its spot with a pile on the hook or for
+   repair, and while coupling or setting down low */
 const KROK_LEGS_R=80,KROK_LEGS_T=1.5;
 function krokLegsWant(k){if(k.low||k.mAct)return 1;const o=k.orders[0];let p=null;
   if(o&&o.type==='lift'&&!k.cargo&&o.unit)p=o.unit;else if(o&&o.type==='salvage'&&!k.cargo)p=o.wreck;else if(!o&&!k.cargo&&k.target&&(k.state==='out'||k.state==='hook'))p=k.target;
+  else if(o&&o.type==='drop'&&k.cargo)p=o.dp||o.tp||o;else if(!o&&!k.cargo&&k.carry&&k.state==='back'&&k.pad)p=k.pad;
   else if(!o&&!k.cargo&&(k.hp<k.maxhp-.5||k.retreat)&&k.pad)p=k.pad;
   return p&&Math.hypot(p.x-k.x,p.y-k.y)<KROK_LEGS_R?1:0;}
 /* no KROK, none in the yard and not material for one (issue 67, Magnus 20 okt): the yard builds a free one after t s, so a lost
