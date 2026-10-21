@@ -26,7 +26,7 @@ function facet(pts,depth,bev,taper){const sh=new THREE.Shape();sh.moveTo(pts[0][
   if(taper){const p=g.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,p.getZ(i)*taper(p.getX(i)));g.computeVertexNormals();}return g;}
 function frust(rt,rb,h,sx,sz){const g=new THREE.CylinderGeometry(rt,rb,h,8).toNonIndexed();g.rotateY(PI/8);g.scale(sx,1,sz);g.computeVertexNormals();return g;}
 function strut(a,b,t,m){const d=new THREE.Vector3().subVectors(b,a),L=d.length(),o=new THREE.Mesh(box(t,L,t),m);o.position.copy(a).addScaledVector(d,.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o;}
-function krok02(col,load){col=col||0xe8b224;const g=new THREE.Group(),Y=mat(col),DK=mat(0x2a2c30),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),SEN=mat(0x15181c),
+function krok02(col,load,noHook){col=col||0xe8b224;const g=new THREE.Group(),Y=mat(col),DK=mat(0x2a2c30),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),SEN=mat(0x15181c),
     WH=new THREE.MeshBasicMaterial({color:0xf4f6f8}),RED=new THREE.MeshBasicMaterial({color:0xd8261c}),AMB=new THREE.MeshBasicMaterial({color:0xf0a020}),V=(x,y,z)=>new THREE.Vector3(x,y,z);
   const nose=x=>x>4.2?1-.4*(x-4.2)/2.6:1,tail=x=>x<-5.4?1-.22*(-5.4-x)/1.3:1;
   // the three sections: the nose section, a slightly narrower middle with the belly raised, and the tail section
@@ -55,6 +55,8 @@ function krok02(col,load){col=col||0xe8b224;const g=new THREE.Group(),Y=mat(col)
     g.add(strut(V(bx,.12,s*.8),hip.clone().lerp(knee,.62),.16,DK));g.add(mesh(box(.4,.4,.4),DK,knee.x,knee.y,knee.z));
     g.add(mesh(box(.2,.2,.62),DK,fx,-2.4,s*2.35));
     for(const dz of[-.21,.21]){const w=mesh(cyl(.45,.45,.26,16),BLK,fx,-2.4,s*2.35+dz);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.17,.17,.28,10),MET,fx,-2.4,s*2.35+dz);hb.rotation.x=PI/2;g.add(hb);}}
+  // (noHook leaves out the hook, for a picture in the game where the game's own wire and hook hang from the swing point)
+  if(!noHook){
   // the hook under the middle: a frame from the belly, a block in yellow and black bands, the hook
   g.add(strut(V(-1.15,.47,0),V(-.6,.02,0),.12,DK));g.add(strut(V(-.05,.47,0),V(-.6,.02,0),.12,DK));g.add(mesh(box(1.4,.12,.4),DK,-.6,.48,0));
   const pl=mesh(cyl(.13,.13,.2,10),MET,-.6,0,0);pl.rotation.x=PI/2;g.add(pl);
@@ -63,6 +65,7 @@ function krok02(col,load){col=col||0xe8b224;const g=new THREE.Group(),Y=mat(col)
   // open to one side, with a knob on the tip
   g.add(mesh(cyl(.06,.06,.34,6),MET,-.6,-.75,0));const hk=mesh(new THREE.TorusGeometry(.26,.07,5,12,PI*1.4),DK,-.6,-1.18,0);hk.rotation.z=PI/2;g.add(hk);
   g.add(mesh(new THREE.SphereGeometry(.09,8,6),DK,-.6+.26*Math.cos(PI*1.9),-1.18+.26*Math.sin(PI*1.9),0));
+  }
   if(load){const gy=-2.85,OL=mat(0x4f5b38),WD=mat(0x8a6038);
     g.add(mesh(box(1.8,.14,1.25),WD,-.6,gy+.07,0));for(const z of[-.5,0,.5])g.add(mesh(box(1.8,.06,.14),WD,-.6,gy+.17,z));
     g.add(mesh(facet([[.25,gy+.2],[.25,gy+.95],[-1.45,gy+.95],[-1.45,gy+.2]],1.15,.06),OL));
