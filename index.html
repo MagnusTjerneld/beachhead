@@ -4402,41 +4402,41 @@ function mkUnitMesh(u){
     b.add(mesh(cyl(.02,.02,.7,4),D,-.8,.6,0));b.add(mesh(box(.5,.08,.3),M,-1.55,.3,0));
   }
   else{
-    // KROK, a skycrane: short cab up front, a high spine over an open cargo bay, twin engines on top, a six-blade rotor,
-    // a rising tail boom with a raked fin and a four-blade tail rotor, and tall spread landing gear
-    const yel=0xd9a63a,Y=mat(yel),Y2=mat(0xc4922e),DK=mat(0x2a2c30),MET=mat(0x7d7a72),GL=mat(0x3d5868);g.userData.spin=[];
-    // cab: rounded nose, window band and side windows, chin step
-    g.add(mesh(box(2.6,2.1,2.2),Y,4.6,-.15,0));const nose=mesh(new THREE.SphereGeometry(1.15,10,8),Y,5.9,-.25,0);nose.scale.set(.9,.95,1);g.add(nose);
-    g.add(mesh(box(1.5,.75,2.26),GL,5.1,.45,0));const ws=mesh(box(.12,.8,1.9),GL,6.2,.2,0);ws.rotation.z=-.5;g.add(ws);
-    for(const z of[-1.12,1.12])g.add(mesh(box(.9,.7,.06),GL,3.9,.35,z));g.add(mesh(box(1.2,.3,1.4),DK,5.6,-1.3,0));
-    // spine and fairing, open bay underneath
-    g.add(mesh(box(5.6,1.3,1.35),Y,1.2,.85,0));g.add(mesh(box(4.6,.6,1.6),Y2,1.5,1.75,0));
-    for(const z of[-.72,.72]){g.add(mesh(cyl(.07,.07,4.6,4),MET,1.2,.45,z).rotateZ(PI/2));g.add(mesh(cyl(.05,.05,3.2,4),DK,.6,.2,z*1.02).rotateZ(PI/2));}
-    // twin engines with dark intakes
-    for(const z of[-.82,.82]){const en=mesh(cyl(.5,.46,2.8,10),Y2,2.6,2.05,z);en.rotation.z=PI/2;g.add(en);const ink=mesh(cyl(.36,.36,.08,10),DK,4.02,2.05,z);ink.rotation.z=PI/2;g.add(ink);const ex=mesh(cyl(.3,.24,.6,8),DK,1.05,2.05,z);ex.rotation.z=PI/2;g.add(ex);}
-    // rotor: mast, hub, six long blades with amber tips
-    g.add(mesh(cyl(.22,.28,1,8),MET,1.4,2.4,0));
-    const rotor=new THREE.Group();rotor.position.set(1.4,2.95,0);rotor.add(mesh(cyl(.55,.55,.28,10),DK,0,0,0));rotor.add(mesh(new THREE.SphereGeometry(.42,8,6),Y,0,.25,0));
-    for(let i=0;i<6;i++){const bl=new THREE.Group();bl.rotation.y=i*PI/3;bl.add(mesh(box(8.4,.06,.36),DK,4.5,-.05,0));bl.add(mesh(box(.55,.07,.37),mat(0xe8b23a),8.2,-.08,0));rotor.add(bl);}
-    g.add(rotor);g.userData.spin.push([rotor,'y',14]);
-    // tail boom rising towards the tail, and a fin raked back that grows out of its end, with a small stabiliser on top
-    const boom=mesh(box(7.4,.75,.7),Y,-5.5,1.15,0);boom.rotation.z=-.12;g.add(boom);g.add(mesh(box(5,.25,.9),Y2,-4.6,1.38,0).rotateZ(-.12));
-    const fin=mesh(box(1.4,3,.32),Y,-9.44,2.85,0);fin.rotation.z=.3;g.add(fin);
-    /* the stabiliser on the side away from the tail rotor, as on a skycrane (20 okt, Magnus: the rotor went through it) */
-    g.add(mesh(box(2,.12,1),Y,-9.84,4.17,-.66));
-    // four-blade tail rotor with red and white tips
-    const tr=new THREE.Group();tr.position.set(-9.62,3.42,.38);tr.add(mesh(cyl(.18,.18,.25,8),DK,0,0,0).rotateX(PI/2));
-    for(let i=0;i<4;i++){const b2=new THREE.Group();b2.rotation.z=i*PI/2;b2.add(mesh(box(.18,1.25,.05),DK,0,.75,.08));b2.add(mesh(box(.19,.22,.06),mat(0xd03a2a),0,1.25,.08));b2.add(mesh(box(.19,.14,.06),mat(0xf2f0ea),0,1.07,.08));tr.add(b2);}
-    g.add(tr);g.userData.spin.push([tr,'z',40]);
-    // landing gear: nose legs under the cab, tall main legs splayed out from the spine, double wheels
-    const wheel=(x,y,z)=>{for(const dz of[-.24,.24]){const w=mesh(cyl(.42,.42,.3,10),DK,x,y,z+dz);w.rotation.x=PI/2;g.add(w);}};
-    const up=new THREE.Vector3(0,1,0),strut=(a,b2,t)=>{const d=new THREE.Vector3(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2]),L=d.length();const m=mesh(box(t,1,t),MET,(a[0]+b2[0])/2,(a[1]+b2[1])/2,(a[2]+b2[2])/2);m.quaternion.setFromUnitVectors(up,d.normalize());m.scale.y=L;g.add(m);};
-    for(const z of[-1,1]){strut([4.3,-1.2,z*.9],[4.2,-2.45,z*1.45],.15);strut([3.5,-1.1,z*.6],[4.2,-2.3,z*1.4],.09);wheel(4.2,-2.55,z*1.5);}
-    // main gear hangs from an outrigger beam under the boom, braced back to the spine
-    g.add(mesh(box(.4,.32,3.9),Y2,-3.4,.62,0));
-    for(const z of[-1,1]){strut([-3.4,.55,z*1.85],[-3.4,-2.4,z*2.15],.2);strut([-1.4,.3,z*.6],[-3.3,-1.2,z*2.05],.11);wheel(-3.4,-2.55,z*2.15);}
-    // winch under the bay, lamp and anti-collision light
-    g.add(mesh(box(.9,.5,.9),DK,0,-.1,0));g.add(mesh(box(.5,.2,.5),R3.lampMat,5.2,-1.45,0));g.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.2,1.6,0));
+    /* KROK 02A (Magnus's own design, 21 okt; the skycrane before it is kept in proto/modeller.html): a long faceted body in three
+       sections, nose and tail tapering, the belly raised between them where the wire leaves; a short pylon forward and a tall one aft
+       so the two four-blade rotors pass over each other; four long crane legs splayed out to twin wheels; a dark sensor window across
+       the nose, a dark tail with red lights. Built in its own frame (b) with the swing point under the belly at the origin */
+    const yel=0xe8b224,Y=mat(yel),DK=mat(0x2a2c30),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),SEN=mat(0x15181c),WH=new THREE.MeshBasicMaterial({color:0xf4f6f8}),
+      RED=new THREE.MeshBasicMaterial({color:0xd8261c}),V=(x,y,z)=>new THREE.Vector3(x,y,z),b=new THREE.Group();b.position.set(.6,-.44,0);g.add(b);g.userData.spin=[];
+    // a side profile extruded to its width with flat chamfers; taper narrows it towards one end (kept linear so the faces stay flat)
+    const facet=(pts,depth,bev,taper)=>{const s=new THREE.Shape();s.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)s.lineTo(pts[i][0],pts[i][1]);
+      const ge=new THREE.ExtrudeGeometry(s,{depth:depth-2*bev,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelSegments:1,curveSegments:1});ge.translate(0,0,-(depth-2*bev)/2);
+      if(taper){const p=ge.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,p.getZ(i)*taper(p.getX(i)));ge.computeVertexNormals();}return ge;};
+    const frust=(rt,rb,h,sx)=>{const ge=new THREE.CylinderGeometry(rt,rb,h,8).toNonIndexed();ge.rotateY(PI/8);ge.scale(sx,1,1);ge.computeVertexNormals();return ge;};
+    const strut=(a,c,t,m)=>{const d=new THREE.Vector3().subVectors(c,a),o=mesh(box(t,d.length(),t),m);o.position.copy(a).addScaledVector(d,.5);o.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());b.add(o);};
+    const nose=x=>x>4.2?1-.4*(x-4.2)/2.6:1,tail=x=>x<-5.4?1-.22*(-5.4-x)/1.3:1;
+    // the sections; the tapering nose and tail are pieces of their own, and the joints read as panel seams
+    b.add(mesh(facet([[1.6,.5],[2.2,0],[4.2,0],[4.2,1.95],[1.6,1.95]],2.3,.42),Y));b.add(mesh(facet([[4.2,0],[6.2,0],[6.75,.5],[6.75,1.0],[5.6,1.55],[4.2,1.95]],2.3,.42,nose),Y));
+    b.add(mesh(facet([[2.0,.45],[2.0,1.9],[-3.3,1.9],[-3.3,.45]],2.05,.36),Y));
+    b.add(mesh(facet([[-2.8,.45],[-2.8,1.95],[-5.4,1.95],[-5.4,0],[-3.3,0]],2.3,.42),Y));b.add(mesh(facet([[-5.4,1.95],[-6.1,1.95],[-6.7,1.35],[-6.7,.55],[-6.2,0],[-5.4,0]],2.3,.42,tail),Y));
+    // the sensor window across the front of the nose and round its sides (the bevel puts the nose's face at x 7.17), the dark tail
+    b.add(mesh(facet([[5.95,0],[7.24,.38],[7.24,1.12],[6.0,1.45]],1.6,.12),SEN));for(const z of[-.66,.66])b.add(mesh(box(.12,.1,.14),WH,7.3,.5,z));
+    b.add(mesh(facet([[-6.45,.42],[-6.79,.6],[-6.79,1.32],[-6.45,1.58]],1.86,.1),SEN));for(const z of[-.8,.8])b.add(mesh(box(.1,.1,.12),RED,-6.8,1.25,z));
+    // the pylons and the two rotors, turning opposite ways
+    b.add(mesh(frust(.42,.72,.7,1.35),Y,4.25,2.3,0));b.add(mesh(cyl(.24,.3,.26,8),DK,4.25,2.78,0));b.add(mesh(box(.3,.05,.08),WH,3.55,2.5,0));
+    b.add(mesh(frust(.55,1.05,2.1,1.3),Y,-4.9,3.0,0));b.add(mesh(cyl(.3,.38,.3,8),DK,-4.9,4.2,0));b.add(mesh(box(.4,.05,.08),WH,-4.2,3.95,0));
+    for(const[x,y,a,sp]of[[4.25,2.98,0,14],[-4.9,4.42,PI/4,-14]]){const r=rotor(4,4.8,.52,yel);r.position.set(x,y,0);r.rotation.y=a;r.add(mesh(cyl(.6,.6,.16,10),DK,0,-.05,0));
+      r.add(mesh(new THREE.SphereGeometry(.3,10,6,0,TAU,0,PI/2),DK,0,.1,0));b.add(r);g.userData.spin.push([r,'y',sp]);}
+    // a sensor box and the anti-collision light on the back, vent slots along the middle
+    b.add(mesh(facet([[.2,1.85],[.2,2.2],[-.6,2.2],[-.6,1.85]],.6,.06),DK));b.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.6,2.05,0));
+    for(const z of[-1.03,1.03])b.add(mesh(box(.9,.06,.03),BLK,-.4,1.35,z));
+    // four crane legs: a heavy strut from the body's corner out and down to a knee, a lighter brace from further in, twin wheels
+    for(const[hx,bx,fx]of[[4.0,2.3,5.2],[-4.3,-2.6,-5.5]])for(const s of[-1,1]){const hip=V(hx,.12,s*.95),knee=V(fx,-1.8,s*2.25);
+      b.add(mesh(box(.7,.36,.5),DK,hx,.08,s*.95));strut(hip,knee,.32,DK);strut(knee,V(fx,-2.4,s*2.35),.26,DK);strut(V(bx,.12,s*.8),hip.clone().lerp(knee,.62),.16,DK);
+      b.add(mesh(box(.4,.4,.4),DK,fx,-1.8,s*2.25));b.add(mesh(box(.2,.2,.62),DK,fx,-2.4,s*2.35));
+      for(const dz of[-.21,.21]){const w=mesh(cyl(.45,.45,.26,16),BLK,fx,-2.4,s*2.35+dz);w.rotation.x=PI/2;b.add(w);const hb=mesh(cyl(.17,.17,.28,10),MET,fx,-2.4,s*2.35+dz);hb.rotation.x=PI/2;b.add(hb);}}
+    // the winch frame under the belly over the swing point, and the lamp under the nose
+    b.add(mesh(box(1.4,.12,.4),DK,-.6,.48,0));b.add(mesh(box(.6,.2,.6),DK,-.6,.36,0));b.add(mesh(box(.5,.2,.5),R3.lampMat,6.0,-.45,0));
     /* the wire hangs from a swing point under the winch (decided 19 okt, issue 49): wire, hook and load swing together. The hook is
        a crane hook: a sheave block, a short shank and an open hook, KROK_HOOK_H long from the wire to the bite */
     /* the winch sits right over the swing point, so the wire leaves it with no gap (prov 19 okt) */const sw=new THREE.Group();sw.position.y=-.35;g.add(sw);g.userData.sw=sw;
