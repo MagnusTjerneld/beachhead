@@ -2789,8 +2789,7 @@ function move(u,dt){
     u.orbit={x:o.enemy.lx,y:o.enemy.ly};orbit(u,dt,o.searchR||55);u.state='Söker '+ename(o.enemy)+' kring senast kända plats';return;}
   else if(o.type==='attack'){if(o.enemy.dead){attackDone(u);return;}if(o.search&&o.enemy.visibleNow)o.search=0;if(o.fp&&(Math.hypot(o.enemy.lx-o.fpE.x,o.enemy.ly-o.fpE.y)>40||(o.fpCam&&o.enemy.visibleNow&&!o.fpVis))){o.fp=null;o.arc=null;u.path=null;}
     if(!o.fp&&!u.air&&LOS.on&&o.enemy.visibleNow&&dist(u,o.enemy)<=effRange(u)&&!sees(u,o.enemy)&&G.time>=(o.losT||0)){o.losT=G.time+2;const fp=firingPoint(u,o.enemy,o.close);if(fp){o.fp=fp;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}else if(u.kind==='tank')losCall(u,o.enemy);}/* in reach but behind the ground: a spot with a clear line (issue 38), or a HÖK when there is none */
-    /* out of shells it has only the machine gun: no firing position for the gun, it closes in as before */
-    if(!o.fp&&u.kind==='tank'&&!o.close&&!(u.maxAmmo&&u.ammo<1)&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=fireSpot(u,o);if(ap.none||ap.exp&&u.post!=='off'&&!o.accept){spotFail(u,o,ap);return;}
+    if(!o.fp&&u.kind==='tank'&&!o.close&&G.time>=(o.arcT||0)){o.arcT=G.time+1;const ap=fireSpot(u,o);if(ap.none||ap.exp&&u.post!=='off'&&!o.accept){spotFail(u,o,ap);return;}
       /* a lone VARG on a target that moves keeps driving at it as before: a spot reckoned on where a tank stood is stale in seconds; the
          search still tells whether it can be reached on a fair way (sandbox overmakt, 21 okt: 0.25 VARG lost a round on the spot, 0.07 before) */
       if(o.enemy.mobile&&groupAtk(o.enemy).length<2){o.arcT=G.time+5;}else{o.fp=ap;o.arc=ap;o.fpE={x:o.enemy.lx,y:o.enemy.ly};o.fpCam=!!o.enemy.camo;o.fpVis=o.enemy.visibleNow;u.path=null;}
