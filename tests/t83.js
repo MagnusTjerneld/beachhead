@@ -1,6 +1,6 @@
 // Provspel ö 3019 (Magnus 21 okt): KROK never sets BÄVER down on the water, flies to an unsecured point and waits there with the load,
 // and waits where it lifted when nothing is said; a new order cancels a lift that waits; a HÖK striking a target is not taken off to
-// spot it; the wing does not wait for a VARG far from its staging point; and every mast stands where the net can reach it
+// spot it but counts as the spotter while it strikes; the wing does not wait for a VARG far from its staging point; and every mast stands where the net can reach it
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find(l=>re.test(l.text));
@@ -27,7 +27,9 @@ const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find
 {B.START.units=['eng'];B.newGame(9949);const G=B.G;G.running=true;G.netAll=true;G.known.fill(1);G.knownV++;for(const e of G.enemies)e.seen=true;G.units.length=0;
   const T=G.enemies.find(e=>e.id==='T8'),L=B.W.landing,h=B.makeUnit('drone',L.x,L.y+40),v=B.makeUnit('tank',L.x+30,L.y+80);h.alt=30;h.post='off';G.units.push(h,v);
   h.orders=[{type:'attack',enemy:T,post:'off'}];v.orders=[{type:'attack',enemy:T,post:'off'}];run(4);
-  ok(!(h.orders[0]&&h.orders[0].spotFor),'a HÖK striking the target is not sent to spot it for the VARG ('+(h.orders[0]?h.orders[0].type:'-')+')');}
+  ok(!(h.orders[0]&&h.orders[0].spotFor),'a HÖK striking the target is not sent to spot it for the VARG ('+(h.orders[0]?h.orders[0].type:'-')+')');
+  ok(B.spotterFor(T)===h,'and it counts as the spotter for the target, attacking and spotting at once (Magnus 22 okt)');
+  ok(/och spanar/.test(h.state),'and says so ('+h.state+')');}
 // 4. every mast stands where the net reaches it: Birka 850 m, R1 or the harbour 500 m (not the radar station or the command centre), a mast placed before 250 m
 {let n=0,bad=[];for(const sd of[3019,9949,2024,1234,5555,7341,9052,77,4242,9001,31]){B.newGame(sd);const G=B.G,C=B.CARRIER,ms=G.structs.filter(s=>s.kind==='mast');n+=ms.length;
     const src=[{x:C.x,y:C.y,r:850},...G.relays.filter(r=>r.type!=='radar'&&r.type!=='central').map(r=>({x:r.x,y:r.y,r:500}))];
