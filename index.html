@@ -6196,9 +6196,10 @@ let grainPat=null;
 function bearing(a){return((a*180/PI+90)%360+360)%360;}
 /* downward camera in a corner of the main view: under KROK while it is flown by hand (heading up, for steering), and under a GETING
    whenever the camera shows it (north up as on the chart, since it circles; Magnus 22 okt: to follow a ground fight from the air).
-   A click in the corner picture swaps it with the main view (G.camDown); the corner then shows the chase camera */
+   A click in the corner picture swaps it with the main view (G.camDown); the corner then shows the chase camera. Drawn in the camera view
+   whether it is the main view or the small one (22 okt: only in the main view at first, and the camera starts as the small one) */
 const PIP_FOV=70,PIP_ALT=26,CAM_FOV=58,DOWN_FOV_PIP=80,DOWN_FOV_MAIN=75;
-function pipRect(w,h){const s=Math.round(clamp(Math.min(w*.3,h*.42),120,280));return{x:w-s-12,y:Math.max(54,h-s-62),s};}
+function pipRect(w,h){const s=Math.round(clamp(Math.min(w*.3,h*.42),90,280));return{x:w-s-12,y:Math.max(54,h-s-62),s};}
 function downUnit(){const k=G.ctrl&&unitById(G.ctrl);if(k&&k.kind==='krok'&&!k.dead)return k;
   const u=unitById(G.cam);return u&&u.kind==='scout'&&!u.dead&&!u.carried&&G.units.includes(u)&&heard(u)?u:null;}
 function downMesh(u){return u.kind==='krok'?R3.kroks.get(u.id):R3.units.get(u.id);}
@@ -6208,7 +6209,7 @@ function camFov(f){if(R3.cam.fov!==f){R3.cam.fov=f;R3.cam.updateProjectionMatrix
 function camRestore(){if(!R3.chP)return;R3.cam.position.copy(R3.chP);R3.lookAt.copy(R3.chL);R3.chP=R3.chL=null;R3.cam.up.set(0,1,0);camFov(CAM_FOV);R3.cam.lookAt(R3.lookAt);}
 function downSwapped(){return !!(G.camDown&&R3&&R3.chP&&downUnit());}
 function renderPip(){
-  const k=downUnit();if(!k||!isMain('cam')||G.camDeadT>0)return;
+  const k=downUnit();if(!k||G.camDeadT>0)return;
   const R=R3.renderer,sz=R.getSize(new THREE.Vector2()),W=sz.x,H=sz.y,r=pipRect(W,H),sw=downSwapped();
   if(!R3.pipCam)R3.pipCam=new THREE.PerspectiveCamera(PIP_FOV,1,.5,900);const c=R3.pipCam,f=sw?CAM_FOV:k.kind==='scout'?DOWN_FOV_PIP:PIP_FOV;if(c.fov!==f){c.fov=f;c.updateProjectionMatrix();}
   if(sw){c.up.set(0,1,0);c.position.copy(R3.chP);c.lookAt(R3.chL);c.updateMatrixWorld();}else downPose(k,c);
@@ -6280,14 +6281,14 @@ function drawHud(ctx,w,h){
       ctx.fillText(t?(t.isStruct?STRUCT[t.kind].label.toUpperCase()+' '+t.id:ENEMY[t.kind].label.toUpperCase()+' '+t.id)+' · '+Math.round(dist(u,t))+' m':'INGET MÅL INOM '+u.range+' m',cx2,cy2+32);
       if(u.kind==='drone'){ctx.fillStyle='#f0c45a';ctx.fillText('R ROBOT '+Math.floor(u.ammo)+'/'+u.maxAmmo+(u.target&&!u.target.isStruct&&reachR(u,u.target)>u.range?' · MÅLET UTPEKAT, NÅR '+reachR(u,u.target)+' m':' · '+u.range+' m')+' · KULSPRUTA '+MG.range+' m',cx2,cy2+48);}}}
   ctx.shadowBlur=0;
-  if(G.ctrl===u.id&&u.kind==='krok'&&isMain('cam')){const r=pipRect(w,h),sw=downSwapped(),c=sw?{x:w/2,y:h/2}:{x:r.x+r.s/2,y:r.y+r.s/2},h2=krokHookTarget(u),a=u.mAct;
+  if(G.ctrl===u.id&&u.kind==='krok'){const r=pipRect(w,h),sw=downSwapped(),c=sw?{x:w/2,y:h/2}:{x:r.x+r.s/2,y:r.y+r.s/2},h2=krokHookTarget(u),a=u.mAct;
     ctx.strokeStyle='rgba(240,196,90,.9)';ctx.lineWidth=1.5;ctx.strokeRect(r.x+.5,r.y+.5,r.s,r.s);
     const vs=sw?h:r.s,rr=Math.min(vs*.48,KROK_HOOK_R/(2*(R3.pipAlt||PIP_ALT)*Math.tan((sw?R3.cam.fov:PIP_FOV)*PI/360))*vs);ctx.setLineDash([4,4]);ctx.strokeStyle=h2?'rgba(240,196,90,.9)':'rgba(240,244,240,.6)';ctx.beginPath();ctx.arc(c.x,c.y,rr,0,TAU);ctx.stroke();ctx.setLineDash([]);
     ctx.beginPath();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){ctx.moveTo(c.x+dx*5,c.y+dy*5);ctx.lineTo(c.x+dx*13,c.y+dy*13);}ctx.stroke();
     if(a){ctx.strokeStyle='#f0c45a';ctx.lineWidth=3;ctx.beginPath();ctx.arc(c.x,c.y,rr+5,-PI/2,-PI/2+TAU*Math.min(1,a.t/KROK_LIFT));ctx.stroke();}
     ctx.font=mono(11);ctx.fillStyle='#f0c45a';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(sw?'BAKOM · KLICK BYTER':'NED · KLICK BYTER',r.x+6,r.y+5);
     ctx.textAlign='center';ctx.fillText(a?(a.type==='drop'?'SÄTTER NED · HÅLL STILLA':'KOPPLAR · HÅLL STILLA'):!h2?(u.carry?'LAST TILL FARTYGET':'INGET UNDER KROKEN'):h2.type==='drop'?'F SÄTTER NED '+u.cargo.name:h2.type==='lift'?'F LYFTER '+h2.unit.name+' · '+Math.round(h2.d)+' m':'F BÄRGAR '+wlabel(h2.w).toUpperCase()+' · '+Math.round(h2.d)+' m',c.x,sw?c.y+rr+12:r.y+r.s+6);}
-  if(u.kind==='scout'&&isMain('cam')&&downUnit()===u){const r=pipRect(w,h),sw=downSwapped(),nm=(x,y)=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-5,y+9);ctx.lineTo(x+5,y+9);ctx.closePath();ctx.fill();ctx.fillText('N',x,y+11);};
+  if(u.kind==='scout'&&downUnit()===u){const r=pipRect(w,h),sw=downSwapped(),nm=(x,y)=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-5,y+9);ctx.lineTo(x+5,y+9);ctx.closePath();ctx.fill();ctx.fillText('N',x,y+11);};
     ctx.strokeStyle='rgba(240,196,90,.9)';ctx.lineWidth=1.5;ctx.strokeRect(r.x+.5,r.y+.5,r.s,r.s);ctx.font=mono(11);ctx.fillStyle='#f0c45a';ctx.textAlign='left';ctx.textBaseline='top';
     ctx.fillText((sw?'BAKOM':'NED')+' · KLICK BYTER',r.x+6,r.y+5);ctx.textAlign='center';
     if(sw){nm(w/2,28);ctx.fillText('NED · '+u.name+' · '+Math.round(R3.pipAlt||0)+' M',w/2,54);}else nm(r.x+r.s/2,r.y+5);}
@@ -6356,7 +6357,7 @@ function onDown(e){
   if(kind==='map'){pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pts.size===2){if(ptr)clearTimeout(ptr.lp);ptr=null;G.box=null;G.drag=null;const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:mv.z,wm:{x:(mx-mapX.ox)/mapX.s,y:(my-mapX.oy)/mapX.s}};try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}return;}}
   if(e.button===2)return;
-  if(kind==='cam'&&R3&&isMain('cam')&&G.camDeadT<0&&downUnit()){const r=pipRect(size.cam.w,size.cam.h),x=e.offsetX,y=e.offsetY;
+  if(kind==='cam'&&R3&&G.camDeadT<0&&downUnit()){const r=pipRect(size.cam.w,size.cam.h),x=e.offsetX,y=e.offsetY;
     if(x>=r.x&&x<=r.x+r.s&&y>=r.y&&y<=r.y+r.s){G.camDown=!G.camDown;R3.snap=true;return;}}
   /* in the wide layout the camera is as big as the main view: a click in it aims and fires there too (18 okt, test round 9949) */
   if(G.ctrl&&kind==='cam'){const cu=unitById(G.ctrl),gun=!!cu&&(cu.kind==='tank'||cu.kind==='drone');/* flying KROK in the wide layout, a click in the camera still gives orders (test round 6718) */
