@@ -2479,9 +2479,9 @@ const inFire=u=>!!u.fh||u.fighting||shotAt(u,1);
    stood 32 to 72 s with its order laid by); it stays on the chart and in route planning */
 function threatNear(u,m){const R=effRange(u);for(const e of G.enemies){if(e.dead||!(e.visibleNow||e.seen))continue;if(!e.visibleNow&&G.time-Math.max(e.seenT??-99,e.lastFire??-99)>FIRE_HOLD.stale)continue;const x=e.visibleNow?e.x:e.lx,y=e.visibleNow?e.y:e.ly,d=Math.hypot(u.x-x,u.y-y);
   if(e.canGround&&(d<=e.range+m||canHit(u,e)&&d<=R+m))return e;}return null;}/* air defence is no threat to a vehicle */
-/* a VARG standing without orders that is hit by something it cannot answer (out of shells, no clear line, out of its reach) for
+/* a VARG standing without orders that is hit by something it cannot answer (beyond its reach, no clear line, unseen) for
    FIRE_HOLD.hit s pulls out of that reach and waits there for orders, as a crew would (decided 22 okt, Magnus, testfall flank: VARG-2
-   stood with no shells under fire from the anti-tank team A1 170 m off and lost half its hull) */
+   stood under fire from the anti-tank team A1 170 m off, past its own 140 m and without a clear line, and lost most of its hull) */
 function idleHold(u,dt){if(u.orders.length||u.rtb||u.carried||G.ctrl===u.id){u.idleUn=0;return;}
   if(u.fighting||!shotAt(u,6)){u.idleUn=0;return;}u.idleUn=(u.idleUn||0)+dt;if(u.idleUn<FIRE_HOLD.hit)return;u.idleUn=0;
   const now=G.time,by=Object.keys(u.hitBy).filter(id=>now-u.hitBy[id]<6),p=by.length?escapePt(u):null;if(!p)return;

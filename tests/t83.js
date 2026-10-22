@@ -35,7 +35,7 @@ const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find
 {B.testfall('flank');const G=B.G;G.paused=false;const h=G.units.find(u=>u.kind==='drone');h.post='off';B.selectWing('1');B.groupOrder({enemy:G.enemies.find(e=>e.id==='T8')});run(6);
   ok(h.orders[0]&&h.orders[0].type==='attack'&&B.spotterFor(h.orders[0].enemy)===h,'a HÖK sent to spot, on Offensiv, attacks the target and spots it ('+h.state+')');}
 {B.testfall('kamera');const G=B.G;G.paused=false;for(const e of G.enemies)e.dead=true;const v=G.units.find(u=>u.kind==='tank'),A=G.enemies.find(e=>e.id==='A1');A.dead=false;A.x=A.lx=v.x+150;A.y=A.ly=v.y;
-  v.ammo=0;for(let i=0;i<120&&!v.orders.length;i++){v.hitBy={A1:G.time};B.step(.05);}
+  for(let i=0;i<120&&!v.orders.length;i++){v.hitBy={A1:G.time};B.step(.05);}
   ok(v.orders[0]&&v.orders[0].pull,'a VARG without orders, hit by a gun it cannot answer, pulls out of reach ('+(v.orders[0]?v.orders[0].type:v.state)+')');ok(!!said(G,/Kan inte besvara elden/),'and says so');}
 // 4. every mast stands where the net reaches it: Birka 850 m, R1 or the harbour 500 m (not the radar station or the command centre), a mast placed before 250 m
 {let n=0,bad=[];for(const sd of[3019,9949,2024,1234,5555,7341,9052,77,4242,9001,31]){B.newGame(sd);const G=B.G,C=B.CARRIER,ms=G.structs.filter(s=>s.kind==='mast');n+=ms.length;
