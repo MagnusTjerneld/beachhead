@@ -64,7 +64,7 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
  const aa=G.enemies.find(e=>e.kind==='aa');aa.seen=true;aa.lx=aa.x;aa.ly=aa.y;let minD=1e9;
  const back=bigRadio();for(let i=0;i<20*120;i++){B.step(.05);if(!sc.dead)minD=Math.min(minD,Math.hypot(sc.x-aa.x,sc.y-aa.y));}back();
  ok(!sc.dead&&G.landPct>.1,'without the radio limit: explored '+Math.round(G.landPct*100)+' % of the island in two minutes');ok(minD>110,'never inside the AA radar ('+Math.round(minD)+' m)');
- const t=G.enemies.find(e=>e.kind==='turret'&&!e.dead);t.seen=true;t.lx=t.x;t.ly=t.y;t.visibleNow=false;const v=G.units.find(u=>u.kind==='tank');v.x=t.x+140;v.y=t.y;
+ const t=G.enemies.find(e=>e.kind==='turret'&&!e.dead&&Math.hypot(e.x-sc.x,e.y-sc.y)>250);/* not one the SPARV already sees from where its search took it */t.seen=true;t.lx=t.x;t.ly=t.y;t.visibleNow=false;const v=G.units.find(u=>u.kind==='tank');v.x=t.x+140;v.y=t.y;
  B.requestSpot(v,t);ok(sc.orders[0]&&sc.orders[0].spotFor===t,'the SPARV is sent to spot, not the HÖK');}
 // SPARV explores one zone when told to, reports when it is done and waits for orders
 {B.newGame(7341);const G=B.G;G.running=true;for(const e of G.enemies)e.dead=true;const sc=B.makeUnit('scout',B.W.landing.x,B.W.landing.y);G.units.push(sc);

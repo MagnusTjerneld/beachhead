@@ -12,7 +12,7 @@ ok(!!pv&&!!bk,'ö 9949 has a pansarvärn near a bunker ('+(pv&&pv.id)+', '+(bk&&
 const aa=G.enemies.find(e=>e.kind==='aa');
 for(const e of G.enemies)if(e!==pv&&e!==bk&&e!==aa)e.dead=true;aa.x=aa.hx=bk.x+2000;aa.y=aa.hy=bk.y;/* out of the way */
 for(const v of G.units)if(v.kind!=='eng')v.dead=true;
-const mx=(pv.x+bk.x)/2,my=(pv.y+bk.y)/2,g=B.makeUnit('scout',mx,my);G.units.push(g);g.fuel=1e9;
+const mx=(pv.x+bk.x)/2,my=(pv.y+bk.y)/2,g=B.makeUnit('scout',mx,my);G.units.push(g);g.fuel=1e9;g.maxhp=1e6;/* low by the bunker it is fired on: it must live through the checks */
 const fix=()=>{g.x=mx;g.y=my;g.orders=[];g.orbit=null;g.hp=g.maxhp;};
 // 1. low sees both
 fix();run(1);ok(pv.visibleNow&&bk.visibleNow,'low it sees the pansarvärn and the bunker ('+Math.round(d(g,pv))+' and '+Math.round(d(g,bk))+' m)');
@@ -43,4 +43,13 @@ B.setHigh(g,false);ok(B.reachVs(bk,g)===70,'low the bunker reaches it at its sig
   ok(!B.knownLo(i),'low, 150 m is beyond its 120 m: still only from high');
   g.x=L.x+(i%B.GW*10-L.x)*.5;g.y=L.y+(Math.floor(i/B.GW)*10-L.y)*.5;for(let k=0;k<20;k++)B.step(.05);
   ok(B.knownLo(i),'flown closer low, it is scouted for KROK too');}
+// 5. exploring freely it flies out over unknown land and keeps its point until it is there (22 okt: it crept a few metres at a time along
+// the edge of what it had seen, 16 % of 9949 in a minute high); the radio's reach is lifted so only the search is measured
+{B.newGame(9949);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(const v of G.units)if(v.kind!=='eng')v.dead=true;
+  const r0=B.RADIO.r,b0=B.RADIO.birka;B.RADIO.r=B.RADIO.birka=5000;
+  const L=B.W.landing,g=B.makeUnit('scout',L.x,L.y);G.units.push(g);g.fuel=1e9;B.setHigh(g,true);B.giveOrder(g,{type:'explore',post:'def'},false,'mission');
+  let tg=null,legs=0,still=0;for(let k=0;k<60*20;k++){const px=g.x,py=g.y;B.step(.05);const o=g.mission;if(o&&o.tgt&&o.tgt!==tg){tg=o.tgt;legs++;}if(Math.hypot(g.x-px,g.y-py)<.2)still++;}
+  B.RADIO.r=r0;B.RADIO.birka=b0;
+  ok(G.landPct>=.3,'high, exploring freely, it has scouted '+Math.round(G.landPct*100)+' % of 9949 in a minute (at least 30)');
+  ok(legs<=12&&still<20,'in long legs ('+legs+' points) without standing still ('+(still/20).toFixed(1)+' s)');}
 console.log(fail?fail+' failed':'all passed');process.exit(fail?1:0);
