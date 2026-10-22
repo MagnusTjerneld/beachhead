@@ -1,9 +1,9 @@
 // The four seasons from one drone camera (decided 17 okt, Magnus: kept for reuse): the same island, hour and camera on the clearest
 // day of each season, each rendered full size in photo mode, and a picture stitched of a quarter of each as vertical stripes, spring,
 // summer, autumn and winter from left to right. All PNG, cropped to 16:9 from the top (the sky).
-//   node tests/arstider.js                                  island 2024, the camera over the cove with the jetty, 3402 px wide
+//   node tests/arstider.js                                  island 2024 from 550 m out at sea to the east at 11:00, 3402 px wide (Magnus 22 okt)
 //   node tests/arstider.js 9052 ut/arstider                 another island; the files are named <ut>_strimlor.png and <ut>_<season>.png
-//   node tests/arstider.js 2024 ut --cam 471,150,704 --look 836,0,713 --klocka 13:00 --moln 15 --bredd 3402
+//   node tests/arstider.js 2024 ut --cam 471,150,704 --look 836,0,713 --klocka 13:00   the first view, over the cove with the jetty
 //   --datum var=04-22,sommar=07-02,host=10-16,vinter=02-15     other days
 //   --fov 30                                                 a longer lens (degrees, vertical), which draws the backdrop islands nearer
 // BH_HTML=<file> renders another copy of the game (a mockup). About 15 s an image at full size in swiftshader; three.js r128 from tests/node_modules/three (npm install in tests) or THREE_JS.
@@ -12,8 +12,8 @@ const {chromium}=require(execSync('npm root -g').toString().trim()+'/playwright'
 const arg=process.argv.slice(2),pos=arg.filter((a,i)=>!a.startsWith('--')&&!(i>0&&arg[i-1].startsWith('--'))),opt=k=>{const i=arg.indexOf('--'+k);return i>=0?arg[i+1]:null;};
 const seed=+(pos[0]||2024),out=pos[1]||'arstider';
 const xyz=s=>{const[x,y,z]=s.split(',').map(Number);return{x,y,z};};
-const cam=xyz(opt('cam')||'471,150,704'),look=xyz(opt('look')||'836,0,713');
-const [hh,mm]=(opt('klocka')||'13:00').split(':').map(Number),moln=+(opt('moln')??15),bredd=+(opt('bredd')||3402),fov=opt('fov')?+opt('fov'):null;
+const cam=xyz(opt('cam')||'1732,550,1160'),look=xyz(opt('look')||'1067,0,1390');
+const [hh,mm]=(opt('klocka')||'11:00').split(':').map(Number),moln=+(opt('moln')??15),bredd=+(opt('bredd')||3402),fov=opt('fov')?+opt('fov'):null;
 const DAYS={var:'04-22',sommar:'07-02',host:'10-16',vinter:'02-15'};if(opt('datum'))for(const kv of opt('datum').split(',')){const[k,v]=kv.split('=');DAYS[k]=v;}
 const SEAS=['var','sommar','host','vinter'];
 const three=process.env.THREE_JS||path.join(__dirname,'node_modules','three','build','three.min.js');

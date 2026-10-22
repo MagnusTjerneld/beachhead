@@ -1312,7 +1312,7 @@ function buildWorldTry(seed,tryK,type,move){
     return true;};
   const findSpot=(a,r0,r1,zi,loose,beach)=>{for(let t=0;t<80;t++){const ang=R()*TAU,rr=r0+R()*(r1-r0),x=a.x+Math.cos(ang)*rr,y=a.y+Math.sin(ang)*rr;if(spotOK(x,y,zi,loose,beach)){const c=cellCenter(cellIdx(x,y));return loose?{x,y}:c;}}return null;};
   const r5=v=>Math.round(v/5)*5;
-  const netSrc=[{x:CARRIER.x,y:CARRIER.y,r:NET.ship},{x:relays[0].x,y:relays[0].y,r:NET.point},{x:relays[2].x,y:relays[2].y,r:NET.point},...(harborPt?[{x:harborPt.x,y:harborPt.y,r:NET.point}]:[])],
+  const netSrc=[{x:CARRIER.x,y:CARRIER.y,r:NET.ship},{x:relays[0].x,y:relays[0].y,r:NET.point},...(harborPt?[{x:harborPt.x,y:harborPt.y,r:NET.point}]:[])],/* Birka, R1 and the harbour: not the command centre (relays[2]), which is the last thing taken (22 okt: it was counted by mistake) */
     netReach0=p=>netSrc.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<=q.r-30)||STR.some(q=>q.kind==='mast'&&Math.hypot(q.x-p.x,q.y-p.y)<=NET.mast-30);
   const addS=(kind,p,m)=>STR.push({id:'B'+(STR.length+1),kind,x:p.x,y:p.y,cell:cellIdx(p.x,p.y),a:p.a!=null?p.a:Math.floor(R()*4)*PI/2+(R()-.5)*.3,value:r5(STRUCT[kind].value*m)});
   /* the land plan, part two: a zone's buildings are one farm (a depot yard in the two core zones), not loose houses (decided 16 okt).
@@ -3957,7 +3957,7 @@ globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return 
    object), the island's grid as it stands and Birka's place. A save in another save format is not loaded: the game says so instead.
    SAVE.ver is raised by hand whenever what a save holds, or the island built from a number, changes (decided 19 okt, Magnus), so
    most saves outlive a new version of the game */
-const SAVE={ver:4,/* 2: 19 okt, Birkas väg in till kajen och öar där hon inte kan lägga till görs om; 3: 20 okt, den sneda angöringen; 4: 21 okt, masterna där nätet når dem */pre:'bh.save.',auto:['a0','a1','a2'],man:'m',every:60,lastT:-1,wasPaused:false};
+const SAVE={ver:5,/* 2: 19 okt, Birkas väg in till kajen och öar där hon inte kan lägga till görs om; 3: 20 okt, den sneda angöringen; 4: 21 okt, masterna där nätet når dem; 5: 22 okt, ledningscentralen räknas inte som nätets källa för masterna */pre:'bh.save.',auto:['a0','a1','a2'],man:'m',every:60,lastT:-1,wasPaused:false};
 const GAME_VER='s'+SAVE.ver;
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return typeof btoa!=='undefined'?btoa(s):Buffer.from(s,'binary').toString('base64');};
 const unb64=t=>{const s=typeof atob!=='undefined'?atob(t):Buffer.from(t,'base64').toString('binary'),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
@@ -7663,13 +7663,16 @@ function filmLighthouse(){const L=WORLD.decor&&WORLD.decor.light,g=R3&&R3.lighth
    over the ground and past the crowns, with the camera clear of them there and on its slow drift back under the logo. The old
    bearing (from the south, so the flight comes in over the forest) is preferred, then about 95 m out. */
 function filmLhView(){const L=FILM.lh||WORLD.decor.light;if(FILM.lhV&&FILM.lhV.L===L)return FILM.lhV;
-  const b=R3.lhBeam?R3.lhBeam.beam.position:{x:L.x,y:L.h+20,z:L.y},bp={x:b.x,y:b.y,z:b.z},foot={x:L.x,y:fGround(L.x,L.y)+2,z:L.y},T=WORLD.trees.filter(t=>Math.hypot(t.x-L.x,t.y-L.y)<200);
+  const b=R3.lhBeam?R3.lhBeam.beam.position:{x:L.x,y:L.h+20,z:L.y},bp={x:b.x,y:b.y,z:b.z},foot={x:L.x,y:fGround(L.x,L.y)+2,z:L.y},T=WORLD.trees.filter(t=>Math.hypot(t.x-L.x,t.y-L.y)<420);/* the dolly starts 400 m out */
   const crown=(x,y,z)=>{for(const t of T){const r=3*t.s+.5;if((x-t.x)**2+(z-t.y)**2<r*r){const g=groundY(t.x,t.y);if(y>g+2.5*t.s&&y<g+14*t.s)return true;}}return false;};
   const seen=(a,q)=>{const d=Math.hypot(q.x-a.x,q.y-a.y,q.z-a.z);for(let s=3;s<d-5;s+=2){const f=s/d,x=a.x+(q.x-a.x)*f,y=a.y+(q.y-a.y)*f,z=a.z+(q.z-a.z)*f;if(groundY(x,z)>y-.5||crown(x,y,z))return false;}return true;};
   let best=null,bs=-1e9;
   for(let k=0;k<72;k++){const a=-PI/2+(k%2?1:-1)*Math.ceil(k/2)*5*PI/180,dx=Math.cos(a),dz=Math.sin(a);
     for(let d=60;d<=140;d+=10){const p={x:L.x+dx*d,z:L.y+dz*d};p.y=Math.max(bp.y+14,groundY(p.x,p.z)+8);if(!seen(p,bp)||!seen(p,foot))continue;
       let ok=true;for(let b=0;b<=24&&ok;b+=3)if(crown(p.x+dx*b,p.y+b*.27,p.z+dz*b)||groundY(p.x+dx*b,p.z+dz*b)>p.y+b*.27-6)ok=false;if(!ok)continue;
+      /* and the whole dolly in from 260 m keeps the beam in sight (22 okt: a mast moved on 7341, a tree grew where it had stood and hid
+         the lighthouse for 44 % of the shot) */
+      {const sx=p.x+dx*260,sz=p.z+dz*260,sy=Math.max(60,groundY(sx,sz)+30);for(const f of[.15,.3,.45,.6,.75,.9]){const e=f*f*(3-2*f);if(!seen({x:sx+(p.x-sx)*e,y:sy+(p.y-sy)*e,z:sz+(p.z-sz)*e},{x:bp.x,y:Math.max(foot.y,bp.y-20+34*e),z:bp.z})){ok=false;break;}}if(!ok)continue;}
       const sc=-Math.abs(angWrap(a+PI/2))*40-Math.abs(d-95)*.3;if(sc>bs){bs=sc;best={x:p.x,y:p.y,z:p.z,dx,dz};}}}
   if(!best)best={x:L.x,y:bp.y+14,z:L.y-95,dx:0,dz:-1};
   const sx=best.x+best.dx*260,sz=best.z+best.dz*260;

@@ -28,9 +28,9 @@ const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find
   const T=G.enemies.find(e=>e.id==='T8'),L=B.W.landing,h=B.makeUnit('drone',L.x,L.y+40),v=B.makeUnit('tank',L.x+30,L.y+80);h.alt=30;h.post='off';G.units.push(h,v);
   h.orders=[{type:'attack',enemy:T,post:'off'}];v.orders=[{type:'attack',enemy:T,post:'off'}];run(4);
   ok(!(h.orders[0]&&h.orders[0].spotFor),'a HÖK striking the target is not sent to spot it for the VARG ('+(h.orders[0]?h.orders[0].type:'-')+')');}
-// 4. every mast stands where the net reaches it: Birka 850 m, a point 500 m (not the radar station), a mast placed before 250 m
-{let n=0,bad=[];for(const sd of[3019,9949,2024,1234,5555,7341,9052]){B.newGame(sd);const G=B.G,C=B.CARRIER,ms=G.structs.filter(s=>s.kind==='mast');n+=ms.length;
-    const src=[{x:C.x,y:C.y,r:850},...G.relays.filter(r=>r.type!=='radar').map(r=>({x:r.x,y:r.y,r:500}))];
+// 4. every mast stands where the net reaches it: Birka 850 m, R1 or the harbour 500 m (not the radar station or the command centre), a mast placed before 250 m
+{let n=0,bad=[];for(const sd of[3019,9949,2024,1234,5555,7341,9052,77,4242,9001,31]){B.newGame(sd);const G=B.G,C=B.CARRIER,ms=G.structs.filter(s=>s.kind==='mast');n+=ms.length;
+    const src=[{x:C.x,y:C.y,r:850},...G.relays.filter(r=>r.type!=='radar'&&r.type!=='central').map(r=>({x:r.x,y:r.y,r:500}))];
     for(const m of ms)if(!src.some(q=>Math.hypot(m.x-q.x,m.y-q.y)<=q.r)&&!ms.some(o=>o!==m&&Math.hypot(o.x-m.x,o.y-m.y)<=250))bad.push(sd+' '+m.id);}
-  ok(!bad.length,n+' masts on seven islands, every one within reach of the net'+(bad.length?' ('+bad.join(', ')+')':''));}
+  ok(!bad.length,n+' masts on eleven islands, every one within reach of the net'+(bad.length?' ('+bad.join(', ')+')':''));}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);
