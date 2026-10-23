@@ -166,6 +166,7 @@ node t61.js        # uppdrag och tillfälliga order
 node t60.js        # luftvärn efter målstorlek, KROK för hand, fältreparation, luckor och luftlandningsfickor
 node t45.js base quick  # datorspelare på fyra öar (cirka en minut)
 node t45.js base        # datorspelare på tio öar (två till tre minuter; öarna körs parallellt om det finns flera kärnor)
+node t45.js kapten "" 1800  # kaptenboten, som spelar som Magnus inspelningar: dagens öar och start, tio öar i 30 minuter (cirka en halv minut)
 ```
 
 ### Sandlådan
@@ -205,7 +206,7 @@ node tests/poster.js ut.jpg --scener egna.js       egna scener, ut_<namn>.jpg
 |---|---|
 | `t23.js` | Kartgeneratorn och fiendens försvarsplan på tio öar |
 | `t30.js` | Bärgning, manuell eld, rivning, bränsledepåns explosion |
-| `t45.js` | Datorspelare, statistik per ö (vinster, tid, förluster, bärgning) |
+| `t45.js` | Datorspelare, statistik per ö (vinster, tid, utslagna, förluster, bärgning); varianten `kapten` (`kapten.js`) spelar metodiskt som en spelare: anfaller bara det som är spanat, med hela wingen, rycker fram i steg och sparar enheterna |
 | `t48.js` | Lufttransport av VARG och BÄVER |
 | `t49.js`, `t50.js`, `t56.js` | Försök att flyga in VARG djupt bakom försvaret |
 | `t51.js` | Strategiska punkter och motanfall mot fältvarvet |

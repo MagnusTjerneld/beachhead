@@ -1,7 +1,8 @@
 global.performance={now:()=>0};
 require('./g2.js');
-const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;if(process.env.LOS)B.LOS.on=process.env.LOS!=='0';if(process.env.HEIGHT)B.HEIGHT_F.on=+process.env.HEIGHT;if(process.env.RANGEAIR)B.RANGE_F.air=+process.env.RANGEAIR;/* before any island is built: the piles get their value then */
-const V=process.argv[2]||'base';
+const B=globalThis.__BH;const V=process.argv[2]||'base';
+/* the old start and round islands, so results compare; the captain bot (tests/kapten.js) plays today's islands and start, as Magnus does */
+if(V!=='kapten'){B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;}if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;if(process.env.LOS)B.LOS.on=process.env.LOS!=='0';if(process.env.HEIGHT)B.HEIGHT_F.on=+process.env.HEIGHT;if(process.env.RANGEAIR)B.RANGE_F.air=+process.env.RANGEAIR;/* before any island is built: the piles get their value then */
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 /* reachability without A*: the bot asked A* once per defender every tick, and for unreachable targets A* floods the whole map.
@@ -20,25 +21,30 @@ function nearestP(t){if(NP.has(t))return NP.get(t);const N=GWc*GWc,seen=new Uint
 function labsOf(s){if(passC(s))return[LAB[s]];const cx=s%GWc,cy=(s/GWc)|0,o=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=cx+dx,ny=cy+dy;if((!dx&&!dy)||nx<0||ny<0||nx>=GWc||ny>=GWc)continue;const n=ny*GWc+nx;if(passC(n)&&(!(dx&&dy)||(passC(cy*GWc+nx)&&passC(ny*GWc+cx))))o.push(LAB[n]);}return o;}
 function reach(sx,sy,tx,ty){const s=cellC(sx,sy);let t=cellC(tx,ty);if(!passC(t)){t=nearestP(t);if(t<0)return false;}if(s===t)return true;return labsOf(s).includes(LAB[t]);}
 function fpOK(u,e){const k=labsOf(cellC(u.x,u.y)).join(',')+'|'+e.id+'|'+e.visibleNow;if(!FPC.has(k))FPC.set(k,!!B.firingPoint(u,e));return FPC.get(k);}
+let kapten=null;
 function play(seed,limit){
   B.newGame(seed);const G=B.G;G.running=true;
+  if(V==='kapten')kapten=require('./kapten.js')(B,{reach,fpOK,reachVer});
   // T45_EXPLORE=1: one extra SPARV explores freely from the start and is left alone by the bot; T45_RADIO sets its radio range
   if(process.env.T45_RADIO)B.RADIO.r=+process.env.T45_RADIO;const exK={};let exS=null;if(process.env.T45_EXPLORE){exS=B.makeUnit('scout',B.W.landing.x,B.W.landing.y+60);exS.simX=1;G.units.push(exS);B.giveOrder(exS,{type:'explore',post:'def'},false,'mission');}
   const landPct=()=>{let a=0,k=0;const g=B.W.baseGrid;for(let i=0;i<g.length;i+=2)if(g[i]>1){a++;if(G.known[i])k++;}return Math.round(k/a*100);};
   if(V==='nosalv')G.krokAuto=false;
   if(process.env.START)G.res=+process.env.START;if(process.env.BASE)B.INCOME.base=+process.env.BASE;if(process.env.RELAY)B.INCOME.relay=+process.env.RELAY;
   const lostK={},seenDead=new Set(),killers={};
-  const cat={},known=new Map();let res15=null,res30=null,tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null;
+  const cat={},known=new Map();let logTop=null,res15=null,res30=null,tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null;
   const COST={scout:40,drone:120,tank:200,eng:150};
   while(G.time<limit&&!G.over){
     if(exS)for(const m of [300,600,890])if(!exK[m]&&G.time>=m)exK[m]=landPct()+(exS.dead?'x':'');
     B.step(.05);tick++;
+    // T45_LOG=1 prints the game's log as it goes, for following one game
+    if(process.env.T45_LOG){/* the log is newest first and keeps 40 */const nw=[];for(const l of G.log){if(l===logTop)break;nw.push(l);}if(G.log[0])logTop=G.log[0];for(const l of nw.reverse())console.log(Math.round(l.t),l.who||'',l.text);}
     // salvage accounting
     if(tick%20===0){const now=new Set(G.wrecks.map(w=>w.id));for(const w of G.wrecks)known.set(w.id,w);for(const[id,w]of known)if(!now.has(id)){const k=w.own?'own':w.kind==='rubble'||w.kind==='crate'||w.kind==='hulk'?w.kind:'enemy';cat[k]=(cat[k]||0)+w.value;known.delete(id);}
       for(const u of G.units)if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);lostK[u.kind]=(lostK[u.kind]||0)+1;if(u.kind==='scout'||process.env.ALLK){let k='?',t=-1;for(const id in u.hitBy)if(u.hitBy[id]>t){t=u.hitBy[id];k=id;}const e=G.enemies.find(x=>x.id===k);const key=u.kind+'<'+(e?e.kind+(e.seen?'':'(osedd)'):k);killers[key]=(killers[key]||0)+1;}}
       for(const k of G.kroks){krokN++;if(k.state!=='idle')krokBusy++;}maxRes=Math.max(maxRes,G.res);if(res15==null&&G.time>=900)res15=Math.round(G.res);if(res30==null&&G.time>=1800)res30=Math.round(G.res);
       if(firstRelay===null&&G.relays.some(r=>r.captured))firstRelay=Math.round(G.time);}
     if(tick%40)continue;
+    if(kapten){kapten(G);if(process.env.T45_WHY&&tick%1200===0){const a=G.units.filter(u=>!u.dead&&u.kind!=='mus');console.log(Math.round(G.time),'res',Math.round(G.res),'kills',G.enemies.filter(e=>e.dead).length,G.kap.why,G.kap.tgt?'mål '+G.kap.tgt.id:'',G.kap.blocker?'[blk '+G.kap.bkWhy+']':'',G.kap.scan?'[scan '+G.kap.scan.key+(G.kap.scan.done?' klar':'')+' '+Math.round(G.time-G.kap.scan.t)+']':'',a.map(u=>u.name+':'+Math.round(u.hp/u.maxhp*100)+(u.rtb?'s':'')).join(' '));}continue;}
     const alive=G.units.filter(u=>!u.dead);
     const cnt=k=>alive.filter(u=>u.kind===k).length+G.build.filter(b=>b.kind===k).length;
     const aaAlive=G.enemies.some(e=>!e.dead&&e.kind==='aa');
@@ -63,7 +69,7 @@ function play(seed,limit){
       const umbrella=G.enemies.some(a=>!a.dead&&a.kind==='aa'&&d(a,tgt)<215);
       const sc=alive.find(u=>u.kind==='scout'&&!u.simX),h=alive.find(u=>u.kind==='drone');
       const sp=umbrella&&sc?sc:h;
-      if(sp&&!sp.rtb){const R=sp===sc?68:150;const p={x:tgt.x+Math.cos(dir)*R,y:tgt.y+Math.sin(dir)*R};const o=sp.orders[0];const post=sp===sc&&umbrella?'off':'def';if(!o||o.type!=='obs'||d(o,p)>25||o.post!==post){sp.orders=[];B.giveOrder(sp,{type:'obs',x:p.x,y:p.y,post},false);}}
+      if(sp&&!sp.rtb){/* outside the reach the target hears a low GETING at (sig 70 since 22 okt; 68 m was chosen when it was 45) */const R=sp===sc?Math.min(sc.vision-10,B.reachVs(tgt,sc)+20):150;const p={x:tgt.x+Math.cos(dir)*R,y:tgt.y+Math.sin(dir)*R};const o=sp.orders[0];const post=sp===sc&&umbrella?'off':'def';if(!o||o.type!=='obs'||d(o,p)>25||o.post!==post){sp.orders=[];B.giveOrder(sp,{type:'obs',x:p.x,y:p.y,post},false);}}
     }
     const engs=alive.filter(u=>u.kind==='eng'),e=engs[0];
     if(e&&!e.orders.length){
@@ -78,14 +84,16 @@ function play(seed,limit){
     if(V!=='nosalv'&&e2&&!e2.orders.length){const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e2)-d(b,e2));const s0=ss.slice(0,6).find(s=>reach(e2.x,e2.y,s.x,s.y));if(s0){s0.krok=true;B.giveOrder(e2,{type:'demolish',s:s0,post:'dold'},false);}}
   }
   const lost={};for(const l of G.log)0;
+  if(process.env.DBG&&G.kap)console.log('kapten:',G.kap.why,G.kap.tgt&&G.kap.tgt.id,G.kap.bound&&[Math.round(G.kap.bound.x),Math.round(G.kap.bound.y)]);
   if(process.env.DBG){for(const u of G.units.filter(u=>!u.dead))console.log(u.name,Math.round(u.x),Math.round(u.y),u.state,u.orders[0]&&u.orders[0].type,u.orders[0]&&u.orders[0].enemy&&u.orders[0].enemy.id);for(const e of G.enemies.filter(e=>!e.dead))console.log(' ',e.id,e.kind,Math.round(e.x),Math.round(e.y),'seen',e.seen,'vis',e.visibleNow,'hp',Math.round(e.hp));console.log(G.relays.map(r=>r.id+':'+r.captured+':'+r.guards).join(' '),'barriers',G.barriers.map(b=>b.id+(b.cleared?'x':'')).join(' '));}
-  return {seed,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length};
+  return {seed,kills:G.enemies.filter(e=>e.dead).length,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length};
 }
 // seeds: a comma list, 'quick' (four islands, about a minute) or nothing (all ten, two to three minutes)
-const seeds=(process.argv[3]==='quick'?'1234,7341,4242,9001':process.argv[3]||'1234,7341,4242,9001,2718,5555,31,77,1001,1002').split(',').map(Number);
+/* the captain bot's ten start with the five islands Magnus has recorded long games on */
+const seeds=(process.argv[3]==='quick'?'1234,7341,4242,9001':process.argv[3]||(V==='kapten'?'1490,9949,3019,1234,9027,7341,4242,9001,2718,5555':'1234,7341,4242,9001,2718,5555,31,77,1001,1002')).split(',').map(Number);
 const lim=+(process.argv[4]||3600);
 const summary=rs=>{const won=rs.filter(r=>r.over);const avg=(a,f)=>a.length?Math.round(a.reduce((s,r)=>s+f(r),0)/a.length):'-';
-console.log(V,'won',won.length+'/'+rs.length,'avg time(won)',avg(won,r=>r.t),'avg lost',avg(rs,r=>r.lost),'avg net',avg(rs,r=>r.net),'avg salv',avg(rs,r=>r.salv),'avg endRes',avg(rs,r=>r.res),'krokBusy%',avg(rs,r=>r.krokBusy));};
+console.log(V,'won',won.length+'/'+rs.length,'avg time(won)',avg(won,r=>r.t),'avg lost',avg(rs,r=>r.lost),'avg kills',avg(rs,r=>r.kills),'lost/kill',(rs.reduce((a,r)=>a+r.lost,0)/Math.max(1,rs.reduce((a,r)=>a+r.kills,0))).toFixed(2),'avg net',avg(rs,r=>r.net),'avg salv',avg(rs,r=>r.salv),'avg endRes',avg(rs,r=>r.res),'krokBusy%',avg(rs,r=>r.krokBusy));};
 // several seeds run in parallel child processes, one per core (each game is independent); T45_SERIAL=1 runs them in turn
 if(seeds.length>1&&!process.env.T45_SERIAL&&!process.env.T45_CHILD){
   const {spawn}=require('child_process'),n=Math.max(1,+(process.env.T45_JOBS||require('os').cpus().length));const out=new Map();let next=0,live=0;
