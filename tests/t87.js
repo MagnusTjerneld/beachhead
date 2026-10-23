@@ -47,14 +47,16 @@ function onDeckOf(u){const f={x:Math.cos(B.CARRIER.a),y:Math.sin(B.CARRIER.a)},d
 {B.beachGo(true);until(()=>G().beach.st==='on',240);run(5);const m=B.makeUnit('tank',0,0);G().units.push(m);const pt=(lat,fwd)=>{const f={x:Math.cos(B.CARRIER.a),y:Math.sin(B.CARRIER.a)};return{x:B.CARRIER.x-f.y*lat+f.x*fwd,y:B.CARRIER.y+f.x*lat+f.y*fwd};};
   const p=pt(0,-50);m.x=p.x;m.y=p.y;m.orders=[];run(.5);B.beachGo(false);const t=until(()=>G().beach.ph==='run',30);
   ok(t!=null,'a VARG standing idle on the ramp drives off it and she leaves ('+(t==null?m.state:'ok')+')');until(()=>G().beach.st==='anchor',300);m.dead=true;}
-// 6. the harbour taken while she lies on the beach: she goes in from the anchorage once she is back there
-{B.newGame(1490);G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const H=G().harbor;
-  if(!H||!B.W.beach)ok(false,'ö 1490 has a harbour and a berth');
-  else{B.beachGo(true);until(()=>G().beach.st==='on',240);const hr=G().relays.find(r=>r.type==='hamn');hr.captured=true;run(3);
-    ok(H.secured&&H.wait&&H.s===0,'the harbour taken while she is on the beach: the harbour waits');
-    ok(!B.beachState().ok&&!B.beachGo(true),'the beach cannot be taken again');
-    B.beachGo(false);until(()=>G().beach.st==='anchor',300);run(5);ok(!H.wait&&H.ph==='nav'&&H.route&&H.route.length>2,'back at the anchorage the navigator plans her way to the harbour from there ('+(H.route?H.route.length:0)+' poses)');
-    const t=until(()=>H.docked,900),d0=B.W.harbor.dock;ok(t!=null&&Math.hypot(B.CARRIER.x-d0.x,B.CARRIER.y-d0.y)<.5,'and she lies docked at the quay ('+(t==null?H.ph+' '+Math.round(H.s):'ok')+')');}}
+// 6. the harbour taken while she lies on the beach: she waits for the captain, then backs off the beach and the navigator takes her straight
+// to the harbour (Magnus 23 okt: test the way from the beach to the harbour too), not round by the anchorage
+for(const sd of[1490,9001,9949]){B.newGame(sd);G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const H=G().harbor,b=B.W.beach;
+  if(!H||!b){ok(false,'ö '+sd+' has a harbour and a berth');continue;}
+  B.beachGo(true);until(()=>G().beach.st==='on',300);const hr=G().relays.find(r=>r.type==='hamn');hr.captured=true;run(3);
+  ok(H.secured&&H.wait&&!H.ph,'ö '+sd+': the harbour taken while she is on the beach: the harbour waits for the captain');
+  ok(!B.beachState().ok&&!B.beachGo(true),'the beach cannot be taken again');
+  let nearA=1e9;B.beachGo(false);const t=until(()=>{nearA=Math.min(nearA,Math.hypot(B.CARRIER.x-b.ax,B.CARRIER.y-b.ay));return H.docked;},900),d0=B.W.harbor.dock;
+  ok(t!=null&&Math.hypot(B.CARRIER.x-d0.x,B.CARRIER.y-d0.y)<.5,'she backs off the beach and lies docked at the quay ('+(t==null?(H.ph||G().beach.st):'ok')+')');
+  ok(H.route&&Math.hypot(H.route[0].x-b.A.x,H.route[0].y-b.A.y)<1,'her way to the harbour starts off the beach, not at the anchorage (came within '+Math.round(nearA)+' m of it)');}
 // 6b. every island's way to the harbour is the navigator's, its poses clear of land, ending where the berthing starts
 for(const sd of[9949,3019,4242]){B.newGame(sd);const P=B.W.birkaPath;if(!P){ok(true,'ö '+sd+' has no harbour');continue;}const R=P.route,e=R[R.length-1];
   ok(R.length>2&&R.every((p,i)=>i===0||i===R.length-1||B.navFree(B.W,p.x,p.y,p.a+Math.PI))&&Math.hypot(e.x-P.pts[0].x,e.y-P.pts[0].y)<.01,'ö '+sd+': the way to the harbour is planned by the navigator ('+R.length+' poses), ending where the berthing starts');}
