@@ -10,18 +10,19 @@ B.newGame(9949);G().running=true;G().netAll=true;
 {const W=B.W,b=W.beach;ok(!!b,'ö 9949 has a berth on the beach');
   ok(d(b.tip,W.landing)<30,'the ramp\'s end lies '+Math.round(d(b.tip,W.landing))+' m from the landing');
   ok(Math.abs(b.ax-B.CARRIER.x)<.01&&Math.abs(b.ay-B.CARRIER.y)<.01,'she starts at the anchorage the berth is planned from');
+  ok(b.route.length>1&&b.route.every((p,i)=>i===0||B.navFree(B.W,p.x,p.y,p.a+Math.PI)),'the navigator route from there to the approach point keeps her hull clear of land ('+b.route.length+' poses)');
   ok(B.heightAt(b.x,b.y)<-1.5,'the water under her at the berth is dredged ('+B.heightAt(b.x,b.y).toFixed(1)+' m)');}
 // 2. not secured while a seen enemy is left in the beach's zone or reaches her way in
 {const st=B.beachState();const e=G().enemies.find(e=>!e.dead&&B.W.zid[B.cellIdx(e.x,e.y)]===B.W.zones.land);
   if(e){e.seen=true;e.lx=e.x;e.ly=e.y;const s2=B.beachState();ok(!s2.ok&&/strandens sektor/.test(s2.why),'a seen '+e.kind+' in the beach\'s zone: "'+s2.why+'"');}
   for(const e of G().enemies)e.dead=true;ok(B.beachState().ok,'with no seen enemy it is secured');
-  const a=G().enemies[0];a.dead=false;a.seen=true;const b=B.W.beach;a.lx=a.x=(b.ax+b.tip.x)/2+40;a.ly=a.y=(b.ay+b.tip.y)/2;const s3=B.beachState();
-  ok(!s3.ok&&/når angöringsplatsen/.test(s3.why),'a seen enemy 40 m off her way in: "'+s3.why+'"');a.dead=true;
+  const a=G().enemies.find(e=>e.kind==='turret');a.dead=false;a.seen=true;const b=B.W.beach,m=b.route[Math.floor(b.route.length/2)],ca=Math.cos(m.a),sa=Math.sin(m.a);a.lx=a.x=m.x-sa*(a.range+5);a.ly=a.y=m.y+ca*(a.range+5);const s3=B.beachState();
+  ok(!s3.ok&&/når Birkas väg in/.test(s3.why),'a seen bunker just within reach of the middle of her route: "'+s3.why+'"');a.dead=true;
   ok(!B.beachGo(false),'she cannot back out from the anchorage');}
 // 3. in: ramps up, turn, run in, ramps down on the sand
 {const S=G().beach,b=B.W.beach;ok(B.beachGo(true),'the order to go in is taken');
   const tUp=until(()=>S.ph!=='ramp',10);ok(tUp!=null&&G().ramp.bow===0,'the ramps fold up first ('+(tUp&&tUp.toFixed(1))+' s)');
-  const t0=G().time,tOn=until(()=>S.st==='on',240);ok(tOn!=null,'she lies on the beach after '+(tOn==null?'-':Math.round(tOn-t0))+' s for '+Math.round(b.run)+' m');
+  const t0=G().time,tOn=until(()=>S.st==='on',240);ok(tOn!=null,'she lies on the beach after '+(tOn==null?'-':Math.round(tOn-t0))+' s');
   ok(d(B.CARRIER,b)<.5&&Math.abs(B.CARRIER.a-b.a)<.01,'at the berth');
   run(5);ok(G().ramp.bow===1,'the bow ramp is down again');
   ok(G().log.some(l=>/ligger på stranden/.test(l.text)),'and the log says so');}
@@ -53,6 +54,12 @@ function onDeckOf(u){const f={x:Math.cos(B.CARRIER.a),y:Math.sin(B.CARRIER.a)},d
     ok(H.secured&&H.wait&&H.s===0,'the harbour taken while she is on the beach: the harbour waits');
     ok(!B.beachState().ok&&!B.beachGo(true),'the beach cannot be taken again');
     B.beachGo(false);until(()=>G().beach.st==='anchor',300);run(20);ok(!H.wait&&H.s>5,'back at the anchorage she goes on to the harbour ('+Math.round(H.s)+' m)');}}
-// 7. an island where she cannot reach the beach says why
-{B.newGame(2718);ok(!B.W.beach&&/brant och grund/.test(B.beachState().why),'ö 2718: "'+B.beachState().why+'"');}
+// 7. every landing beach has a berth: 2718, 6263 and 9033, where the straight way in from the anchorage hit the shore, get one by the navigator
+for(const sd of[2718,6263,9033]){B.newGame(sd);G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const b=B.W.beach;
+  ok(!!b,'ö '+sd+' has a berth ('+(b?Math.round(Math.hypot(b.tip.x-B.W.landing.x,b.tip.y-B.W.landing.y))+' m from the landing':'')+')');if(!b)continue;B.beachGo(true);const t=until(()=>G().beach.st==='on',300);ok(t!=null&&Math.hypot(B.CARRIER.x-b.x,B.CARRIER.y-b.y)<.5,'and she gets there ('+(t==null?G().beach.ph:Math.round(t)+' s')+')');
+  B.beachGo(false);ok(until(()=>G().beach.st==='anchor',400)!=null&&Math.hypot(B.CARRIER.x-b.ax,B.CARRIER.y-b.ay)<.5,'and back to the anchorage');
+  B.beachGo(true);ok(until(()=>G().beach.st==='on',300)!=null,'and in again from the heading she came back with');}
+// 8. turned back half way in she backs out along her way
+{B.newGame(9033);G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;B.beachGo(true);until(()=>G().beach.ph==='run'&&G().beach.i>3,200);B.beachGo(false);
+  const b=B.W.beach;ok(until(()=>G().beach.st==='anchor',400)!=null&&Math.hypot(B.CARRIER.x-b.ax,B.CARRIER.y-b.ay)<.5,'turned back on her way in, she is back at the anchorage');}
 console.log(fail?fail+' failed':'all passed');process.exit(fail?1:0);
