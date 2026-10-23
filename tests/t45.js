@@ -30,8 +30,10 @@ function play(seed,limit){
   const landPct=()=>{let a=0,k=0;const g=B.W.baseGrid;for(let i=0;i<g.length;i+=2)if(g[i]>1){a++;if(G.known[i])k++;}return Math.round(k/a*100);};
   if(V==='nosalv')G.krokAuto=false;
   if(process.env.START)G.res=+process.env.START;if(process.env.BASE)B.INCOME.base=+process.env.BASE;if(process.env.RELAY)B.INCOME.relay=+process.env.RELAY;
+  // KROK_BROKE=0 keeps a KROK hit below 60 % on its pad until it is repaired, as before 23 okt
+  if(process.env.KROK_BROKE!=null)B.KROK_BROKE.on=process.env.KROK_BROKE!=='0';
   const lostK={},seenDead=new Set(),killers={};
-  const cat={},known=new Map();let logTop=null,res15=null,res30=null,tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null;
+  const cat={},known=new Map();let logTop=null,res15=null,res30=null,tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null,zeroT=0;
   const COST={scout:40,drone:120,tank:200,eng:150};
   while(G.time<limit&&!G.over){
     if(exS)for(const m of [300,600,890])if(!exK[m]&&G.time>=m)exK[m]=landPct()+(exS.dead?'x':'');
@@ -42,7 +44,7 @@ function play(seed,limit){
     if(tick%20===0){const now=new Set(G.wrecks.map(w=>w.id));for(const w of G.wrecks)known.set(w.id,w);for(const[id,w]of known)if(!now.has(id)){const k=w.own?'own':w.kind==='rubble'||w.kind==='crate'||w.kind==='hulk'?w.kind:'enemy';cat[k]=(cat[k]||0)+w.value;known.delete(id);}
       for(const u of G.units)if(u.dead&&!seenDead.has(u.id)){seenDead.add(u.id);lostK[u.kind]=(lostK[u.kind]||0)+1;if(u.kind==='scout'||process.env.ALLK){let k='?',t=-1;for(const id in u.hitBy)if(u.hitBy[id]>t){t=u.hitBy[id];k=id;}const e=G.enemies.find(x=>x.id===k);const key=u.kind+'<'+(e?e.kind+(e.seen?'':'(osedd)'):k);killers[key]=(killers[key]||0)+1;}}
       for(const k of G.kroks){krokN++;if(k.state!=='idle')krokBusy++;}maxRes=Math.max(maxRes,G.res);if(res15==null&&G.time>=900)res15=Math.round(G.res);if(res30==null&&G.time>=1800)res30=Math.round(G.res);
-      if(firstRelay===null&&G.relays.some(r=>r.captured))firstRelay=Math.round(G.time);}
+      if(firstRelay===null&&G.relays.some(r=>r.captured))firstRelay=Math.round(G.time);if(G.res<2)zeroT++;}
     if(tick%40)continue;
     if(kapten){kapten(G);if(process.env.T45_WHY&&tick%1200===0){const a=G.units.filter(u=>!u.dead&&u.kind!=='mus');console.log(Math.round(G.time),'res',Math.round(G.res),'kills',G.enemies.filter(e=>e.dead).length,G.kap.why,G.kap.tgt?'mål '+G.kap.tgt.id:'',G.kap.blocker?'[blk '+G.kap.bkWhy+']':'',G.kap.scan?'[scan '+G.kap.scan.key+(G.kap.scan.done?' klar':'')+' '+Math.round(G.time-G.kap.scan.t)+']':'',a.map(u=>u.name+':'+Math.round(u.hp/u.maxhp*100)+(u.rtb?'s':'')).join(' '));}continue;}
     const alive=G.units.filter(u=>!u.dead);
@@ -86,14 +88,14 @@ function play(seed,limit){
   const lost={};for(const l of G.log)0;
   if(process.env.DBG&&G.kap)console.log('kapten:',G.kap.why,G.kap.tgt&&G.kap.tgt.id,G.kap.bound&&[Math.round(G.kap.bound.x),Math.round(G.kap.bound.y)]);
   if(process.env.DBG){for(const u of G.units.filter(u=>!u.dead))console.log(u.name,Math.round(u.x),Math.round(u.y),u.state,u.orders[0]&&u.orders[0].type,u.orders[0]&&u.orders[0].enemy&&u.orders[0].enemy.id);for(const e of G.enemies.filter(e=>!e.dead))console.log(' ',e.id,e.kind,Math.round(e.x),Math.round(e.y),'seen',e.seen,'vis',e.visibleNow,'hp',Math.round(e.hp));console.log(G.relays.map(r=>r.id+':'+r.captured+':'+r.guards).join(' '),'barriers',G.barriers.map(b=>b.id+(b.cleared?'x':'')).join(' '));}
-  return {seed,kills:G.enemies.filter(e=>e.dead).length,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length};
+  return {seed,kills:G.enemies.filter(e=>e.dead).length,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,zeroT,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length};
 }
 // seeds: a comma list, 'quick' (four islands, about a minute) or nothing (all ten, two to three minutes)
 /* the captain bot's ten start with the five islands Magnus has recorded long games on */
 const seeds=(process.argv[3]==='quick'?'1234,7341,4242,9001':process.argv[3]||(V==='kapten'?'1490,9949,3019,1234,9027,7341,4242,9001,2718,5555':'1234,7341,4242,9001,2718,5555,31,77,1001,1002')).split(',').map(Number);
 const lim=+(process.argv[4]||3600);
 const summary=rs=>{const won=rs.filter(r=>r.over);const avg=(a,f)=>a.length?Math.round(a.reduce((s,r)=>s+f(r),0)/a.length):'-';
-console.log(V,'won',won.length+'/'+rs.length,'avg time(won)',avg(won,r=>r.t),'avg lost',avg(rs,r=>r.lost),'avg kills',avg(rs,r=>r.kills),'lost/kill',(rs.reduce((a,r)=>a+r.lost,0)/Math.max(1,rs.reduce((a,r)=>a+r.kills,0))).toFixed(2),'avg net',avg(rs,r=>r.net),'avg salv',avg(rs,r=>r.salv),'avg endRes',avg(rs,r=>r.res),'krokBusy%',avg(rs,r=>r.krokBusy));};
+console.log(V,'won',won.length+'/'+rs.length,'avg time(won)',avg(won,r=>r.t),'avg lost',avg(rs,r=>r.lost),'avg kills',avg(rs,r=>r.kills),'lost/kill',(rs.reduce((a,r)=>a+r.lost,0)/Math.max(1,rs.reduce((a,r)=>a+r.kills,0))).toFixed(2),'avg net',avg(rs,r=>r.net),'avg salv',avg(rs,r=>r.salv),'avg endRes',avg(rs,r=>r.res),'avg s at 0',avg(rs,r=>r.zeroT),'krokBusy%',avg(rs,r=>r.krokBusy));};
 // several seeds run in parallel child processes, one per core (each game is independent); T45_SERIAL=1 runs them in turn
 if(seeds.length>1&&!process.env.T45_SERIAL&&!process.env.T45_CHILD){
   const {spawn}=require('child_process'),n=Math.max(1,+(process.env.T45_JOBS||require('os').cpus().length));const out=new Map();let next=0,live=0;

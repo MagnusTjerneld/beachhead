@@ -102,9 +102,7 @@ return function tick(G){
     else{const s=st();if(s){s.krok=true;B.giveOrder(en,{type:'demolish',s,post:'off'},false);}}}
   /* KROK sent to material by hand, as he did on 9949 when the material ran out: a pile seen, outside every seen threat, near the landing or
      the wing, though the ground round it is not all looked over (the automatic salvage waits for that) */
-  /* with no material a KROK hit below 60 % stays on its pad for good, since its repair waits for material that only salvage brings;
-     an order of its own goes before the retreat, so it is sent to a pile outside every seen threat (ö 9949) */
-  if(G.res<2)for(const k of G.kroks){if(k.dead||k.cargo||k.orders.length||!k.retreat)continue;const w=G.wrecks.filter(w=>!w.claimed&&B.wreckSafe(w)).sort((a,b)=>d(a,k)-d(b,k))[0];if(w)B.krokOrder(k,{type:'salvage',wreck:w},false);}
+  /* a KROK on its pad with no material to repair it goes out to salvage by itself in the game now (KROK_BROKE, 23 okt) */
   if(G.krokQ.length<2){const c1=tanks.length?cen(tanks):L0,w=G.wrecks.filter(w=>!w.claimed&&!G.krokQ.includes(w.id)&&G.known[B.cellIdx(w.x,w.y)]&&(d(w,L0)<400||d(w,c1)<300)&&B.wreckSafe(w)).sort((a,b)=>b.value-a.value)[0];if(w)B.orderKrok(w);}
   /* never under a seen air defence (twelve HÖK of fifteen lost were shot down by one, ten islands 23 okt) */
   const known=(e,r)=>knownShare(G,{x:e.lx,y:e.ly},r);
