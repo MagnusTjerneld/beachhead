@@ -53,7 +53,11 @@ function onDeckOf(u){const f={x:Math.cos(B.CARRIER.a),y:Math.sin(B.CARRIER.a)},d
   else{B.beachGo(true);until(()=>G().beach.st==='on',240);const hr=G().relays.find(r=>r.type==='hamn');hr.captured=true;run(3);
     ok(H.secured&&H.wait&&H.s===0,'the harbour taken while she is on the beach: the harbour waits');
     ok(!B.beachState().ok&&!B.beachGo(true),'the beach cannot be taken again');
-    B.beachGo(false);until(()=>G().beach.st==='anchor',300);run(20);ok(!H.wait&&H.s>5,'back at the anchorage she goes on to the harbour ('+Math.round(H.s)+' m)');}}
+    B.beachGo(false);until(()=>G().beach.st==='anchor',300);run(5);ok(!H.wait&&H.ph==='nav'&&H.route&&H.route.length>2,'back at the anchorage the navigator plans her way to the harbour from there ('+(H.route?H.route.length:0)+' poses)');
+    const t=until(()=>H.docked,900),d0=B.W.harbor.dock;ok(t!=null&&Math.hypot(B.CARRIER.x-d0.x,B.CARRIER.y-d0.y)<.5,'and she lies docked at the quay ('+(t==null?H.ph+' '+Math.round(H.s):'ok')+')');}}
+// 6b. every island's way to the harbour is the navigator's, its poses clear of land, ending where the berthing starts
+for(const sd of[9949,3019,4242]){B.newGame(sd);const P=B.W.birkaPath;if(!P){ok(true,'ö '+sd+' has no harbour');continue;}const R=P.route,e=R[R.length-1];
+  ok(R.length>2&&R.every((p,i)=>i===0||i===R.length-1||B.navFree(B.W,p.x,p.y,p.a+Math.PI))&&Math.hypot(e.x-P.pts[0].x,e.y-P.pts[0].y)<.01,'ö '+sd+': the way to the harbour is planned by the navigator ('+R.length+' poses), ending where the berthing starts');}
 // 7. every landing beach has a berth: 2718, 6263 and 9033, where the straight way in from the anchorage hit the shore, get one by the navigator
 for(const sd of[2718,6263,9033]){B.newGame(sd);G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const b=B.W.beach;
   ok(!!b,'ö '+sd+' has a berth ('+(b?Math.round(Math.hypot(b.tip.x-B.W.landing.x,b.tip.y-B.W.landing.y))+' m from the landing':'')+')');if(!b)continue;B.beachGo(true);const t=until(()=>G().beach.st==='on',300);ok(t!=null&&Math.hypot(B.CARRIER.x-b.x,B.CARRIER.y-b.y)<.5,'and she gets there ('+(t==null?G().beach.ph:Math.round(t)+' s')+')');
