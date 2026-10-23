@@ -25,6 +25,14 @@ ok(bk.visibleNow,'high it sees the bunker');ok(!pv.visibleNow,'but not the pansa
 pv.reveal=2;run(.1);ok(pv.visibleNow,'until the pansarvärn fires');pv.reveal=0;run(.2);
 // 3. who can fire on it
 ok(B.reachVs(bk,g)===0,'high the bunker cannot reach it');ok(B.reachVs(aa,g)>0,'the air defence\'s radar can ('+B.reachVs(aa,g)+' m)');
+ok(Math.abs(B.reachVs(aa,g)-Math.sqrt(200*200-150*150))<1,'along the slant line its 200 m reach 150 m up is 132 m along the ground ('+Math.round(B.reachVs(aa,g))+')');
+{const o={x:aa.x,y:aa.y},at=r=>({x:aa.x+r,y:aa.y});ok(Math.abs(B.hiHit(aa,at(0))-.03)<1e-6&&Math.abs(B.hiHit(aa,at(132.3))-.005)<1e-3,'a ballistic gun seldom hits it: '+(B.hiHit(aa,at(0))*100).toFixed(1)+' % a shot straight overhead, '+(B.hiHit(aa,at(132.3))*100).toFixed(1)+' % at the end of its reach');}
+/* the air defence fires on a high GETING it can reach, and seldom hits */
+{const ax=aa.x,ay=aa.y;aa.x=aa.hx=bk.x+400;aa.y=aa.hy=bk.y;aa.seen=true;aa.lx=aa.x;aa.ly=aa.y;aa.firedHere=true;const put=r=>{g.x=aa.x+r;g.y=aa.y;g.orders=[];g.orbit=null;};
+  let tg=false;for(let i=0;i<40;i++){put(145);B.step(.05);if(aa.tgtU===g)tg=true;}ok(!tg,'at 145 m along the ground the air defence does not take it');
+  let shots=0,hits=0;for(let i=0;i<20*120;i++){put(100);const cd=aa.cd,hp=g.hp;B.step(.05);if(aa.cd>cd+.1)shots++;if(g.hp<hp)hits++;g.hp=g.maxhp;}
+  ok(shots>60&&hits/shots<.06,'at 100 m it fires ('+shots+' shots in two minutes) and hits '+hits+' ('+(hits/Math.max(1,shots)*100).toFixed(1)+' %, '+(B.hiHit(aa,{x:aa.x+100,y:aa.y})*100).toFixed(1)+' % a shot)');
+  aa.x=aa.hx=ax;aa.y=aa.hy=ay;aa.firedHere=false;aa.seen=false;aa.tgtU=null;}
 B.setHigh(g,false);ok(B.reachVs(bk,g)===70,'low the bunker reaches it at its sig ('+B.reachVs(bk,g)+' m)');
 {g.x=bk.x+50;g.y=bk.y;g.orders=[];g.orbit=null;B.setHigh(g,true);let shot=false;for(let i=0;i<60;i++){B.step(.05);g.x=bk.x+50;g.y=bk.y;if(bk.tgtU===g)shot=true;}
   ok(!shot,'high, 50 m from the bunker, the bunker does not take it as a target');
