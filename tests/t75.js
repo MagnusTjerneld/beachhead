@@ -9,14 +9,14 @@ const L={x:1175,y:1405};/* laid out like t66 */
 // 1. two VARG and two HÖK in a wing on a bunker: no robot leaves a HÖK before the VARG leave their staging points
 {const G=setup();const[v1,v2]=G.units.filter(u=>u.kind==='tank'),h1=G.units.find(u=>u.kind==='drone'),h2=B.makeUnit('drone',h1.x+10,h1.y);G.units.push(h2);
   const t=live(G,'turret',L.x+200,L.y);t.hp=t.maxhp=5000;t.camo=false;t.dmg=0;
-  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-470;v2.y=t.y+20;for(const h of[h1,h2]){h.x=t.x-260;h.y=t.y;h.alt=30;h.post='off';h.hp=h.maxhp=1e4;}for(const v of[v1,v2])v.hp=v.maxhp=1e5;
+  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-280;v2.y=t.y+20;/* 50 m behind: since 24 okt one more than STAGE_LATE s off is not waited for */for(const h of[h1,h2]){h.x=t.x-260;h.y=t.y;h.alt=30;h.post='off';h.hp=h.maxhp=1e4;}for(const v of[v1,v2])v.hp=v.maxhp=1e5;
   B.setSel([v1.id,v2.id,h1.id,h2.id]);B.groupOrder({enemy:t},false);
   let early=0,go=false;for(let i=0;i<240&&!go;i++){run(.5);go=[v1,v2].some(v=>v.orders[0]&&v.orders[0].go);if(!go&&[h1,h2].some(h=>h.ammo<h.maxAmmo))early++;}
   ok(go,'the VARG go in together ('+(go?'yes':'no')+')');ok(early===0,'and no HÖK fired its robots before that ('+early+' half seconds with a robot gone)');
   run(15);ok([h1,h2].some(h=>h.ammo<h.maxAmmo),'after they go in the HÖK strike too');}
 // 2. one of the group already in a fight elsewhere: the planned attack does not wait for the slow one
 {const G=setup();const[v1,v2]=G.units.filter(u=>u.kind==='tank');const t=live(G,'turret',L.x+200,L.y);t.hp=t.maxhp=5000;t.camo=false;t.cd=1e9;/* silent, so only the new rule can start the attack */
-  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-470;v2.y=t.y+20;for(const v of[v1,v2]){v.hp=v.maxhp=1e5;v.orders=[{type:'attack',enemy:t,post:'off'}];}
+  v1.x=t.x-230;v1.y=t.y-20;v2.x=t.x-280;v2.y=t.y+20;/* 50 m behind: since 24 okt one more than STAGE_LATE s off is not waited for */for(const v of[v1,v2]){v.hp=v.maxhp=1e5;v.orders=[{type:'attack',enemy:t,post:'off'}];}
   let st=0;for(;st<60&&!/väntar på resten/.test(v1.state||'');st+=.5)run(.5);
   ok(/väntar på resten/.test(v1.state||''),'(VARG-1 waits at its staging point: '+v1.state+')');
   const lp=live(G,'light',v2.x+90,v2.y);lp.mobile=false;lp.speed=0;lp.hp=lp.maxhp=1e4;
