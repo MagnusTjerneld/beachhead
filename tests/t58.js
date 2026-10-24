@@ -15,7 +15,7 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
  const v=G.units.find(u=>u.kind==='tank');v.x=r2.x+30;v.y=r2.y;v.hp=30;ok(B.lockedAt(v.x,v.y),'VARG placed in locked sector');
  r2.captured=true;const hm=B.homeFor(v);ok(hm.ship||!/verkstad|fältvarv/.test(hm.name)||hm.name.indexOf(r2.id)<0,'captured point in a locked sector gives no service ('+hm.name+')');
  run(G,3);ok(!v.rtb,'cut-off VARG does not head for service');ok(G.log.some(l=>/Avskuren bakom spärr/.test(l.text)&&l.acts&&l.acts.length),'cut-off notice with actions');
- const w={x:r2.x+40,y:r2.y,value:30,id:'wX',kind:'crate'};G.wrecks.push(w);G.known.fill(1);ok(!B.callIn('krok',{wreck:w})||!G.krokQ.includes('wX'),'KROK refuses salvage behind the barrier');}
+ const w={x:r2.x+40,y:r2.y,value:30,id:'wX',kind:'crate'};G.wrecks.push(w);G.known.fill(1);B.callIn('krok',{wreck:w});ok(G.krokQ.includes('wX')||G.kroks.some(k=>k.target===w||k.orders.some(o=>o.wreck===w)),'KROK takes a salvage behind the barrier (since 24 okt: it comes by air; service there stays cut off)');}
 // 3. mines: buried, so a HÖK right above sees nothing; BÄVER's detector finds the field, the ground closes, the BÄVER clears it
 {B.newGame(8080);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;const m=G.mines[0];
  const h=G.units.find(u=>u.kind==='drone');h.x=m.x+20;h.y=m.y;h.alt=30;h.orders=[];h.orbit={x:h.x,y:h.y};run(G,1);ok(!m.found,'HÖK does not see buried mines');
