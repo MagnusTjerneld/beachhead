@@ -105,18 +105,20 @@ function rotor(n,len,w,tip){const r=new THREE.Group();r.add(mesh(cyl(w*.9,w*.9,w
   for(let i=0;i<n;i++){const b=new THREE.Group();b.rotation.y=i*TAU/n;b.add(mesh(box(len,w*.3,w),mat(0x22282e),len/2,0,0));b.add(mesh(box(len*.16,w*.32,w*1.02),mat(tip||0xd8dde0),len*.92,0,0));r.add(b);}
   return r;}
 function sh(g){g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
-const _bm=new THREE.Matrix4();
-function bake(root){
+const _bm=new THREE.Matrix4(),_bc=new THREE.Color();
+function vcMat(){if(!MATS.has('vc'))MATS.set('vc',new THREE.MeshLambertMaterial({vertexColors:true}));return MATS.get('vc');}
+const vcOK=m=>m.isMeshLambertMaterial&&!m.vertexColors&&!m.map&&!m.transparent&&m.emissive.r+m.emissive.g+m.emissive.b===0;
+function bake(root,vc){
   root.updateMatrixWorld(true);const keep=new Set();
   const note=v=>{if(!v)return;if(Array.isArray(v)){for(const x of v)note(Array.isArray(x)?x[0]:x);}else if(v.isObject3D)keep.add(v);};
   root.traverse(o=>{for(const k in o.userData)note(o.userData[k]);});
   const pass=r=>{const inv=new THREE.Matrix4().copy(r.matrixWorld).invert(),groups=new Map(),drop=[];
-    const walk=o=>{for(const c of o.children){if(keep.has(c)&&c!==r)continue;if(c.isMesh&&c.visible&&!c.userData.solo){const k=c.material.uuid;if(!groups.has(k))groups.set(k,{m:c.material,g:[]});_bm.multiplyMatrices(inv,c.matrixWorld);const g=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();g.applyMatrix4(_bm);groups.get(k).g.push(g);drop.push(c);}walk(c);}};
+    const walk=o=>{for(const c of o.children){if(keep.has(c)&&c!==r)continue;if(c.isMesh&&c.visible&&!c.userData.solo){const v=vc&&vcOK(c.material),k=v?'vc':c.material.uuid;if(!groups.has(k))groups.set(k,{m:v?vcMat():c.material,g:[],v});_bm.multiplyMatrices(inv,c.matrixWorld);const g=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();g.applyMatrix4(_bm);if(v){const n=g.attributes.position.count,C=new Float32Array(n*3);_bc.copy(c.material.color);for(let i=0;i<n;i++){C[i*3]=_bc.r;C[i*3+1]=_bc.g;C[i*3+2]=_bc.b;}g.userData.vc=C;}groups.get(k).g.push(g);drop.push(c);}walk(c);}};
     walk(r);
     for(const c of drop)c.parent.remove(c);
-    for(const{m,g}of groups.values()){let n=0;for(const x of g)n+=x.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3);let o=0;
-      for(const x of g){P.set(x.attributes.position.array,o*3);N.set(x.attributes.normal.array,o*3);o+=x.attributes.position.count;x.dispose();}
-      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));bg.computeBoundingSphere();r.add(new THREE.Mesh(bg,m));}};
+    for(const{m,g,v}of groups.values()){let n=0;for(const x of g)n+=x.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=v?new Float32Array(n*3):null;let o=0;
+      for(const x of g){P.set(x.attributes.position.array,o*3);N.set(x.attributes.normal.array,o*3);if(C)C.set(x.userData.vc,o*3);o+=x.attributes.position.count;x.dispose();}
+      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));if(C)bg.setAttribute('color',new THREE.BufferAttribute(C,3));bg.computeBoundingSphere();r.add(new THREE.Mesh(bg,m));}};
   pass(root);for(const k of keep)if(!k.isMesh)pass(k);
   return root;}
 let BLOB=null;
@@ -281,7 +283,7 @@ function mkUnitMesh(u){
     hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
   }
-  {const r=sh(bake(g));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
+  {const r=sh(bake(g,u.kind==='krok'));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
     if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
@@ -374,7 +376,7 @@ const ENEMY={
 };
 
 const TYPES={
-  scout:{label:'GETING',tag:'G',role:'spaning och verkan',cost:60,build:10,hp:5,speed:19,vision:120,fuel:600,air:true,sig:45},
+  scout:{label:'GETING',tag:'G',role:'spaning och verkan',cost:60,build:10,hp:5,speed:19,vision:120,fuel:600,air:true,sig:70},
   drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
