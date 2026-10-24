@@ -3,7 +3,8 @@
 // the lighthouse) and Birka in the roads with the other islands behind, in portrait 2:3 with the logo, the line and the copyright.
 // It is staged in the trailer's film mode (?trailer, island 7341) with the film's own actors and effects: a scene takes the place of a
 // shot's script, the film is stepped up to the moment on its own clock and the frame is rendered and composed with the logo.
-// The lighthouse stands where the game has it, on the point (the trailer moves it up the height), and Birka is brought in to 520 m.
+// The lighthouse stands where the game has it, on the point (the trailer moves it up the height), and Birka is brought in to 380 m, into the bay
+// (24 okt, Magnus: nearer, still at a distance; 520 m before).
 //   node tests/poster.js [ut.jpg] [--bredd 2400] [--utan-logga]
 //   node tests/poster.js ut.jpg --scener egna.js [--bara namn,namn]   your own scenes: module.exports=[{namn, host (a shot id, for its
 //       lighting and set dressing), tau (seconds into the shot), steg (seconds stepped before it, for effects), kod}], where kod is the
@@ -35,7 +36,7 @@ const mus=(K,sx,f,rel)=>{const q=K.gnd(sx,f),hd=K.yaw+rel,m=fUnit('mus','mus');f
 `;
 const POSTER=[{namn:'fyren',host:'lyft',tau:1.5,steg:1.5,kod:`
   FILM.tod=17.2;FILM.sunEl=.24;
-  const a0=75*PI/180;filmBirka({x:L.x+Math.cos(a0)*520,y:L.y+Math.sin(a0)*520,a:a0+PI/2});
+  const a0=68*PI/180;filmBirka({x:L.x+Math.cos(a0)*380,y:L.y+Math.sin(a0)*380,a:a0+PI/2});
   const K=from(255,130,70,-.3,58,.05);
   mus(K,.18,108,PI-.5);
   varg(K,0,-.28,150,PI+.25);varg(K,1,.3,168,PI-.15);varg(K,2,.02,190,PI);
