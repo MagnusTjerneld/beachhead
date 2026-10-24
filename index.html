@@ -5590,7 +5590,12 @@ function hallTex(){if(hallTex.t)return hallTex.t;const W=512,H=732,S=H/10,c=mkCa
   const k=Math.min(1,740/y.measureText('BIRKA').width);y.setTransform(k,0,0,1,384*(1-k),0);y.fillStyle='#e6e1d2';y.fillText('BIRKA',384,136);y.setTransform(1,0,0,1,0,0);
   y.globalCompositeOperation='destination-out';for(let i=0;i<420;i++){y.globalAlpha=.5+R()*.5;y.beginPath();y.ellipse(R()*768,R()*256,1+R()*5,1+R()*2.5,R()*3,0,TAU);y.fill();}
   const name=new THREE.CanvasTexture(n);name.anisotropy=8;
-  return hallTex.t={wall,name};}
+  /* the floodlights' light on the wall: two warm ovals from the top edge under the lamps and a weaker one between them, each fading out inside the picture so the
+     field has no edges (the plane is 11 x 4.8 m, the lamps 2.6 m either side of its middle) */
+  const gl=mkCanvas(512,224),q=gl.getContext('2d');q.globalCompositeOperation='lighter';
+  for(const[u,k]of[[.264,1],[.736,1],[.5,.5]]){q.setTransform(1,0,0,1.6,0,0);const gr=q.createRadialGradient(u*512,4,0,u*512,4,128);gr.addColorStop(0,'rgba(255,226,170,'+.85*k+')');gr.addColorStop(.35,'rgba(255,218,160,'+.45*k+')');gr.addColorStop(.7,'rgba(255,214,150,'+.12*k+')');gr.addColorStop(1,'rgba(255,214,150,0)');q.fillStyle=gr;q.fillRect(0,0,512,140);}
+  const glow=new THREE.CanvasTexture(gl);
+  return hallTex.t={wall,name,glow};}
 /* the carrier: low-poly but with a pointed bow, boot stripe, flight deck with pads, an island with a lit bridge, radar and
    masts, lifeboats and a crane; at night floodlights shine down into the water all round and the navigation lights burn */
 /* HMS Birka: a barge platform, a floating yard. Pontoon hull, the big revolving crane at the stern (after Lodbrok, Stockholm's
@@ -5685,7 +5690,13 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
       plate=(w,rep,x,z,ry)=>{const ge=new THREE.PlaneGeometry(w,10),uv=ge.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,uv.getX(i)*rep);const m=mesh(ge,PM,x,DY+5,z);m.rotation.y=ry;m.userData.solo=true;g.add(m);},
       bar=(a,b,t,m2)=>{const d=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),n=d.length(),m=mesh(box(t,1,t),m2||STEEL2,(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.scale.y=n;g.add(m);};
     plate(28,4,-16.03,-2,-PI/2);plate(14,2,-9,-16.03,PI);plate(14,2,-9,12.03,0);
-    {const nm=mesh(new THREE.PlaneGeometry(8.4,2.8),NM,-16.06,DY+3.3,-2);nm.rotation.y=-PI/2;nm.userData.solo=nm.userData.noShadow=true;nm.receiveShadow=true;g.add(nm);}
+    {const nm=mesh(new THREE.PlaneGeometry(8.4,2.8),NM,-16.06,DY+3.3,-2);nm.rotation.y=-PI/2;nm.userData.solo=nm.userData.noShadow=true;nm.receiveShadow=true;g.add(nm);
+      /* two floodlights under the gallery light the name at night (Magnus, 24 okt): the lamps on short brackets, and a warm field
+         of light on the wall over the letters, brightest under the lamps and fading downwards, its strength following the dark */
+      for(const z of[-4.6,.6]){bar([-16.4,GY-.08,z],[-16.95,GY-.4,z],.1,DARK);const hd=mesh(box(.32,.28,.5),DARK,-17.05,GY-.5,z);hd.rotation.z=.55;g.add(hd);
+        const fc=mesh(box(.05,.22,.42),lampMat,-16.9,GY-.6,z);fc.rotation.z=.55;g.add(fc);}
+      const nlM=new THREE.MeshBasicMaterial({map:T.glow,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}),nl=mesh(new THREE.PlaneGeometry(11,4.8),nlM,-16.09,DY+2.6,-2);
+      nl.rotation.y=-PI/2;nl.userData.solo=nl.userData.noShadow=true;nl.renderOrder=5;g.add(nl);g.userData.nameLight=nlM;}
     // pillars at the corners and thirds of the outer wall, and at the inner corners
     for(const z of[-16,-6.67,2.67,12])g.add(mesh(box(.6,10.2,.6),STEEL2,-16.05,DY+5.1,z));for(const z of[-16,12])g.add(mesh(box(.6,10.2,.6),STEEL2,-2,DY+5.1,z));
     // the high windows, two to a bay, with sills; two on the forward end
@@ -6544,7 +6555,7 @@ function sync3D(dtr){
         while(bw.thr>1){bw.thr--;const fw=Math.random()<.5?-36:34,sd=Math.random()<.5?-1:1,lat=sd*16,x=CARRIER.x-sn*lat+c*fw,z=CARRIER.y+c*lat+sn*fw;
           addPart(x-sn*sd*Math.random()*5,.3,z+c*sd*Math.random()*5,1.2,4.5,0xeef3f2,.55,1.6);}}}}
   {const sh=R3.ship.userData,L=R3.lit||0,now2=performance.now()/1000;if(sh.radar)sh.radar.rotation.y=now2*1.3;printTick(sh,now2);if(sh.crane)sh.crane.rotation.y=-.18+Math.sin(now2*.031)*.22;
-    if(sh.flood){sh.flood.coneM.opacity=.16*L;sh.flood.poolM.opacity=.75*L;}
+    if(sh.flood){sh.flood.coneM.opacity=.16*L;sh.flood.poolM.opacity=.75*L;}if(sh.nameLight)sh.nameLight.opacity=.7*L;
     if(sh.nav){if(!sh.navH){sh.navH=sh.nav.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(3.2);n.m.add(h);return h;});}sh.navH.forEach(h=>{h.visible=L>0;h.material.opacity=.85*L;});}}
   const now=performance.now()/1000;if(R3.bobs)for(const m of R3.bobs){const ph=m.userData.bob;m.position.y=m.userData.y0+Math.sin(now*1.1+ph)*.14;m.rotation.z=Math.sin(now*.9+ph*1.7)*.035;m.rotation.x=Math.sin(now*.8+ph)*.03;}
   for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);const t=g.userData.top;t.material.color.setHex(r.captured?0x3fd06a:0xe0283a);}}
