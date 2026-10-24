@@ -7883,6 +7883,12 @@ function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h
    seconds, and the director only takes a shot it can make gracefully. Before it commits it checks how far it has to pan, how fast
    the subject will sweep past (speed over the closest distance the HÖK will pass it at), and whether the shot would swing the
    camera across to the other side; a subject it cannot frame calmly is let go. Shots are spaced 20 to 35 seconds apart. */
+/* HÖK's ducts in the intro and the trailer (Magnus 24 okt: as in the game): the lean follows the model's own speed along its length,
+   measured from frame to frame; a jump to a new place (a new shot) starts it over */
+function ductLean(m,dt){const U=m.userData;if(!U.ducts||!U.ducts.length)return;const p=m.position,hd=-m.rotation.y;
+  if(U.fx==null||dt<=0||Math.hypot(p.x-U.fx,p.z-U.fz)>dt*80+2){U.fx=p.x;U.fz=p.z;if(U.fvf==null){U.fvf=0;U.ftl=0;}return;}
+  const vf=((p.x-U.fx)*Math.cos(hd)+(p.z-U.fz)*Math.sin(hd))/dt;U.fx=p.x;U.fz=p.z;U.fvf=lerp(U.fvf,vf,Math.min(1,dt*3));
+  const want=clamp(U.fvf/TYPES.drone.speed,-1,1)*.44;U.ftl+=clamp(want-U.ftl,-dt*.8,dt*.8);for(const d of U.ducts)d.rotation.z=-U.ftl;}
 function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0,poi:null,until:0,next:14,seen:{}});
   const relTo=(x,y)=>angWrap(Math.atan2(y-p.z,x-p.x)-hd),deg=PI/180,V=17,hx=Math.cos(hd),hz=Math.sin(hd);
   const isl=relTo(RT.c.x,RT.c.y),side=Math.sign(isl)||1;
@@ -7994,7 +8000,7 @@ function titleCam(dtr){
   const hd=TITLE.hd,bank=clamp(angWrap(hdRaw-TITLE.hd)*1.4,-.35,.35);p.x=TITLE.sp.x;p.z=TITLE.sp.z;
   if(!TITLE.drone){TITLE.drone=mkUnitMesh({kind:'drone',color:PAL[0][0],ammo:4});R3.scene.add(TITLE.drone);}
   const m=TITLE.drone;m.visible=true;m.position.set(p.x,TITLE.alt+Math.sin(TITLE.t*1.3)*.6,p.z);m.rotation.set(0,-hd,Math.sin(TITLE.t*.7)*.05+bank);
-  if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
+  if(m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;ductLean(m,dtr);
   // the director picks the view angle (see titleDirector); the camera stands behind the HÖK on that line, a little to the side
   const Dr=titleDirector(dtr,p,hd,TITLE),L=hd+Dr.yaw,off=-.2*clamp(Dr.yaw/(12*PI/180),-1,1),R0=30+Dr.pull*10+Math.sin(TITLE.t*.11)*4;
   const cp=tmpV.set(m.position.x-Math.cos(L+off)*R0,TITLE.alt+8+Dr.pull*3-Dr.low*5+Math.sin(TITLE.t*.07)*2.5,m.position.z-Math.sin(L+off)*R0);
@@ -8204,7 +8210,7 @@ function filmCam(dtr){
   if(R3.cam.fov!==FILM.fov){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
   for(const m of(R3.movers||[]))if(m.varg){m.g.visible=FILM.useMovers;m.wake.mesh.visible=FILM.useMovers;}
   {const bu=G.units.find(u=>u.kind==='eng'),bm=bu&&R3.units.get(bu.id);if(bm&&FILM.hideBeaver&&!FILM.beaverHeld)bm.visible=false;else if(bm)bm.visible=true;FILM.beaverHeld=false;}
-  for(const k in FILM.act){const m=FILM.act[k];if(m.visible&&m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
+  for(const k in FILM.act){const m=FILM.act[k];if(m.visible&&m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;if(m.visible)ductLean(m,dtr);
     /* an actor's contact shadow only where it lies on the ground: not under a BÄVER hanging from KROK (24 okt) */
     const B=m.userData.blob;if(B)B.visible=m.position.y+B.position.y*m.scale.y-fGround(m.position.x,m.position.z)<1.2;}
   filmFx(dtr);
