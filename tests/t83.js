@@ -25,7 +25,7 @@ const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find
   run(12);ok(v1.orders[0]&&v1.orders[0].go,'VARG-1 goes in without waiting for VARG-2 far behind ('+v1.state+')');ok(!!said(G,/långt efter och ansluter/),'and the log says VARG-2 joins later');
   B.SHAPE_CFG.force=null;B.SHAPE_CFG.rough=1;B.LOS.on=true;}
 {B.START.units=['eng'];B.newGame(9949);const G=B.G;G.running=true;G.netAll=true;G.known.fill(1);G.knownV++;for(const e of G.enemies)e.seen=true;G.units.length=0;
-  const T=G.enemies.find(e=>e.id==='T8'),L=B.W.landing,h=B.makeUnit('drone',L.x,L.y+40),v=B.makeUnit('tank',L.x+30,L.y+80);h.alt=30;h.post='off';G.units.push(h,v);
+  const T=G.enemies.find(e=>e.id==='T8'),L=B.W.landing,h=B.makeUnit('drone',L.x,L.y+40),v=B.makeUnit('tank',L.x+30,L.y+80);h.alt=30;h.post='off';for(const u of[h,v])u.hp=u.maxhp=1e5;/* T8 and T9 hit them: shot below half she turns home, not what is tried here */G.units.push(h,v);
   h.orders=[{type:'attack',enemy:T,post:'off'}];v.orders=[{type:'attack',enemy:T,post:'off'}];run(4);
   ok(!(h.orders[0]&&h.orders[0].spotFor),'a HÖK striking the target is not sent to spot it for the VARG ('+(h.orders[0]?h.orders[0].type:'-')+')');
   ok(B.spotterFor(T)===h,'and it counts as the spotter for the target, attacking and spotting at once (Magnus 22 okt)');

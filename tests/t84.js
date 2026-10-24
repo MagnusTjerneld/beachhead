@@ -10,4 +10,10 @@ for(const t of T){ok(/^[a-z0-9]+$/.test(t.id)&&!ids.has(t.id),t.id+': an id that
   ok(G.log.some(l=>/^Testfall: /.test(l.text)),t.id+': says what to try');
   let c=false;try{c=!!t.check();}catch(e){console.log(e.message);}ok(c,t.id+': its own check');
   try{G.paused=false;for(let i=0;i<200;i++)B.step(.05);ok(true,t.id+': plays ten seconds');}catch(e){ok(false,t.id+': plays ten seconds ('+e.message+')');}}
+// the cases for Birka (23 okt) play through: in onto the beach, off the beach to the harbour, from the anchorage to the quay
+const until=(f,s)=>{for(let i=0;i<s*20;i++){if(f())return true;B.step(.05);}return f();};
+{B.testfall('strand');const G=B.G;G.paused=false;ok(B.beachGo(true)&&until(()=>G.beach.st==='on',300),'strand: she goes in onto the beach');}
+{B.testfall('strandhamn');const G=B.G;G.paused=false;ok(until(()=>G.harbor.wait,5),'strandhamn: the harbour waits for the captain');
+  ok(B.beachGo(false)&&until(()=>G.harbor.docked,900),'strandhamn: she backs off the beach and docks in the harbour ('+(G.harbor.ph||G.beach.st)+')');}
+{B.testfall('kaj');const G=B.G;G.paused=false;ok(until(()=>G.harbor.docked,900),'kaj: from the anchorage she docks in the harbour ('+(G.harbor.ph||'-')+')');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);
