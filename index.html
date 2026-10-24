@@ -6487,7 +6487,7 @@ const HOVER_Y=.05;
 function unitY(u,dtr){
   const g=groundY(u.x,u.y);
   if(u.dive){/* a GETING diving: straight down the line to where it strikes */const D=u.dive,d=Math.hypot(D.x-u.x,D.y-u.y),g=groundY(u.x,u.y);if(D.a0==null){D.a0=u.alt==null?g+gAlt(u):u.alt;D.d0=Math.max(1,d);}u.alt=g+Math.max(0,D.a0-g)*Math.min(1,d/D.d0);return u.alt;}
-  if(u.air||u.kind==='krok'){const pq=u.onPad&&padPt(u),want=pq?pq.y3+(u.kind==='scout'?.15:u.kind==='drone'?.75:.3):/* HÖK 04B stands on its legs, which reach 0.73 m down (prov 24 okt: at 0.3 they went through Birka's deck) */u.kind==='krok'?flyAlt(u.x,u.y,u.low?15:30,u.low?3:6):flyAlt(u.x,u.y,u.kind==='scout'?gAlt(u):24,u.kind==='scout'?4:6);u.alt=u.alt==null?want:lerp(u.alt,want,Math.min(1,1.5*(dtr||0)));return u.alt;}
+  if(u.air||u.kind==='krok'){const pq=u.onPad&&padPt(u),want=pq?pq.y3+(u.kind==='scout'?.15:u.kind==='drone'?(u.pad.key==='ship'?.43:.75):.3):/* HÖK 04B stands on its legs, which reach 0.73 m down: on the plates at the field station y3 is the slab's top, on Birka 0.32 m over the deck (prov 24 okt: at 0.3 the legs went through the plates, then at 0.75 everywhere she hovered over Birka's deck) */u.kind==='krok'?flyAlt(u.x,u.y,u.low?15:30,u.low?3:6):flyAlt(u.x,u.y,u.kind==='scout'?gAlt(u):24,u.kind==='scout'?4:6);u.alt=u.alt==null?want:lerp(u.alt,want,Math.min(1,1.5*(dtr||0)));return u.alt;}
   /* a hovercraft's skirt rests on the surface (fixed 16 okt: the whole model stood 0.45 m up, and over the water at night a lit strip
      showed between the skirt and its shadow, so VARG seemed to float); it bobs a few centimetres */
   if(!u.carried&&onDeck(u.x,u.y))return DECK_Y+(u.kind==='tank'?HOVER_Y:0);
@@ -6891,6 +6891,9 @@ function onUp(e){
   if(p.box&&p.moved){boxSelect(p.x,p.y,x,y,p.add);uiTick(true);return;}
   if(p.moved)return;
   const pk=pick(p.kind,x,y),u=selUnit(),sk=selKrok();
+  /* the beach's icon opens its menu whatever is selected (prov 24 okt, Magnus: with KROK selected the click was taken as an order to
+     KROK, so Birka could not be sent from the beach without selecting something else first); KROK's order is an item in it */
+  if(pk.beach){openWheel(x,y,pk,p.el);return;}
   if(sk){
     if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
     const liftable=pk.unit&&(pk.unit.kind==='tank'||pk.unit.kind==='eng');
@@ -6995,7 +6998,7 @@ function selfMenu(sx,sy,pk,srcEl){const t=pk.unit;if(!t||t.dead)return;
   renderWheel(sx,sy,srcEl,t.name,'egen meny',selfItems(t),()=>false,()=>wheelWho(sx,sy,pk,srcEl,null));}
 function openWheel(sx,sy,pk,srcEl,pick){
   if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
-  if(pk.beach&&!selKrok()){beachWheel(sx,sy,pk,srcEl);return;}
+  if(pk.beach){beachWheel(sx,sy,pk,srcEl);return;}
   lastWheel={sx,sy,pk,srcEl};
   if(!pk.wp&&(pick||(!selUnit()&&!selKrok()))){wheelWho(sx,sy,pk,srcEl,typeof pick==='string'?pick:null);return;}
   {const su=selUnit();if(su&&!heard(su)&&!selKrok()){noContact([su]);return;}}
@@ -7085,6 +7088,7 @@ function beachWheel(sx,sy,pk,srcEl){const S=G.beach,b=beachState(),items=[];let 
   if(S.st==='anchor'||S.st==='out'){items.push({l:'Angör stranden',off:!b.ok,f:()=>beachGo(true)});sub=S.st==='out'?'HMS Birka backar ut':b.why;}
   else{const toH=S.st==='on'&&G.harbor&&G.harbor.secured&&!G.harbor.docked;items.push({l:toH?'Till hamnen':'Tillbaka till ankarplatsen',f:()=>beachGo(false)});/* with the harbour taken she backs off and goes on there */sub=S.st==='on'?'HMS Birka ligger på stranden':'HMS Birka går in';}
   const u=selUnit(),q=beachIcon();if(u){const post=u.post;items.push({l:'Gå hit',f:()=>groupOrder({world:{x:q.x,y:q.y}},false,post)});}
+  {const sk=selKrok();if(sk&&!sk.dead){const pq={world:{x:q.x,y:q.y}};items.push({l:sk.cargo?'KROK: sätt ned '+sk.cargo.name+' här':'KROK: flyg hit',f:()=>{const o=krokDefault(sk,pq);if(o){krokOrder(sk,o,o.type==='drop'&&!sk.cargo);uiTick(true);}}});}}
   renderWheel(sx,sy,srcEl,'STRANDEN',sub,items,()=>false,null);}
 function renderWheel(sx,sy,srcEl,title,sub,items,fillChips,back){
   wRing.innerHTML='';const bk=typeof back==='function'?{f:back,hint:'annan enhet'}:back||null;
