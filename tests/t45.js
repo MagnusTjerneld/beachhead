@@ -53,7 +53,7 @@ function play(seed,limit){
     const want=V==='rush'?[['eng',1],['tank',6]]:V==='farm'?[['eng',3]]:[['eng',2],['drone',1],...(aaAlive?[['scout',1]]:[]),['tank',Math.min(7,4+Math.floor(G.res/350))]];
     for(const[k,n]of want){if(cnt(k)<n&&G.res>=COST[k]&&alive.length+G.build.filter(b=>b.kind!=='krok').length<10){G.res-=COST[k];G.build.push({kind:k,t:{scout:8,drone:15,tank:25,eng:20}[k],total:1});}}
     if(V!=='nosalv'&&G.kroks.length+G.build.filter(b=>b.kind==='krok').length<(V==='farm'?4:3)&&G.res>=(V==='farm'?150:400)&&G.wrecks.filter(w=>!w.claimed).length>4){G.res-=150;G.build.push({kind:'krok',t:20,total:20});}
-    if(V==='farm'){for(const e of alive.filter(u=>u.kind==='eng')){if(e.orders.length)continue;const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e)-d(b,e));const s=ss.find(s=>!G.units.some(o=>o!==e&&o.orders[0]&&o.orders[0].s===s));if(s){s.krok=true;B.giveOrder(e,{type:'demolish',s,post:'dold'},false);}}continue;}
+    if(V==='farm'){for(const e of alive.filter(u=>u.kind==='eng')){if(e.orders.length)continue;const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e)-d(b,e));const s=ss.find(s=>!G.units.some(o=>o!==e&&o.orders[0]&&o.orders[0].s===s));if(s){s.krok=true;B.giveOrder(e,{type:'demolish',s,post:'def'},false);}}continue;}
     const tanks=alive.filter(u=>u.kind==='tank');
     const cen=tanks.length?{x:tanks.reduce((s,u)=>s+u.x,0)/tanks.length,y:tanks.reduce((s,u)=>s+u.y,0)/tanks.length}:{x:G.units[0]?G.units[0].x:0,y:0};
     const defs0=G.enemies.filter(e=>!e.dead).sort((a,b)=>d(a,cen)-d(b,cen));
@@ -80,10 +80,10 @@ function play(seed,limit){
                  ...(G.mines||[]).filter(m=>m.found&&!m.cleared).map(m=>({type:'demine',mine:m}))];
       const pass=i=>B.W.grid[i]!==4&&B.W.grid[i]!==5;const reachable=j=>j.relay?reach(e.x,e.y,j.relay.x,j.relay.y):j.mine?(()=>{const sd=B.mineSide(j.mine,e);return reach(e.x,e.y,sd.x,sd.y);})():j.barrier.sides.some(s=>reach(e.x,e.y,s.x,s.y));
       job.sort((a,b)=>d(e,a.relay||a.barrier||a.mine)-d(e,b.relay||b.barrier||b.mine));const okj=job.filter(reachable);job.length=0;job.push(...okj);
-      if(job[0]){job[0].post='dold';B.giveOrder(e,job[0],false);e.override=true;}
+      if(job[0]){job[0].post='def';B.giveOrder(e,job[0],false);e.override=true;}
     }
     const e2=engs[1];
-    if(V!=='nosalv'&&e2&&!e2.orders.length){const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e2)-d(b,e2));const s0=ss.slice(0,6).find(s=>reach(e2.x,e2.y,s.x,s.y));if(s0){s0.krok=true;B.giveOrder(e2,{type:'demolish',s:s0,post:'dold'},false);}}
+    if(V!=='nosalv'&&e2&&!e2.orders.length){const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e2)-d(b,e2));const s0=ss.slice(0,6).find(s=>reach(e2.x,e2.y,s.x,s.y));if(s0){s0.krok=true;B.giveOrder(e2,{type:'demolish',s:s0,post:'def'},false);}}
   }
   const lost={};for(const l of G.log)0;
   if(process.env.DBG&&G.kap)console.log('kapten:',G.kap.why,G.kap.tgt&&G.kap.tgt.id,G.kap.bound&&[Math.round(G.kap.bound.x),Math.round(G.kap.bound.y)]);

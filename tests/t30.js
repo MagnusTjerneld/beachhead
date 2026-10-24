@@ -10,7 +10,7 @@ t.x=s.x-60;t.y=s.y;t.heading=0;t.turret=0;G.ctrl=t.id;G.mlook=true;G.firing=true
 for(let i=0;i<200;i++)B.step(.05);
 console.log('struct dead',s.dead,'hp',s.hp,'wrecks rubble',G.wrecks.filter(w=>w.kind==='rubble').map(w=>w.value));
 // demolish by eng
-const e=G.units.find(u=>u.kind==='eng');const s2=ss[1];e.x=s2.x+30;e.y=s2.y;s2.krok=true;B.giveOrder(e,{type:'demolish',s:s2,post:'dold'},false);
+const e=G.units.find(u=>u.kind==='eng');const s2=ss[1];e.x=s2.x+30;e.y=s2.y;s2.krok=true;B.giveOrder(e,{type:'demolish',s:s2,post:'def'},false);
 G.ctrl=null;G.firing=false;
 for(let i=0;i<400;i++)B.step(.05);
 console.log('demolished',s2.dead,s2.kind,s2.value,'queue',G.krokQ,'log',G.log.slice(0,5).map(l=>l.who+': '+l.text));

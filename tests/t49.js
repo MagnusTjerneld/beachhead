@@ -6,7 +6,7 @@ for(const seed of seeds){
   const R3=G.relays[2],R2=G.relays[1];
   // a stream of SPARVs fly toward R3 one after another, each re-launched when the previous dies
   let sc=0,t=0;const tank=G.units.find(u=>u.kind==='tank');
-  const launch=()=>{const u=B.makeUnit('scout',k.pad.x,k.pad.y);G.units.push(u);B.giveOrder(u,{type:'move',x:R3.x,y:R3.y,post:'dold'},false);sc++;return u;};
+  const launch=()=>{const u=B.makeUnit('scout',k.pad.x,k.pad.y);G.units.push(u);B.giveOrder(u,{type:'move',x:R3.x,y:R3.y,post:'def'},false);sc++;return u;};
   let cur=launch();
   for(let i=0;i<20*60*2;i++){B.step(.05);if(cur.dead&&sc<6)cur=launch();}
   // now try to airlift the tank next to R3
