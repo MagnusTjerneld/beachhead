@@ -4749,7 +4749,7 @@ function mesh(geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x||0,y||
 /* a small rotor like KROK's but smaller: a hub and n thin dark blades with light tips, spun as one group (one draw call per
    material once baked); spun at a calm visible rate so the blades do not strobe */
 function rotor(n,len,w,tip){const r=new THREE.Group();r.add(mesh(cyl(w*.9,w*.9,w*.8,8),mat(0x22282e),0,0,0));
-  for(let i=0;i<n;i++){const b=new THREE.Group();b.rotation.y=i*TAU/n;b.add(mesh(box(len,w*.3,w),mat(0x22282e),len/2,0,0));b.add(mesh(box(len*.16,w*.32,w*1.02),mat(tip||0xd8dde0),len*.92,0,0));r.add(b);}
+  for(let i=0;i<n;i++){const b=new THREE.Group();b.rotation.y=i*TAU/n;b.add(mesh(box(len,w*.3,w),mat(0x22282e),len/2,0,0));b.add(mesh(box(len*.16+.02,w*.32,w*1.02),mat(tip||0xd8dde0),len*.92+.01,0,0));r.add(b);}
   return r;}
 /* the lamps are not shadowed by the sun (decided 22 okt, Magnus, provspel ö 3019 kp08, kp12, kp13): in three.js r128 the Lambert
    material sums every light per vertex and multiplies the sum by the shadow map, so the headlights and the lamps were dimmed by the
@@ -4954,7 +4954,7 @@ function mkUnitMesh(u){
     // the body, narrowing to the nose and a little to the tail; the nose's tip dark; the ridge along the back
     const bt=x=>x>.7?1-.55*(x-.7)/1.3:x<-1?1-.35*(-1-x)/.55:1;
     b.add(mesh(facet([[1.5,.15],[.9,.23],[-.4,.26],[-1.2,.2],[-1.55,.08],[-1.55,-.06],[-.6,-.13],[1,-.13],[1.5,-.08]],.62,.1,bt),M));
-    b.add(mesh(facet([[1.5,.15],[1.55,.14],[2,-.01],[1.62,-.07],[1.5,-.08]],.62,.1,bt),K));
+    b.add(mesh(facet([[1.5,.16],[1.55,.15],[2,0],[1.62,-.07],[1.5,-.08]],.62,.1,bt),K));
     b.add(mesh(facet([[1.05,.2],[.6,.31],[-.95,.29],[-1.3,.19]],.26,.05),M2));b.add(mesh(box(.75,.03,.07),TC,0,.365,0));b.add(mesh(box(.12,.035,.3),K,-.55,.355,0));
     for(const sz of[-1,1]){
       // the thin wing out to the duct, with dark joints and lighter plates on top and a strip in the side's colour
@@ -5014,7 +5014,7 @@ function mkUnitMesh(u){
     for(const[x,y,a,sp]of[[4.25,2.98,0,14],[-4.9,4.42,PI/4,-14]]){const r=rotor(4,4.8,.52,yel);r.position.set(x,y,0);r.rotation.y=a;r.add(mesh(cyl(.6,.6,.16,10),DK,0,-.05,0));
       r.add(mesh(new THREE.SphereGeometry(.3,10,6,0,TAU,0,PI/2),DK,0,.1,0));b.add(r);g.userData.spin.push([r,'y',sp]);}
     // a sensor box and the anti-collision light on the back, vent slots along the middle
-    b.add(mesh(facet([[.2,1.85],[.2,2.2],[-.6,2.2],[-.6,1.85]],.6,.06),DK));b.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.6,2.05,0));
+    /* standing on the back (24 okt: its top was flush with the back's and flickered against it, and the light sat inside the body) */b.add(mesh(facet([[.2,2.1],[.2,2.45],[-.6,2.45],[-.6,2.1]],.6,.06),DK));b.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.6,2.3,0));
     for(const z of[-1.03,1.03])b.add(mesh(box(.9,.06,.03),BLK,-.4,1.35,z));
     /* four crane legs: a heavy strut from the body's corner out and down to a knee, a lighter brace from further in, twin wheels.
        They fold back along the belly in flight and come down before a pickup and at service (Magnus 21 okt): each leg is the
@@ -5130,7 +5130,7 @@ function mkEnemyMesh(e){
     tracks(8.2,1.8,.95,RUST3);
     g.add(mesh(box(7.2,1.0,2.6),RUST3,0,1.05,0));g.add(mesh(box(6.4,.65,4.4),RUST,-.3,1.85,0));
     const gl=mesh(box(1.8,.16,4.4),RUST,3.4,1.75,0);gl.rotation.z=-.4;g.add(gl);for(const z of[-1.6,1.6])g.add(mesh(box(.2,.25,.4),DK,4.0,1.6,z));
-    g.add(mesh(box(2.4,.1,3.8),mat(0x8a5a4a),-2.5,2.22,0));for(let i=0;i<5;i++)g.add(mesh(box(.12,.06,3),DK,-3.4+i*.42,2.3,0));
+    g.add(mesh(box(2.4,.1,3.8),mat(0x8a5a4a),-2.5,2.22,0));for(let i=0;i<5;i++)g.add(mesh(box(.12,.06,3),DK,-3.45+i*.42,2.3,0));/* off the turret's back face (24 okt: one shared it and flickered) */
     for(const z of[-1.3,1.3])g.add(mesh(box(.5,.45,.7),DK,-3.75,1.95,z));
     g.add(mesh(box(3.6,1.3,3.2),RUST2,-.4,2.85,0));for(const sz of[-1,1]){const ch=mesh(box(1.4,1.2,1.3),RUST2,1.4,2.8,sz*.95);ch.rotation.y=sz*.4;g.add(ch);}
     g.add(mesh(box(1.4,.6,2.6),RUST3,-2.4,2.9,0));g.add(mesh(cyl(.38,.42,.4,8),RUST3,-.8,3.65,-.7));g.add(mesh(box(.45,.3,.4),DK,.3,3.6,.75));
@@ -5720,8 +5720,8 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
   // printing hall amidships to starboard: a long shed with a skylight, the big door facing the build bay glows at the slit
   g.add(mesh(box(14,10,28),STEEL,-9,DY+5,-2));g.add(mesh(box(14.6,.6,28.6),STEEL2,-9,DY+10.3,-2));{const rf=mesh(box(10,1.6,28),STEEL2,-9,DY+11.2,-2);g.add(rf);}
   g.add(mesh(box(1.2,.4,26),winMat,-9,DY+12.05,-2));
-  g.add(mesh(box(.3,8,18),DARK,-1.9,DY+4.2,-2));for(let k=0;k<8;k++)g.add(mesh(box(.32,.12,18),STEEL,-1.85,DY+.8+k*1,-2));
-  g.add(mesh(box(.34,.35,18),GLOW,-1.8,DY+.35,-2));g.add(mesh(box(.36,.5,18.4),YEL,-1.82,DY+8.3,-2));
+  g.add(mesh(box(.3,8,18),DARK,-1.9,DY+4.2,-2));for(let k=0;k<8;k++)g.add(mesh(box(.32,.12,17.9),STEEL,-1.85,DY+.8+k*1,-2));
+  g.add(mesh(box(.34,.35,17.9),GLOW,-1.8,DY+.35,-2));g.add(mesh(box(.36,.5,18.4),YEL,-1.82,DY+8.3,-2));
   /* the hall's outside (24 okt, Magnus: plain as a container, from starboard above all): corrugated plate (a texture, so it costs
      nothing in parts) on the outer wall and both ends, pillars at the corners and thirds, a band of high windows under the eaves
      that light up at night, BIRKA in the middle bay, a gallery along the wall with a stair down the forward end, downpipes and fire
@@ -5775,7 +5775,7 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
   for(const[x,y,z,c]of[[-13,0,-20,0x9a4a32],[-13,2.6,-20,0x2f5d7c],[-8,0,-20,0x52704a],[12.5,0,-28.6,0xb7832e],[12.5,2.6,-28.6,0x2f5d7c]]){const cn=mesh(box(4.6,2.5,6),mat(c),x,DY+1.25+y,z);g.add(cn);}
   // the big crane at the stern: pedestal, slewing house with counterweight and A-frame, a lattice boom over the stern, hook
   const cr=new THREE.Group();cr.position.set(-4,DY,-30);g.add(cr);g.add(mesh(cyl(3.2,3.6,3,16),YEL2,-4,DY+1.5,-30));
-  cr.add(mesh(box(7.5,5,10),YEL,0,5.6,1));cr.add(mesh(box(7.6,1.2,10.1),DARK,0,4.2,1));cr.add(mesh(box(8,4,3),mat(0x4a4f52),0,5.2,6.6));cr.add(mesh(box(2.4,1.8,2.2),winMat,-2.6,8.3,-3.4));cr.add(mesh(box(2.6,2.2,2.6),YEL,-2.6,8.1,-3.4));
+  cr.add(mesh(box(7.5,5,10),YEL,0,5.6,1));cr.add(mesh(box(7.6,1.2,10.1),DARK,0,4.2,1));cr.add(mesh(box(8,4,3),mat(0x4a4f52),0,5.2,6.6));cr.add(mesh(box(2.66,.7,2.66),winMat,-2.6,8.55,-3.4));cr.add(mesh(box(2.6,2.2,2.6),YEL,-2.6,8.1,-3.4));/* the windows a band round the cab (24 okt: a box inside it with the same roof, never seen, and the roof flickered between the two) */
   const up=new THREE.Vector3(0,1,0),st=(a,b2,t,m2)=>{const d=new THREE.Vector3(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2]),Ln=d.length();const m=mesh(box(t,1,t),m2||YEL,(a[0]+b2[0])/2,(a[1]+b2[1])/2,(a[2]+b2[2])/2);m.quaternion.setFromUnitVectors(up,d.normalize());m.scale.y=Ln;cr.add(m);};
   const BL=44,EL=58*PI/180,base=[0,8.4,-3.6],tip=[0,8.4+BL*Math.sin(EL),-3.6-BL*Math.cos(EL)];
   const at=(t,u,v)=>{const w=1.7*(1-t)+.5*t;const p=[base[0]+(tip[0]-base[0])*t,base[1]+(tip[1]-base[1])*t,base[2]+(tip[2]-base[2])*t];const ny=Math.cos(EL),nz=Math.sin(EL);return[p[0]+u*w,p[1]+v*w*ny,p[2]+v*w*nz];};
