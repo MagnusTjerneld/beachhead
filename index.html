@@ -7687,6 +7687,8 @@ function titleLandingApply(dtr){const L=TITLE.land;if(!L)return;const tau=TITLE.
     ud.legT=ud.legT==null?w:clamp(ud.legT+Math.sign(w-ud.legT)*dt/KROK_LEGS_T,0,1);krokLegs(ud,ud.legT);}
   const carrying=tau>=L.hook&&tau<L.drop;km.userData.cable.visible=tau>=8&&tau<L.drop+2;km.userData.hook.visible=carrying;
   if(tau<L.hook)return;
+  /* the contact shadow stays on the ground: hidden while BÄVER hangs under the hook, as in the game (24 okt, Magnus: it followed her up) */
+  if(bm.userData.blob)bm.userData.blob.visible=!carrying;
   if(carrying){bm.position.set(x,y-8,z);bm.rotation.y=-L.hd;return;}
   // set down on the beach, then a short drive inland
   const d=sm((tau-L.drop-1)/6)*15,bx=L.B.x+L.inl.x*d,bz=L.B.y+L.inl.y*d;bm.position.set(bx,groundY(bx,bz)+.4,bz);/* and turns up the beach gently, not in one frame */if(L.bh==null)L.bh=L.hd;L.bh+=angWrap(Math.atan2(L.inl.y,L.inl.x)-L.bh)*(1-Math.exp(-1.2*Math.min(dtr||0,.1)));bm.rotation.y=-L.bh;}
@@ -7915,7 +7917,9 @@ function filmCam(dtr){
   if(R3.cam.fov!==FILM.fov){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
   for(const m of(R3.movers||[]))if(m.varg){m.g.visible=FILM.useMovers;m.wake.mesh.visible=FILM.useMovers;}
   {const bu=G.units.find(u=>u.kind==='eng'),bm=bu&&R3.units.get(bu.id);if(bm&&FILM.hideBeaver&&!FILM.beaverHeld)bm.visible=false;else if(bm)bm.visible=true;FILM.beaverHeld=false;}
-  for(const k in FILM.act){const m=FILM.act[k];if(m.visible&&m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;}
+  for(const k in FILM.act){const m=FILM.act[k];if(m.visible&&m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
+    /* an actor's contact shadow only where it lies on the ground: not under a BÄVER hanging from KROK (24 okt) */
+    const B=m.userData.blob;if(B)B.visible=m.position.y+B.position.y*m.scale.y-fGround(m.position.x,m.position.z)<1.2;}
   filmFx(dtr);
   if(FILM.state==='idle')FILM.fadeA=Math.max(FILM.fadeA,.35);
   FILM.fade.style.opacity=FILM.fadeA.toFixed(3);}
