@@ -5276,10 +5276,18 @@ function mkWake(N0){
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(idx);
   const mt=new THREE.MeshBasicMaterial({map:wakeTex,transparent:true,opacity:.85,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,side:THREE.DoubleSide});
   const m=new THREE.Mesh(geo,mt);m.frustumCulled=false;m.renderOrder=3;m.userData.noShadow=true;return{mesh:m,geo,N};}
-function updWake(m,head,T){const N=m.wake.N,P=m.wake.geo.attributes.position.array,U=m.wake.geo.attributes.uv.array,life=m.life||7,pts=head?[head,...m.trail]:m.trail;
-  for(let i=0;i<N;i++){const p=pts[Math.min(i,pts.length-1)],a=pts[Math.max(0,Math.min(i,pts.length-1)-1)],b=pts[Math.min(pts.length-1,i+1)];let dx=a.x-b.x,dz=a.z-b.z;const L=Math.hypot(dx,dz)||1;dx/=L;dz/=L;
-    const age=T-p.t,w=i>=pts.length?0:m.beam*.5+age*(m.spread||1.5),u=clamp(age/life,0,1);
-    P[i*6]=p.x-dz*w;P[i*6+1]=.06;P[i*6+2]=p.z+dx*w;P[i*6+3]=p.x+dz*w;P[i*6+4]=.06;P[i*6+5]=p.z-dx*w;U[i*4]=u;U[i*4+1]=0;U[i*4+2]=u;U[i*4+3]=1;}
+/* the band is laid across the way at each point; in a turn the side towards the turn's centre is held inside the turn's radius,
+   measured over two points either way (24 okt, Magnus: in Birka's turns, where the band is wider than the turn, the cross lines
+   crossed and the triangles lay over each other) */
+function updWake(m,head,T){const N=m.wake.N,P=m.wake.geo.attributes.position.array,U=m.wake.geo.attributes.uv.array,life=m.life||7,pts=head?[head,...m.trail]:m.trail,n=pts.length;
+  for(let i=0;i<N;i++){const k=Math.min(i,n-1),p=pts[k],a=pts[Math.max(0,k-2)],b=pts[Math.min(n-1,k+2)];let dx=a.x-b.x,dz=a.z-b.z;const L=Math.hypot(dx,dz)||1;dx/=L;dz/=L;/* the way's direction over two points either way, so close points do not swing the cross line */
+    /* a point that carries its own cross line (nx, nz: Birka's, across her beam at the stern) keeps it: turning, the lines turn about
+       the turn's centre like spokes and never cross */
+    if(p.nx!=null){dx=p.nz;dz=-p.nx;}
+    const age=T-p.t,w=i>=n?0:m.beam*.5+age*(m.spread||1.5),u=clamp(age/life,0,1);let wl=w,wr=w;
+    if(w>0&&k>0&&k<n-1&&p.nx==null){const a2=pts[Math.max(0,k-2)],b2=pts[Math.min(n-1,k+2)],v1x=p.x-b2.x,v1z=p.z-b2.z,v2x=a2.x-p.x,v2z=a2.z-p.z,cr=v1x*v2z-v1z*v2x,an=Math.atan2(Math.abs(cr),v1x*v2x+v1z*v2z);
+      if(an>.02){const R=.85*(Math.hypot(v1x,v1z)+Math.hypot(v2x,v2z))/2/an;if(cr>0)wl=Math.min(wl,R);else wr=Math.min(wr,R);}}
+    P[i*6]=p.x-dz*wl;P[i*6+1]=.06;P[i*6+2]=p.z+dx*wl;P[i*6+3]=p.x+dz*wr;P[i*6+4]=.06;P[i*6+5]=p.z-dx*wr;U[i*4]=u;U[i*4+1]=0;U[i*4+2]=u;U[i*4+3]=1;}
   m.wake.geo.attributes.position.needsUpdate=true;m.wake.geo.attributes.uv.needsUpdate=true;m.wake.mesh.material.color.setScalar(1-(m.dark??.72)*(R3.night||0));}
 /* navigation lights (lanternor) for civilian boats under way: red to port, green to starboard, white masthead and stern; lit only in the dark */
 const NAV_R=0xff3a2a,NAV_G=0x3aff6a,NAV_W=0xfff4dc;
@@ -6114,7 +6122,9 @@ function buildStatic(){
      nearly black at night): foam spreading slower, lit by the ship. 12 s and paler (20 okt, Magnus: the 25 s of 18 okt read from above
      as a long white beam), 60 m at full speed, and it fades out where she stops instead of vanishing */
   /* as wide as her stern (19 okt, Magnus): the wake texture fades its outer thirds, so the band is drawn three times her 30 m beam */
-  if(!R3.birkaWake){R3.birkaWake={wake:mkWake(48),trail:[],tt:-1,beam:46,life:12,spread:.9,dark:.45};R3.birkaWake.wake.mesh.material.opacity=.6;}st.add(R3.birkaWake.wake.mesh);R3.birkaWake.trail.length=0;
+  /* two bands: when she changes from ahead to astern the band under way is left to fade and the other starts at the other end */
+  if(!R3.birkaWake){const mk=()=>{const w={wake:mkWake(48),trail:[],tt:-1,beam:46,life:12,spread:.9,dark:.45};w.wake.mesh.material.opacity=.6;return w;};R3.birkaWake=mk();R3.birkaWakeOld=mk();}
+  for(const w of[R3.birkaWake,R3.birkaWakeOld]){st.add(w.wake.mesh);w.trail.length=0;w.tt=-1;w.wake.mesh.visible=false;}R3.bwS=null;
   R3.surround=mkSurround(W,st);
   st.traverse(o=>{if(o.isMesh&&!o.userData.surround){o.castShadow=true;o.receiveShadow=true;}});
   // light itself casts no shadow (a transparent beam still lands in the shadow map)
@@ -6579,8 +6589,16 @@ function sync3D(dtr){
     if(HM){const own=!!(Hs&&Hs.secured);for(const b of HM.boats)b.visible=!own;HM.poolM.opacity=own?.7*L:0;HM.headM.color.setHex(own&&L>0?0xfff1c8:0x3a3a36);}
     if(R3.ship.userData.bowPool)R3.ship.userData.bowPool.visible=!(Hs&&Hs.docked)&&!beached();
     // a wake behind Birka while it is under way
+    /* the wake starts at the end she leaves behind: the stern going ahead, the bow going astern (24 okt, Magnus: backing off the beach
+       it came from the stern, the end going first). Which way she goes is read from how she moved since the last frame, and a jump of
+       more than 30 m (a new island, a test case) is not a move. A point is added to the band only when she has gone 3 m, and none at
+       all under 1 m/s, so turning on the spot (where the stern swings round) lays no fan of cross lines */
+    if(R3.birkaWake){const S=R3.bwS||(R3.bwS={px:CARRIER.x,py:CARRIER.y,dir:-1,v:0}),fx=Math.cos(CARRIER.a),fy=Math.sin(CARRIER.a),mx=CARRIER.x-S.px,my=CARRIER.y-S.py,md=Math.hypot(mx,my),dg=G.running&&!G.paused?dtr*G.speed:0;S.px=CARRIER.x;S.py=CARRIER.y;
+      if(dg>0&&md<30)S.v=S.v*.85+md/dg*.15;/* her speed through the water as it shows, smoothed: turning on the spot she barely moves */
+      if(md>.01&&md<30){const d=mx*fx+my*fy>0?1:-1;if(d!==S.dir){S.dir=d;if(R3.birkaWake.trail.length){const o=R3.birkaWakeOld;R3.birkaWakeOld=R3.birkaWake;R3.birkaWake=o;o.trail.length=0;o.tt=-1;}}}
+      const ow=R3.birkaWakeOld,T=R3.decoT||0;if(ow.trail.length){if(T-ow.trail[0].t>ow.life){ow.trail.length=0;ow.wake.mesh.visible=false;}else{ow.wake.mesh.visible=true;updWake(ow,null,T);}}else ow.wake.mesh.visible=false;}
     const bw=R3.birkaWake;if(bw){const T=R3.decoT||0,mov=Hs&&Hs.secured&&!Hs.docked&&!Hs.wait&&Hs.v>.2||beachMoving()&&G.beach.v>.2;bw.wake.mesh.visible=mov||bw.trail.length>0;
-      if(mov){const sx=CARRIER.x+Math.cos(CARRIER.a)*44,sz=CARRIER.y+Math.sin(CARRIER.a)*44;if(bw.tt<0||T-bw.tt>.25){bw.tt=T;bw.trail.unshift({x:sx,z:sz,t:T});if(bw.trail.length>bw.wake.N)bw.trail.pop();}updWake(bw,{x:sx,z:sz,t:T},T);}
+      if(mov&&R3.bwS.v>1){const e=-R3.bwS.dir*44,sx=CARRIER.x+Math.cos(CARRIER.a)*e,sz=CARRIER.y+Math.sin(CARRIER.a)*e;if((bw.tt<0||T-bw.tt>.25)&&(!bw.trail.length||Math.hypot(sx-bw.trail[0].x,sz-bw.trail[0].z)>3)){bw.tt=T;bw.trail.unshift({x:sx,z:sz,t:T,nx:-Math.sin(CARRIER.a),nz:Math.cos(CARRIER.a)});if(bw.trail.length>bw.wake.N)bw.trail.pop();}updWake(bw,{x:sx,z:sz,t:T,nx:-Math.sin(CARRIER.a),nz:Math.cos(CARRIER.a)},T);}
       else if(bw.trail.length){if(T-bw.trail[0].t>bw.life)bw.trail.length=0;else updWake(bw,null,T);}
       /* the bow and stern thrusters (19 okt, Magnus) while she turns at Bq and glides in to the quay: foam boiling up out of the
          tunnels on both sides, fore and aft */
