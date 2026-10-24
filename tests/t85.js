@@ -17,8 +17,9 @@ const fix=()=>{g.x=mx;g.y=my;g.orders=[];g.orbit=null;g.hp=g.maxhp;};
 // 1. low sees both
 fix();run(1);ok(pv.visibleNow&&bk.visibleNow,'low it sees the pansarvärn and the bunker ('+Math.round(d(g,pv))+' and '+Math.round(d(g,bk))+' m)');
 const hLo=B.unitHOf(g);
-// 2. high: the bunker, not the team on foot
-B.setHigh(g,true);fix();run(1);
+// 2. high: the climb takes its time (Magnus 24 okt: 10 m/s), and on the way up it is still low; then the bunker, not the team on foot
+B.setHigh(g,true);fix();run(1);ok(g.vision===120&&!B.highG(g)&&B.unitHOf(g)-hLo<20,'a second into the climb it is still low ('+Math.round(g.ga)+' m, sees '+g.vision+' m)');
+fix();run(12);
 ok(Math.abs(B.unitHOf(g)-hLo-125)<1,'high it flies 125 m over its low height ('+Math.round(B.unitHOf(g)-hLo)+')');
 ok(g.vision===200,'and sees 200 m');
 ok(bk.visibleNow,'high it sees the bunker');ok(!pv.visibleNow,'but not the pansarvärn');
@@ -34,12 +35,12 @@ ok(Math.abs(B.reachVs(aa,g)-Math.sqrt(200*200-150*150))<1,'along the slant line 
   ok(shots>60&&hits/shots<.06,'at 100 m it fires ('+shots+' shots in two minutes) and hits '+hits+' ('+(hits/Math.max(1,shots)*100).toFixed(1)+' %, '+(B.hiHit(aa,{x:aa.x+100,y:aa.y})*100).toFixed(1)+' % a shot)');
   aa.x=aa.hx=ax;aa.y=aa.hy=ay;aa.firedHere=false;aa.seen=false;aa.tgtU=null;}
 B.setHigh(g,false);ok(B.reachVs(bk,g)===70,'low the bunker reaches it at its sig ('+B.reachVs(bk,g)+' m)');
-{g.x=bk.x+50;g.y=bk.y;g.orders=[];g.orbit=null;B.setHigh(g,true);let shot=false;for(let i=0;i<60;i++){B.step(.05);g.x=bk.x+50;g.y=bk.y;if(bk.tgtU===g)shot=true;}
+{g.x=bk.x+50;g.y=bk.y;g.orders=[];g.orbit=null;B.setHigh(g,true,true);let shot=false;for(let i=0;i<60;i++){B.step(.05);g.x=bk.x+50;g.y=bk.y;if(bk.tgtU===g)shot=true;}
   ok(!shot,'high, 50 m from the bunker, the bunker does not take it as a target');
-  B.setHigh(g,false);for(let i=0;i<60;i++){B.step(.05);g.x=bk.x+50;g.y=bk.y;g.hp=g.maxhp;if(bk.tgtU===g)shot=true;}ok(shot,'low it does');}
+  B.setHigh(g,false,true);for(let i=0;i<60;i++){B.step(.05);g.x=bk.x+50;g.y=bk.y;g.hp=g.maxhp;if(bk.tgtU===g)shot=true;}ok(shot,'low it does');}
 // 4. the map: land seen only from high is scouted but not secured; looking low clears it
 {B.newGame(9949);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(const v of G.units)if(v.kind!=='eng')v.dead=true;
-  const L=B.W.landing,g=B.makeUnit('scout',L.x,L.y);G.units.push(g);g.fuel=1e9;B.setHigh(g,true);
+  const L=B.W.landing,g=B.makeUnit('scout',L.x,L.y);G.units.push(g);g.fuel=1e9;B.setHigh(g,true,true);
   const ci=(x,y)=>Math.floor(y/10)*B.GW+Math.floor(x/10);let i=null;
   for(let a=0;a<12&&i==null;a++){const x=L.x+Math.cos(a*Math.PI/6)*150,y=L.y+Math.sin(a*Math.PI/6)*150,c=ci(x,y);if(!G.known[c])i=c;}
   const hold=()=>{g.x=L.x;g.y=L.y;g.orders=[];g.orbit=null;};
@@ -47,7 +48,7 @@ B.setHigh(g,false);ok(B.reachVs(bk,g)===70,'low the bunker reaches it at its sig
   ok(i!=null&&G.known[i]===1&&!B.knownLo(i),'land 150 m away seen from high counts as scouted but only from high');
   {const K0=G.known.slice();G.known.fill(1);G.knownV++;for(let k=0;k<13;k++){B.step(.05);hold();}const s1=B.secureMask()[ci(L.x,L.y)];const H0=G.knownHi.slice();G.knownHi.fill(0);G.knownV++;for(let k=0;k<13;k++){B.step(.05);hold();}const s2=B.secureMask()[ci(L.x,L.y)];
     ok(!s1&&s2,'with all else scouted, the landing is secured only once nothing near it is seen from high alone ('+s1+', '+s2+')');G.known.set(K0);G.knownHi.set(H0);G.knownV++;}
-  B.setHigh(g,false);for(let k=0;k<20;k++){B.step(.05);hold();}
+  B.setHigh(g,false,true);for(let k=0;k<20;k++){B.step(.05);hold();}
   ok(!B.knownLo(i),'low, 150 m is beyond its 120 m: still only from high');
   g.x=L.x+(i%B.GW*10-L.x)*.5;g.y=L.y+(Math.floor(i/B.GW)*10-L.y)*.5;for(let k=0;k<20;k++)B.step(.05);
   ok(B.knownLo(i),'flown closer low, it is scouted for KROK too');}
@@ -55,7 +56,7 @@ B.setHigh(g,false);ok(B.reachVs(bk,g)===70,'low the bunker reaches it at its sig
 // the edge of what it had seen, 16 % of 9949 in a minute high); the radio's reach is lifted so only the search is measured
 {B.newGame(9949);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(const v of G.units)if(v.kind!=='eng')v.dead=true;
   const r0=B.RADIO.r,b0=B.RADIO.birka;B.RADIO.r=B.RADIO.birka=5000;
-  const L=B.W.landing,g=B.makeUnit('scout',L.x,L.y);G.units.push(g);g.fuel=1e9;B.setHigh(g,true);B.giveOrder(g,{type:'explore',post:'def'},false,'mission');
+  const L=B.W.landing,g=B.makeUnit('scout',L.x,L.y);G.units.push(g);g.fuel=1e9;B.setHigh(g,true,true);B.giveOrder(g,{type:'explore',post:'def'},false,'mission');
   let tg=null,legs=0,still=0;for(let k=0;k<60*20;k++){const px=g.x,py=g.y;B.step(.05);const o=g.mission;if(o&&o.tgt&&o.tgt!==tg){tg=o.tgt;legs++;}if(Math.hypot(g.x-px,g.y-py)<.2)still++;}
   B.RADIO.r=r0;B.RADIO.birka=b0;
   ok(G.landPct>=.3,'high, exploring freely, it has scouted '+Math.round(G.landPct*100)+' % of 9949 in a minute (at least 30)');

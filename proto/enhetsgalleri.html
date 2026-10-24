@@ -216,7 +216,7 @@ function mkUnitMesh(u){
     // pieces that bake() merges by the corners' colours into one draw call, so the four can still go one by one
     const body=0x4d5f72,M=mat(body),M2=mat(0x5d7083),K=mat(0x1c2026),PL=mat(0x8d969e),
       WH=new THREE.MeshBasicMaterial({color:0xf4f6f8}),TC=new THREE.MeshBasicMaterial({color:u.color}),b=new THREE.Group();b.scale.setScalar(1.3);g.add(b);
-    g.userData.spin=[];g.userData.rockets=[];g.userData.legs=[];
+    g.userData.spin=[];g.userData.rockets=[];g.userData.legs=[];g.userData.ducts=[];
     // a side profile extruded to its width with flat chamfers; taper narrows it towards one end (as KROK's)
     const facet=(pts,depth,bev,taper)=>{const s=new THREE.Shape();s.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)s.lineTo(pts[i][0],pts[i][1]);
       const ge=new THREE.ExtrudeGeometry(s,{depth:depth-2*bev,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelSegments:1,curveSegments:1});ge.translate(0,0,-(depth-2*bev)/2);
@@ -237,11 +237,14 @@ function mkUnitMesh(u){
       b.add(mesh(box(.28,.02,.2),PL,-.42,.098,sz*.72));b.add(mesh(box(.26,.02,.18),PL,-.82,.098,sz*1.3));
       const st=mesh(box(.42,.025,.06),TC,.05,.104,sz*.62);st.rotation.y=sz*.65;b.add(st);
       // the duct: a slim faceted ring band, two struts to the motor, the fan under a light hub cap, and three lamps round its outside
-      const cx=-.72,cz=sz*2.55,ds=new THREE.Shape();ds.absarc(0,0,.76,0,TAU,false);const hole=new THREE.Path();hole.absarc(0,0,.65,0,TAU,true);ds.holes.push(hole);
-      const dg=new THREE.ExtrudeGeometry(ds,{depth:.17,bevelEnabled:false,curveSegments:18});dg.rotateX(PI/2);dg.translate(0,.085,0);b.add(mesh(dg,M,cx,.05,cz));
-      b.add(mesh(cyl(.09,.07,.18,8),K,cx,.0,cz));for(const dx of[-1,1])b.add(mesh(box(.56,.035,.05),K,cx+dx*.38,-.01,cz));
-      const fan=rotor(6,.58,.17,0x22282e);fan.position.set(cx,.07,cz);b.add(fan);b.add(mesh(new THREE.SphereGeometry(.1,8,4,0,TAU,0,PI/2),PL,cx,.12,cz));/* the hub cap stands still, round as it is, and goes in with the body */g.userData.spin.push([fan,'y',sz*14]);
-      for(const a of[90,30,150]){const t=sz*a*PI/180,l=mesh(box(.03,.05,.32),WH,cx+Math.cos(t)*.765,.07,cz+Math.sin(t)*.765);l.rotation.y=-t;b.add(l);}
+      /* the duct turns about its axis across the wing, forward as she flies forward and back as she backs (decided 24 okt, Magnus: the
+         air went straight down whatever she did); built round its own pivot (dk, userData.ducts), baked on its own */
+      const cx=-.72,cz=sz*2.55,dk=new THREE.Group();dk.position.set(cx,.05,cz);b.add(dk);g.userData.ducts.push(dk);
+      const ds=new THREE.Shape();ds.absarc(0,0,.76,0,TAU,false);const hole=new THREE.Path();hole.absarc(0,0,.65,0,TAU,true);ds.holes.push(hole);
+      const dg=new THREE.ExtrudeGeometry(ds,{depth:.17,bevelEnabled:false,curveSegments:18});dg.rotateX(PI/2);dg.translate(0,.085,0);dk.add(mesh(dg,M,0,0,0));
+      dk.add(mesh(cyl(.09,.07,.18,8),K,0,-.05,0));for(const dx of[-1,1])dk.add(mesh(box(.56,.035,.05),K,dx*.38,-.06,0));
+      const fan=rotor(6,.58,.17,0x22282e);fan.position.set(0,.02,0);dk.add(fan);dk.add(mesh(new THREE.SphereGeometry(.1,8,4,0,TAU,0,PI/2),PL,0,.07,0));/* the hub cap stands still, round as it is, and goes in with the duct */g.userData.spin.push([fan,'y',sz*14]);
+      for(const a of[90,30,150]){const t=sz*a*PI/180,l=mesh(box(.03,.05,.32),WH,Math.cos(t)*.765,.02,Math.sin(t)*.765);l.rotation.y=-t;dk.add(l);}
       // the fins in a V, dark at the tips
       const fin=new THREE.Group();fin.position.set(0,.22,sz*.15);fin.rotation.x=sz*.5;b.add(fin);
       fin.add(mesh(facet([[-.92,0],[-1.28,.58],[-1.58,.58],[-1.52,0]],.06,.02),M));fin.add(mesh(facet([[-1.25,.5],[-1.3,.64],[-1.6,.64],[-1.58,.5]],.07,.02),K));
@@ -436,7 +439,7 @@ const ENEMY={
 };
 
 const TYPES={
-  scout:{label:'GETING',tag:'G',role:'spaning och verkan',cost:60,build:10,hp:5,speed:19,vision:120,fuel:600,air:true,sig:70},
+  scout:{label:'GETING',tag:'G',role:'spaning och verkan',cost:60,build:10,hp:5,speed:28,vision:120,fuel:600,air:true,sig:70},
   drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},

@@ -38,7 +38,8 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
  const t=G.enemies.find(x=>x.kind==='turret'&&!x.dead);t.x=r.x+20;t.y=r.y;t.lx=t.x;t.ly=t.y;t.seen=true;G.known.fill(1);G.knownV++;
  B.giveOrder(e,{type:'capture',relay:r,post:'def'},false);run(G,2);
  ok(!k.orders.length&&e.hold,'target inside a known bunker\'s reach: no lift, the BÄVER waits ('+e.state+')');
- ok(G.log.some(l=>/Ingen säker landningsplats/.test(l.text)),'KROK reports that there is no safe landing zone');
+ /* since 24 okt the target is checked on deck too, before a lift is asked for (provspel ö 2915 kp16), so BÄVER says why it waits */
+ ok(G.log.some(l=>/Ingen säker landningsplats|Målet ligger inom räckhåll/.test(l.text)),'BÄVER or KROK says why it waits');
  t.dead=true;run(G,4);ok(k.orders.some(o=>o.type==='drop'),'bunker gone: KROK flies the BÄVER in');
  const d=k.orders.find(o=>o.type==='drop');ok(G.enemies.every(x=>x.dead||!x.seen||!x.canGround||Math.hypot(x.lx-d.x,x.ly-d.y)>=x.range+15),'landing zone outside every known ground threat');}
 {B.newGame(7341);const G=B.G;G.running=true;for(const x of G.enemies)x.dead=true;const L=G.relays[0],e=G.units.find(u=>u.kind==='eng');
@@ -46,5 +47,7 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
  for(let r=170;r<260&&!p0;r+=10)for(let a=0;a<12&&!p0;a++){const x=L.x+Math.cos(a/12*6.283)*r,y=L.y+Math.sin(a/12*6.283)*r;if(land(x,y))p0={x,y};}
  e.x=p0.x;e.y=p0.y;e.orders=[];const t=G.enemies.find(x=>x.kind==='turret');t.dead=false;t.x=L.x;t.y=L.y;t.lx=t.x;t.ly=t.y;t.seen=true;t.hp=999;
  B.giveOrder(e,{type:'move',x:L.x,y:L.y,post:'def'},false);run(G,2);ok(e.hold&&Math.hypot(e.x-p0.x,e.y-p0.y)<5,'BÄVER waits instead of driving into a known bunker\'s reach ('+e.state+')');
- e.override=true;e.hold=false;run(G,3);ok(Math.hypot(e.x-p0.x,e.y-p0.y)>5,'Kör ändå sends it anyway');}
+ e.override=true;e.hold=false;run(G,3);ok(Math.hypot(e.x-p0.x,e.y-p0.y)>5,'Kör ändå sends it anyway');
+ /* on Offensiv it goes in as Kör ändå sends it (decided 24 okt, provspel ö 2915 kp08) */
+ e.override=false;e.x=p0.x;e.y=p0.y;e.hp=e.maxhp;B.giveOrder(e,{type:'move',x:L.x,y:L.y,post:'off'},false);run(G,3);ok(Math.hypot(e.x-p0.x,e.y-p0.y)>5&&G.log.some(l=>/BÄVER står på Offensiv/.test(l.text)),'on Offensiv it drives in and says so ('+e.state+')');}
 console.log(fail?fail+' FAILED':'all passed');process.exit(fail?1:0);
