@@ -349,7 +349,8 @@ function mkEnemyMesh(e){
     // drop sides and stakes, ammunition boxes and jerrycans, outriggers down at the sides. The cannon mount on the flatbed turns on a
     // ring: a cradle with side plates, an angled shield, ammunition boxes either side, a sight and the layer's seat; twin barrels with
     // recoil sleeves and muzzle brakes. The barrels lie flat facing aft when it moves
-    const body=mat(0x5e4a3e),body2=mat(0x6a5444),body3=mat(0x524036),GL=mat(0x9fb4bf),RED=mat(0x7a3a2e),RED2=mat(0x6a3226),SHD=mat(0x8a8a80);
+    /* the windows black (Magnus 24 okt), so the cab reads as a cab from above too */
+    const body=mat(0x5e4a3e),body2=mat(0x6a5444),body3=mat(0x524036),GL=mat(0x15181c),RED=mat(0x7a3a2e),RED2=mat(0x6a3226),SHD=mat(0x8a8a80);
     // chassis, bed and drop sides with stakes, the tailgate
     g.add(mesh(box(6.9,.35,1.5),BLK,0,.78,0));g.add(mesh(box(4.7,.22,2.5),body,-1.1,1.06,0));
     for(const z of[-1.22,1.22]){g.add(mesh(box(4.7,.45,.08),body2,-1.1,1.4,z));for(const x of[-3.3,-2.2,-1.1,0,1.1])g.add(mesh(box(.1,.5,.12),body3,x,1.42,z*1.01));}
@@ -360,19 +361,20 @@ function mkEnemyMesh(e){
     g.add(mesh(box(.26,.26,2.55),BLK,3.82,1.05,0));for(const z of[-.92,.92]){g.add(mesh(box(.12,.24,.36),R3.lampMat||DK,3.7,1.66,z));g.add(mesh(box(.04,.3,.42),BLK,3.68,1.66,z));}
     // the cab: body, roof, sloping windscreen, side windows, mirrors, and the step under the door
     g.add(mesh(box(1.5,1.55,2.4),body,1.95,1.95,0));g.add(mesh(box(1.6,.1,2.46),body3,1.92,2.77,0));
-    const ws=mesh(box(.08,.66,2.06),GL,2.71,2.32,0);ws.rotation.z=.18;g.add(ws);const wf=mesh(box(.1,.8,2.3),body2,2.73,2.3,0);wf.rotation.z=.18;g.add(wf);
+    const ws=mesh(box(.08,.62,2.0),GL,2.79,2.33,0);ws.rotation.z=.18;g.add(ws);const wf=mesh(box(.1,.8,2.3),body2,2.73,2.3,0);wf.rotation.z=.18;g.add(wf);
     for(const z of[-1,1]){g.add(mesh(box(.75,.5,.04),GL,2.0,2.32,z*1.21));g.add(mesh(box(.05,.5,.06),BLK,2.8,2.35,z*1.32));g.add(mesh(box(.08,.3,.16),BLK,2.85,2.4,z*1.42));
       g.add(mesh(box(.6,.06,.3),BLK,1.95,1.05,z*1.25));}
     g.add(mesh(cyl(.08,.08,1.7,6),BLK,1.12,2.25,-1.05));g.add(mesh(cyl(.11,.11,.2,6),BLK,1.12,3.1,-1.05));g.add(mesh(cyl(.02,.02,1.2,4),BLK,1.4,3.35,.95));
     // wheels with hubs on three axles, the front one under the bonnet, and mudguards over them
-    for(const x of[-2.6,-1.4,2.95])for(const z of[-1.2,1.2]){const w=mesh(cyl(.55,.55,.42,12),DK,x,.55,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.24,.24,.44,8),MET,x,.55,z*1.005);hb.rotation.x=PI/2;g.add(hb);}
+    for(const x of[-2.6,-1.4,2.95])for(const z of[-1.2,1.2]){const w=mesh(cyl(.55,.55,.42,10),DK,x,.55,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.24,.24,.44,6),MET,x,.55,z*1.005);hb.rotation.x=PI/2;g.add(hb);}
     for(const z of[-1.2,1.2]){g.add(mesh(box(2.5,.08,.55),body3,-2.0,1.17,z));g.add(mesh(box(1.35,.08,.58),body2,2.95,1.17,z));g.add(mesh(box(.08,.3,.58),body2,2.3,1.02,z));}
-    // ammunition boxes and jerrycans on the bed, the outriggers down at the sides
+    // ammunition boxes and jerrycans on the bed
     for(const z of[-.7,.7]){g.add(mesh(box(.8,.5,.6),OLV,-3.0,1.42,z));g.add(mesh(box(.07,.05,.25),BLK,-3.0,1.69,z));}g.add(mesh(box(.5,.4,.35),OLV,-3.0,1.87,.5));
     for(const z of[-.12,.12])g.add(mesh(box(.3,.45,.18),mat(0x3d4a2c),.8,1.4,z+.85));
-    for(const x of[-2.7,.4])for(const sz of[-1,1]){const leg=mesh(box(.15,.9,.15),MET,x,.6,sz*1.5);leg.rotation.x=sz*.4;g.add(leg);g.add(mesh(box(.42,.06,.42),MET,x,.18,sz*1.68));}
+    /* each outrigger: a beam straight out from the chassis, a leg straight down, a plate on the ground (behind the rear wheels and between the axles) */
+    for(const x of[-3.3,.4])for(const sz of[-1,1]){g.add(mesh(box(.2,.18,1.1),MET,x,.8,sz*1.3));g.add(mesh(box(.16,.8,.16),MET,x,.45,sz*1.78));g.add(mesh(box(.5,.06,.5),MET,x,.04,sz*1.78));}
     // the mount: ring, cradle, shield, ammunition boxes, sight and seat, turning together
-    const h=new THREE.Group();h.position.set(-1.1,1.2,0);h.add(mesh(cyl(1.0,1.1,.3,12),RED2,0,.15,0));h.add(mesh(box(1.6,.55,1.4),RED,0,.58,0));
+    const h=new THREE.Group();h.position.set(-1.1,1.2,0);h.add(mesh(cyl(1.0,1.1,.3,10),RED2,0,.15,0));h.add(mesh(box(1.6,.55,1.4),RED,0,.58,0));
     for(const z of[-.72,.72])h.add(mesh(box(1.1,.95,.12),RED2,.35,1.15,z));
     const sh2=mesh(box(.1,1.0,1.9),SHD,-.62,1.35,0);sh2.rotation.z=-.22;h.add(sh2);h.add(mesh(box(.1,.25,1.9),SHD,-.75,1.88,0));
     for(const z of[-1,1]){h.add(mesh(box(.65,.5,.36),OLV,.25,1.0,z*1.0));h.add(mesh(box(.67,.06,.38),BLK,.25,1.26,z*1.0));}
@@ -380,7 +382,7 @@ function mkEnemyMesh(e){
     h.add(mesh(box(.42,.08,.42),DK,.8,.92,0));h.add(mesh(box(.08,.45,.42),DK,1.0,1.15,0));
     // twin barrels, each a group so it lifts as one: barrel, recoil sleeve at the breech, muzzle brake (+y is the muzzle)
     const barrels=[];for(const z of[-.45,.45]){const b=new THREE.Group();b.position.set(.9,1.3,z);b.rotation.z=PI/2-.9;
-      b.add(mesh(cyl(.1,.1,3.6,8),DK));b.add(mesh(cyl(.17,.17,1.1,8),BLK,0,-.9,0));b.add(mesh(cyl(.16,.16,.36,8),BLK,0,1.72,0));b.add(mesh(cyl(.13,.13,.08,8),MET,0,1.42,0));h.add(b);barrels.push(b);}
+      b.add(mesh(cyl(.1,.1,3.6,6),DK));b.add(mesh(cyl(.17,.17,1.1,6),BLK,0,-.9,0));b.add(mesh(cyl(.16,.16,.36,6),BLK,0,1.72,0));b.add(mesh(cyl(.13,.13,.08,6),MET,0,1.42,0));h.add(b);barrels.push(b);}
     g.add(h);g.userData.head=h;g.userData.barrels=barrels;g.userData.truck=true;}
   else if(e.kind==='rb'){
     // MANPADS team: a gunner kneeling with the launcher on his shoulder and a loader with a spare tube
