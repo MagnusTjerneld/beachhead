@@ -4746,7 +4746,7 @@ function sh(g){g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=tru
    repaints it whole */
 const _bm=new THREE.Matrix4(),_bc=new THREE.Color();
 function vcMat(){if(!MATS.has('vc'))MATS.set('vc',new THREE.MeshLambertMaterial({vertexColors:true}));return MATS.get('vc');}
-const vcOK=m=>m.isMeshLambertMaterial&&!m.vertexColors&&!m.map&&!m.transparent&&m.emissive.r+m.emissive.g+m.emissive.b===0;
+const vcOK=m=>m.isMeshLambertMaterial&&!m.vertexColors&&!m.map&&!m.transparent&&!m.userData.lit&&m.emissive.r+m.emissive.g+m.emissive.b===0;/* lit: the lamps and windows, which glow at night */
 function bake(root,vc){
   root.updateMatrixWorld(true);const keep=new Set();
   const note=v=>{if(!v)return;if(Array.isArray(v)){for(const x of v)note(Array.isArray(x)?x[0]:x);}else if(v.isObject3D)keep.add(v);};
@@ -5574,6 +5574,23 @@ const FXM=new Map();
 function fxMat(c,add){const k=c+(add?'a':'');if(!FXM.has(k)){const m=new THREE.MeshBasicMaterial({color:c,transparent:true,depthWrite:false,blending:add?THREE.AdditiveBlending:THREE.NormalBlending});m.userData.shared=true;FXM.set(k,m);}const m=FXM.get(k).clone();m.userData.shared=false;return m;}
 /* the game's small puffs (muzzle smoke, rocket trails) on the shared soft sprites; s0 and s1 were sphere radii */
 function addPart(x,y,z,s0,s1,c,o,ttl,glow){if(!R3)return;fP(x,y,z,{v:[0,1.2,0],s0:s0*2.2,s1:s1*2.2,c,a:o,ttl,add:!!glow});}
+/* the printing hall's plate (24 okt): a tile 7 m wide and 10 m high, corrugated, with seams between three panels, a dark plinth, soot
+   under the eaves and rust run down from the seams; and BIRKA, worn, for the middle bay of the outer wall */
+function hallTex(){if(hallTex.t)return hallTex.t;const W=512,H=732,S=H/10,c=mkCanvas(W,H),x=c.getContext('2d'),R=rng(4711);
+  x.fillStyle='#737d84';x.fillRect(0,0,W,H);
+  for(let i=0;i<35;i++){const px=i*W/35;x.fillStyle='#86909a';x.fillRect(px+1,0,4,H);x.fillStyle='#5e676d';x.fillRect(px+9,0,3,H);}
+  for(const px of[0,W/3,2*W/3]){x.fillStyle='rgba(38,44,48,.6)';x.fillRect(px,0,3,H);}
+  x.fillStyle='rgba(38,44,48,.5)';x.fillRect(0,Math.round(H-5.3*S),W,2);
+  {const gr=x.createLinearGradient(0,0,0,S*.9);gr.addColorStop(0,'rgba(30,32,34,.45)');gr.addColorStop(1,'rgba(30,32,34,0)');x.fillStyle=gr;x.fillRect(0,0,W,S*.9);}
+  for(let i=0;i<26;i++){const px=i<9?[0,W/3,2*W/3][i%3]+2+R()*6:R()*W,y0=i<9?H-5.3*S+R()*30:R()*H*.6,l=40+R()*220,w=2+R()*6,gr=x.createLinearGradient(0,y0,0,y0+l);
+    gr.addColorStop(0,'rgba(112,70,44,'+(.25+R()*.3)+')');gr.addColorStop(1,'rgba(112,70,44,0)');x.fillStyle=gr;x.fillRect(px,y0,w,l);}
+  {const gr=x.createLinearGradient(0,H-1.2*S,0,H);gr.addColorStop(0,'rgba(40,44,46,.55)');gr.addColorStop(1,'rgba(52,46,40,.75)');x.fillStyle=gr;x.fillRect(0,H-1.2*S,W,1.2*S);x.fillStyle='rgba(225,184,74,.85)';x.fillRect(0,H-1.2*S-5,W,5);}
+  const wall=new THREE.CanvasTexture(c);wall.wrapS=THREE.RepeatWrapping;wall.anisotropy=8;
+  const n=mkCanvas(768,256),y=n.getContext('2d');y.font='900 230px "Arial Black",Arial,sans-serif';y.textAlign='center';y.textBaseline='middle';
+  const k=Math.min(1,740/y.measureText('BIRKA').width);y.setTransform(k,0,0,1,384*(1-k),0);y.fillStyle='#e6e1d2';y.fillText('BIRKA',384,136);y.setTransform(1,0,0,1,0,0);
+  y.globalCompositeOperation='destination-out';for(let i=0;i<420;i++){y.globalAlpha=.5+R()*.5;y.beginPath();y.ellipse(R()*768,R()*256,1+R()*5,1+R()*2.5,R()*3,0,TAU);y.fill();}
+  const name=new THREE.CanvasTexture(n);name.anisotropy=8;
+  return hallTex.t={wall,name};}
 /* the carrier: low-poly but with a pointed bow, boot stripe, flight deck with pads, an island with a lit bridge, radar and
    masts, lifeboats and a crane; at night floodlights shine down into the water all round and the navigation lights burn */
 /* HMS Birka: a barge platform, a floating yard. Pontoon hull, the big revolving crane at the stern (after Lodbrok, Stockholm's
@@ -5641,7 +5658,7 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
   for(const x of[-13,-4.5,4.5,13]){const ring=new THREE.Mesh(new THREE.RingGeometry(3.4,3.9,28),YEL);ring.rotation.x=-PI/2;ring.position.set(x,DY+.32,38);g.add(ring);
     g.add(mesh(box(.4,.06,2.4),WHITE,x-.9,DY+.33,38));g.add(mesh(box(.4,.06,2.4),WHITE,x+.9,DY+.33,38));g.add(mesh(box(1.4,.06,.4),WHITE,x,DY+.33,38));}
   g.add(mesh(box(W-2,.06,.4),YEL,0,DY+.32,32.5));
-  // control tower aft to starboard: block, decks, bridge with a band of windows, mast with radar
+  // control tower forward to port: block, decks, bridge with a band of windows, mast with radar
   g.add(mesh(box(9,11,9),STEEL,11,DY+5.5,22));g.add(mesh(box(8.4,.3,9.4),STEEL2,11,DY+7,22));for(const y of[3.2,5.4,8.6])g.add(mesh(box(9.1,.7,.2),winMat,11,DY+y,17.45));g.add(mesh(box(8,4,7.5),STEEL2,11,DY+13,22.5));
   g.add(mesh(box(11.5,3,7),STEEL,11,DY+16.5,22));g.add(mesh(box(11.6,1,7.1),winMat,11,DY+16.9,22));g.add(mesh(box(12.2,.3,7.8),STEEL2,11,DY+18.15,22));
   g.add(mesh(box(13.5,.25,2),STEEL2,11,DY+15.1,18.6));
@@ -5649,26 +5666,62 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
   const rad=new THREE.Group();rad.add(mesh(box(4.6,.9,.5),mat(0xd8dcde),0,0,0));rad.position.set(11,DY+30.4,23);g.add(rad);g.userData.radar=rad;
   g.add(mesh(new THREE.SphereGeometry(1,10,8),mat(0xe8eaea),13.6,DY+19.4,24.5));g.add(mesh(cyl(.06,.06,6,4),STEEL2,8.4,DY+21,24.5));
   for(const z of[17.4,26.6])g.add(mesh(box(1.4,1,4),mat(0xe0662a),16.2,DY+5.2,z));
-  // reactor aft to port: containment, dome, vents, a hazard band, and the pipes to the hall
+  // reactor forward to starboard: containment, dome, vents, a hazard band, and the pipes to the hall
   g.add(mesh(cyl(4.4,4.6,6.5,20),mat(0xc9cdc8),-11,DY+3.25,22));g.add(mesh(cyl(4.5,4.5,.7,20),YEL,-11,DY+5.2,22));
   {const d=new THREE.Mesh(new THREE.SphereGeometry(4.4,20,10,0,PI*2,0,PI/2),mat(0xdadcd6));d.position.set(-11,DY+6.5,22);g.add(d);}
   for(const a of[0,2.1,4.2]){g.add(mesh(cyl(.6,.6,3,8),STEEL,-11+Math.cos(a)*5.6,DY+1.5,22+Math.sin(a)*5.6));g.add(mesh(cyl(.75,.6,.5,8),DARK,-11+Math.cos(a)*5.6,DY+3.2,22+Math.sin(a)*5.6));}
   for(const x of[-13,-9]){const pp=mesh(cyl(.35,.35,11,8),STEEL2,x,DY+1.2,12.5);pp.rotation.x=PI/2;g.add(pp);}
-  // printing hall amidships to port: a long shed with a skylight, the big door facing the build bay glows at the slit
+  // printing hall amidships to starboard: a long shed with a skylight, the big door facing the build bay glows at the slit
   g.add(mesh(box(14,10,28),STEEL,-9,DY+5,-2));g.add(mesh(box(14.6,.6,28.6),STEEL2,-9,DY+10.3,-2));{const rf=mesh(box(10,1.6,28),STEEL2,-9,DY+11.2,-2);g.add(rf);}
   g.add(mesh(box(1.2,.4,26),winMat,-9,DY+12.05,-2));
   g.add(mesh(box(.3,8,18),DARK,-1.9,DY+4.2,-2));for(let k=0;k<8;k++)g.add(mesh(box(.32,.12,18),STEEL,-1.85,DY+.8+k*1,-2));
   g.add(mesh(box(.34,.35,18),GLOW,-1.8,DY+.35,-2));g.add(mesh(box(.36,.5,18.4),YEL,-1.82,DY+8.3,-2));
-  // build bay to starboard: hazard frame on the deck, gantry crane on rails, a chassis half built
+  /* the hall's outside (24 okt, Magnus: plain as a container, from starboard above all): corrugated plate (a texture, so it costs
+     nothing in parts) on the outer wall and both ends, pillars at the corners and thirds, a band of high windows under the eaves
+     that light up at night, BIRKA in the middle bay, a gallery along the wall with a stair down the forward end, downpipes and fire
+     hose boxes, a roller door for material at the aft end facing the containers, fans and plant on the roof. The plates and the name
+     keep their own objects (solo), since bake() keeps no texture coordinates; the name casts no shadow on the wall behind it */
+  {const T=hallTex(),PM=new THREE.MeshLambertMaterial({map:T.wall}),NM=new THREE.MeshLambertMaterial({map:T.name,alphaTest:.5}),GY=DY+5.6,RED=mat(0xa8382a),
+      plate=(w,rep,x,z,ry)=>{const ge=new THREE.PlaneGeometry(w,10),uv=ge.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,uv.getX(i)*rep);const m=mesh(ge,PM,x,DY+5,z);m.rotation.y=ry;m.userData.solo=true;g.add(m);},
+      bar=(a,b,t,m2)=>{const d=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),n=d.length(),m=mesh(box(t,1,t),m2||STEEL2,(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.scale.y=n;g.add(m);};
+    plate(28,4,-16.03,-2,-PI/2);plate(14,2,-9,-16.03,PI);plate(14,2,-9,12.03,0);
+    {const nm=mesh(new THREE.PlaneGeometry(8.4,2.8),NM,-16.06,DY+3.3,-2);nm.rotation.y=-PI/2;nm.userData.solo=nm.userData.noShadow=true;nm.receiveShadow=true;g.add(nm);}
+    // pillars at the corners and thirds of the outer wall, and at the inner corners
+    for(const z of[-16,-6.67,2.67,12])g.add(mesh(box(.6,10.2,.6),STEEL2,-16.05,DY+5.1,z));for(const z of[-16,12])g.add(mesh(box(.6,10.2,.6),STEEL2,-2,DY+5.1,z));
+    // the high windows, two to a bay, with sills; two on the forward end
+    for(const zc of[-11.33,-2,7.33])for(const dz of[-2.2,2.2]){g.add(mesh(box(.12,.9,3.6),winMat,-16.07,DY+8.6,zc+dz));g.add(mesh(box(.24,.12,3.8),STEEL2,-16.1,DY+8.1,zc+dz));}
+    for(const x of[-12.5,-5.5]){g.add(mesh(box(3,.9,.12),winMat,x,DY+8.6,12.07));g.add(mesh(box(3.2,.12,.24),STEEL2,x,DY+8.1,12.1));}
+    // the gallery: a grating along the wall outside the pillars and round the forward corner, struts under it, a rail at the edge
+    g.add(mesh(box(1,.12,28.6),DARK,-16.85,GY,-1.7));g.add(mesh(box(3.35,.12,1),DARK,-15.68,GY,12.8));
+    for(const z of[-16,-6.67,2.67,12])bar([-16.35,GY-1.4,z],[-17.25,GY-.08,z],.14);
+    for(let z=-15.95;z<=13.3;z+=2.4)g.add(mesh(box(.07,1.05,.07),STEEL2,-17.3,GY+.55,z));for(const y of[GY+1.05,GY+.55])g.add(mesh(box(.07,.07,29.3),STEEL2,-17.3,y,-1.35));
+    g.add(mesh(box(1,.07,.07),STEEL2,-16.85,GY+1.05,-16));for(const y of[GY+1.05,GY+.55])g.add(mesh(box(3.3,.07,.07),STEEL2,-15.7,y,13.27));
+    for(const x of[-16.2,-14.1])g.add(mesh(box(.07,1.05,.07),STEEL2,x,GY+.55,13.27));
+    // the stair down the forward end to the deck, over the reactor's pipes: stringers, treads and a handrail
+    {const x0=-14,x1=-5,y1=DY+.3;for(const z of[12.35,13.25])bar([x0,GY-.1,z],[x1,y1-.1,z],.16,DARK);
+      for(let k=0;k<15;k++){const t=(k+.5)/15;g.add(mesh(box(.34,.06,.86),STEEL2,x0+(x1-x0)*t,GY+(y1-GY)*t-.02,12.8));}
+      bar([x0,GY+1.05,13.27],[x1,y1+1,13.27],.07);bar([x1,y1,13.27],[x1,y1+1,13.27],.07);}
+    // the gallery's door with a lamp over it, downpipes beside the middle pillars, fire hose boxes by the plinth
+    g.add(mesh(box(.1,2.1,1.1),DARK,-16.07,GY+1.1,9.6));g.add(mesh(box(.3,.2,.3),lampMat,-16.25,GY+2.45,9.6));
+    for(const z of[-7.3,3.3])g.add(mesh(cyl(.16,.16,10.4,6),STEEL,-16.22,DY+5.2,z));
+    for(const z of[-12.6,6.2])g.add(mesh(box(.25,1.1,.8),RED,-16.15,DY+1.55,z));
+    // the roller door aft, framed in yellow banded with black, the drum box over it and a lamp
+    g.add(mesh(box(7,6.5,.14),mat(0x98a1a6),-9,DY+3.25,-16.1));for(let k=0;k<12;k++)g.add(mesh(box(7,.07,.06),DARK,-9,DY+.4+k*.53,-16.19));
+    for(const x of[-12.7,-5.3]){g.add(mesh(box(.36,6.9,.3),YEL,x,DY+3.45,-16.16));for(let k=0;k<7;k++)g.add(mesh(box(.38,.45,.32),DARK,x,DY+.45+k*.95,-16.16));}
+    g.add(mesh(box(7.7,.5,.32),YEL,-9,DY+6.75,-16.16));g.add(mesh(box(7.4,.7,.6),STEEL2,-9,DY+7.35,-16.33));g.add(mesh(box(.4,.25,.35),lampMat,-9,DY+8,-16.4));
+    // on the roof: three fans along the starboard side, two plant boxes with fans on top to port
+    for(const z of[-11,-2,7]){g.add(mesh(cyl(.8,.9,.9,10),STEEL2,-12.2,DY+12.45,z));g.add(mesh(cyl(.84,.84,.1,10),DARK,-12.2,DY+12.95,z));}
+    for(const z of[-9,4]){g.add(mesh(box(2.4,1.3,3.2),mat(0x9aa0a4),-6,DY+12.65,z));g.add(mesh(cyl(.5,.5,.12,10),DARK,-6,DY+13.35,z-.6));g.add(mesh(box(.06,.8,2.6),DARK,-4.79,DY+12.6,z));}}
+  // build bay to port: hazard frame on the deck, gantry crane on rails, a chassis half built
   for(const x of[2.6,15.4])g.add(mesh(box(.5,.25,30),STEEL2,x,DY+.4,-2));
   for(const[x,z,w,d]of[[9,-16.5,13,.4],[9,12.5,13,.4],[3.2,-2,.4,29],[14.8,-2,.4,29]])g.add(mesh(box(w,.06,d),YEL,x,DY+.33,z));
   const gan=new THREE.Group();for(const x of[2.6,15.4]){gan.add(mesh(box(.8,13,.8),YEL,x,DY+6.9,-1.4));gan.add(mesh(box(.8,13,.8),YEL,x,DY+6.9,1.4));gan.add(mesh(box(1.2,.6,4),YEL2,x,DY+.7,0));}
   gan.add(mesh(box(14.2,1.4,1.2),YEL,9,DY+13.6,-1));gan.add(mesh(box(14.2,1.4,1.2),YEL,9,DY+13.6,1));gan.add(mesh(box(2.4,1.3,3),DARK,7,DY+12.4,0));
   {const cab=mesh(cyl(.06,.06,1,4),DARK,7,DY+9.2,0);cab.scale.y=5;gan.add(cab);const hd=mesh(box(1.4,.8,1),YEL2,7,DY+6.6,0);gan.add(hd);const nz=mesh(box(.35,.35,.35),GLOW,7,DY+6,0);nz.visible=false;gan.add(nz);gan.userData={head:hd,cable:cab,noz:nz,top:DY+12.4};}
   g.add(gan);g.userData.gantry=gan;g.userData.DY=DY;
-  // containers at the bow
+  // containers aft
   for(const[x,y,z,c]of[[-13,0,-20,0x9a4a32],[-13,2.6,-20,0x2f5d7c],[-8,0,-20,0x52704a],[12.5,0,-28.6,0xb7832e],[12.5,2.6,-28.6,0x2f5d7c]]){const cn=mesh(box(4.6,2.5,6),mat(c),x,DY+1.25+y,z);g.add(cn);}
-  // the big crane at the bow: pedestal, slewing house with counterweight and A-frame, a lattice boom over the bow, hook
+  // the big crane at the stern: pedestal, slewing house with counterweight and A-frame, a lattice boom over the stern, hook
   const cr=new THREE.Group();cr.position.set(-4,DY,-30);g.add(cr);g.add(mesh(cyl(3.2,3.6,3,16),YEL2,-4,DY+1.5,-30));
   cr.add(mesh(box(7.5,5,10),YEL,0,5.6,1));cr.add(mesh(box(7.6,1.2,10.1),DARK,0,4.2,1));cr.add(mesh(box(8,4,3),mat(0x4a4f52),0,5.2,6.6));cr.add(mesh(box(2.4,1.8,2.2),winMat,-2.6,8.3,-3.4));cr.add(mesh(box(2.6,2.2,2.6),YEL,-2.6,8.1,-3.4));
   const up=new THREE.Vector3(0,1,0),st=(a,b2,t,m2)=>{const d=new THREE.Vector3(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2]),Ln=d.length();const m=mesh(box(t,1,t),m2||YEL,(a[0]+b2[0])/2,(a[1]+b2[1])/2,(a[2]+b2[2])/2);m.quaternion.setFromUnitVectors(up,d.normalize());m.scale.y=Ln;cr.add(m);};
@@ -5696,7 +5749,11 @@ function mkCarrier(lampMat,winMat){const g=new THREE.Group(),HULL=mat(0x5a6168),
   // since 18 okt, so port is +x and the stern light is at the crane end)
   const nav=[];for(const[c,x,y,z]of[[0x3aff6a,4.4,DY+15.4,18.6],[0xff3a2a,17.6,DY+15.4,18.6],[0xffffff,11,DY+30,23],[0xffffff,0,DY+1.4,-46.3]]){const m2=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:c}),x,y,z);m2.userData.noShadow=true;g.add(m2);nav.push({m:m2,c});}
   {const tl=mesh(new THREE.SphereGeometry(.32,8,6),new THREE.MeshBasicMaterial({color:0xff3a2a}),tip[0],tip[1]+.9,tip[2]);tl.userData.noShadow=true;cr.add(tl);nav.push({m:tl,c:0xff3a2a});}
-  g.userData.flood={coneM,poolM};g.userData.nav=nav;return g;}
+  g.userData.flood={coneM,poolM};g.userData.nav=nav;
+  /* the fixed parts are merged as a unit's are (24 okt): the moving ones are named in userData; the navigation lights carry halos
+     and the floodlights' cones and pools are transparent and cast no shadow, so they stay as they are */
+  for(const n of nav)n.m.userData.solo=true;g.traverse(o=>{if(o.isMesh&&o.userData.noShadow)o.userData.solo=true;});
+  return bake(g,true);}
 function init3D(){
   if(typeof THREE==='undefined')return false;
   let renderer;
@@ -5720,7 +5777,7 @@ function init3D(){
   for(let i=0;i<6;i++){const L=new THREE.SpotLight(0xfff0d0,0,110,.52,.6,1.1);scene.add(L,L.target);spots.push(L);}
   const lhSpots=[];for(let i=0;i<2;i++){const L=new THREE.SpotLight(0xfff2d8,0,650,.1,.6,1);scene.add(L,L.target);lhSpots.push(L);}/* the lighthouse's two beams */
   for(let i=0;i<8;i++){const P=new THREE.PointLight(0xffc070,0,40,1.5);scene.add(P);points.push(P);}
-  const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x000000}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a,emissive:0x000000});
+  const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x000000}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a,emissive:0x000000});lampMat.userData.lit=winMat.userData.lit=true;
   const water=new THREE.Mesh(new THREE.PlaneGeometry(6400,6400),mkWaterMat());
   water.rotation.x=-PI/2;water.position.set(WW/2,0,WH/2);water.receiveShadow=true;scene.add(water);
   const sky=mkSky();scene.add(sky);
