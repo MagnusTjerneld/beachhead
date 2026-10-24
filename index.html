@@ -6426,13 +6426,15 @@ function mkWaterMat(){
       /* the seven waves are pushed about by a slow noise so their crossings make no regular lattice in the glitter (Magnus 24 okt: round
          the sun's glitter the surface looked all alike) */
       vec2 wpw=vWPos.xz+(vec2(sNoise(vWPos.xz/45.0),sNoise(vWPos.xz/45.0+9.0))-0.5)*14.0;
-      vec2 wg=wgrad(wpw,uTime)*0.06*rough/(1.0+wDist/320.0);
+      /* and two small waves whose direction turns slowly over the surface, so the glints sit where the water itself tilts towards the sun
+         and move with it; the waves flatten less with distance than before (320 m, was 220), so the far glitter stays fine glints */
+      float va=(sNoise(vWPos.xz/55.0)-0.5)*2.4;vec2 d1=vec2(cos(va+0.4),sin(va+0.4)),d2=vec2(cos(va*1.3-1.1),sin(va*1.3-1.1));
+      vec2 wg=(wgrad(wpw,uTime)+d1*6.1*0.09*cos(dot(wpw,d1)*6.1-uTime*3.6)+d2*9.7*0.05*cos(dot(wpw,d2)*9.7+uTime*4.6))*0.06*rough/(1.0+wDist/320.0);
       normal=normalize((viewMatrix*vec4(normalize(vec3(-wg.x,1.0,-wg.y)),0.0)).xyz);`)
     .replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
-      /* the glitter breaks into moving sparks, larger further off so it does not turn to grain, and more of them where it is rough */
-      {float sc=2.2*(1.0+wDist/140.0);vec2 sq=vWPos.xz/sc;float sa=sNoise(sq+vec2(uTime*0.6,-uTime*0.45)),sb=sNoise(mat2(0.6,0.8,-0.8,0.6)*sq*1.3-vec2(uTime*0.35,uTime*0.8)+3.0);
-       float spk=sa*sb;vec3 ds=reflectedLight.directSpecular;ds=ds/(1.0+1.1*ds);/* the core compressed first, or it stays one white blob seen from high up */
-       reflectedLight.directSpecular=ds*mix(1.0,0.3+3.0*spk,clamp(0.55+0.3*rough,0.0,0.85));}`)
+      /* the glitter's core compressed, so the waves' own tilts show in it as structure instead of one white blob seen from high up (a
+         mask of moving sparks laid on top was tried the same evening and taken away: it slid over the water like a texture, Magnus) */
+      {vec3 ds=reflectedLight.directSpecular;reflectedLight.directSpecular=ds/(1.0+1.1*ds);}`)
     .replace('#include <envmap_fragment>',`#include <envmap_fragment>
       {vec3 V=normalize(cameraPosition-vWPos);float fr=pow(1.0-clamp(V.y,0.0,1.0),6.0);outgoingLight=mix(outgoingLight,uHor,fr*0.32*(1.0+0.9*clamp(1.0-rough,0.0,1.0)));/* a calm patch mirrors the sky more */
        if(uHasDepth>0.5){vec2 uv=(vWPos.xz/2200.0*uGrid+0.5)/(uGrid+1.0);
