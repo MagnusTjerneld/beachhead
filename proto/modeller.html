@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv"><head><meta charset="utf-8"><title>Nya modeller: KROK och BÄVER</title>
+<html lang="sv"><head><meta charset="utf-8"><title>Modeller: KROK, BÄVER, HÖK och luftvärn</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>html,body{margin:0;height:100%;background:#cfd8de;overflow:hidden;font:14px system-ui,sans-serif}#lbl{position:fixed;left:12px;top:10px;color:#1b2630;font-weight:600}</style>
 </head><body><div id="lbl"></div>
@@ -116,6 +116,49 @@ function krokOriginal(){const g=new THREE.Group(),R3={lampMat:new THREE.MeshBasi
   hook.position.y=-.65;g.add(hook);g.add(mesh(cyl(.06,.06,.3,4),mat(0x222222),0,-.5,0));
   return g;}
 
+/* HÖK as it was in the game until 24 okt (the delta body with skids, four robots under the wings and the gun in a pod under the nose),
+   kept here when 04B replaced it. The code is the game's own, verbatim; only the frame round it is new (the side's colour and the
+   game's lamp material) */
+function hokOriginal(){const g=new THREE.Group(),u={color:0x5fb6cc},R3={lampMat:new THREE.MeshBasicMaterial({color:0xfff2c0})};
+
+    // HÖK: delta body, nose cone, sensor ball and a machine gun under the nose, two ducted fans on the wings, fins, antenna, skids,
+    // and four robots on pylons under the wings that go one by one as they are fired. Built 1.3 times larger (decided 14 okt) so it
+    // reads as the thing that carries four robots and a gun
+    const dark=0x2c3640,mid=0x3a4753,D=mat(dark),M=mat(mid),RK=mat(0xd8dde0),b=new THREE.Group();b.scale.setScalar(1.3);g.add(b);g.userData.spin=[];g.userData.rockets=[];
+    b.add(mesh(box(3.2,.5,.8),D,0,0,0));b.add(mesh(box(2,.22,.6),M,-.2,.32,0));
+    const nose=mesh(new THREE.ConeGeometry(.4,1.3,6),D,2.2,0,0);nose.rotation.z=-PI/2;b.add(nose);
+    b.add(mesh(new THREE.SphereGeometry(.3,8,6),mat(0x111418),1.5,-.35,0));b.add(mesh(box(.3,.12,.3),R3.lampMat,.9,-.3,0));
+    const mg=mesh(cyl(.05,.05,.9,5),mat(0x111418),2.05,-.32,.22);mg.rotation.z=PI/2;b.add(mg);
+    /* the gun sits in a short pod under the front of the body, so it is not left hanging outside the nose cone (20 okt) */
+    b.add(mesh(box(.55,.16,.16),D,1.5,-.31,.22));
+    b.add(mesh(box(1.7,.06,.84),mat(u.color),0,.28,0));
+    for(const sz of[-1,1]){
+      const w=mesh(box(1.5,.08,2.5),M,-.4,0,sz*1.25);w.rotation.y=sz*.45;b.add(w);
+      const ring=mesh(new THREE.TorusGeometry(.6,.12,6,16),D,-.9,.05,sz*2.55);ring.rotation.x=PI/2;b.add(ring);
+      const fan=rotor(3,.5,.13);fan.position.set(-.9,.05,sz*2.55);b.add(fan);g.userData.spin.push([fan,'y',sz*14]);
+      const fin=mesh(box(.8,.06,.6),M,-1.6,.3,sz*.3);fin.rotation.x=sz*.7;b.add(fin);
+      /* the skids hang from the body on two struts each (20 okt, Magnus: they floated under the hull, unjoined) */
+      b.add(mesh(box(2.2,.06,.06),D,.1,-.55,sz*.32));for(const sx of[-.55,.75])b.add(mesh(box(.06,.32,.06),D,sx,-.4,sz*.32));
+      for(const dz of[.85,1.5]){b.add(mesh(box(.5,.14,.08),D,-.15,-.1,sz*dz));const rk=mesh(cyl(.1,.1,1.1,6),RK,0,-.24,sz*dz);rk.rotation.z=PI/2;b.add(rk);g.userData.rockets.push(rk);}}
+    b.add(mesh(cyl(.02,.02,.7,4),D,-.8,.6,0));b.add(mesh(box(.5,.08,.3),M,-1.55,.3,0));
+    return g;}
+
+/* The enemy's air defence truck as it was in the game until 24 okt (made over the same day: too lo-fi), kept here verbatim; only the
+   frame round it is new (the enemy's colours that the game's model shares, and the lamp material) */
+function lvOriginal(){const g=new THREE.Group(),DK=mat(0x2a1a18),BLK=mat(0x1b1c1e),MET=mat(0x4a4440),OLV=mat(0x4b4632),R3={lampMat:new THREE.MeshBasicMaterial({color:0xfff2c0})};
+
+    // a light truck: cab forward, the cannon mount on the flatbed; the gun lies flat facing aft when it moves
+    const body=mat(0x5e4a3e),body2=mat(0x6a5444);g.add(mesh(box(7,.9,2.5),body,0,1.05,0));g.add(mesh(box(1.9,1.7,2.4),body2,2.55,2.1,0));g.add(mesh(box(.12,.8,2.1),mat(0x9fb4bf),3.52,2.35,0));
+    for(const z of[-1.21,1.21])g.add(mesh(box(.7,.5,.04),mat(0x9fb4bf),2.6,2.4,z));g.add(mesh(box(.2,.3,2.6),BLK,3.6,1.0,0));for(const z of[-1,1])g.add(mesh(box(.12,.25,.4),R3.lampMat||DK,3.62,1.35,z));
+    for(const x of[-2.3,-.9,2.3])for(const z of[-1.25,1.25]){const w=mesh(cyl(.55,.55,.45,10),DK,x,.55,z);w.rotation.x=PI/2;g.add(w);}
+    for(const x of[-1.6,2.3])for(const z of[-1.3,1.3])g.add(mesh(box(x>0?1.3:2.6,.1,.5),body2,x,1.15,z));
+    g.add(mesh(box(4.4,.5,.08),body2,-1.3,1.75,1.22));g.add(mesh(box(4.4,.5,.08),body2,-1.3,1.75,-1.22));g.add(mesh(cyl(.08,.08,1.6,6),BLK,1.5,2.4,-1.05));
+    g.add(mesh(box(.8,.5,.6),OLV,-3.0,1.75,.7));g.add(mesh(box(.8,.5,.6),OLV,-3.0,1.75,-.7));
+    for(const sz of[-1,1]){const leg=mesh(box(.15,.9,.15),MET,-2.6,.6,sz*1.5);leg.rotation.x=sz*.4;g.add(leg);}
+    const h=new THREE.Group();h.position.set(-1.1,1.5,0);h.add(mesh(box(1.8,1,1.8),mat(0x7a3a2e),0,.5,0));h.add(mesh(box(.1,.9,1.2),mat(0x8a8a80),-.7,1.4,0));h.add(mesh(box(.5,.5,.5),DK,.4,1.1,.7));
+    const barrels=[];for(const z of[-.45,.45]){const b=mesh(cyl(.13,.13,3.6,6),DK,.9,1,z);b.rotation.z=PI/2-.9;h.add(b);barrels.push(b);}
+    g.add(h);g.userData.head=h;g.userData.barrels=barrels;g.userData.truck=true;  return g;}
+
 /* BÄVER, engineer vehicle: an armoured six-wheeler with a sloped glacis, a dozer blade with yellow and black warning edge, a folded
    excavator arm on the roof with a yellow bucket, a low armoured cab with narrow vision blocks, stowage boxes, a rear winch,
    an amber beacon and an antenna; the hull is field olive */
@@ -153,11 +196,11 @@ sc.add(new THREE.HemisphereLight(0xdfe9f2,0x6b6a55,.75));const sun=new THREE.Dir
 Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20});sc.add(sun);
 const gr=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0x7d8a5a));gr.rotation.x=-PI/2;gr.receiveShadow=true;sc.add(gr);
 const q=new URLSearchParams(location.search),v=q.get('v')||'krok-sida';
-const kind=v.split('-')[0],m=kind==='original'?krokOriginal():kind==='krok'?krok02(/oliv/.test(v)?0x4f5b38:0,/last|krokl/.test(v)):baverIng();m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});m.traverse(o=>{if(o.userData.rotor)o.traverse(c=>c.castShadow=false);});  // the rotors spin in the game; a still blade's shadow only reads as stripes
-if(kind==='original')m.position.y=2.97;if(kind==='krok')m.position.y=/under/.test(v)?0:2.85;if(/under/.test(v))gr.visible=false;sc.add(m);
+const kind=v.split('-')[0],m=kind==='hok'?hokOriginal():kind==='lv'?lvOriginal():kind==='original'?krokOriginal():kind==='krok'?krok02(/oliv/.test(v)?0x4f5b38:0,/last|krokl/.test(v)):baverIng();m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});m.traverse(o=>{if(o.userData.rotor)o.traverse(c=>c.castShadow=false);});  // the rotors spin in the game; a still blade's shadow only reads as stripes
+if(kind==='original')m.position.y=2.97;if(kind==='hok')m.position.y=1.1;if(kind==='krok')m.position.y=/under/.test(v)?0:2.85;if(/under/.test(v))gr.visible=false;sc.add(m);
 const views={'krok-fram':[26,3.6,0,0,3.3,0],'krok-bak':[-26,3.6,0,0,3.3,0],'krok-sida':[0,3.4,28,0,3.2,0],'krok-ovan':[0,32,.01,0,0,0],'krok-under':[0,-30,.01,0,0,0],
   'krok-snett':[17,11,19,0,3,0],'krok-last':[9,3.2,19,-.5,2.6,0],'krok-mark':[13,6,14,0,2.5,0],'original-sida':[0,3.4,28,0,3.2,0],'original-snett':[17,11,19,0,3,0],'krok-krok':[-.3,1.6,4.2,-.6,1.5,0],'krok-krokl':[-.3,1.2,4.6,-.6,1.0,0],
-  'baver-sida':[0,3.5,13,0,2,0],'baver-snett':[9,6,9,.5,2,0],'baver-bak':[-9,5,7,0,2,0],'baver-ovan':[1,14,3,0,2,0]};
+  'hok-snett':[7,4,8,0,1.2,0],'hok-sida':[0,1.6,11,0,1.2,0],'lv-snett':[9,5,9,0,1.6,0],'lv-sida':[0,2.5,13,0,1.6,0],'baver-sida':[0,3.5,13,0,2,0],'baver-snett':[9,6,9,.5,2,0],'baver-bak':[-9,5,7,0,2,0],'baver-ovan':[1,14,3,0,2,0]};
 const c=views[v]||views['krok-sida'],cam=new THREE.PerspectiveCamera(38,W/H,.1,500);cam.position.set(c[0],c[1],c[2]);cam.lookAt(c[3],c[4],c[5]);
 ren.render(sc,cam);document.getElementById('lbl').textContent=v;window.DONE=true;
 </script></body></html>
