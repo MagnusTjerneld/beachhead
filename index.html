@@ -7832,6 +7832,19 @@ function squelch(ship){
   nz(g,now,'bandpass',2300,1.6,.003,.5,.09);tone(g,now+.02,'sine',ship?880:1250,0,.004,.25,.07);if(ship)tone(g,now+.12,'sine',1100,0,.004,.2,.06);nz(g,now+.1,'bandpass',1900,1.4,.01,.25,.18);
 }
 /* engine voices for the nearest vehicles */
+/* the rotor voices of HÖK and GETING (25 okt, Magnus: too shrill, tiring to the ears). They were two sawtooths a few per cent apart,
+   beating at about 6 Hz, filtered round 0.7 to 1.3 kHz with a hiss at 2.6 kHz: a constant whistle where the ear is most sensitive.
+   Now the tone is low-passed at under three times its pitch and nearly in tune, so it beats slowly; the air is noise below about 1 to 1.3 kHz;
+   and the rotor blades carry the sound, a soft flutter at the blade rate that rises with speed. HÖK lower and heavier, GETING a
+   little higher and quicker, both under the old pitch. Shared with the sound bench, proto/ljud.html (built by proto/mkljud.py) */
+function rotorVoice(c,kind,st,out,noise){const hk=kind==='drone',f0=hk?150:240,blade=hk?19:31;
+  const a=st(c.createOscillator()),b=st(c.createOscillator());a.type=b.type='sawtooth';a.frequency.value=f0;b.frequency.value=f0*1.006;
+  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=f0*2.8;lp.Q.value=.6;a.connect(lp);b.connect(lp);const tg=c.createGain();tg.gain.value=hk?.3:.24;lp.connect(tg);
+  const n=st(noise()),nf=c.createBiquadFilter();nf.type='lowpass';nf.frequency.value=hk?1000:1300;nf.Q.value=.5;const ng=c.createGain();ng.gain.value=hk?.5:.42;n.connect(nf);nf.connect(ng);
+  const am=c.createGain();am.gain.value=.62;tg.connect(am);ng.connect(am);am.connect(out);
+  const lfo=st(c.createOscillator());lfo.type='sine';lfo.frequency.value=blade;const ld=c.createGain();ld.gain.value=.34;lfo.connect(ld);ld.connect(am.gain);
+  return{base:hk?.62:.4,set:(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.12*mv),t,.25);b.frequency.setTargetAtTime(f0*1.006*(1+.12*mv),t,.25);
+    lfo.frequency.setTargetAtTime(blade*(1+.25*mv),t,.25);lp.frequency.setTargetAtTime(f0*(2.8+.6*mv),t,.25);}};}
 function mkVoice(u){
   const c=AUD.ctx,out=c.createGain();out.gain.value=0;const pan=c.createStereoPanner?c.createStereoPanner():null;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=8000;
   out.connect(lp);if(pan){lp.connect(pan);pan.connect(AUD.master);}else lp.connect(AUD.master);
@@ -7845,12 +7858,7 @@ function mkVoice(u){
     V.set=(sp,mv)=>{const t=c.currentTime;o1.frequency.setTargetAtTime(f0*(1+.5*mv),t,.3);o2.frequency.setTargetAtTime(f0*2.01*(1+.5*mv),t,.3);lfo.frequency.setTargetAtTime(f0*.45*(1+.5*mv),t,.3);f.frequency.setTargetAtTime(380+420*mv,t,.3);
       ng.gain.setTargetAtTime(.12*mv,t,.2);cg.gain.setTargetAtTime(.12*mv,t,.2);cl.frequency.setTargetAtTime(3+9*mv,t,.3);};
     V.base=.55;
-  }else if(u.kind==='drone'||u.kind==='scout'){
-    const f0=u.kind==='drone'?182:330;const a=st(c.createOscillator()),b=st(c.createOscillator());a.type=b.type='sawtooth';a.frequency.value=f0;b.frequency.value=f0*1.034;
-    const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f0*4;bp.Q.value=.9;a.connect(bp);b.connect(bp);const g=c.createGain();g.gain.value=.5;bp.connect(g);g.connect(out);
-    const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.7;const ng=c.createGain();ng.gain.value=.25;n.connect(nf);nf.connect(ng);ng.connect(out);
-    V.set=(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.18*mv),t,.25);b.frequency.setTargetAtTime(f0*1.034*(1+.18*mv),t,.25);};
-    V.base=u.kind==='drone'?.38:.22;
+  }else if(u.kind==='drone'||u.kind==='scout'){const R=rotorVoice(c,u.kind,st,out,noiseSrc);V.set=R.set;V.base=R.base;
   }else if(u.kind==='mus'){ // MUS: a small electric drive, a thin whine and a little gravel
     const a=st(c.createOscillator());a.type='triangle';a.frequency.value=520;const g=c.createGain();g.gain.value=.18;a.connect(g);g.connect(out);
     const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=3200;nf.Q.value=1.2;const ng=c.createGain();ng.gain.value=.08;n.connect(nf);nf.connect(ng);ng.connect(out);
@@ -7875,13 +7883,15 @@ function updAudio(dtr){
   for(const u of [...G.units,...G.kroks]){if(u.dead||(u.kind==='mus'&&u.carried))continue;const h=u.air||u.kind==='krok'?(u.alt||groundY(u.x,u.y)+20):groundY(u.x,u.y)+1.5;const d=Math.hypot(u.x-L.x,h-L.y,u.y-L.z);if(d<520)cand.push([d,u,h]);}
   cand.sort((a,b)=>a[0]-b[0]);const keep=new Set(cand.slice(0,6).map(c=>c[1].id));
   for(const[id,V]of AUD.voices)if(!keep.has(id)){killVoice(V);AUD.voices.delete(id);}
+  /* several rotors at once are each a little quieter, as if the power were shared (25 okt): two at .71, four at .5 */
+  const rotorCrowd=1/Math.sqrt(Math.max(1,cand.slice(0,6).filter(c=>c[1].kind==='drone'||c[1].kind==='scout').length));
   for(const[d,u,h]of cand.slice(0,6)){
     let V=AUD.voices.get(u.id);if(!V){V=mkVoice(u);AUD.voices.set(u.id,V);}
     const pv=AUD.prev.get(u.id),sp=pv?Math.hypot(u.x-pv.x,u.y-pv.y)/Math.max(dtr,1e-3):0;AUD.prev.set(u.id,{x:u.x,y:u.y});
     // each setTargetAtTime adds an event to the parameter's timeline: refresh ten times a second, and only on a real change
     const tn=AUD.ctx.currentTime;if(V.tUp&&tn-V.tUp<.1)continue;V.tUp=tn;
     const mv=clamp(sp/Math.max(1,u.speed||10),0,1.2)*(G.paused?0:1);if(V.mv==null||Math.abs(mv-V.mv)>.03){V.mv=mv;V.set(sp,mv);}
-    const s=spatial(u.x,h,u.y,u.air||u.kind==='krok'?90:55),t=tn,gv=V.base*s.g*(G.paused?.25:1);
+    const s=spatial(u.x,h,u.y,u.air||u.kind==='krok'?90:55),t=tn,gv=V.base*s.g*(G.paused?.25:1)*(V.k==='drone'||V.k==='scout'?rotorCrowd:1);
     if(V.gv==null||Math.abs(gv-V.gv)>.004+V.gv*.04){V.gv=gv;V.out.gain.setTargetAtTime(gv,t,.12);}
     if(V.pan&&(V.pv==null||Math.abs(s.pan-V.pv)>.03)){V.pv=s.pan;V.pan.pan.setTargetAtTime(s.pan,t,.1);}
     if(V.lv==null||Math.abs(s.lp-V.lv)>V.lv*.05){V.lv=s.lp;V.lp.frequency.setTargetAtTime(s.lp,t,.1);}

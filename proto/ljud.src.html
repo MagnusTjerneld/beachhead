@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ljudbänk</title>
+<!-- Ljudbänken för HÖK och GETING (25 okt): det gamla och det nya rotorljudet sida vid sida. Byggs av proto/mkljud.py, som klistrar in
+     spelets rotorVoice ur index.html där det står ROTORVOICE nedan; det gamla ljudet är fruset här som det var före 25 okt. -->
+<style>
+:root{--bg:#0e1720;--panel:#172330;--line:#2a3946;--ink:#ebe6d6;--dim:#8d9caa;--signal:#f0c45a;--mag:#d6458a;--ok:#7fc8a0;color-scheme:dark}
+:root[data-theme="light"]{--bg:#0e1720}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{margin:0;font-size:22px;letter-spacing:.06em}
+p{margin:0;color:var(--dim);max-width:70ch}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);min-width:90px}
+button{font:inherit;font-weight:600;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 14px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:#1b1a12}
+button.stop{border-color:var(--mag)}
+input[type=range]{width:min(320px,60vw)}
+canvas{width:100%;height:220px;background:#0b1015;border:1px solid var(--line);border-radius:4px;display:block}
+.meter{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--dim)}
+.meter b{color:var(--ink);font-weight:400}
+table{border-collapse:collapse;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+td,th{border-bottom:1px solid var(--line);padding:4px 10px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ljudbänk: HÖK och GETING</h1>
+  <p>Det gamla rotorljudet (före 25 okt) och det nya, som i spelet. Välj enhet och version och tryck Spela. Växla med A/B medan det spelar, eller låt Växla själv byta var tredje sekund. Kurvan visar spektrumet; det gula fältet är 1 till 4 kHz, där örat är som känsligast och där det gamla ljudet hade sin vissling.</p>
+  <div class="row"><span class="lab">Enhet</span><button data-u="drone" aria-pressed="true">HÖK</button><button data-u="scout" aria-pressed="false">GETING</button><button data-u="wing" aria-pressed="false">Wing: 2 HÖK och 2 GETING</button></div>
+  <div class="row"><span class="lab">Version</span><button data-v="old" aria-pressed="false">Gammalt</button><button data-v="new" aria-pressed="true">Nytt</button><button id="ab">A/B</button><button id="auto" aria-pressed="false">Växla själv</button></div>
+  <div class="row"><span class="lab">Fart</span><input id="mv" type="range" min="0" max="1.2" step=".01" value=".6"><span class="meter" id="mvv">0.60</span></div>
+  <div class="row"><span class="lab">Volym</span><input id="vol" type="range" min="0" max="1" step=".01" value=".6"></div>
+  <div class="row"><button id="play">Spela</button><button id="stop" class="stop">Tyst</button><span class="meter" id="now"></span></div>
+  <canvas id="spec" width="1600" height="440"></canvas>
+  <div class="meter" id="band">Andel av energin mellan 1 och 4 kHz: <b>ingen</b></div>
+  <div class="row"><button id="meas">Mät gammalt mot nytt</button></div>
+  <table id="tab" hidden><thead><tr><th>Ljud</th><th>Nivå A-vägd</th><th>Under 1 kHz</th><th>1 till 4 kHz</th><th>Över 4 kHz</th></tr></thead><tbody></tbody></table>
+</main>
+<script>
+/* ROTORVOICE */
+
+// the old voice, frozen as it was in the game before 25 okt
+function oldVoice(c,kind,st,out,noise){const f0=kind==='drone'?182:330;const a=st(c.createOscillator()),b=st(c.createOscillator());a.type=b.type='sawtooth';a.frequency.value=f0;b.frequency.value=f0*1.034;
+  const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f0*4;bp.Q.value=.9;a.connect(bp);b.connect(bp);const g=c.createGain();g.gain.value=.5;bp.connect(g);g.connect(out);
+  const n=st(noise()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.7;const ng=c.createGain();ng.gain.value=.25;n.connect(nf);nf.connect(ng);ng.connect(out);
+  return{base:kind==='drone'?.38:.22,set:(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.18*mv),t,.25);b.frequency.setTargetAtTime(f0*1.034*(1+.18*mv),t,.25);}};}
+
+const noiseBuf=c=>{const n=c.sampleRate*2,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b;};
+// a voice set: the chosen units in one version, each through its own gain, with the game's crowd damping in the new version
+function build(c,dest,unit,ver,mv){const buf=noiseBuf(c),nodes=[],st=n=>{nodes.push(n);if(n.start)n.start();return n;};
+  const noise=()=>{const s=c.createBufferSource();s.buffer=buf;s.loop=true;s.loopStart=Math.random();return s;};
+  const kinds=unit==='wing'?['drone','drone','scout','scout']:[unit],crowd=ver==='new'?1/Math.sqrt(kinds.length):1,vs=[];
+  kinds.forEach((k,i)=>{const out=c.createGain();const R=(ver==='new'?rotorVoice:oldVoice)(c,k,st,out,noise);out.gain.value=R.base*crowd;out.connect(dest);R.set(0,mv*(1+(i%2)*.08));vs.push({R,out,base:R.base*crowd,i});});
+  return{nodes,vs,set:m=>vs.forEach(v=>v.R.set(0,m*(1+(v.i%2)*.08)))};}
+
+let ctx=null,master,an,cur=null,unit='drone',ver='new',autoT=null;
+const $=id=>document.getElementById(id);
+function ensure(){if(ctx)return;ctx=new AudioContext();master=ctx.createGain();master.gain.value=+$('vol').value;an=ctx.createAnalyser();an.fftSize=4096;an.smoothingTimeConstant=.8;master.connect(an);an.connect(ctx.destination);draw();}
+function stopCur(){if(!cur)return;const c=cur;cur=null;const t=ctx.currentTime;c.vs.forEach(v=>v.out.gain.setTargetAtTime(0,t,.05));setTimeout(()=>c.nodes.forEach(n=>{try{n.stop()}catch(_){}}),300);}
+function start(){ensure();ctx.resume();stopCur();cur=build(ctx,master,unit,ver,+$('mv').value);$('now').textContent=(ver==='new'?'Nytt':'Gammalt')+' · '+({drone:'HÖK',scout:'GETING',wing:'wing'})[unit];}
+function pick(sel,attr,val){document.querySelectorAll(sel).forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val?'true':'false'));}
+document.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{unit=b.dataset.u;pick('[data-u]','u',unit);if(cur)start();});
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ver=b.dataset.v;pick('[data-v]','v',ver);if(cur)start();});
+$('ab').onclick=()=>{ver=ver==='new'?'old':'new';pick('[data-v]','v',ver);if(cur)start();};
+$('auto').onclick=()=>{const on=$('auto').getAttribute('aria-pressed')!=='true';$('auto').setAttribute('aria-pressed',on);clearInterval(autoT);if(on){if(!cur)start();autoT=setInterval(()=>$('ab').onclick(),3000);}};
+$('play').onclick=start;$('stop').onclick=()=>{stopCur();clearInterval(autoT);$('auto').setAttribute('aria-pressed','false');$('now').textContent='';};
+$('mv').oninput=()=>{$('mvv').textContent=(+$('mv').value).toFixed(2);if(cur)cur.set(+$('mv').value);};
+$('vol').oninput=()=>{if(master)master.gain.value=+$('vol').value;};
+
+function draw(){const cv=$('spec'),g=cv.getContext('2d'),W=cv.width,H=cv.height,d=new Float32Array(an.frequencyBinCount),ny=ctx.sampleRate/2;
+  const x=f=>Math.log(f/40)/Math.log(16000/40)*W;
+  (function loop(){requestAnimationFrame(loop);an.getFloatFrequencyData(d);g.fillStyle='#0b1015';g.fillRect(0,0,W,H);
+    g.fillStyle='rgba(240,196,90,.12)';g.fillRect(x(1000),0,x(4000)-x(1000),H);
+    g.strokeStyle='#2a3946';g.fillStyle='#8d9caa';g.font='22px ui-monospace,monospace';for(const f of[50,100,200,500,1000,2000,4000,8000,16000]){g.beginPath();g.moveTo(x(f),0);g.lineTo(x(f),H);g.stroke();g.fillText(f>=1000?f/1000+'k':f,x(f)+4,H-8);}
+    g.strokeStyle='#7fc8a0';g.lineWidth=3;g.beginPath();let lo=0,mid=0,hi=0;
+    for(let i=1;i<d.length;i++){const f=i*ny/d.length;if(f<40||f>16000)continue;const y=H-(d[i]+110)/90*H;i===1?g.moveTo(x(f),y):g.lineTo(x(f),y);const p=Math.pow(10,d[i]/10);if(f<1000)lo+=p;else if(f<4000)mid+=p;else hi+=p;}
+    g.stroke();const tot=lo+mid+hi;$('band').innerHTML='Andel av energin mellan 1 och 4 kHz: <b>'+(cur&&tot>0?Math.round(mid/tot*100)+' %':'ingen')+'</b>';})();}
+
+// offline: three seconds of each sound, levels by band and an A-weighted level, relative to the old HÖK
+async function measure(){const rows=[];for(const u of['drone','scout','wing'])for(const v of['old','new']){const sr=48000,c=new OfflineAudioContext(1,sr*3,sr),b=build(c,c.destination,u,v,.6);
+    const buf=await c.startRendering(),x=buf.getChannelData(0).slice(sr),N=32768,re=new Float64Array(N),im=new Float64Array(N);
+    for(let i=0;i<N;i++)re[i]=x[i]*(.5-.5*Math.cos(2*Math.PI*i/(N-1)));fft(re,im);let lo=0,mid=0,hi=0,aw=0;
+    for(let k=1;k<N/2;k++){const f=k*sr/N,p=re[k]*re[k]+im[k]*im[k];if(f<1000)lo+=p;else if(f<4000)mid+=p;else hi+=p;aw+=p*aW(f);}
+    rows.push({u,v,lo,mid,hi,aw});}
+  const ref=rows[0].aw,db=v=>(10*Math.log10(v/ref)).toFixed(1)+' dB',pc=(r,v)=>Math.round(v/(r.lo+r.mid+r.hi)*100)+' %';
+  return rows.map(r=>({namn:({drone:'HÖK',scout:'GETING',wing:'Wing'})[r.u]+' '+(r.v==='new'?'nytt':'gammalt'),nivå:db(r.aw),under1k:pc(r,r.lo),k1till4:pc(r,r.mid),över4k:pc(r,r.hi)}));}
+function aW(f){const f2=f*f,r=(12194**2*f2*f2)/((f2+20.6**2)*Math.sqrt((f2+107.7**2)*(f2+737.9**2))*(f2+12194**2));return r*r;}
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}
+  for(let l=2;l<=n;l<<=1){const a=-2*Math.PI/l,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=l){let cr=1,ci=0;for(let k=0;k<l/2;k++){const p=i+k,q=p+l/2,tr=re[q]*cr-im[q]*ci,ti=re[q]*ci+im[q]*cr;re[q]=re[p]-tr;im[q]=im[p]-ti;re[p]+=tr;im[p]+=ti;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
+$('meas').onclick=async()=>{$('meas').disabled=true;const r=await measure();const tb=$('tab').tBodies[0];tb.innerHTML=r.map(o=>'<tr><td>'+o.namn+'</td><td>'+o.nivå+'</td><td>'+o.under1k+'</td><td>'+o.k1till4+'</td><td>'+o.över4k+'</td></tr>').join('');$('tab').hidden=false;$('meas').disabled=false;};
+window.__measure=measure;
+</script>
+</body>
+</html>
