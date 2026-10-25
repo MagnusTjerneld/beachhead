@@ -26,7 +26,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   const p=await b.newPage({viewport:{width:Math.round(bredd/.8723),height:Math.round(bredd/.8723*.564)}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
   await p.goto(require('url').pathToFileURL(process.env.BH_HTML||path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro&photo',{waitUntil:'commit',timeout:120000});
-  await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
+  await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed&&globalThis.__boot&&__boot.warm,null,{timeout:200000,polling:500});
   const imgs=[];for(const s of SEAS){const[m,d]=DAYS[s].split('-').map(Number);const o={doy:doyOf(m,d),tod:hh+mm/60,moln,png:true,cam,look,fov};
     await p.evaluate(o=>globalThis.__BHstill(o),o);/* the first frame after a new date settles snow, leaves and ice */
     imgs.push(await p.evaluate(o=>globalThis.__BHstill(o),o));process.stdout.write(s+' ');}

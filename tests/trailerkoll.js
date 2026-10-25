@@ -17,7 +17,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   const p=await b.newPage({viewport:{width:640,height:360}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
   await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?trailer',{waitUntil:'commit',timeout:120000});
-  await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__FILM.W&&__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
+  await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__FILM.W&&__BH&&__BH.G&&__BH.G.seed&&globalThis.__boot&&__boot.warm,null,{timeout:200000,polling:500});
   const res=await p.evaluate(([want,all,omr])=>{const F=__FILM,FILM=F.FILM,W=F.W(),G=F.G(),R3=F.R3(),gy=F.gy,hAt=F.hAt,clr=F.clearAt,cam=R3.cam,TH=THREE;
     // the obstacles: [x, z, radius, kind, top (m over the ground) or null]
     const OB=[],D=W.decor||{};

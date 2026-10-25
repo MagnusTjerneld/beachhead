@@ -19,7 +19,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   const p=await b.newPage({viewport:{width:W,height:H}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
   await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?trailer',{waitUntil:'commit',timeout:120000});
-  await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
+  await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__BH&&__BH.G&&__BH.G.seed&&globalThis.__boot&&__boot.warm,null,{timeout:200000,polling:500});
   // the list of pictures: [film time, label]
   const shots=await p.evaluate(()=>__FILM.SHOTS.map((S,i)=>({id:S.id,t0:__FILM.shotT(i),t1:i<__FILM.SHOTS.length-1?__FILM.shotT(i+1):__FILM.END})));
   let list=[];

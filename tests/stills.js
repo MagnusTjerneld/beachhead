@@ -32,7 +32,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   const p=await b.newPage({viewport:{width:1600,height:900}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
   await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro'+(S.photo?'&photo':'')+(S.form?'&form='+S.form:''),{waitUntil:'commit',timeout:120000});
-  await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
+  await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed&&globalThis.__boot&&__boot.warm,null,{timeout:200000,polling:500});
   const prep=code=>code&&p.evaluate(c=>{const B=globalThis.__BH,G=B.G;return new Function('B','G',c)(B,G);},code);let prepped=false;
   // the flashing lights (sector lights, daymarks) are held lit unless the series or a shot says fyrar:false
   const imgs=[];for(const s of S.shots){const o={fyrar:S.fyrar??true,...s};delete o.prep;if(s.datum){const[m,d]=s.datum.split('-').map(Number);o.doy=doyOf(m,d);}if(s.klocka){const[h,mi]=s.klocka.split(':').map(Number);o.tod=h+mi/60;}

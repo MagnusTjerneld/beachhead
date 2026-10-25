@@ -53,6 +53,14 @@ html,body{height:100%;margin:0;overflow:hidden}
 .tmenu .btn{min-width:150px;backdrop-filter:blur(2px)}
 .tfoot{position:absolute;bottom:18px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:rgba(238,241,234,.7);text-shadow:0 1px 2px #000}
 #intro{z-index:9}
+/* the start (25 okt): a bar over everything while the island, the scene and the shaders are made; the browser draws it between the steps,
+   and the bar runs on toward the end of each step for as long as the step took last time, also while the step holds the page */
+#boot{position:fixed;inset:0;z-index:40;background:#0b1015;display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);color:#eef1ea;cursor:progress}
+#boot .bwrap{width:min(420px,80vw);display:flex;flex-direction:column;gap:14px;text-align:center}
+#boot .btitle{letter-spacing:.32em;font-size:15px;text-transform:uppercase}
+#boot .bbar{height:3px;background:rgba(238,241,234,.14);overflow:hidden}
+#boot .bbar i{display:block;height:100%;background:#f0c45a;transform-origin:0 50%;transform:scaleX(0)}
+#boot .bstep{font-size:12px;letter-spacing:.2em;color:rgba(238,241,234,.72);text-transform:uppercase}
 /* the opening of a round (seasons step 3): the camera full screen, a military ticker over it, and a dark dip back to the game */
 #opStage{position:fixed;inset:0;z-index:8;background:#0b1015;cursor:pointer}
 #opView,#opView .pane{position:absolute;inset:0}
@@ -338,6 +346,7 @@ button:disabled{opacity:.45;cursor:default}
 
 <div id="opStage" hidden><div id="opView"></div><div class="opShade"></div><pre id="opText"></pre><div id="opSkip">Klick eller tangent hoppar över</div></div>
 <div id="opVeil"></div>
+<div id="boot"><div class="bwrap"><div class="btitle">Uppdrag Arkipelag</div><div class="bbar"><i id="bootBar"></i></div><div class="bstep" id="bootStep">Laddar</div></div></div>
 <div class="title" id="title">
   <div id="titleStage"></div>
   <div class="tshade"></div>
@@ -6743,9 +6752,36 @@ function updateSky(){
    blasts or shines nearby. The picture is the same; the shaders loop over fewer lights. Each group has two states, so the shaders exist
    in four variants, all compiled at start (lightsWarm) so that dusk or the first blast does not stall a frame. */
 function lightsShow(arr,on){if(arr._on===on)return;arr._on=on;for(const L of arr)L.visible=on;}
-function lightsWarm(){if(!R3)return;const rs=[R3.renderer,...(FEED.list||[]).map(F=>F.r).filter(Boolean)];
-  for(const a of[false,true])for(const b of[false,true]){lightsShow(R3.spotGroup,a);lightsShow(R3.points,b);for(const r of rs){try{r.compile(R3.scene,R3.cam);}catch(_){}}}
-  R3.spotGroup._on=R3.points._on=undefined;}
+/* the compile at start (25 okt: 9.6 of the start's 14.7 s on Magnus RTX 4080). Each variant's shaders are first compiled in parallel in
+   a hidden WebGL context (shaderPre), which the browser can spread over several cores, and the game's own renderers then find them in
+   the browser's shader cache: about 50 ms a variant instead of about 2 s. One variant at a time, since the cache is too small for all
+   eight (the main view's four with shadows, the live pictures' four without) and the first are pushed out before they are used. Without
+   the extension it is the plain compile, as before */
+async function lightsWarm(step){if(!R3)return;const sc=R3.scene,V=[[false,false],[false,true],[true,false],[true,true]],fr=(FEED.list||[]).map(F=>F.r).filter(Boolean);
+  const groups=[{rs:[R3.renderer],shadow:true},...(fr.length?[{rs:fr,shadow:false}]:[])],n=groups.length*V.length;let P=null,k=0;try{P=shaderPre();}catch(_){P=null;}
+  for(const g of groups)for(const v of V){if(step)step(k++,n);lightsShow(R3.spotGroup,v[0]);lightsShow(R3.points,v[1]);
+    if(P){try{await P.run(g.shadow);}catch(_){}lightsShow(R3.spotGroup,v[0]);lightsShow(R3.points,v[1]);}
+    for(const r of g.rs){try{r.compile(sc,R3.cam);}catch(_){}}}
+  if(P)P.done();R3.spotGroup._on=R3.points._on=undefined;}
+/* the hidden contexts: a renderer on a context that only writes down the shader sources three would link (no compile, no link), and a
+   context with KHR_parallel_shader_compile that compiles them and is asked without waiting when they are done */
+function shaderPre(){const c2=document.createElement('canvas'),g2=c2.getContext('webgl2',{antialias:false});if(!g2||!g2.getExtension('KHR_parallel_shader_compile'))return null;
+  const caps={};
+  const cap=shadow=>{if(caps[shadow])return caps[shadow];const cv=document.createElement('canvas'),gl=cv.getContext('webgl2',{antialias:false});if(!gl)throw 0;
+    const type=new Map(),src=new Map(),att=new Map(),bind=new Map(),out=[];
+    const fake={compileShader:()=>{},createShader:ty=>{const x=gl.createShader(ty);type.set(x,ty);return x;},shaderSource:(x,t)=>{src.set(x,t);},
+      attachShader:(p,x)=>{if(!att.has(p))att.set(p,[]);att.get(p).push(x);},bindAttribLocation:(p,i,nm)=>{if(!bind.has(p))bind.set(p,[]);bind.get(p).push([i,nm]);},
+      linkProgram:p=>{const sh=att.get(p)||[];out.push({vs:src.get(sh.find(x=>type.get(x)===gl.VERTEX_SHADER)),fs:src.get(sh.find(x=>type.get(x)===gl.FRAGMENT_SHADER)),b:bind.get(p)||[]});},
+      getShaderParameter:()=>true,getProgramParameter:(p,q)=>q===gl.LINK_STATUS?true:0,getShaderInfoLog:()=>'',getProgramInfoLog:()=>''};
+    const P=new Proxy(gl,{get(t,key){if(key in fake)return fake[key];const v=t[key];return typeof v==='function'?v.bind(t):v;}});
+    const r=new THREE.WebGLRenderer({canvas:cv,context:P,antialias:false});r.localClippingEnabled=true;r.shadowMap.enabled=shadow;r.shadowMap.type=THREE.PCFSoftShadowMap;
+    return caps[shadow]={r,out,gl};};
+  return{async run(shadow){const C=cap(shadow);C.out.length=0;C.r.compile(R3.scene,R3.cam);const ps=[];
+      for(const o of C.out){if(!o.vs||!o.fs)continue;const p=g2.createProgram();for(const[ty,t]of[[g2.VERTEX_SHADER,o.vs],[g2.FRAGMENT_SHADER,o.fs]]){const x=g2.createShader(ty);g2.shaderSource(x,t);g2.compileShader(x);g2.attachShader(p,x);g2.deleteShader(x);}
+        for(const[i,nm]of o.b)g2.bindAttribLocation(p,i,nm);g2.linkProgram(p);ps.push(p);}
+      const t0=performance.now();while(ps.some(p=>!g2.getProgramParameter(p,0x91B1))&&performance.now()-t0<30000)await new Promise(r=>setTimeout(r,8));/* COMPLETION_STATUS_KHR */
+      for(const p of ps)g2.deleteProgram(p);},
+    done(){for(const g of[g2,...Object.values(caps).map(C=>C.gl)]){try{const e=g.getExtension('WEBGL_lose_context');if(e)e.loseContext();}catch(_){}}}};}
 const HOVER_Y=.05;
 function unitY(u,dtr){
   const g=groundY(u.x,u.y);
@@ -9187,15 +9223,31 @@ function bootWhen(){const m=/^(?:2032-)?(\d\d)-(\d\d)$/.exec(BOOTQ.get('datum')|
 /* the start in steps, for the statistics panel (F3): the page and script up to here, the island, the 3D setup, the scene, the
    shaders compiled ahead (lightsWarm) and the first frame; a new island's scene and first frame are kept too */
 const BOOT=globalThis.__boot={js:performance.now()};const bootMark=k=>{BOOT[k]=performance.now();};
+/* each step is drawn before it runs (bootStep waits for a frame), and the times are kept for the next start's bar */
+const BOOTT=(()=>{try{const t=JSON.parse(localStorage.getItem('bh.boot'));if(t&&t.island>0)return t;}catch(_){}return{island:2700,scene:1000,warm:2500};})();
+const bootSum=BOOTT.island+BOOTT.scene+BOOTT.warm;let bootAt=0;
+function bootBar(a,b,ms){const bar=$('bootBar');bar.style.transition='none';bar.style.transform='scaleX('+Math.min(1,a)+')';void bar.offsetWidth;
+  bar.style.transition='transform '+Math.round(ms)+'ms cubic-bezier(.25,.7,.45,1)';bar.style.transform='scaleX('+Math.min(1,b)+')';}
+function bootStep(txt,ms){const a=bootAt/bootSum;bootAt+=ms;$('bootStep').textContent=txt;bootBar(a,bootAt/bootSum,ms);
+  return new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
+(async()=>{
+await bootStep('Ön tar form',BOOTT.island);
 newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('trailer')||BOOTQ.has('bench')?undefined:DOCTRINE[BOOTQ.get('doktrin')]?BOOTQ.get('doktrin'):'auto',bootWhen());/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &doktrin= chooses the enemy's doctrine */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
-bootMark('island');init3D();bootMark('init3d');
+bootMark('island');
+await bootStep('Bygger scenen',BOOTT.scene);
+init3D();bootMark('init3d');
 if(R3)buildStatic();bootMark('scene');
 mkFeeds();
-lightsWarm();bootMark('warm');
+await bootStep('Förbereder grafiken',BOOTT.warm);
+{const a=(BOOTT.island+BOOTT.scene)/bootSum,w=BOOTT.warm/bootSum;/* the graphics step counts its variants, so the bar follows them */
+  await lightsWarm((k,n)=>{$('bootStep').textContent='Förbereder grafiken '+(k+1)+' av '+n;bootBar(a+w*k/n,a+w*(k+1)/n,BOOTT.warm/n);});}bootMark('warm');
+try{localStorage.setItem('bh.boot',JSON.stringify({island:BOOT.island-BOOT.js,scene:BOOT.scene-BOOT.island,warm:BOOT.warm-BOOT.scene}));}catch(_){}
+$('boot').hidden=true;
 placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();if(BOOTQ.has('trailer'))filmStart();
 requestAnimationFrame(frame);
 if(BOOTQ.has('bench'))setTimeout(benchStart,1500);
 if(BOOTQ.has('rec'))recStart();
+})();
 })();
 </script>
 

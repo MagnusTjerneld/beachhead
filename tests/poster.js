@@ -51,7 +51,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   const p=await b.newPage({viewport:{width:Math.min(W,1600),height:Math.min(H,2400)}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
   await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?trailer',{waitUntil:'commit',timeout:120000});
-  await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__BH&&__BH.G&&__BH.G.seed,null,{timeout:200000,polling:500});
+  await p.waitForFunction(()=>globalThis.__FILM&&__FILM.R3()&&__BH&&__BH.G&&__BH.G.seed&&globalThis.__boot&&__boot.warm,null,{timeout:200000,polling:500});
   for(const s of scener){
     const url=await p.evaluate(([s,help,W,H,logga])=>{const F=__FILM,FILM=F.FILM,X=F.fx();FILM.state='export';FILM.tod=null;
       const i=F.SHOTS.findIndex(q=>q.id===s.host);if(i<0)throw new Error('ingen bild '+s.host);const f0=F.SHOTS[i].f;
