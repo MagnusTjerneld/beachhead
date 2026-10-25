@@ -8294,7 +8294,8 @@ function startGame(){
 /* ---------- the opening of a round (seasons step 3, decided 15 and 16 okt) ----------
    When a round begins to be played, a short military ticker types out over the camera: the island, its position, the date-time
    group and the next sunrise or sunset. After the title screen and after Ny ö the camera first flies in low over the water toward
-   Birka and ends in the game's ordinary start view, so the game takes over without a cut; after Starta om ön, which one does often,
+   Birka and ends in the game's ordinary start view, so the game takes over without a cut (changed 25 okt, see opStart: from high over the
+   island to Birka, and a cut to the start view); after Starta om ön, which one does often,
    only the ticker shows, over the start view. The game stands paused throughout, and a click or a key skips it all. Never in the
    trailer or the benchmark. */
 const OP={on:false,phase:'',t:0,fly:false,dur:0,lines:null,typed:-1,S:null,C:null,E:null,EL:null,B:null};globalThis.__op=OP;
@@ -8318,25 +8319,37 @@ function opLines(){const P=islePos(G.seed),q=dayMD(G.doy);
 const opWanted=()=>!!R3&&!FILM.on&&!BENCH.on&&!BOOTQ.has('nointro');
 function opStart(fly){
   if(!opWanted())return;
-  OP.on=true;OP.phase='run';OP.t=0;OP.fly=!!fly;OP.dur=fly?10.8:7.5;OP.lines=opLines();OP.typed=0;
+  OP.on=true;OP.phase='run';OP.t=0;OP.fly=!!fly;OP.dur=fly?OP_FLY.dur:7.5;OP.lines=opLines();OP.typed=0;
   G.running=true;G.paused=true;$('intro').hidden=true;
   $('opText').style.opacity=1;$('opText').textContent='';$('opStage').hidden=false;$('opView').appendChild(paneCam);fitPanes();
   // the end of the flight is the start view itself, so the game's own camera takes over where the flight stops
   R3.snap=true;updateCam(0);OP.E=R3.cam.position.clone();OP.EL=R3.lookAt.clone();
-  /* the flight comes in low over the water from behind the start view, a little to one side, and climbs over Birka's stern to
-     settle into the view, so it never passes through the superstructure */
-  if(fly){const E=OP.E,fx=OP.EL.x-E.x,fz=OP.EL.z-E.z,fl=Math.hypot(fx,fz)||1,ux=fx/fl,uz=fz/fl,side=hash2(G.seed,7,3)<.5?-1:1;
-    OP.B=new THREE.Vector3(CARRIER.x,10,CARRIER.y);
-    OP.S=new THREE.Vector3(E.x-ux*760-uz*side*190,14,E.z-uz*760+ux*side*190);
-    OP.C=new THREE.Vector3(E.x-ux*170-uz*side*25,E.y+34,E.z-uz*170+ux*side*25);
+  /* the flight (decided 25 okt, Magnus: it came in from the wrong end once Birka's bow and stern were turned, and need not end on
+     BÄVER): first the whole island from high up, drifting slowly while the lines type out, then a long descending arc out over the
+     water to Birka, seen from astern and a little to one side; the veil then cuts to the start view (opEnd). Birka's bow is at
+     negative fwd in her own frame (the ramp's tip, BEACH_IN.tipF), her stern at positive */
+  if(fly){const Q=OP_FLY,sh=new THREE.Vector3(CARRIER.x,0,CARRIER.y),st=shipPos(0,60),sx=st[0]-CARRIER.x,sz=st[1]-CARRIER.y,sl=Math.hypot(sx,sz)||1,ax=sx/sl,az=sz/sl,side=hash2(G.seed,7,3)<.5?-1:1;
+    const ic=new THREE.Vector3(CX,groundY(CX,CY),CY),tx=sh.x-ic.x,tz=sh.z-ic.z,tl=Math.hypot(tx,tz)||1,bx=tx/tl,bz=tz/tl;/* from the island toward Birka */
+    OP.L0=ic.clone();OP.LF=new THREE.Vector3(sh.x,DECK_Y+3,sh.z);
+    OP.P0=new THREE.Vector3(ic.x-bx*Q.back-bz*side*Q.wide,Q.high,ic.z-bz*Q.back+bx*side*Q.wide);
+    OP.P1=new THREE.Vector3(OP.P0.x+bx*Q.drift,Q.high-20,OP.P0.z+bz*Q.drift);
+    OP.F=new THREE.Vector3(sh.x+ax*Q.astern-az*side*Q.side,Q.endH,sh.z+az*Q.astern+ax*side*Q.side);
+    /* the arc's turn lies out over the water beside and astern of Birka, so the camera swings in on her stern from the side and never
+       passes over her (25 okt: through the middle it looked straight down on the deck) */
+    OP.C=new THREE.Vector3(sh.x+ax*Q.arcBack-az*side*Q.arcOut,Q.arcH,sh.z+az*Q.arcBack+ax*side*Q.arcOut);
     opCam(0);}
   uiTick(true);
 }
+/* the flight's timing and places, in seconds and metres: the island seen from high (back from its middle, away from Birka, and to one
+   side), the drift while the lines type, the arc down to Birka (astern, aside, at endH), the hold on her before the cut */
+const OP_FLY={dur:17,hold:6,end:1.4,high:420,back:300,wide:160,drift:140,astern:190,side:110,endH:62,arcOut:420,arcBack:260,arcH:230};
 function opCam(dtr){
   OP.t+=dtr;
-  if(OP.fly){const u=clamp(OP.t/(OP.dur-.4),0,1),s=1-Math.pow(1-u,2.4),S=OP.S,C=OP.C,E=OP.E,i=1-s;
-    const p=tmpV.set(i*i*S.x+2*i*s*C.x+s*s*E.x,i*i*S.y+2*i*s*C.y+s*s*E.y,i*i*S.z+2*i*s*C.z+s*s*E.z);p.y=Math.max(p.y,camFloor(p.x,p.z)+1);
-    const w=u<.5?0:(u-.5)/.5,k=w*w*(3-2*w);R3.lookAt.copy(OP.B).lerp(OP.EL,k);R3.cam.position.copy(p);R3.cam.lookAt(R3.lookAt);}
+  if(OP.fly){const Q=OP_FLY,sm=x=>x*x*(3-2*x),p=tmpV;let look;
+    if(OP.t<Q.hold){const u=sm(clamp(OP.t/Q.hold,0,1));p.copy(OP.P0).lerp(OP.P1,u);look=OP.L0;R3.lookAt.copy(look);}
+    else{const v=clamp((OP.t-Q.hold)/(OP.dur-Q.end-Q.hold),0,1),s=sm(v),i=1-s,P=OP.P1,C=OP.C,F=OP.F;
+      p.set(i*i*P.x+2*i*s*C.x+s*s*F.x,i*i*P.y+2*i*s*C.y+s*s*F.y,i*i*P.z+2*i*s*C.z+s*s*F.z);R3.lookAt.copy(OP.L0).lerp(OP.LF,sm(clamp(v*1.25,0,1)));}
+    p.y=Math.max(p.y,camFloor(p.x,p.z)+1);R3.cam.position.copy(p);R3.cam.lookAt(R3.lookAt);}
   else updateCam(dtr);
   // the ticker: the lines type out in turn, a soft tick for every letter as on a teleprinter, all in one tone (decided 16 okt)
   // (the lines are the game's own letters and digits, nothing to escape; a pause of six characters' time between lines)
