@@ -393,7 +393,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, också på ett val i hjulet; kön syns under enhetens namn och varje order kan tas bort. Enhetskorten visar hållningen enheten har i sin order just nu: triangel för Offensiv, fyrkant för Defensiv.</li>
-      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. Månen står där den står den natten 2032, med rätt fas: skära, halvmåne eller fullmåne, och syns blek också på dagen; vid nymåne, och när månen är nere, är natten något mörkare. Havet följer öns väder: krusigt och mörkare i stråk när det blåser och är mulet, nästan blankt en klar kväll, och vindfläckarna driver med molnen. Årstiden syns i landskapet: snö och is på vintern, fjolårsgräs och isflak på våren, ljusgröna björkar i maj, höstfärger i oktober, och fritidsbåtarna är ute bara under säsongen. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Molnen driver sakta från väster. Knappen +3 h spolar fram.</li>
+      <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. Månen står där den står den natten 2032, med rätt fas: skära, halvmåne eller fullmåne, och syns blek också på dagen; vid nymåne, och när månen är nere, är natten något mörkare. Havet följer öns väder: krusigt och mörkare i stråk när det blåser och är mulet, nästan blankt en klar kväll, och vindfläckarna driver med molnen. Årstiden syns i landskapet: snö och is på vintern, fjolårsgräs och isflak på våren, vass i de skyddade vikarna som är grön på sommaren och halmgul resten av året, ljusgröna björkar i maj, höstfärger i oktober, och fritidsbåtarna är ute bara under säsongen. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Molnen driver sakta från väster. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
     </ul>
@@ -1536,6 +1536,18 @@ function buildWorldTry(seed,tryK,type,move){
         }
       // a few big single boulders further out, 10 to 60 m off, breaking the surface
       for(let k=0;k<N;k++){const e=ev[k];if(e>-.7||e<-5||dL[k]<10||dL[k]>60||hc[k]<4)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(Rs()<.07&&far(x,y))put(x,y,e,Math.min(5,-e/.85+.2+Rs()*.8));}}
+    /* reeds (decided 25 okt, Magnus): only in sheltered coves, as in the archipelago, in water down to about 2 m off a shore that is not a cliff, in
+       beds with open water between them. Shelter is the share of 32 rays from the point that meet land within 320 m; a straight coast
+       gets about .55 from the island behind it, so only coves over .68 get reeds and open coast and capes none. Not on the landing beach, in the harbour, on Birka's way in or at the cove's landing point; jetties and
+       boats clear them further down. Decor only: they hide nothing and stop nothing */
+    {const Rr=rng(s*577+29),reeds=[],NR=32,dirs=[...Array(NR)].map((_,a)=>[Math.cos(a/NR*6.2832),Math.sin(a/NR*6.2832)]);W.reeds=reeds;
+      const at=(x,y)=>{const i=Math.round(x/stp),j=Math.round(y/stp);return i<0||j<0||i>=nx||j>=ny?-9:ev[j*nx+i];};
+      const shel=(x,y)=>{let n=0;for(const[cx,cy]of dirs)for(let d=stp*2;d<=320;d+=stp)if(at(x+cx*d,y+cy*d)>0){n++;break;}return n/NR;};
+      for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){const k=j*nx+i,e=ev[k],x=i*stp,y=j*stp;if(e<-2.2||e>.25||hc[k]>7||(e>0?dW[k]>stp*1.5:dL[k]>20))continue;
+        if(Math.hypot(x-landing.x,y-landing.y)<150||covePt&&Math.hypot(x-covePt.x,y-covePt.y)<45||W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+90||nearPath(x,y,35))continue;
+        const bed=fbm(x*5,y*5,s+1300);if(bed<.45)continue;const sh=shel(x,y);if(sh<.68)continue;
+        const n=Math.round(clamp((sh-.68)/.17,0,1)*clamp((bed-.45)/.1,0,1)*10+Rr()*.8);
+        for(let q=0;q<n;q++)reeds.push({x:x+(Rr()-.5)*stp,y:y+(Rr()-.5)*stp,s:.75+Rr()*.5,a:Rr()*6.283,r:1});}}
     for(let k=0;k<N;k++)if(hall[k]){const i=k%nx,j=(k/nx)|0;let g=0;if(i<SX)g=Math.max(g,Math.abs(ev[k]-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(ev[k]-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(ev[k]-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(ev[k]-ev[k-nx]));vcls[k]=ev[k]<=0?(ev[k]<-3.2?DEEP:SHAL):g>2.6?ROCK:BEACH;}
     // the granite slope is bare rock in the land plan, and keeps a quarter of its trees, low pines
     const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
@@ -1727,7 +1739,8 @@ function buildWorldTry(seed,tryK,type,move){
         const r={x:m.x+left.x*wd,y:m.y+left.y*wd},g={x:m.x-left.x*wd,y:m.y-left.y*wd};if(wet(cellIdx(r.x,r.y))&&wet(cellIdx(g.x,g.y))){D.marks.push({...r,type:'red'},{...g,type:'green'});}}}
   }
   if(W.coastStones&&W.decor){const D=W.decor,sd=(px,py,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1,t=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);return Math.hypot(px-a.x-vx*t,py-a.y-vy*t);};
-    W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));}
+    W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));
+    if(W.reeds)W.reeds=W.reeds.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+6),y:j.y+Math.sin(j.a)*(j.len+6)})>5)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>8));}
   // the ridges and the field islets, now that the houses stand where they would without them (see the note at ridges)
   {const ev0=ev.slice();ridges();
     /* the lighthouse was seated before the ridges reshaped the ground; on ö 7313 they lowered it 12 m and the tower hung in the air */
@@ -5463,6 +5476,24 @@ function mkDecor(D,st){
     S.forEach((q,i)=>{const sy=q.r*.65;d.position.set(q.x,(q.h>.3?Math.max(gLow(q.x,q.y,q.r*1.1),-q.r*.2):q.h)+q.r*.2,q.y)/* stones in the water keep their height: they are sized to the depth so that about half break the surface */;d.rotation.set(0,q.a,0);d.scale.set(q.r*1.15,sy,q.r);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.45+hash2(i,3,77)*.15;m.setColorAt(i,cl.setRGB(v+.03,v,v-.02));
       if(q.g){d.position.y+=sy*.72;d.scale.set(q.r*.7,sy*.36,q.r*.62);d.updateMatrix();w.setMatrixAt(gi++,d.matrix);}});
     m.instanceColor.needsUpdate=true;m.frustumCulled=false;st.add(m);(R3.foamSrc||(R3.foamSrc=[])).push(m);if(w){w.frustumCulled=false;st.add(w);}(R3.looseM||(R3.looseM=[])).push([m,S]);if(w)R3.looseM.push([w,G2]);}}
+  /* the reeds of the sheltered coves (25 okt), one instanced mesh: a clump of 48 thin tapering blades, seven with a panicle, stood on
+     the bottom and reaching 1.2 to 2 m over the water. Green in summer and straw the rest of the year with the season's grass, and
+     swaying with the sea's own wind, stronger towards the tips */
+  {const RE=WORLD.reeds||[];if(RE.length){if(!R3.reedG){const P=[],C=[],N=[],rr=rng(4711);for(let b=0;b<48;b++){const a=rr()*6.283,d=Math.sqrt(rr())*1.6,x=Math.cos(a)*d,z=Math.sin(a)*d,h=.75+rr()*.25,lx=x*.12+(rr()-.5)*.12,lz=z*.12+(rr()-.5)*.12,w=.035+rr()*.02,o=rr()*6.283,ox=Math.cos(o)*w,oz=Math.sin(o)*w,v=rr(),pan=b<7;
+        const tx=x+lx,tz=z+lz,top=pan?h-.16:h;P.push(x-ox,0,z-oz,x+ox,0,z+oz,tx,top,tz);for(let q=0;q<3;q++){C.push(v,0,0);N.push(lx*2,1,lz*2);}
+        if(pan){const px=-oz*1.4/w*.05,pz=ox*1.4/w*.05;for(const s2 of[1,-1])P.push(tx-ox*.8,top-.02,tz-oz*.8,tx+ox*.8,top-.02,tz+oz*.8,tx+lx*.5+s2*px*.6,h+.04,tz+lz*.5+s2*pz*.6);for(let q=0;q<6;q++){C.push(v,1,0);N.push(lx*2,1,lz*2);}}}
+        const dup=(A)=>{const o=A.slice();for(let t=0;t<A.length;t+=9)o.push(...A.slice(t+3,t+6),...A.slice(t,t+3),...A.slice(t+6,t+9));return o;};
+        const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(dup(P),3));g.setAttribute('color',new THREE.Float32BufferAttribute(dup(C),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(dup(N),3));g.normalizeNormals();R3.reedG=g;}/* each triangle twice, one per winding, with the same upward normal: a double-sided Lambert lights the back with the normal turned down, and the blades went black from behind */
+      const m0=new THREE.MeshLambertMaterial({vertexColors:true});
+      m0.onBeforeCompile=sh=>{const WU=R3.water&&R3.water.material.userData.U;sh.uniforms.uRT=WU?WU.uTime:{value:0};sh.uniforms.uRW=WU?WU.uWind:{value:.5};sh.uniforms.uRD=WU?WU.uWindDir:{value:new THREE.Vector2(1,0)};
+        sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float uRT,uRW;uniform vec2 uRD;').replace('#include <begin_vertex>',`#include <begin_vertex>
+          #ifdef USE_INSTANCING
+          {vec2 o=instanceMatrix[3].xz;mat3 im=mat3(instanceMatrix);vec3 w=vec3(uRD.x,0.0,uRD.y),ld=vec3(dot(im[0],w),dot(im[1],w),dot(im[2],w));vec2 d=normalize(ld.xz+1e-5);
+          float b=position.y*position.y,ph=dot(o,vec2(.13,.11)),gu=.55+.45*sin(uRT*1.3+ph-dot(o,uRD)*.06);transformed.xz+=d*b*(.05+.2*uRW)*gu+vec2(sin(uRT*2.3+ph*3.0),cos(uRT*1.9+ph*2.0))*b*.025;}
+          #endif`);};
+      const m=new THREE.InstancedMesh(R3.reedG,seasonMat(m0,'reed'),RE.length),d=new THREE.Object3D();
+      RE.forEach((q,i)=>{const h=heightAt(q.x,q.y),H=Math.max(0,-h)+(1.2+hash2(i,5,31)*.8)*q.s;d.position.set(q.x,Math.min(h,.2),q.y);d.rotation.set(0,q.a,0);d.scale.set(q.s,H,q.s);d.updateMatrix();m.setMatrixAt(i,d.matrix);});
+      m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,RE]);}}
   /* the ridges (17 okt): the wall's blocks with moss on their upper faces and snow on top in winter, the loose blocks of the strips
      and the foot of the granite ridge, broadleaf bushes that turn with the season (hazel as birch, dog rose as rowan, sloe as oak)
      and dark junipers that hold snow */
@@ -6368,6 +6399,12 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
     conifer:`{vec3 n3=normalize(vSWN);float nz=sNoise(vSWP.xz/2.5+vSWP.y*.4);
       float sm=uSnow*(.5*smoothstep(.2,.5,n3.y+(nz-.5)*.5)+.55*smoothstep(3.0,5.5,vSLY));
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.9,.93,.96),clamp(sm,0.0,.7));}`,
+    /* reeds: green with lighter tips in summer, straw with the season's grass the rest of the year and last year's straw over the new
+       green shoots in spring, each blade a little apart, the
+       panicles a soft purple-brown in summer and pale in winter; a touch of snow on the tips and the sea's dark under the surface */
+    reed:`{float r=vColor.r,tip=clamp(vSLY,0.0,1.0);vec3 gr=mix(vec3(.28,.4,.16),vec3(.5,.6,.28),tip),st=mix(vec3(.46,.39,.27),vec3(.8,.7,.47),tip);
+      vec3 c=mix(gr,st,clamp(uGrass*1.2+(r-.5)*.35+uYoung*smoothstep(.35,.75,tip+(r-.5)*.3),0.0,1.0))*(.85+r*.3);if(vColor.g>.5)c=mix(vec3(.5,.4,.36),vec3(.78,.7,.58),uGrass);
+      c=mix(c,vec3(.9,.92,.95),uSnow*.3*tip);float uw=smoothstep(-.3,-2.5,vSWP.y)*.85;diffuseColor.rgb=mix(c,vec3(.07,.15,.22),uw);}`,
     /* broadleaf autumn per kind (decided 17 okt, Magnus): birch golden yellow to yellow-brown and never red; aspen yellow to orange;
        maple yellow, orange and clear red; rowan orange to red and first; oak yellow-brown to rust late, keeping its dry leaves;
        alder olive and last, falling green. Each kind is shifted against the season's autumn curve, and each tree by its own value */
