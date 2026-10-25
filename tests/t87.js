@@ -56,7 +56,7 @@ for(const sd of[1490,9001,9949]){B.newGame(sd);G().running=true;G().netAll=true;
   ok(!B.beachState().ok&&!B.beachGo(true),'the beach cannot be taken again');
   let nearA=1e9;B.beachGo(false);const t=until(()=>{nearA=Math.min(nearA,Math.hypot(B.CARRIER.x-b.ax,B.CARRIER.y-b.ay));return H.docked;},900),d0=B.W.harbor.dock;
   ok(t!=null&&Math.hypot(B.CARRIER.x-d0.x,B.CARRIER.y-d0.y)<.5,'she backs off the beach and lies docked at the quay ('+(t==null?(H.ph||G().beach.st):'ok')+')');
-  ok(H.route&&Math.hypot(H.route[0].x-b.A.x,H.route[0].y-b.A.y)<1,'her way to the harbour starts off the beach, not at the anchorage (came within '+Math.round(nearA)+' m of it)');}
+  const P=B.beachClear();ok(H.route&&Math.hypot(H.route[0].x-P.x,H.route[0].y-P.y)<1,'her way to the harbour starts where she is clear to turn off the beach, not at the anchorage (came within '+Math.round(nearA)+' m of it)');}
 // 6b. every island's way to the harbour is the navigator's, its poses clear of land, ending where the berthing starts
 for(const sd of[9949,3019,4242]){B.newGame(sd);const P=B.W.birkaPath;if(!P){ok(true,'ö '+sd+' has no harbour');continue;}const R=P.route,e=R[R.length-1];
   ok(R.length>2&&R.every((p,i)=>i===0||i===R.length-1||B.navFree(B.W,p.x,p.y,p.a+Math.PI))&&Math.hypot(e.x-P.pts[0].x,e.y-P.pts[0].y)<.01,'ö '+sd+': the way to the harbour is planned by the navigator ('+R.length+' poses), ending where the berthing starts');}

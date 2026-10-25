@@ -24,7 +24,7 @@ const land=(G,r)=>{const L=G.relays[r];return{x:L.x,y:L.y};};
   b.hp=b.maxhp*.6;h.ammo=0;B.groupService([a,b,h],'Wing 3');
   ok(!a.rtb&&!a.orders.length&&b.rtb&&h.rtb,'Wing till service sends the damaged VARG and the HÖK without robots, not the whole one');
   const r=B.makeUnit('eng',p.x+30,p.y+20);G.units.push(r);b.orders=[];b.rtb=false;b.saved=null;B.groupService([b]);
-  ok(b.orders[0]&&b.orders[0].toRep===r.id,'a damaged VARG with a BÄVER nearby goes to it for field repair');}
+  ok(b.rtb&&b.orders[0]&&b.orders[0].type==='rtb'&&b.orders[0].cap,'the captain sends a damaged VARG to service: it goes there, not to the BÄVER nearby (decided 25 okt, provspel ö 7670 kp06)');}
 // 4. marks: a wrench with progress over a unit on a pad, an hourglass over one waiting for a pad
 {const G=setup(7341),h=B.makeUnit('drone',0,0);G.units.push(h);h.ammo=h.maxAmmo/2;h.orders=[{type:'rtb',post:'def'}];h.rtb=true;h.pad={key:'ship',i:0,t:0};h.onPad=true;
   let m=B.taskMarks().find(k=>k.unit===h);ok(m&&m.g==='wrench'&&Math.abs(m.p-.5)<.01,'a HÖK on a pad shows a wrench at 50 %');

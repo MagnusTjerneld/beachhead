@@ -669,7 +669,7 @@ const HARB={hw:30,L:125,deck:7};
 const KAJ={lt0:-95,p0:46,p1:58,out:42,deck:7,q:1.7,back:25,off:22,c:-4,dredge:50,app:-130};
 /* Birka under way: top speed (m/s, 20 knots: doubled 19 okt, Magnus: she was too slow), acceleration and braking (m/s², doubled with
    it), turn rate (degrees a second) */
-const BIRKA_MOVE={vmax:10.2,acc:.24,dec:.3,turn:6,glide:3};
+const BIRKA_MOVE={vmax:10.2,acc:.24,dec:.3,turn:6,glide:3,spin:12};/* spin: degrees a second on the spot, on her bow and stern thrusters (25 okt) */
 const SHAPES={rund:'rund ö',as:'ås',hastsko:'hästsko',nas:'näs',udde:'udde'};
 const SHAPE_CFG={force:null,mix:{rund:1,as:1,hastsko:1,nas:1,udde:1},rough:1};
 /* the intro director's pace (see titleDirector): pan and acceleration in degrees, the spring, the fastest sweep a locked or held
@@ -2023,7 +2023,7 @@ const BEACH_IN={tipF:-55,dredge:-2.4,w:20,taper:12,astern:.5,landR:80,legs:[40,6
    NAV.clear m along her length, in a distance field of the grid. Headings in the search are the way she goes (th); CARRIER.a, the
    model's frame, is th+PI. A route is a list of poses {x,y,a} with the speed allowed to the next one (v); two poses at the same place
    are a turn on the spot. */
-const NAV={step:12,nh:24,margin:8,spin:6,cell:8,maxN:400000,wH:1.5,win:30,near:70,back:1.5};
+const NAV={step:12,nh:24,margin:8,spin:1,cell:8,maxN:400000,wH:1.5,win:30,near:70,back:1.5};
 /* the field counts the holms and skerries laid out in the water (rock in the grid) and the hidden shoals with their cardinal marks
    (Magnus 23 okt: "vi navigerar också runt grund och holmar?"): they are laid out after her ways are planned with the island, and kept
    well off them, so it is built again once they are there, for the ways planned in the game */
@@ -2062,7 +2062,9 @@ function birkaNav(W,from,goal){const H=NAV.nh,dth=TAU/H,st=NAV.step,M=BIRKA_MOVE
     const th=h*dth;
     for(const dh of[0,-1,1]){const tm=th+dh*dth/2,nx=x+Math.cos(tm)*st,ny=y+Math.sin(tm)*st,nh=(h+dh+H)%H;
       if(!navFree(W,nx,ny,nh*dth)||!navFree(W,(x+nx)/2,(y+ny)/2,tm))continue;add(nx,ny,nh,g+(dh?st/vT:st/M.vmax)*navNear(W,nx,ny),i);}
-    for(const dh of[-1,1]){const nh=(h+dh+H)%H;if(navFree(W,x,y,nh*dth))add(x,y,nh,g+dth/w+NAV.spin,i);}
+    /* a turn on the spot goes on her thrusters at M.spin (25 okt, Magnus, provspel ö 7670 kp12: at her rudder's 6 degrees a second and 6 s
+       on top for each step a half turn cost about 100 s, so she backed 300 m rather than turned) */
+    for(const dh of[-1,1]){const nh=(h+dh+H)%H;if(navFree(W,x,y,nh*dth))add(x,y,nh,g+dth/(M.spin*PI/180)+NAV.spin,i);}
     /* astern at half speed, dearer than ahead: out of a place where she can neither turn nor go on (off the beach on 9001) */
     {const nx=x-Math.cos(th)*st,ny=y-Math.sin(th)*st;if(navFree(W,nx,ny,th)&&navFree(W,(x+nx)/2,(y+ny)/2,th))add(nx,ny,h,g+st/(M.vmax*BEACH_IN.astern)*NAV.back*navNear(W,nx,ny),i,3);}}
   if(end<0)return null;
@@ -2100,7 +2102,7 @@ function routeArr(R,endV){const M=BIRKA_MOVE,A=new Float32Array(R.length);A[R.le
 /* one step along the route in G.beach (S.route, S.arr, S.i, S.u, S.v); true when she is at its end */
 function routeStep(S,dt){const R=S.route,M=BIRKA_MOVE;let first=true;
   while(S.i<R.length-1){const p=R[S.i],q=R[S.i+1],l=Math.hypot(q.x-p.x,q.y-p.y);
-    if(l<.01){S.v=0;if(!first)return false;first=false;const err=angWrap(q.a-CARRIER.a),st=M.turn*PI/180*dt;if(Math.abs(err)>st){moveCarrier(p.x,p.y,CARRIER.a+Math.sign(err)*st);return false;}moveCarrier(p.x,p.y,q.a);S.i++;S.u=0;return S.i>=R.length-1;}
+    if(l<.01){S.v=0;if(!first)return false;first=false;const err=angWrap(q.a-CARRIER.a),st=M.spin*PI/180*dt;if(Math.abs(err)>st){moveCarrier(p.x,p.y,CARRIER.a+Math.sign(err)*st);return false;}moveCarrier(p.x,p.y,q.a);S.i++;S.u=0;return S.i>=R.length-1;}
     if(first){first=false;const vt=Math.max(.15,Math.min(p.v,Math.sqrt(S.arr[S.i+1]*S.arr[S.i+1]+2*M.dec*Math.max(0,l-S.u))));S.v=S.v<vt?Math.min(vt,S.v+M.acc*dt):Math.max(vt,S.v-M.dec*2*dt);S.u+=S.v*dt;}
     if(S.u<l){const f=S.u/l;moveCarrier(lerp(p.x,q.x,f),lerp(p.y,q.y,f),p.a+angWrap(q.a-p.a)*f);return false;}
     S.u-=l;S.i++;if(S.i>=R.length-1||Math.hypot(R[S.i+1].x-q.x,R[S.i+1].y-q.y)<.01)S.u=0;}
@@ -2151,7 +2153,12 @@ function routeIn(){const B=WORLD.beach,M=BIRKA_MOVE;let R;
   if(Math.hypot(CARRIER.x-B.ax,CARRIER.y-B.ay)<.5&&Math.abs(angWrap(CARRIER.a-B.a0))<1e-3)R=B.route.map(p=>({...p}));
   else R=birkaNav(WORLD,{x:CARRIER.x,y:CARRIER.y,th:CARRIER.a+PI},{x:B.A.x,y:B.A.y,th:B.a+PI});
   if(!R)return null;R[R.length-1].v=M.glide;R.push({x:B.x,y:B.y,a:B.a,v:0});return R;}
-function routeOut(){const B=WORLD.beach,M=BIRKA_MOVE,R0=[{x:B.x,y:B.y,a:B.a,v:M.vmax*BEACH_IN.astern},{x:B.A.x,y:B.A.y,a:B.a,v:0}],R1=birkaNav(WORLD,{x:B.A.x,y:B.A.y,th:B.a+PI},{x:B.ax,y:B.ay,th:null});
+/* off the beach she backs only until her hull is clear to turn on the spot, and the navigator takes her on from there (decided 25 okt,
+   Magnus, provspel ö 7670 kp12: she backed all the way out to the approach point A, about 200 m in a narrow bay); A if no place before it */
+function beachClear(){const B=WORLD.beach;if(B._P)return B._P;const dx=B.A.x-B.x,dy=B.A.y-B.y,L=Math.hypot(dx,dy);
+  for(let r=24;r<L;r+=6){const x=B.x+dx*r/L,y=B.y+dy*r/L;let ok=true;for(let k=0;k<24&&ok;k++)ok=navFree(WORLD,x,y,k*TAU/24);if(ok)return B._P={x,y};}
+  return B._P={x:B.A.x,y:B.A.y};}
+function routeOut(){const B=WORLD.beach,M=BIRKA_MOVE,P=beachClear(),R0=[{x:B.x,y:B.y,a:B.a,v:M.vmax*BEACH_IN.astern},{x:P.x,y:P.y,a:B.a,v:0}],R1=birkaNav(WORLD,{x:P.x,y:P.y,th:B.a+PI},{x:B.ax,y:B.ay,th:null});
   if(!R1)return null;R0[1].v=R1[0].v;/* the navigator's speed on from A */return R0.concat(R1.slice(1));}
 function routeBack(S){const R=S.route,M=BIRKA_MOVE,out=[{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a,v:0}];
   for(let j=S.i;j>=0;j--){out[out.length-1].v=Math.min(R[j].v||M.glide,M.vmax*BEACH_IN.astern);out.push({x:R[j].x,y:R[j].y,a:R[j].a,v:0});}
@@ -2164,7 +2171,7 @@ function beachGo(inn){const S=G.beach;if(!S)return false;
     const moving=S.st==='out'&&S.ph==='run';routeSet(S,R);S.ph=moving?'run':'ramp';S.st='in';say(null,'HMS Birka lättar ankar och går in mot stranden. Ramperna fälls upp och servicen står still under överfarten.');}
   else{if(S.st!=='on'&&S.st!=='in')return false;
     if(S.st==='in'&&S.ph==='run'){routeSet(S,routeBack(S));}else if(S.st==='in'){routeSet(S,[{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a,v:0}]);S.done=true;}
-    else if(G.harbor&&G.harbor.secured&&!G.harbor.docked){const B=WORLD.beach;routeSet(S,[{x:B.x,y:B.y,a:B.a,v:BIRKA_MOVE.vmax*BEACH_IN.astern},{x:B.A.x,y:B.A.y,a:B.a,v:0}]);S.toHarbor=true;}
+    else if(G.harbor&&G.harbor.secured&&!G.harbor.docked){const B=WORLD.beach,P=beachClear();routeSet(S,[{x:B.x,y:B.y,a:B.a,v:BIRKA_MOVE.vmax*BEACH_IN.astern},{x:P.x,y:P.y,a:B.a,v:0}]);S.toHarbor=true;}
     else{const R=routeOut();if(!R){say(null,'HMS Birka hittar ingen väg ut till ankarplatsen.');return false;}routeSet(S,R);}
     S.ph=S.st==='in'&&S.ph==='run'?'run':'ramp';S.st='out';say(null,S.toHarbor?'HMS Birka backar ut från stranden och går till hamnen. Ramperna fälls upp och servicen står still under överfarten.':'HMS Birka backar ut till ankarplatsen. Ramperna fälls upp och servicen står still under överfarten.');}
   return true;}
@@ -2225,11 +2232,17 @@ function step(dt){
     if(!rep)for(const r of G.relays)if(r.captured&&dist(r,e)<(r.type==='radar'?RADAR_SEE:110)){vis=true;rep=true;}
     if((rep||e.reveal>0)&&!e.seen){e.seen=true;if(!spot||spot.id!==G.ctrl)(G.newC||(G.newC=[])).push({e,by:spot});if(e.canAir){G.tver=(G.tver||0)+1;for(const v of G.units)if(v.air)v.path=null;}say(spot,(vis?'':'Mynningsflamma, kamouflerad. ')+'Kontakt: '+ename(e)+' i ruta '+sq(e.x,e.y)+'.');}
     e.visibleNow=vis;if(vis||rep||e.reveal>0)e.seenT=G.time;if(rep||e.reveal>0){e.lx=e.x;e.ly=e.y;e.stale=null;}
-    else if(SCOOT[e.kind]&&e.seen){if(e.stale==null&&(e.x!==e.lx||e.y!==e.ly))e.stale=G.time;else if(e.stale!=null&&G.time-e.stale>STALE_FORGET){e.seen=false;e.stale=null;}}
+    else if(SCOOT[e.kind]&&e.seen){if(e.stale==null&&(e.x!==e.lx||e.y!==e.ly))e.stale=G.time;else if(e.stale!=null&&(G.time-e.stale>STALE_FORGET||lookedEmpty(e))){e.seen=false;e.stale=null;}}
   }
   if(G.newC){const L=G.newC;G.newC=null;autoPause(L);}
   padTick();
   for(const u of G.units)updateUnit(u,dt);
+  /* no vehicle ever ends a step inside a known minefield it was not already in, by hand, by a shove from Birka or any other way: it stays
+     where it stood (decided 25 okt, Magnus, provspel ö 7670 kp09; the routes already keep out, this is the guarantee). MUS goes in on
+     purpose, BÄVER clearing the field works at it */
+  if(G.mines.some(m=>m.found&&!m.cleared))for(const u of G.units){if(u.dead||u.carried||u.air||u.kind==='mus'||u._px==null)continue;
+    if(u.kind==='eng'&&u.orders[0]&&u.orders[0].type==='demine')continue;
+    if(mineWalled(cellIdx(u.x,u.y))&&!mineWalled(cellIdx(u._px,u._py))){u.x=u._px;u.y=u._py;u.path=null;}}
   /* HÖK keep apart (18 okt, Magnus: they hovered inside each other when they circled the same point): two closer than HOK_SEP
      are pushed apart along the line between them, the one flown by hand stays where it is */
   {const H=G.units.filter(u=>u.kind==='drone'&&!u.dead);for(let i=0;i<H.length;i++)for(let j=i+1;j<H.length;j++){const a=H[i],b=H[j];if(a.pad||b.pad)continue;let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d>=HOK_SEP)continue;
@@ -2276,7 +2289,7 @@ function homeAt(u,svc){if(svc==='ship')return{x:CARRIER.x,y:CARRIER.y,ship:true,
   const sp=stationPt(r);return{x:sp.x,y:sp.y,ship:false,r:u.air?44:22,rate:r.type==='varv'?.5:1,name:(r.type==='varv'?'fältvarv ':'verkstad ')+r.id,rid:r.id};}
 const svcHome=u=>{const o=u.orders[0];return(o&&o.type==='rtb'&&o.svc&&homeAt(u,o.svc))||homeFor(u);};
 function sendToService(u,svc){if(!u||u.dead)return;const h=homeAt(u,svc);if(!h){say(u,'Den platsen ger ingen service just nu.');return;}if(G.ctrl===u.id&&hasDOM)setCtrl(null);
-  u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post,svc}];u.path=null;u.rtb=true;u.hold=false;say(u,'Till service vid '+h.name+'.');}
+  u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post,svc,cap:1}];u.path=null;u.rtb=true;u.hold=false;say(u,'Till service vid '+h.name+'.');}
 /* service on pads (decided 18 okt, issue 34): a unit is serviced only standing or landed on a pad, four to a station: the bow pads
    of HMS Birka and four plates beside a taken workshop or forward yard. A pad goes to the first to reach the station (within
    SVC.near), not to the first sent there, so units already there never wait for one still on its way; a unit done with service lets
@@ -2411,7 +2424,9 @@ function aaPullOut(u,aa,lead){const ax=aa.lx??aa.x,ay=aa.ly??aa.y,dx=u.x-ax,dy=u
 /* a VARG the captain sent back in keeps fighting until it has lost 10 % of full hull or half of what it had when he sent it, whichever
    comes first (decided 18 okt, issue 25: a fixed 15 meant a VARG sent in with 7 of 150 never turned again) */
 const sentBackIn=u=>u.holdHp!=null&&u.hp>=u.holdHp-Math.min(u.maxhp*.1,u.holdHp*.5);
-function goRtb(u,msg){if(!u.air&&lockedAt(u.x,u.y)){cutOff(u);return;}u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post,via:escapePt(u)}];u.path=null;u.rtb=true;u.hold=false;say(u,msg);}
+/* cap: the captain sent it, so it goes where it was sent and is not turned to a BÄVER on the way (decided 25 okt, Magnus, provspel ö 7670
+   kp06: two VARG sent to service at Birka went to BÄVER, which mends only to 75 %, and one of them already had 75 %) */
+function goRtb(u,msg,cap){if(!u.air&&lockedAt(u.x,u.y)){cutOff(u);return;}u.saved=u.orders.filter(o=>o.type!=='rtb');u.orders=[{type:'rtb',post:u.post,via:escapePt(u),cap:cap?1:0}];u.path=null;u.rtb=true;u.hold=false;say(u,msg);}
 /* a vehicle sent to service under fire first gets out of the reach of those firing on it, by the shortest way that also leans towards
    home, and only then heads for service (18 okt, test round 9949: a VARG took the straight way to Birka past the bunker that hit it) */
 function escapePt(u){if(u.air)return null;const ok=u.kind==='tank'?passAmph:passLand,hm=homeFor(u);
@@ -2456,11 +2471,15 @@ function updateUnit(u,dt){
   if(u.kind==='scout'&&getingTick(u,dt))return;
   if(u.awaitRep){const b=G.units.find(x=>x.id===u.awaitRep);if(!b||b.dead||!b.orders[0]||b.orders[0].type!=='repair'||b.orders[0].unit!==u)u.awaitRep=null;else{u.cd-=dt;u.mgcd=(u.mgcd||0)-dt;if(u.kind==='tank'&&tankCombat(u,dt,'def'))return;u.state='Väntar på '+b.name+' för lagning';return;}}
   if(u.holdHp!=null&&u.hp>u.maxhp*.5)u.holdHp=null;
-  if(u.kind==='tank'&&u.rtb&&!u.awaitRep&&u.hp<u.maxhp*.75&&G.time-u.lastHit>4&&G.time>=(u.medScan||0)){u.medScan=G.time+1;const b=fieldMedic(u);
+  if(u.kind==='tank'&&u.rtb&&!(u.orders[0]&&u.orders[0].cap)&&!u.awaitRep&&u.hp<u.maxhp*REP.cap-1&&G.time-u.lastHit>4&&G.time>=(u.medScan||0)){u.medScan=G.time+1;const b=fieldMedic(u);
     if(b&&dist(u,b)<dist(u,hm)*.8){const sv=(u.saved||[]).filter(o=>o.type!=='rtb');u.rtb=false;u.saved=null;u.orders=[{type:'move',x:b.x,y:b.y,post:'def',toRep:b.id},...sv];u.path=null;say(u,'Ur elden. '+b.name+' är närmare än '+hm.name+', lagas i fält i stället.');}}
   {const o=u.orders[0];if(o&&o.toRep){const b=G.units.find(x=>x.id===o.toRep);
     if(!b||b.dead||b.carried||onDeck(b.x,b.y)){u.orders.shift();goRtb(u,'Ingen BÄVER att möta. Retirerar till '+hm.name+'.');return;}
-    o.x=b.x;o.y=b.y;if(dist(u,b)<35&&!(b.orders[0]&&b.orders[0].type==='repair')){u.orders.shift();u.path=null;giveOrder(b,{type:'repair',unit:u,post:'def'},false,'temp');}}}
+    o.x=b.x;o.y=b.y;if(dist(u,b)<35&&!(b.orders[0]&&b.orders[0].type==='repair')){u.orders.shift();u.path=null;
+      /* the mending goes first in BÄVER's queue and the rest of the queue carries on after it (decided 25 okt, Magnus, provspel ö 7670 kp08:
+         it dropped five demolitions to mend a VARG and then stood waiting) */
+      if(b.orders.length&&!b.rtb&&!(b.mission&&b.orders[0]===b.mission)){if(G.ctrl===b.id)dropCtrl();b.orders.unshift({type:'repair',unit:u,post:'def'});b.path=null;resetFor(b);}
+      else giveOrder(b,{type:'repair',unit:u,post:'def'},false,'temp');}}}
   if(u.awaitRep&&u.kind==='tank'&&G.time-u.lastHit<.5&&u.hp<u.maxhp*.3){const b=G.units.find(x=>x.id===u.awaitRep);if(b&&b.orders[0]&&b.orders[0].type==='repair'&&b.orders[0].unit===u)b.orders.shift();u.awaitRep=null;goRtb(u,'Beskjuten medan jag väntar på lagning. Retirerar till '+hm.name+'.');return;}
   if(!u.override&&!u.rtb){
     if(u.air&&!onPad&&u.fuel<Math.max(u.maxFuel*.15,homeDist(u,hm)/u.speed*1.2+8))goRtb(u,'Batteriet räcker precis. Återvänder till '+hm.name+' för laddning.');
@@ -2549,7 +2568,7 @@ function aimTarget(u,hidden){
 function droneRocket(u){
   if(u.ammo<1){say(u,'Inga robotar kvar. Laddas om vid fartyget eller en verkstad.');return;}if(u.cd>0)return;
   u.turret=u.heading;const t=aimTarget(u);if(!t||dist(u,t)>reachR(u,t)){say(u,'Inget mål i siktet inom '+u.range+' m ('+(u.range+ROCKET_EXT)+' m om en annan sorts enhet än HÖK har ögon på målet).');return;}
-  u.cd=1/u.rate;u.ammo-=1;if(!t.isStruct)t.reveal=Math.max(t.reveal,2);shoot(u,t,u.dmg,.95,'f','rocket');if(u.ammo<1)say(u,'Robotarna slut. Skicka mig till service, Birka eller en tagen verkstad, för att ladda om.',[{l:'Till service',f:()=>goRtb(u,'Återvänder för att ladda om.')}]);
+  u.cd=1/u.rate;u.ammo-=1;if(!t.isStruct)t.reveal=Math.max(t.reveal,2);shoot(u,t,u.dmg,.95,'f','rocket');if(u.ammo<1)say(u,'Robotarna slut. Skicka mig till service, Birka eller en tagen verkstad, för att ladda om.',[{l:'Till service',f:()=>goRtb(u,'Återvänder för att ladda om.',true)}]);
   for(const m of G.enemies)if(m.mobile&&!m.dead&&dist(m,u)<320)m.alert={x:u.x,y:u.y,t:G.time};}
 function manualFire(u){
   if(u.cd>0)return;u.cd=1/u.rate;
@@ -2571,7 +2590,7 @@ function fireAt(u,tgt){
   /* no robot at a target that the robots and shells already on their way will finish if they hit (18 okt, issue 31: a wing of four
      fired five at a robot team one robot kills); if one misses, the next robot goes when it has */
   const inbound=G.fx.reduce((s,f)=>f.k==='shot'&&!f.done&&f.side==='f'&&f.tg===tgt&&(f.ws==='rocket'||f.ws==='cannon')?s+f.dmg*dmgMult(f.a,tgt,f.w):s,0);
-  if(u.ammo>=1&&u.cd<=0&&d<=reachR(u,tgt)&&inbound<tgt.hp){u.cd=1/u.rate;u.ammo-=1;shoot(u,tgt,u.dmg,.95,'f','rocket');if(u.ammo<1){/* the last robot fired at another target than the ordered one: the ordered target decides (prov 24 okt, ö 2915 kp17: "Skicka mig till service" and "Återvänder för att ladda om" came one after the other) */const ot=u.orders[0]&&u.orders[0].type==='attack'?u.orders[0].enemy:null;if(hokDry(u,tgt)||ot&&ot!==tgt&&hokDry(u,ot))return;say(u,'Robotarna slut. Skicka mig till service, Birka eller en tagen verkstad, för att ladda om.',[{l:'Till service',f:()=>goRtb(u,'Återvänder för att ladda om.')}]);}}
+  if(u.ammo>=1&&u.cd<=0&&d<=reachR(u,tgt)&&inbound<tgt.hp){u.cd=1/u.rate;u.ammo-=1;shoot(u,tgt,u.dmg,.95,'f','rocket');if(u.ammo<1){/* the last robot fired at another target than the ordered one: the ordered target decides (prov 24 okt, ö 2915 kp17: "Skicka mig till service" and "Återvänder för att ladda om" came one after the other) */const ot=u.orders[0]&&u.orders[0].type==='attack'?u.orders[0].enemy:null;if(hokDry(u,tgt)||ot&&ot!==tgt&&hokDry(u,ot))return;say(u,'Robotarna slut. Skicka mig till service, Birka eller en tagen verkstad, för att ladda om.',[{l:'Till service',f:()=>goRtb(u,'Återvänder för att ladda om.',true)}]);}}
   if(!tgt.dead&&u.mgcd<=0&&d<=MG.range&&tgt.cls!=='armor'){u.mgcd=1/MG.rate;shoot(u,tgt,MG.dmg,MG.acc,'f','mg');}
 }
 /* escort targets: Offensiv hunts anything it can hit near the group, other postures go after whoever is shooting at the group */
@@ -3269,6 +3288,10 @@ const MOVE_DEF={on:true,max:.3,full:12,ball:new Set(['turret','tank','aa','light
 function moveDef(e,t){if(!MOVE_DEF.on||!MOVE_DEF.ball.has(e.kind)||!t.vx&&!t.vy)return 1;const dx=t.x-e.x,dy=t.y-e.y,d=Math.hypot(dx,dy)||1,lat=Math.abs(t.vx*dy-t.vy*dx)/d;
   return 1-MOVE_DEF.max*clamp(lat/MOVE_DEF.full,0,1);}
 const STALE_FORGET=40;
+/* an own unit that looks at the place where a moved enemy was last seen, and sees nothing there, forgets it at once, on the chart too
+   (decided 25 okt, Magnus, provspel ö 7670 kp05: MUS drove up to where an air defence had stood and the chart still showed it there) */
+function lookedEmpty(e){const P={id:'L'+e.id,kind:e.kind,cls:e.cls,x:e.lx,y:e.ly};for(const u of G.units){if(u.dead||u.carried)continue;const r=Math.min(u.vision,u.air?HIDE_AIR*2:120)*.8;
+    if(dist(u,P)<r&&sees(u,P))return true;}return false;}
 function startScoot(e,away){
   const C=SCOOT[e.kind];if(!C||e.sc)return false;const z=WORLD.zid[cellIdx(e.px,e.py)];let best=null,bs=-1e9;
   for(let k=0;k<18;k++){const a=Math.random()*TAU,r=C.min+Math.random()*(C.max-C.min),x=e.x+Math.cos(a)*r,y=e.y+Math.sin(a)*r,i=cellIdx(x,y);
@@ -3951,7 +3974,11 @@ function updateKrok(k,dt){
   // queued orders take over unless a salvaged load is already on the hook
   /* the captain's orders take over on the way home and in a retreat too (prov 19 okt: KROK flew home past the air defence that had hit it
      with an order to get out standing); a salvaged load on the hook goes to the ship once they are done */
-  if(k.orders.length&&(k.state==='idle'||k.state==='out'||k.state==='back')){k.holdAt=null;if(k.state==='out'&&k.target){k.target.claimed=false;k.target=null;}k.state='idle';krokOrders(k,dt,sp);return;}
+  /* a salvaged load on the hook goes down on Birka before KROK fetches or lifts anything else (fixed 25 okt, Magnus, provspel ö 7670 kp03:
+     a new salvage order on the way home took the next pile, and the new load wrote over the old, whose 30 were lost) */
+  const hookBusy=k.carry&&k.orders.length&&(k.orders[0].type==='salvage'||k.orders[0].type==='lift');
+  if(hookBusy&&k.orders[0].busySaid!==true){k.orders[0].busySaid=true;say(k,'Lämnar först '+wlabel(k.carry)+' på HMS Birka, sedan tar jag ordern.');}
+  if(k.orders.length&&!hookBusy&&(k.state==='idle'||k.state==='out'||k.state==='back')){k.holdAt=null;if(k.state==='out'&&k.target){k.target.claimed=false;k.target=null;}k.state='idle';krokOrders(k,dt,sp);return;}
   if(k.state==='idle'&&k.carry)k.state='back';
   /* a load on the hook and no order: KROK waits where it is when no known air threat reaches it, else over Birka (Magnus 21 okt, provspel
      ö 3019 kp03: it flew back to Birka after a lift and nobody knew why) */
@@ -3974,7 +4001,8 @@ function updateKrok(k,dt){
     else{k.status='På väg mot '+wlabel(w)+' i '+sq(w.x,w.y);const d=k.tBold?krokFly(k,w.x,w.y,dt,sp,true):fly(w.x,w.y);if(d===Infinity){w.claimed=false;k.target=null;k.state='back';k.pickAt=G.time+5;}else if(d<2){k.state='hook';k.t=0;}}
   }else if(k.state==='hook'){
     k.t+=dt;k.status='Kopplar last';
-    if(k.t>=3){k.carry=k.target;k.carryT=G.time;G.wrecks=G.wrecks.filter(w=>w!==k.target);G.krokQ=G.krokQ.filter(id=>id!==k.target.id);k.target=null;k.state='back';}
+    if(k.carry){k.target.claimed=false;k.target=null;k.state='back';}/* never one load over another */
+    else if(k.t>=3){k.carry=k.target;k.carryT=G.time;G.wrecks=G.wrecks.filter(w=>w!==k.target);G.krokQ=G.krokQ.filter(id=>id!==k.target.id);k.target=null;k.state='back';}
   }else{
     /* on the way home without a load it takes the next pile at once (prov 24 okt, ö 2915 kp01: it flew all the way to Birka and back
        for a pile the captain had ordered on the beach) */
@@ -4257,7 +4285,7 @@ const REP={r:25,rate:8/3,cap:.75,cost:.5,quiet:5};
 /* the BÄVER that can patch up a damaged vehicle in the field: on land, not on deck, not busy breaching, within 500 m */
 function fieldMedic(v){let best=null,bd=500;for(const b of G.units){if(b.dead||b.kind!=='eng'||b.carried||b.id===G.ctrl||!passLand(cellIdx(b.x,b.y))||onDeck(b.x,b.y))continue;
   const o=b.orders[0];if(o&&['clear','demine','capture','repair'].includes(o.type)&&!b.mission)continue;if(G.time-b.lastHit<5)continue;const d=dist(b,v);if(d<bd){bd=d;best=b;}}return best;}
-function repairCand(u,R){let best=null,bd=R;const free=v=>!v.orders.length||v.rtb||(v.mission&&v.orders[0]===v.mission);if(!passLand(cellIdx(u.x,u.y))||dist(u,homeFor(u))<homeFor(u).r)return null;
+function repairCand(u,R){let best=null,bd=R;const free=v=>!v.orders.length||v.rtb&&!(v.orders[0]&&v.orders[0].cap)||(v.mission&&v.orders[0]===v.mission);if(!passLand(cellIdx(u.x,u.y))||dist(u,homeFor(u))<homeFor(u).r)return null;
   for(const v of G.units){if(v===u||v.dead||v.carried||v.air||(v.kind!=='tank'&&v.kind!=='eng')||v.hp>=v.maxhp*REP.cap-1||!free(v)||v.id===G.ctrl)continue;if(G.units.some(w=>w!==u&&!w.dead&&w.orders[0]&&w.orders[0].type==='repair'&&w.orders[0].unit===v))continue;const d=dist(u,v);if(d<bd){bd=d;best=v;}}return best;}
 function workRepair(t,u,o,dt){
   if(t.repX==null||Math.hypot(t.x-t.repX,t.y-t.repY)>.4){t.repX=t.x;t.repY=t.y;t.repStill=0;}else t.repStill=(t.repStill||0)+dt;
@@ -4442,7 +4470,7 @@ const TESTFALL=[
   set(){const L=WORLD.landing,g=TF.put('scout',L.x,L.y-60,-PI/2);setHigh(g,true,true);TF.wing('2',[g]);const us=TF.line('tank',2,TF.en('T8'),0,320);for(const u of us)u.post='off';TF.wing('1',us);if(hasDOM)setCam(g.id);},check:()=>G.units.some(u=>u.kind==='scout'&&u.high)},
  {id:'strand',t:'Strandlandningen',seed:9949,when:TF_DAY,keep:['eng'],note:'Fienden i strandens sektor och allt som når Birkas väg in är utslaget, så stranden är säkrad. BÄVER och en VARG står på däck. Klicka på strandens ikon på sjökortet och välj Angör stranden: ramperna fälls upp, hon följer den streckade vägen in och lägger förrampen på sanden. Kör sedan BÄVER och VARG i land över förrampen och tillbaka till service, och ta ut henne igen med Tillbaka till ankarplatsen.',
   set(){TF.reveal();TF.beach();TF.put('tank',...shipPos(-32,0),CARRIER.a);},check:()=>beachState().ok&&G.beach.st==='anchor'},
- {id:'strandhamn',t:'Från stranden till hamnen',seed:9001,when:TF_DAY,note:'HMS Birka ligger på stranden innerst i en smal vik, och hamnen är tagen. Klicka på strandens ikon och välj Till hamnen: hon backar ut ur viken, cirka 200 m, eftersom hon inte kan vända där, och navigatorn tar henne direkt till hamnen utan att gå om ankarplatsen. Vid kajen glider hon in i sidled på bogpropellrarna. Snabbspola gärna.',
+ {id:'strandhamn',t:'Från stranden till hamnen',seed:9001,when:TF_DAY,note:'HMS Birka ligger på stranden innerst i en smal vik, och hamnen är tagen. Klicka på hamnens eller strandens ikon och välj Till hamnen: hon backar bara tills skrovet går fritt, cirka 40 m, vrider på stället på bogpropellrarna och navigatorn tar henne direkt till hamnen utan att gå om ankarplatsen. Vid kajen glider hon in i sidled på bogpropellrarna. Snabbspola gärna.',
   set(){TF.harbour();TF.onBeach();},check:()=>G.beach.st==='on'&&G.relays.some(r=>r.type==='hamn'&&r.captured)},
  {id:'kaj',t:'Angöringen vid kajen',seed:9949,when:TF_DAY,note:'Enbärsnäset med hamnen tagen och fienden borta. HMS Birka ger sig av från ankarplatsen när spelet startar: följ henne till hamnen, där skrovet ska gå fritt från land även förbi uddarna, och se henne stanna en bit ut från kajplatsen och glida in i sidled på bogpropellrarna. Snabbspola gärna.',
   set(){TF.harbour();},check:()=>!!WORLD.birkaPath&&G.relays.some(r=>r.type==='hamn'&&r.captured)},
@@ -4470,7 +4498,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -6839,7 +6867,9 @@ function sync3D(dtr){
   for(const[id,m]of R3.structs)if(!seen.has(id)){D.remove(m);R3.structs.delete(id);}
   seen.clear();
   for(const e of G.enemies){
-    if(e.dead||!(e.visibleNow||(e.seen&&!e.mobile)))continue;seen.add(e.id);
+    /* 3D shows an enemy only where it is (decided 25 okt, Magnus, provspel ö 7670 kp05): one seen now, or a known one that has not moved since
+       it was seen; an air defence that drove off unseen is gone from the 3D picture, while the chart keeps its last place, faded */
+    if(e.dead||!(e.visibleNow||(e.seen&&!e.mobile&&e.x===e.lx&&e.y===e.ly)))continue;seen.add(e.id);
     let m=R3.enemies.get(e.id);if(!m){m=mkEnemyMesh(e);D.add(m);R3.enemies.set(e.id,m);}
     const px=e.visibleNow?e.x:e.lx,py=e.visibleNow?e.y:e.ly;m.position.set(px,groundY(px,py),py);
     if(m.userData.truck){m.rotation.y=-e.hd;const st=!!e.sc&&(e.sc.ph!=='setup'||e.sc.t>SCOOT.aa.setup*.5);/* down while it packs and moves, up halfway through setting up */m.userData.head.rotation.y=st?PI:-(e.aim-e.hd);for(const b of m.userData.barrels)b.rotation.z=st?PI/2:PI/2-.9;}
@@ -7018,6 +7048,12 @@ function renderPip(){
   const km=sw?null:downMesh(k);treeCull(c,false);if(km)km.visible=false;R.setScissorTest(true);R.setScissor(r.x,H-r.y-r.s,r.s,r.s);R.setViewport(r.x,H-r.y-r.s,r.s,r.s);renderAgain(R,c);if(km)km.visible=true;
   R.setScissorTest(false);R.setViewport(0,0,W,H);
 }
+/* KAMERA 2 showing a GETING or HÖK has the same downward picture in its corner as the camera (decided 25 okt, Magnus, provspel ö 7670
+   kp01: with KAMERA 2 as the large view on a GETING there was no downward picture until the camera itself was turned to it) */
+function cam2Pip(R,k){const sz=R.getSize(new THREE.Vector2()),W=sz.x,H=sz.y;if(!W||!H)return;const r=pipRect(W,H);
+  if(!R3.pipCam2)R3.pipCam2=new THREE.PerspectiveCamera(DOWN_FOV_PIP,1,.5,900);const c=R3.pipCam2,km=downMesh(k),pa=R3.pipAlt;downPose(k,c);R3.pipAlt=pa;treeCull(c,false);
+  if(km)km.visible=false;R.setScissorTest(true);R.setScissor(r.x,H-r.y-r.s,r.s,r.s);R.setViewport(r.x,H-r.y-r.s,r.s,r.s);renderAgain(R,c);if(km)km.visible=true;
+  R.setScissorTest(false);R.setViewport(0,0,W,H);}
 /* a further view of the same frame (the small view, the live pictures, the second camera): the main view has just brought every matrix in
    the scene up to date and nothing moves between them, so the scene is not walked again (it was, once a view, four times a frame) */
 function renderAgain(r,cam){const s=R3.scene,a=s.autoUpdate;s.autoUpdate=false;try{r.render(s,cam);}finally{s.autoUpdate=a;}}
@@ -7267,6 +7303,7 @@ function wheelWho(sx,sy,pk,srcEl,kind){
     if(kind!=='krok')items.push({l:'Alla '+lab,keep:true,f:()=>go(L.filter(heard).map(v=>v.id))});
     for(const v of L){const out=kind!=='krok'&&!heard(v);items.push({l:v.name+(pk.unit===v?' · målet':' · '+Math.round(dist(v,tp))+' m')+(out?' · ingen kontakt':v.orders&&v.orders.length?' · upptagen':''),off:out,keep:true,
       f:()=>{if(kind==='krok'){selectKrok(v);reopen();}else go([v.id]);}});}}
+  {const hi=!kind&&harborItem(pk);if(hi)items.unshift(hi);}
   renderWheel(sx,sy,srcEl,title,sub,items,()=>{if(kind)return false;
     const lab=document.createElement('div');lab.className='lab';lab.textContent='Wing (1 till 4)';wChips.appendChild(lab);
     for(let n=1;n<=4;n++){const k=String(n),w=(G.wings[k]||[]).filter(id=>G.units.some(u=>u.id===id&&!u.dead));const b=document.createElement('button');b.type='button';b.className='chip wing';b.textContent=k+' · '+(w.length||'tom');b.disabled=!w.length;
@@ -7279,9 +7316,7 @@ function wheelWho(sx,sy,pk,srcEl,kind){
 function needsSvc(u){return u.hp<u.maxhp-.5||(u.air&&u.fuel<u.maxFuel-.5)||u.ammo<u.maxAmmo;}
 function groupService(us,who){const L=[];
   for(const u of noContact(us)){if(u.dead||u.carried||u.kind==='mus'||u.kind==='krok'||!needsSvc(u))continue;if(G.ctrl===u.id&&hasDOM)setCtrl(null);
-    const hm=homeFor(u),b=u.kind==='tank'&&u.hp<u.maxhp*REP.cap-1?fieldMedic(u):null;
-    if(b&&dist(u,b)<dist(u,hm)*.8){u.orders=[{type:'move',x:b.x,y:b.y,post:'def',toRep:b.id}];u.saved=null;u.rtb=false;u.path=null;u.hold=false;u.override=false;L.push(u.name+' till '+b.name);}
-    else{goRtb(u,'Till service vid '+hm.name+'.');L.push(u.name+' till '+hm.name);}}
+    const hm=homeFor(u);goRtb(u,'Till service vid '+hm.name+'.',true);L.push(u.name+' till '+hm.name);}
   say(null,L.length?(who||'Urvalet')+' till service: '+L.join(', ')+'.':'Ingen i '+(who?who.toLowerCase():'urvalet')+' behöver service.');}
 function selfItems(t){const it=[],sel=G.selIds.includes(t.id),sole=sel&&G.selIds.length===1,ok=heard(t),off=!ok;
   if(!sole)it.push({l:'Välj',f:()=>setSel([t.id])});
@@ -7297,7 +7332,7 @@ function selfItems(t){const it=[],sel=G.selIds.includes(t.id),sole=sel&&G.selIds
     const z=WORLD.zid[cellIdx(t.x,t.y)];if(z>=0)it.push({l:'Utforska zonen här'+nc,off,f:()=>giveOrder(t,{type:'explore',zone:z,post:'def'},false,'mission')});
     it.push({l:(t.high?'Spana lågt':'Spana högt')+nc,off,f:()=>setHigh(t,!t.high)});
 }
-  if(t.kind!=='mus'&&needsSvc(t))it.push({l:'Till service'+nc,off,f:()=>goRtb(t,'Återvänder till '+homeFor(t).name+'.')});
+  if(t.kind!=='mus'&&needsSvc(t))it.push({l:'Till service'+nc,off,f:()=>goRtb(t,'Återvänder till '+homeFor(t).name+'.',true)});
   {const wk=wingOf(t.id),wu=wk?G.wings[wk].map(unitById).filter(v=>v&&!v.dead&&v.kind!=='mus'):[];
     if(wu.length>1&&wu.some(needsSvc))it.push({l:'Wing '+wk+' till service',f:()=>groupService(wu,'Wing '+wk)});}
   if(t.kind==='eng'){wheelPost=t.post;
@@ -7309,6 +7344,9 @@ function selfItems(t){const it=[],sel=G.selIds.includes(t.id),sole=sel&&G.selIds
   return it;}
 function selfMenu(sx,sy,pk,srcEl){const t=pk.unit;if(!t||t.dead)return;
   renderWheel(sx,sy,srcEl,t.name,'egen meny',selfItems(t),()=>false,()=>wheelWho(sx,sy,pk,srcEl,null));}
+/* the harbour's own menu sends Birka there from the beach once it is taken (decided 25 okt, Magnus, provspel ö 7670 kp10: only the beach's
+   menu had it) */
+function harborItem(pk){return pk&&pk.relay&&pk.relay.type==='hamn'&&pk.relay.captured&&G.harbor&&G.harbor.secured&&!G.harbor.docked&&G.beach&&G.beach.st==='on'?{l:'HMS Birka: till hamnen',f:()=>beachGo(false)}:null;}
 function openWheel(sx,sy,pk,srcEl,pick){
   if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
   if(pk.beach){beachWheel(sx,sy,pk,srcEl);return;}
@@ -7390,6 +7428,7 @@ function openWheel(sx,sy,pk,srcEl,pick){
   if(!items.length)return;
   const canBack=!pk.wp;
   const showChips=!sk&&!!u&&!pk.wreck&&!pk.unit;
+  {const hi=harborItem(pk);if(hi)items.unshift(hi);}
   renderWheel(sx,sy,srcEl,title,sub,items,()=>{if(!showChips)return false;
     const lab=document.createElement('div');lab.className='lab';lab.textContent=postTarget?'Hållning för punkten':'Hållning för ordern';wChips.appendChild(lab);
     for(const p of PK){const b=document.createElement('button');b.type='button';b.className='chip';b.innerHTML=postSvg(p)+'<span></span>';b.lastChild.textContent=POST[p];b.setAttribute('aria-pressed',String(wheelPost===p));
@@ -7524,7 +7563,7 @@ $('bMus').addEventListener('click',()=>{roverKey();uiTick(true);});
   if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+v+' material'+(w.length?' ('+w.join(', ')+')':'');clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent='Återvinn';},4000);return;}
   clearTimeout(b._t);b.classList.remove('confirm');b.textContent='Återvinn';recycle(us);uiTick(true);});}
 $('bExplore').addEventListener('click',()=>{for(const v of noContact(selUnits()))if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');uiTick(true);});
-$('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(0):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of noContact(selUnits())){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
+$('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(0):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of noContact(selUnits())){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post,cap:1}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of noContact(selUnits())){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
 $('bPause').addEventListener('click',()=>{setPaused(!G.paused);uiTick(true);});
 function setAutoPause(on){AUTOPAUSE.on=on;try{localStorage.setItem('bh.autopause',on?'1':'0');}catch(_){}const b=$('bAutoPause');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Autopaus på':'Autopaus av';}
@@ -7628,14 +7667,21 @@ function buildLockC(){const c=lockX,W4=GW*4,H4=GH*4;c.clearRect(0,0,W4,H4);c.sav
 function tagSprite(text,bg,fg){const c=mkCanvas(256,64),x=c.getContext('2d');x.font='700 30px '+FONT;const tw=Math.min(244,x.measureText(text).width+28);
   x.fillStyle=bg;x.beginPath();x.rect((256-tw)/2,8,tw,48);x.fill();x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';x.fillText(text,128,33);
   const tx=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false,depthWrite:false,fog:false}));sp.renderOrder=20;sp.userData.tw=tw;return sp;}
+/* a task mark's size is set for each view as it is drawn, from the camera drawing it: about 6 % of the picture's height, and it fades out
+   between 25 and 12 m from the camera (decided 25 okt, Magnus, provspel ö 7670 kp04: the size was set once a frame from the main camera
+   185 m off, and KAMERA 2 15 m behind the same VARG had the 14 m spanner over half its picture) */
+const MV=new THREE.Vector3();
+function markView(r,s,cam){MV.setFromMatrixPosition(this.parent.matrixWorld);const d=cam.position.distanceTo(MV),fov=cam.isPerspectiveCamera?cam.fov:CAM_FOV;
+  const sc=clamp(d*2*Math.tan(fov*PI/360)*.06,1.5,70)*this.userData.k;this.scale.set(sc,sc,1);this.updateMatrixWorld();this.material.opacity=clamp((d-12)/13,0,1);}
 function syncMarks(dtr){if(!R3.marks)R3.marks=new Map();const want=taskMarks(),seen=new Set();
   const iconTex=g=>{R3.markTex=R3.markTex||{};if(!R3.markTex[g]){const c=mkCanvas(128,128),x=c.getContext('2d');x.fillStyle='rgba(14,21,28,.82)';x.beginPath();x.arc(64,64,60,0,TAU);x.fill();drawGlyph(x,g,64,64,40,MARK_COL[g]);const t=new THREE.CanvasTexture(c);R3.markTex[g]=t;}return R3.markTex[g];};
   for(const m of want){seen.add(m.k);let o=R3.marks.get(m.k);
     if(!o||o.g!==m.g){if(o)R3.dyn.remove(o.grp);const grp=new THREE.Group(),ic=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:iconTex(m.g),transparent:true,side:THREE.DoubleSide,depthTest:false,fog:false}));ic.renderOrder=20;
       const rc=mkCanvas(128,128),rt=new THREE.CanvasTexture(rc),ring=new THREE.Sprite(new THREE.SpriteMaterial({map:rt,transparent:true,depthTest:false,fog:false}));ring.renderOrder=21;grp.add(ic);grp.add(ring);R3.dyn.add(grp);
+      ic.userData.k=1;ring.userData.k=1.35;ic.onBeforeRender=ring.onBeforeRender=markView;ic.frustumCulled=ring.frustumCulled=false;/* its size is set as it is drawn */
       o={grp,ic,ring,rc,rt,g:m.g,p:-1};R3.marks.set(m.k,o);}
     const y=m.unit?unitY(m.unit,0)+11:groundY(m.x,m.y)+13;o.grp.position.set(m.x,y,m.y);
-    const d=R3.cam.position.distanceTo(o.grp.position),sc=clamp(d*.075,5,70);o.ic.scale.set(sc,sc,1);o.ring.scale.set(sc*1.35,sc*1.35,1);o.ic.rotation.y+=dtr*1.6;
+    o.ic.rotation.y+=dtr*1.6;
     if(Math.abs(o.p-m.p)>.01){o.p=m.p;const x=o.rc.getContext('2d');x.clearRect(0,0,128,128);x.lineWidth=9;x.strokeStyle='rgba(255,255,255,.25)';x.beginPath();x.arc(64,64,56,0,TAU);x.stroke();
       if(m.p>0){x.strokeStyle=MARK_COL[m.g];x.beginPath();x.arc(64,64,56,-PI/2,-PI/2+TAU*m.p);x.stroke();}o.rt.needsUpdate=true;}}
   for(const[k,o]of R3.marks)if(!seen.has(k)){R3.dyn.remove(o.grp);o.rt.dispose();o.ring.material.dispose();o.ic.material.dispose();o.ic.geometry.dispose();R3.marks.delete(k);}}
@@ -7783,7 +7829,7 @@ function cam2Render(F,u){const S=R3.sun;if(!C2S.p){C2S.p=new THREE.Vector3();C2S
   S.position.set(f.x+vDir.x*SD,f.y+vDir.y*SD,f.z+vDir.z*SD);S.updateMatrixWorld();S.target.position.copy(f);S.target.updateMatrixWorld();
   renderAgain(F.r,F.cam);S.position.copy(C2S.p);S.updateMatrixWorld();S.target.position.copy(C2S.t);S.target.updateMatrixWorld();}
 function feedDraw(F){
-  if(F.uid==='bay'){const b=G.build[0];F.el.classList.toggle('empty',!F.r);F.lbl.textContent='BYGGBÄDDEN';const st=b?'Bygger '+(b.kind==='krok'?'KROK':TYPES[b.kind].label)+' '+Math.round(clamp(1-b.t/(b.total||1),0,1)*100)+' %'+(G.build.length>1?' · '+(G.build.length-1)+' i kö':''):'Ledig';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width='0';F.el.classList.remove('hit');
+  if(F.uid==='bay'){if(F.nzv){F.nzv=0;F.nz.style.opacity=0;}/* the build bay has no radio link: the noise of the unit shown before goes (fixed 25 okt, provspel ö 7670 kp07: it stayed, frozen) */const b=G.build[0];F.el.classList.toggle('empty',!F.r);F.lbl.textContent='BYGGBÄDDEN';const st=b?'Bygger '+(b.kind==='krok'?'KROK':TYPES[b.kind].label)+' '+Math.round(clamp(1-b.t/(b.total||1),0,1)*100)+' %'+(G.build.length>1?' · '+(G.build.length-1)+' i kö':''):'Ledig';if(F.st.textContent!==st)F.st.textContent=st;F.hp.style.width='0';F.el.classList.remove('hit');
     if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
     const c=shipPos(BAY.lat+15,BAY.fwd-13),t=shipPos(BAY.lat,BAY.fwd);F.cam.position.set(c[0],DECK_Y+10,c[1]);F.cam.lookAt(t[0],DECK_Y+2.5,t[1]);treeCull(F.cam,false);renderAgain(F.r,F.cam);return;}
   const u=unitById(F.uid);F.el.classList.toggle('empty',!u||u.dead||!F.r);
@@ -7792,7 +7838,7 @@ function feedDraw(F){
   if(!F.r)return;const w=F.cv.clientWidth,h=F.cv.clientHeight;if(!w||!h)return;
   if(F.isBig){const pr=resBase()*(DYNRES.on?DYNRES.scale:1);if(F.r.getPixelRatio()!==pr){F.r.setPixelRatio(pr);F.w=0;}}
   if(F.w!==w||F.h!==h){F.w=w;F.h=h;F.r.setSize(w,h,false);F.cam.aspect=w/h;F.cam.updateProjectionMatrix();}
-  if(F.isBig){feedCam(u,F.cam);treeCull(F.cam,false);cam2Render(F,u);}
+  if(F.isBig){feedCam(u,F.cam);treeCull(F.cam,false);cam2Render(F,u);if(u.kind==='scout'&&!u.carried&&heard(u))cam2Pip(F.r,u);}
   else{const far=FEEDQ.L[FEEDQ.lv].far;if(F.cam.far!==far){F.cam.far=far;F.cam.updateProjectionMatrix();}feedCam(u,F.cam);
     /* the haze closes in with the picture's reach, so its edge is fog and not a cut */
     const fg=R3.scene.fog,fn=fg.near,ff=fg.far;if(ff>far*.95){fg.far=far*.95;fg.near=Math.min(fn,far*.45);}treeCull(F.cam,false,fg.far);renderAgain(F.r,F.cam);fg.near=fn;fg.far=ff;}
