@@ -437,6 +437,11 @@ const M_HALL=1,M_STRAND=2,M_SKOG=3,M_AKER=4,M_HAGE=5;
 const TREE_SP={birch:0,alder:1,aspen:2,oak:3,maple:4,rowan:5};
 const PI=Math.PI,TAU=PI*2;
 const CX=WW/2,CY=WH/2,CARRIER={x:WW/2,y:WH-300,a:-PI/2};
+// the surrounding archipelago's fairway and island shapes, up here so that the reeds' shelter can use them in the headless tests too (see surroundData)
+const FAIR={off:330,lane:70,y0:-1800,y1:4000};
+const fairX=(W,y)=>WW+FAIR.off+90*Math.sin(y/700+W.seed%7);
+const sIsleW=(q,a)=>1+.2*Math.sin(2*a+q.p[0])+.11*Math.sin(5*a+q.p[1])+.06*Math.sin(11*a+q.p[2])+.03*Math.sin(23*a+q.p[3]);
+const sIsleH=(q,f,a)=>Math.max(.5,q.h*Math.pow(1-f,.55)*(1+.18*Math.sin(3*a+q.p[1]+f*4)));
 const hasDOM=typeof document!=='undefined'&&!!document.getElementById&&!!document.getElementById('app');
 const $=id=>document.getElementById(id);
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -1536,18 +1541,14 @@ function buildWorldTry(seed,tryK,type,move){
         }
       // a few big single boulders further out, 10 to 60 m off, breaking the surface
       for(let k=0;k<N;k++){const e=ev[k];if(e>-.7||e<-5||dL[k]<10||dL[k]>60||hc[k]<4)continue;const x=(k%nx)*WW/SX,y=((k/nx)|0)*WH/SY;if(Rs()<.07&&far(x,y))put(x,y,e,Math.min(5,-e/.85+.2+Rs()*.8));}}
-    /* reeds (decided 25 okt, Magnus): only in sheltered coves, as in the archipelago, in water down to about 2 m off a shore that is not a cliff, in
-       beds with open water between them. Shelter is the share of 32 rays from the point that meet land within 320 m; a straight coast
-       gets about .55 from the island behind it, so only coves over .68 get reeds and open coast and capes none. Not on the landing beach, in the harbour, on Birka's way in or at the cove's landing point; jetties and
-       boats clear them further down. Decor only: they hide nothing and stop nothing */
-    {const Rr=rng(s*577+29),reeds=[],NR=32,dirs=[...Array(NR)].map((_,a)=>[Math.cos(a/NR*6.2832),Math.sin(a/NR*6.2832)]);W.reeds=reeds;
-      const at=(x,y)=>{const i=Math.round(x/stp),j=Math.round(y/stp);return i<0||j<0||i>=nx||j>=ny?-9:ev[j*nx+i];};
-      const shel=(x,y)=>{let n=0;for(const[cx,cy]of dirs)for(let d=stp*2;d<=320;d+=stp)if(at(x+cx*d,y+cy*d)>0){n++;break;}return n/NR;};
+    /* reeds (decided 25 okt, Magnus): only in sheltered coves, as in the archipelago, in water down to about 2 m off a shore that is not a
+       cliff, in beds with open water between them. Here the places that could hold reeds; how sheltered they are is judged when the
+       island is drawn, with its islets and the surrounding archipelago (reedsOf). Not on the landing beach, in the harbour,
+       on Birka's way in or at the cove's landing point. Decor only: they hide nothing and stop nothing */
+    {const cand=[];W.reedCand=cand;
       for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){const k=j*nx+i,e=ev[k],x=i*stp,y=j*stp;if(e<-2.2||e>.25||hc[k]>7||(e>0?dW[k]>stp*1.5:dL[k]>20))continue;
         if(Math.hypot(x-landing.x,y-landing.y)<150||covePt&&Math.hypot(x-covePt.x,y-covePt.y)<45||W.harbor&&Math.hypot(x-W.harbor.x,y-W.harbor.y)<HARB.L+90||nearPath(x,y,35))continue;
-        const bed=fbm(x*5,y*5,s+1300);if(bed<.45)continue;const sh=shel(x,y);if(sh<.68)continue;
-        const n=Math.round(clamp((sh-.68)/.17,0,1)*clamp((bed-.45)/.1,0,1)*10+Rr()*.8);
-        for(let q=0;q<n;q++)reeds.push({x:x+(Rr()-.5)*stp,y:y+(Rr()-.5)*stp,s:.75+Rr()*.5,a:Rr()*6.283,r:1});}}
+        const bed=fbm(x*5,y*5,s+1300);if(bed>=.45)cand.push({x,y,bed});}}
     for(let k=0;k<N;k++)if(hall[k]){const i=k%nx,j=(k/nx)|0;let g=0;if(i<SX)g=Math.max(g,Math.abs(ev[k]-ev[k+1]));if(i>0)g=Math.max(g,Math.abs(ev[k]-ev[k-1]));if(j<SY)g=Math.max(g,Math.abs(ev[k]-ev[k+nx]));if(j>0)g=Math.max(g,Math.abs(ev[k]-ev[k-nx]));vcls[k]=ev[k]<=0?(ev[k]<-3.2?DEEP:SHAL):g>2.6?ROCK:BEACH;}
     // the granite slope is bare rock in the land plan, and keeps a quarter of its trees, low pines
     const vk=(x,y)=>Math.round(y/WH*SY)*nx+Math.round(x/WW*SX);
@@ -1739,8 +1740,7 @@ function buildWorldTry(seed,tryK,type,move){
         const r={x:m.x+left.x*wd,y:m.y+left.y*wd},g={x:m.x-left.x*wd,y:m.y-left.y*wd};if(wet(cellIdx(r.x,r.y))&&wet(cellIdx(g.x,g.y))){D.marks.push({...r,type:'red'},{...g,type:'green'});}}}
   }
   if(W.coastStones&&W.decor){const D=W.decor,sd=(px,py,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1,t=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);return Math.hypot(px-a.x-vx*t,py-a.y-vy*t);};
-    W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));
-    if(W.reeds)W.reeds=W.reeds.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+6),y:j.y+Math.sin(j.a)*(j.len+6)})>5)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>8));}
+    W.coastStones=W.coastStones.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+4),y:j.y+Math.sin(j.a)*(j.len+4)})>6)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>9)&&[...(D.villas||[]),...(D.cabins||[]),...(D.sheds||[])].every(h=>Math.hypot(h.x-q.x,h.y-q.y)>8)&&!(D.light&&Math.hypot(D.light.x-q.x,D.light.y-q.y)<10));}
   // the ridges and the field islets, now that the houses stand where they would without them (see the note at ridges)
   {const ev0=ev.slice();ridges();
     /* the lighthouse was seated before the ridges reshaped the ground; on ö 7313 they lowered it 12 m and the tower hung in the air */
@@ -4438,7 +4438,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -5479,7 +5479,7 @@ function mkDecor(D,st){
   /* the reeds of the sheltered coves (25 okt), one instanced mesh: a clump of 48 thin tapering blades, seven with a panicle, stood on
      the bottom and reaching 1.2 to 2 m over the water. Green in summer and straw the rest of the year with the season's grass, and
      swaying with the sea's own wind, stronger towards the tips */
-  {const RE=WORLD.reeds||[];if(RE.length){if(!R3.reedG){const P=[],C=[],N=[],rr=rng(4711);for(let b=0;b<48;b++){const a=rr()*6.283,d=Math.sqrt(rr())*1.6,x=Math.cos(a)*d,z=Math.sin(a)*d,h=.75+rr()*.25,lx=x*.12+(rr()-.5)*.12,lz=z*.12+(rr()-.5)*.12,w=.035+rr()*.02,o=rr()*6.283,ox=Math.cos(o)*w,oz=Math.sin(o)*w,v=rr(),pan=b<7;
+  {const RE=reedsOf(WORLD);if(RE.length){if(!R3.reedG){const P=[],C=[],N=[],rr=rng(4711);for(let b=0;b<48;b++){const a=rr()*6.283,d=Math.sqrt(rr())*1.6,x=Math.cos(a)*d,z=Math.sin(a)*d,h=.75+rr()*.25,lx=x*.12+(rr()-.5)*.12,lz=z*.12+(rr()-.5)*.12,w=.035+rr()*.02,o=rr()*6.283,ox=Math.cos(o)*w,oz=Math.sin(o)*w,v=rr(),pan=b<7;
         const tx=x+lx,tz=z+lz,top=pan?h-.16:h;P.push(x-ox,0,z-oz,x+ox,0,z+oz,tx,top,tz);for(let q=0;q<3;q++){C.push(v,0,0);N.push(lx*2,1,lz*2);}
         if(pan){const px=-oz*1.4/w*.05,pz=ox*1.4/w*.05;for(const s2 of[1,-1])P.push(tx-ox*.8,top-.02,tz-oz*.8,tx+ox*.8,top-.02,tz+oz*.8,tx+lx*.5+s2*px*.6,h+.04,tz+lz*.5+s2*pz*.6);for(let q=0;q<6;q++){C.push(v,1,0);N.push(lx*2,1,lz*2);}}}
         const dup=(A)=>{const o=A.slice();for(let t=0;t<A.length;t+=9)o.push(...A.slice(t+3,t+6),...A.slice(t,t+3),...A.slice(t+6,t+9));return o;};
@@ -5946,8 +5946,24 @@ function init3D(){
    colours, no trees and no shadows: a few tens of thousands of triangles in one draw call. */
 /* the outer fairway: big ships pass east of the play area, on the sea side, two lanes (northbound on the east side, as at sea
    ships keep to starboard). Scenery skerries are kept out of it. */
-const FAIR={off:330,lane:70,y0:-1800,y1:4000};
-const fairX=(W,y)=>WW+FAIR.off+90*Math.sin(y/700+W.seed%7);
+  /* the reeds' shelter (25 okt, Magnus: weight .3 for the land beyond, since the island lies more or less inside the skerries and
+     the surrounding archipelago is drawn round it): the mean over 32 rays of the land each meets. Land within 320 m, the island and
+     its islets, counts in full; land further out, the island across a bay or the surrounding islands (dense and high to the west on
+     an inner island, few and low on an outer one), counts .3 out to 800 m and less to nothing at 2.5 km. Worked out when the island
+     is drawn, since the surrounding archipelago cannot be known while the first island is built as the script loads; jetties and
+     boats clear them. A straight coast gets about
+     .55 from the island behind it, so only coves over .68 get reeds, and the sheltered side of an inner island gets more of them */
+function reedsOf(W){if(W.reeds)return W.reeds;if(!W.reedCand)return[];const S=surroundData(W),stp=WW/W.SX,nx=W.SX+1,ny=W.SY+1,ev=W.ev,Rr=rng(W.seed*577+29),reeds=[],NR=32,C=40,X0=-1600,NC=Math.ceil((WW+3200)/C),occ=new Uint8Array(NC*NC);
+    for(const q of S.isl){const R=q.r*1.35,c=Math.cos(q.rot),sn=Math.sin(q.rot);for(let gy=Math.max(0,Math.floor((q.y-R-X0)/C));gy<=Math.min(NC-1,Math.floor((q.y+R-X0)/C));gy++)for(let gx=Math.max(0,Math.floor((q.x-R-X0)/C));gx<=Math.min(NC-1,Math.floor((q.x+R-X0)/C));gx++){
+      const dx=X0+(gx+.5)*C-q.x,dy=X0+(gy+.5)*C-q.y,lx=dx*c+dy*sn,ly=(-dx*sn+dy*c)/q.el;if(Math.hypot(lx,ly)<q.r*sIsleW(q,Math.atan2(ly,lx)))occ[gy*NC+gx]=1;}}
+    const land=(x,y)=>{if(x>=0&&y>=0&&x<=WW&&y<=WH)return ev[Math.round(y/stp)*nx+Math.round(x/stp)]>0;const gx=Math.floor((x-X0)/C),gy=Math.floor((y-X0)/C);return gx>=0&&gy>=0&&gx<NC&&gy<NC&&occ[gy*NC+gx]===1;};
+    const shel=(x,y)=>{let n=0;for(let a=0;a<NR;a++){const cx=Math.cos(a/NR*6.2832),cy=Math.sin(a/NR*6.2832);let w=0;
+      for(let d=stp*2;d<=2500;d+=d<320?stp:25)if(land(x+cx*d,y+cy*d)){w=d<=320?1:.3*clamp((2500-d)/1700,0,1);break;}n+=w;}return n/NR;};
+    for(const q of W.reedCand){const sh=shel(q.x,q.y);if(sh<.68)continue;
+      const n=Math.round(clamp((sh-.68)/.17,0,1)*clamp((q.bed-.45)/.1,0,1)*10+Rr()*.8);
+      for(let k=0;k<n;k++)reeds.push({x:q.x+(Rr()-.5)*stp,y:q.y+(Rr()-.5)*stp,s:.75+Rr()*.5,a:Rr()*6.283,r:1});}
+    const D=W.decor,sd=(px,py,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1,t=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);return Math.hypot(px-a.x-vx*t,py-a.y-vy*t);};
+    W.reeds=D?reeds.filter(q=>D.jetties.every(j=>sd(q.x,q.y,j,{x:j.x+Math.cos(j.a)*(j.len+6),y:j.y+Math.sin(j.a)*(j.len+6)})>5)&&D.boats.every(b=>Math.hypot(b.x-q.x,b.y-q.y)>8)):reeds;return W.reeds;}
 function surroundData(W){
   if(W.surround)return W.surround;
   const R=rng(W.seed*97+5),t0=.1+R()*.8,PAD=45,M=1500,isl=[];
@@ -5975,9 +5991,7 @@ function surroundData(W){
   for(const q of isl){if(q.forest>0&&q.o<.75){const n=Math.round((q.r/60)*(q.o<.3?1.6:1)*R()*1.6);for(let k=0;k<n;k++){const a=R()*TAU,f=.8+R()*.08,p=sIslePt(q,f,a);wins.push({x:p.x,y:p.y,h:sIsleH(q,f,a)+1.6,w:R()<.3?2:1});}}
     if(q.o>.35&&q.r<45&&navs.length<12&&R()<.45){navs.push({x:q.x,y:q.y,h:q.h+3,col:(()=>{const F=W.fairAxis;return F?(q.x-F.x)*F.nx+(q.y-F.y)*F.ny>0:q.y<CY;})()?'green':'red',ch:Math.floor(R()*7),ph:R()*5});/* the far side of the fairways from the island's lights: beyond the northern fairway is its starboard side, green; beyond the southern one red */}}
   W.surround={t0,isl,wins,navs};return W.surround;}
-const sIsleW=(q,a)=>1+.2*Math.sin(2*a+q.p[0])+.11*Math.sin(5*a+q.p[1])+.06*Math.sin(11*a+q.p[2])+.03*Math.sin(23*a+q.p[3]);
 function sIslePt(q,f,a){const lr=q.r*f*sIsleW(q,a),lx=Math.cos(a)*lr,ly=Math.sin(a)*lr*q.el,c=Math.cos(q.rot),sn=Math.sin(q.rot);return{x:q.x+lx*c-ly*sn,y:q.y+lx*sn+ly*c};}
-const sIsleH=(q,f,a)=>Math.max(.5,q.h*Math.pow(1-f,.55)*(1+.18*Math.sin(3*a+q.p[1]+f*4)));
 function mkSurround(W,st){
   const D=surroundData(W),P=[],C=[],I=[];let nv=0;R3.sNav=null;R3.sWin=null;
   const GRA=[[.58,.52,.49],[.53,.5,.48],[.6,.54,.5]],LICH=[.36,.34,.32],GRS=[.42,.47,.29],FOR=[[.16,.23,.14],[.14,.21,.13],[.19,.26,.16]];
