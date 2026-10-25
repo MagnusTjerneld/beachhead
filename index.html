@@ -480,15 +480,17 @@ class Heap{constructor(){this.a=new Int32Array(1024);this.f=new Float64Array(102
 function nearestPass(t,pass){const seen=new Uint8Array(GW*GH);const qu=[t];seen[t]=1;for(let h=0;h<qu.length;h++){const c=qu[h];if(pass(c))return c;const cx=c%GW,cy=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!seen[n]){seen[n]=1;qu.push(n);}}}return -1;}
 /* the search buffers are kept between calls and invalidated by a stamp instead of being refilled */
 const AS={N:0,g:null,came:null,gs:null,cs:null,stamp:0};
-function astarCells(s,t,pass,cost,hs){
+/* maxG (25 okt): a bound on the way's cost in cells; a branch whose cost so far plus the shortest rest of the way is over it is cut,
+   so a search for a way that will be refused anyway if it is long ends early instead of going through the whole island */
+function astarCells(s,t,pass,cost,hs,maxG){
   const N=GW*GH;if(AS.N!==N){AS.N=N;AS.g=new Float32Array(N);AS.came=new Int32Array(N);AS.gs=new Uint32Array(N);AS.cs=new Uint32Array(N);AS.stamp=0;}
   const st=++AS.stamp,g=AS.g,came=AS.came,gs=AS.gs,cs=AS.cs;
   const tx0=t%GW,ty0=(t/GW)|0;hs=hs||1;
-  const H=i=>{const dx=Math.abs(i%GW-tx0),dy=Math.abs(((i/GW)|0)-ty0);return (Math.max(dx,dy)+.414*Math.min(dx,dy))*hs;};
+  const H0=i=>{const dx=Math.abs(i%GW-tx0),dy=Math.abs(((i/GW)|0)-ty0);return Math.max(dx,dy)+.414*Math.min(dx,dy);},H=i=>H0(i)*hs;
   const hp=new Heap();g[s]=0;gs[s]=st;came[s]=-1;hp.push(s,H(s));let found=s===t;
   while(hp.size&&!found){const c=hp.pop();if(cs[c]===st)continue;cs[c]=st;if(c===t){found=true;break;}
     const cx=c%GW,cy=(c/GW)|0,gc=g[c];
-    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const ni=ny*GW+nx;if(cs[ni]===st||!pass(ni))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;const stp=(dx&&dy?1.414:1)*(cost?cost(ni):1);const ng=gc+stp;if(gs[ni]!==st||ng<g[ni]){g[ni]=ng;gs[ni]=st;came[ni]=c;hp.push(ni,ng+H(ni));}}}
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const ni=ny*GW+nx;if(cs[ni]===st||!pass(ni))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;const stp=(dx&&dy?1.414:1)*(cost?cost(ni):1);const ng=gc+stp;if(maxG&&ng+H0(ni)>maxG)continue;if(gs[ni]!==st||ng<g[ni]){g[ni]=ng;gs[ni]=st;came[ni]=c;hp.push(ni,ng+H(ni));}}}
   if(!found)return null;
   const cells=[];for(let c=t;c!==-1&&c!==s;c=came[c])cells.push(c);cells.reverse();return cells;
 }
@@ -500,12 +502,12 @@ function smooth(p,pass,cost){if(p.length<3)return p;const out=[p[0]];let i=0;
   const cum=[0];for(let k=1;k<p.length;k++)cum[k]=cum[k-1]+(cost?hotM(p[k-1],p[k],cost):0);/* metres inside a threat's reach along the search's own way */
   const ok=(a,b)=>lineOK(p[a],p[b],pass)&&(!cost||hotM(p[a],p[b],cost)<=cum[b]-cum[a]+4);
   while(i<p.length-1){let j=p.length-1;while(j>i+1&&!ok(i,j))j--;out.push(p[j]);i=j;}return out;}
-function astar(sx,sy,tx,ty,pass,cost){
+function astar(sx,sy,tx,ty,pass,cost,maxLen){
   const s=cellIdx(sx,sy);let t=cellIdx(tx,ty),exact=true;
   if(!pass(t)){t=nearestPass(t,pass);exact=false;if(t<0)return null;}
   const end=exact?{x:tx,y:ty}:cellCenter(t);
   if(s===t)return[end];
-  const cells=astarCells(s,t,pass,cost,.6);if(!cells)return null;
+  const cells=astarCells(s,t,pass,cost,.6,maxLen?maxLen/CELL:0);if(!cells)return null;
   const pts=[{x:sx,y:sy},...cells.map(cellCenter)];pts[pts.length-1]=end;
   return smooth(pts,pass,cost).slice(1);
 }
@@ -2785,10 +2787,16 @@ function fireHold(u,dt){const o=u.orders[0];
   return true;}
 /* wing support never sends a unit on a long trip: the shooter must be in the supporter's or the hit mate's zone, or close, and the
    way there at most 1.5 times the straight line plus 40 m (decided 14 okt) */
+/* the search is bounded by the longest way that would be taken (with a margin for the straightening, so no way taken before is lost),
+   and the answer kept 2 s for the same unit and shooter while the unit is within 15 m of where it asked: every VARG looks twice a
+   second for each shooter of each mate, and an unbounded search for a shooter it could not reach went through the whole island,
+   frames of 200 to 300 ms on a slow processor (benchmark 25 okt) */
 function supportReach(u,m,e){const z=(x,y)=>WORLD.zid[cellIdx(x,y)],ze=z(e.lx,e.ly),d=Math.hypot(e.lx-u.x,e.ly-u.y);
   if(ze!==z(u.x,u.y)&&ze!==z(m.x,m.y)&&d>effRange(u)+30)return false;
-  const p=astar(u.x,u.y,e.lx,e.ly,passAmph,()=>1);if(!p)return false;let L=0,q={x:u.x,y:u.y};for(const r of p){L+=Math.hypot(r.x-q.x,r.y-q.y);q=r;}
-  return L<=d*1.5+40;}
+  const C=u.supC||(u.supC={}),k=e.id,c=C[k];if(c&&G.time-c.t<2&&Math.hypot(c.x-u.x,c.y-u.y)<15&&c.ex===e.lx&&c.ey===e.ly)return c.ok;
+  const lim=d*1.5+40,p=astar(u.x,u.y,e.lx,e.ly,passAmph,()=>1,lim*1.1+2*CELL);let ok=false;
+  if(p){let L=0,q={x:u.x,y:u.y};for(const r of p){L+=Math.hypot(r.x-q.x,r.y-q.y);q=r;}ok=L<=lim;}
+  C[k]={t:G.time,x:u.x,y:u.y,ex:e.lx,ey:e.ly,ok};return ok;}
 function supportTick(u){
   if(!SUPPORT.on)return;const o=u.orders[0];
   if(o&&o.support){const e=o.enemy;let last=u.hitBy[e.id]||-99;for(const m of mates(u))last=Math.max(last,m.hitBy[e.id]||-99);
@@ -7719,9 +7727,12 @@ function feedTick(now){const F1=FEED.list[0],big=!!F1&&F1.isBig;if((!FEED.on&&!b
 function feedQTick(now){const Q=FEEDQ,gap=DIAG.lastNow?now-DIAG.lastNow:0;if(gap>3&&gap<40)Q.refMin=Math.min(Q.refMin,gap);
   if(now-Q.refT>2000){Q.refT=now;if(Q.refMin<1e9)Q.ref=clamp(Q.refMin,1000/60,34);Q.refMin=1e9;}
   /* a stall of a quarter second (an island being built, the tab away) says nothing about the pictures: 2 s until the averages forget it */
-  if(gap>250)Q.stallT=now;if(now-(Q.stallT||-1e9)<2000){Q.bad=0;return;}
-  if(now-Q.chk<500)return;Q.chk=now;
-  const heavy=DIAG.gap>Q.ref*1.15||DIAG.cpu>Q.ref*.9,light=DIAG.gap<Q.ref*1.05&&DIAG.cpu<Q.ref*.55;
+  if(gap>250)Q.stallT=now;if(now-(Q.stallT||-1e9)<2000){Q.bad=0;Q.gs=[];Q.cs=[];return;}
+  /* the half second's median frame, not a running mean: one long frame (a shader compiled, a collection) pulled the mean over the line
+     and the pictures went down to the bottom with the frame rate at 60 (benchmark 25 okt, ö 2024 slag 10) */
+  (Q.gs||(Q.gs=[])).push(gap);(Q.cs||(Q.cs=[])).push(DIAG.cpuLast||0);
+  if(now-Q.chk<500)return;Q.chk=now;const med=a=>{const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1]||0;},mg=med(Q.gs),mc=med(Q.cs);Q.gs=[];Q.cs=[];
+  const heavy=mg>Q.ref*1.15||mc>Q.ref*.9,light=mg<Q.ref*1.05&&mc<Q.ref*.55;
   Q.bad=heavy?Q.bad+1:0;Q.good=light?Q.good+1:0;
   if(Q.bad>=2&&Q.lv>0){Q.lv--;Q.bad=0;Q.good=0;Q.downT=now;}
   else if(Q.good>=10&&Q.lv<feedQMax()&&now-Q.downT>8000){Q.lv++;Q.good=0;}}
@@ -8839,7 +8850,7 @@ window.addEventListener('error',e=>diagErr('fel',e.error||e.message));
 window.addEventListener('unhandledrejection',e=>diagErr('löfte',e.reason));
 window.addEventListener('keydown',e=>{if(e.code==='F3'||e.code==='Backquote'||e.key==='§'){e.preventDefault();e.stopImmediatePropagation();diagToggle();}},true);
 function diagTick(now,P){
-  const tot=performance.now()-P[0],gap=DIAG.lastNow?now-DIAG.lastNow:16.7;DIAG.lastNow=now;
+  const tot=performance.now()-P[0],gap=DIAG.lastNow?now-DIAG.lastNow:16.7;DIAG.lastNow=now;DIAG.cpuLast=tot;
   DIAG.gap+=(gap-DIAG.gap)*.05;DIAG.cpu+=(tot-DIAG.cpu)*.05;DIAG.worst=Math.max(DIAG.worst,gap);
   for(let i=1;i<P.length&&i<=5;i++)DIAG.ph[i-1]+=((P[i]-P[i-1])-DIAG.ph[i-1])*.05;
   if(tot>800&&G.running&&G.time>3&&DIAG.slow<5){DIAG.slow++;const parts=[];for(let i=1;i<P.length;i++)parts.push(DIAG_PH[i-1]+' '+Math.round(P[i]-P[i-1]));diagShow('långsam bildruta '+Math.round(tot)+' ms ('+parts.join(', ')+')');}
@@ -9022,7 +9033,7 @@ window.addEventListener('beforeunload',e=>{if(REC.ev.length&&!REC.saved){e.preve
    camera; the only scenario where the simulation runs). The hour is held and dynamic resolution is off. A tab in the background does not
    render, so keep it in front. The result is a table against a locked baseline (the first run, or one marked &label=bas or with its
    button), and one block to copy and paste back. ---------- */
-const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],sims:[],phs:[[],[],[],[]],ns:[],lbs:[],gpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',run:'',dyn0:null,rnd0:null,boomT:0,R:null,
+const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],sims:[],phs:[[],[],[],[]],ns:[],lbs:[],gpus:[],long:[],prev:null,calls:[],tris:[],res:[],last:0,el:null,label:'',run:'',dyn0:null,rnd0:null,boomT:0,R:null,
   seeds:[1234,2024,4711],warm:2500,len:8000};
 /* the benchmark always plays on 22 September, so its day, dusk and night look alike on every island and every run */
 const BENCH_DOY=doyOf(8,22),BENCH_SLAG=[4,10,20];BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
@@ -9052,7 +9063,7 @@ function benchCam(){const v=BENCH.v;if(!v)return;R3.cam.position.set(v.px,v.py,v
 function benchStart(){if(BENCH.on)return;let q=null;try{q=new URLSearchParams(location.search);}catch(_){}
   BENCH.warm=+(q&&q.get('benchwarm'))||2500;BENCH.len=+(q&&q.get('benchlen'))||8000;BENCH.run=(q&&q.get('label'))||'';
   BENCH.list=+(q&&q.get('benchmax'))>0?BENCH.all.slice(0,+q.get('benchmax')):BENCH.all;
-  BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();BENCH.rnd0=Math.random;
+  BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.long=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();BENCH.rnd0=Math.random;
   diagToggle(true,true);if(BENCH.el)BENCH.el.hidden=true;benchNext();}
 function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();const sc=BENCH.list[BENCH.i];
   // the same random numbers and the same fresh island every time, so two runs see the same frames
@@ -9061,13 +9072,18 @@ function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();
   if(sc.view==='strid'){const v=BENCH.v;for(let k=0;k<4;k++){const a=k*TAU/4;startFire(v.tx+Math.cos(a)*18,v.ty+Math.sin(a)*18,60,1,0);}}
   if(sc.view==='slag')benchSlag(sc.n);
   uiTick(true);BENCH.label=(BENCH.i+1)+'/'+BENCH.list.length+'  '+benchName(sc);BENCH.phase='warm';BENCH.t0=performance.now();BENCH.boomT=0;
-  BENCH.gaps=[];BENCH.cpus=[];BENCH.sims=[];BENCH.phs=[[],[],[],[]];BENCH.ns=[];BENCH.lbs=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
+  BENCH.gaps=[];BENCH.cpus=[];BENCH.sims=[];BENCH.phs=[[],[],[],[]];BENCH.ns=[];BENCH.lbs=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;BENCH.prev=null;}
 const benchPct=(a,q)=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(q*b.length))];};
 function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!sc)return;G.tod=sc.tod;G.doy=BENCH_DOY;const t=performance.now()-BENCH.t0,gap=BENCH.last?now-BENCH.last:0;BENCH.last=now;
   // the staged fight: a blast and a puff of smoke near the fires every 0.3 s of game time
   if(sc.view==='strid'&&G.time-BENCH.boomT>=.3){BENCH.boomT=G.time;const v=BENCH.v,R=BENCH.R,x=v.tx+(R()-.5)*60,y=v.ty+(R()-.5)*60;
     G.fx.push({k:'boom',x,y,t:0,ttl:1.1,big:R()<.3});G.fx.push({k:'puff',x,y,h:groundY(x,y)+1,t:0,ttl:1.2,c:0x6a665e,s:2.4,hit:false,ws:'cannon'});}
   if(sc.view==='slag')benchTopUp();
+  /* a long frame: the gap before this frame is the last frame's work and whatever ran after it, so it is put with the last frame's
+     parts; parts that add up to far less than the gap mean the time went outside the game's code (a collection, the browser) */
+  {const pr=R3?(R3.renderer.info.programs||[]).length:0,ph=[];for(let i=1;i<P.length&&i<=5;i++)ph.push(P[i]-P[i-1]);
+    if(BENCH.phase==='run'&&gap>40&&BENCH.prev&&BENCH.long.length<200)BENCH.long.push({name:benchName(sc),t:+(t/1000).toFixed(1),gap:Math.round(gap),ph:BENCH.prev.ph.map(x=>+x.toFixed(1)),prog:pr-BENCH.prev.pr,fx:G.fx.length});
+    BENCH.prev={ph,pr};}
   if(BENCH.phase==='warm'){if(t>=BENCH.warm){BENCH.phase='run';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.sims=[];BENCH.phs=[[],[],[],[]];BENCH.ns=[];BENCH.lbs=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];}return;}
   if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);BENCH.sims.push(P.length>1?P[1]-P[0]:0);for(let i=0;i<4;i++)BENCH.phs[i].push(P.length>i+2?P[i+2]-P[i+1]:0);BENCH.ns.push(G.units.length+G.enemies.filter(e=>!e.dead).length);BENCH.lbs.push(FEEDQ.lv);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
   if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),sim:benchPct(BENCH.sims,.5),sim95:benchPct(BENCH.sims,.95),ph:BENCH.phs.map(a=>benchPct(a,.5)),ph95:BENCH.phs.map(a=>benchPct(a,.95)),ns:benchPct(BENCH.ns,.5),lb:benchPct(BENCH.lbs,.5),gpu:BENCH.gpus.length?benchPct(BENCH.gpus,.25):null,gpu50:BENCH.gpus.length?benchPct(BENCH.gpus,.5):null,gpu95:BENCH.gpus.length?benchPct(BENCH.gpus,.95):null,
@@ -9097,7 +9113,7 @@ function benchDone(){BENCH.on=false;BENCH.label='';BENCH.v=null;Math.random=BENC
     const tab=r=>'scenario;bild_ms;p95_ms;varst_ms;gpu_p25_ms;gpu_med_ms;gpu_p95_ms;cpu_ms;sim_ms;sim_p95_ms;sjokort_ms;3d_ms;ljud_ms;hud_ms;sjokort_p95;3d_p95;ljud_p95;hud_p95;objekt;livebild_niva;anrop;tri_k\n'+r.rows.map(x=>[x.name,x.gap,x.p95,x.worst,x.gpu??'',x.gpu50??'',x.gpu95??'',x.cpu,x.sim??'',x.sim95??'',...(x.ph||['','','','']),...(x.ph95||['','','','']),x.ns??'',x.lb??'',x.calls,x.tri].join(';')).join('\n');
     const meta=r=>(r.label?'etikett '+r.label+'  ':'')+r.date+'\ngrafik '+r.gpu+'\nskärm '+r.screen;
     BENCH.el._csv='BENCHMARK Uppdrag Arkipelag\nsiktavstånd '+SIKT_N[SIKT.k]+'  skuggor '+(R3&&R3.renderer.shadowMap.enabled?'på':'av')+'\nwebbläsare '+navigator.userAgent+
-      '\n\nDENNA KÖRNING  '+meta(run)+'\n'+tab(run)+'\n\nBASLINJE  '+(base?meta(base)+'\n'+tab(base):'(den här körningen är baslinjen)');
+      '\n\nDENNA KÖRNING  '+meta(run)+'\n'+tab(run)+(BENCH.long.length?'\n\nLÅNGA BILDRUTOR (över 40 ms, med förra bildrutans delar)\nscenario;sekund;gap_ms;sim;sjokort;3d;ljud;hud;nya_program;effekter\n'+BENCH.long.map(x=>[x.name,x.t,x.gap,...x.ph,x.prog,x.fx].join(';')).join('\n'):'\n\nLÅNGA BILDRUTOR inga över 40 ms')+'\n\nBASLINJE  '+(base?meta(base)+'\n'+tab(base):'(den här körningen är baslinjen)');
     BENCH.el.children[1].textContent=head+'\n'+lines.join('\n')+sum+(base?'':'\n(den här körningen är nu baslinjen)');console.log(head+'\n'+lines.join('\n')+sum);};
   if(!BENCH.el){const el=document.createElement('div');el.id='benchOut';el.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;background:rgba(14,20,26,.96);color:#d8e2e6;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:12px 14px;border:1px solid rgba(160,190,200,.45);border-radius:8px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;';
     el.innerHTML='<b style="color:#e8eef0">Benchmark klart</b><pre style="margin:8px 0;font:inherit;white-space:pre"></pre><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-a="copy">Kopiera resultat</button><button type="button" class="btn" data-a="base">Gör till baslinje</button><button type="button" class="btn" data-a="again">Kör igen</button><button type="button" class="btn" data-a="close">Stäng</button></div>';
