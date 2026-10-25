@@ -6176,15 +6176,28 @@ function buildStatic(){
      slope and sank into a bulge, and VARG seemed to drive under it): the pieces are at most 1 m long, and the left edge, the centre
      line and the right edge each lie 0.2 m over the ground where they are */
   const RY=.2,densify=rd=>{const o=[rd[0]];for(let i=1;i<rd.length;i++){const a=rd[i-1],b=rd[i],n=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/1);for(let k=1;k<n;k++)o.push({x:a.x+(b.x-a.x)*k/n,y:a.y+(b.y-a.y)*k/n});o.push(b);}return o;};
-  for(const[RL,hw]of[[W.roads,3.2],[W.lanes||[],1.7]])for(const rd0 of RL){if(rd0.length<2)continue;const rd=densify(rd0);
+  /* a gravel road (decided 25 okt, Magnus: the flat brown band looked lo-fi beside the ground's colour map): the band is a third wider
+     than the road and carries, per corner, its place across it in metres and its kind; the shader (ROAD_GLSL) lays gravel with two
+     packed wheel tracks, a loose ridge between them (grass on the lanes), small stones that fade out with distance, and a ragged edge
+     where the gravel goes over into the ground's own colour map under it. Lit with the ground's normals, so the wider band does not
+     show on a slope. Nothing per frame: one mesh as before */
+  const ra=[],rn=[],gn=(x,y)=>{const a=groundY(x-1,y)-groundY(x+1,y),b=groundY(x,y-1)-groundY(x,y+1),l=Math.hypot(a,2,b);return[a/l,2/l,b/l];};
+  for(const[RL,hw0,kind]of[[W.roads,3.2,0],[W.lanes||[],1.7,1]])for(const rd0 of RL){if(rd0.length<2)continue;const rd=densify(rd0),hw=hw0*1.35;
     const E=rd.map((p,i)=>{const a=rd[Math.max(0,i-1)],b=rd[Math.min(rd.length-1,i+1)],q=i>0?p:b,o=i>0?a:p,r=i<rd.length-1?b:p,m=i<rd.length-1?p:a;
       let d1x=q.x-o.x,d1y=q.y-o.y,d2x=r.x-m.x,d2y=r.y-m.y;const l1=Math.hypot(d1x,d1y)||1,l2=Math.hypot(d2x,d2y)||1;d1x/=l1;d1y/=l1;d2x/=l2;d2y/=l2;
       let nx=-(d1y+d2y),ny=d1x+d2x;const ln=Math.hypot(nx,ny);if(ln<1e-6){nx=-d1y;ny=d1x;}else{nx/=ln;ny/=ln;}
       const k=hw/Math.max(.5,nx*-d1y+ny*d1x),lx=p.x+nx*k,ly=p.y+ny*k,rx=p.x-nx*k,ry=p.y-ny*k;return{lx,ly,rx,ry,cx:p.x,cy:p.y,yl:groundY(lx,ly)+RY,yc:groundY(p.x,p.y)+RY,yr:groundY(rx,ry)+RY};});
     for(let i=0;i<rd.length-1;i++){const A=E[i],B=E[i+1];
       rv.push(A.lx,A.yl,A.ly, B.lx,B.yl,B.ly, A.cx,A.yc,A.cy, B.lx,B.yl,B.ly, B.cx,B.yc,B.cy, A.cx,A.yc,A.cy,
-              A.cx,A.yc,A.cy, B.cx,B.yc,B.cy, A.rx,A.yr,A.ry, B.cx,B.yc,B.cy, B.rx,B.yr,B.ry, A.rx,A.yr,A.ry);}}/* wound to face up, for the normals below */
-  if(rv.length){const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rv),3));{const nm=new Float32Array(rv.length);for(let i=1;i<nm.length;i+=3)nm[i]=1;rg.setAttribute('normal',new THREE.BufferAttribute(nm,3));}/* lit as level ground: per-triangle normals showed dark creases where a bend's triangles meet */st.add(new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0x6b6156,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));}
+              A.cx,A.yc,A.cy, B.cx,B.yc,B.cy, A.rx,A.yr,A.ry, B.cx,B.yc,B.cy, B.rx,B.yr,B.ry, A.rx,A.yr,A.ry);/* wound to face up */
+      for(const[x,y,a]of[[A.lx,A.ly,-hw],[B.lx,B.ly,-hw],[A.cx,A.cy,0],[B.lx,B.ly,-hw],[B.cx,B.cy,0],[A.cx,A.cy,0],[A.cx,A.cy,0],[B.cx,B.cy,0],[A.rx,A.ry,hw],[B.cx,B.cy,0],[B.rx,B.ry,hw],[A.rx,A.ry,hw]]){ra.push(a,kind);rn.push(...gn(x,y));}}}
+  if(rv.length){const rg=new THREE.BufferGeometry(),P=new Float32Array(rv),uv=new Float32Array(rv.length/3*2);for(let i=0;i<uv.length/2;i++){uv[i*2]=P[i*3]/WW;uv[i*2+1]=P[i*3+2]/WH;}
+    rg.setAttribute('position',new THREE.BufferAttribute(P,3));rg.setAttribute('normal',new THREE.BufferAttribute(new Float32Array(rn),3));/* the ground's smooth normals: per-triangle ones showed dark creases where a bend's triangles meet */
+    rg.setAttribute('uv',new THREE.BufferAttribute(uv,2));rg.setAttribute('rd',new THREE.BufferAttribute(new Float32Array(ra),2));
+    const rm=new THREE.MeshPhongMaterial({map:tmat.map,shininess:0,specular:0x000000,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+    rm.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 rd;varying vec2 vRd;varying vec3 vRW;').replace('#include <begin_vertex>','#include <begin_vertex>\nvRd=rd;vRW=(modelMatrix*vec4(transformed,1.0)).xyz;');
+      sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vRd;varying vec3 vRW;'+ROAD_GLSL).replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=roadCol(diffuseColor.rgb);');};
+    st.add(new THREE.Mesh(rg,seasonMat(rm,'road')));}
   const dummy=new THREE.Object3D();
   if(W.walls.length){const wm=new THREE.InstancedMesh(new THREE.BoxGeometry(3.6,3.4,1.8),mat(0x8f8b80),W.walls.length);W.walls.forEach((wl,i)=>{dummy.position.set(wl.x,groundY(wl.x,wl.y)+1.5,wl.y);dummy.rotation.set(0,-wl.a,0);dummy.scale.set(1,1,1);dummy.updateMatrix();wm.setMatrixAt(i,dummy.matrix);});st.add(wm);(R3.looseM||(R3.looseM=[])).push([wm,W.walls]);}
   if(W.trees.length){
@@ -6414,6 +6427,35 @@ function cloudTick(){const C=R3.clouds;if(!C)return;C.g.visible=!FILM.on;if(FILM
    on north slopes; conifer: snow on the upper faces of spruce and pine; birch (all broadleaf): the crowns go light green, full green, then each kind its own
    autumn tree by tree (a random value per tree), then bare grey-brown twigs, smaller */
 const SEASU={uSnow:{value:0},uGrass:{value:0},uBrown:{value:0},uLeaf:{value:1},uYoung:{value:0},uAutumn:{value:0}};
+/* the gravel road (see the road band in buildStatic): d is the distance from the centre line in metres, lane 1 on the narrow lanes.
+   The hash has no sine, so the stones stay put far out on the map and on phones (the sea's noise, 24 okt) */
+const ROAD_GLSL=`float rH(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+  float rN(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(rH(i),rH(i+vec2(1,0)),f.x),mix(rH(i+vec2(0,1)),rH(i+vec2(1,1)),f.x),f.y);}
+  float rdSnow=1.0;
+  float roadStones(vec2 p,float sc,float occ,float amp){vec2 cp=p*sc,ci=floor(cp),cf=fract(cp)-(vec2(rH(ci+17.3),rH(ci+41.7))*.5+.25);
+    float an=rH(ci+3.3)*6.283,cs=cos(an),sn=sin(an);vec2 q=vec2(cs*cf.x-sn*cf.y,sn*cf.x+cs*cf.y);q.x*=1.0+rH(ci+8.1)*.9;
+    float r=.1+.28*rH(ci+5.1),dd=length(q),sd=(1.0-smoothstep(r*.55,r,dd))*step(1.0-occ,rH(ci+9.7));
+    return sd*(.75+.25*(1.0-dd/r))*(rH(ci)>.5?amp:-amp*.9);}
+  vec3 roadCol(vec3 g){float d=abs(vRd.x),lane=vRd.y;vec2 p=vRW.xz;float dist=length(vRW-cameraPosition);
+    float core=mix(3.05,1.5,lane),tw=mix(1.0,.72,lane);
+    /* the edge: ragged on two scales, gravel thinning out into the verge */
+    float e=d+(rN(p*.7)-.5)*.9+(rN(p*3.1)-.5)*.35;float edge=1.0-smoothstep(core-.45,core+.2,e);
+    /* the gravel: grey-brown, a slow change over tens of metres and patches of a metre or two */
+    vec3 c=mix(vec3(.47,.42,.35),vec3(.57,.52,.43),rN(p*.12))*(.93+.14*rN(p*.9));
+    /* fine grain and stones, gone before they could shimmer: by distance, and by the size of a pixel on the ground */
+    float px=length(fwidth(p)),fd=(1.0-smoothstep(30.0,110.0,dist))*(1.0-smoothstep(.04,.12,px));
+    float tr=exp(-pow((d-tw)/.3,2.0));
+    /* stones in two sizes (cells of 25 and 8 cm, some of them holding one): oblong, turned at random, of different sizes, lighter or
+       darker, a little lighter on top; fewer and smaller in the packed tracks */
+    float st=roadStones(p,4.0,.38,.13)*(1.0-tr*.6)+roadStones(p+7.3,12.5,.5,.09)*(1.0-smoothstep(.02,.05,px));
+    c*=1.0+(st+(rN(p*7.0)-.5)*.08)*fd;
+    /* the wheel tracks: packed, darker and smoother; the ridge between them loose and a little lighter, grass on a lane */
+    c*=1.0-.1*tr;float cr=1.0-smoothstep(.2,.5,d);c*=1.0+.05*cr*(1.0-lane);
+    c=mix(c,g*.95,cr*lane*smoothstep(.3,.55,rN(p*.45)));
+    /* tufts of the verge reaching in */
+    c=mix(c,g,smoothstep(.62,.8,rN(p*1.6+7.0))*smoothstep(core-1.1,core,d)*.8);
+    rdSnow=1.0-edge*(.15+.35*tr);
+    return mix(g,c,edge);}`;
 const NOISE_GLSL=`float sHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
   float sNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sHash(i),sHash(i+vec2(1,0)),f.x),mix(sHash(i+vec2(0,1)),sHash(i+vec2(1,1)),f.x),f.y);}`;
 const SEAS_GLSL=`uniform float uSnow,uGrass,uBrown,uLeaf,uYoung,uAutumn;varying vec3 vSWP,vSWN;varying float vSLY;`+NOISE_GLSL+`\nfloat mdN(vec2 p){p+=vec2(sNoise(p*.41+3.1),sNoise(p*.41+7.7))*1.7-.85;vec2 q=mat2(.8,-.6,.6,.8)*p*1.13+11.0;float a=sNoise(p),b=sNoise(q);return clamp((a+b-1.0)*1.4+.5,0.0,1.0);}`;
@@ -6447,7 +6489,7 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
       vec3 n3=normalize(vSWN);float lvl=max(smoothstep(.72,.9,n3.y),smoothstep(.35,.6,n3.y)*(1.0-smoothstep(1.0,2.5,vSWP.y))),nz=sNoise(vSWP.xz/22.0)*.6+sNoise(vSWP.xz/5.0)*.4;
       /* and a little under it, where the shallowest water is drawn almost clear: the ground there showed as a dark edge between the
          snow and the ice (18 okt) */
-      float v=uSnow*1.15-n3.z*.35+(nz-.5)*.6,sm=smoothstep(.5,.62,v)*lvl*smoothstep(-.45,-.2,vSWP.y);
+      float v=uSnow*1.15-n3.z*.35+(nz-.5)*.6,sm=smoothstep(.5,.62,v)*lvl*smoothstep(-.45,-.2,vSWP.y)/*road*/;
       diffuseColor.rgb=mix(c,vec3(.93,.95,.98),sm);}
       {float uw=smoothstep(-.3,-4.2,vSWP.y)*.85;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.07,.15,.22),uw);}/* under the surface everything goes over into the sea's dark by about 3 m, the visibility: the undersides of cliffs and shoals showed through with a sharp lower edge (18 okt) */`,
     /* snow on top of stones and on the islets, on the faces turned up (18 okt, Magnus: they stayed bare in winter) */
@@ -6484,6 +6526,8 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
      first the colour map's granite drawn here: pink-grey and grey-green slabs and dark lichen fields, at the islet's own brightness */
   F.islet=`{vec3 c0=diffuseColor.rgb;float lum=dot(c0,vec3(.3333))/.53;float li=smoothstep(.35,.65,mdN(vSWP.xz/3.0+3.0+vSWP.y*.25));vec3 g=mix(vec3(.66,.63,.58),vec3(.6,.6,.56),li);
       float ln=smoothstep(.58,.7,mdN(vSWP.xz/2.0+7.0-vSWP.y*.3))*.35;g=mix(g,vec3(.46,.46,.42),ln);/* toned down (prov 19 okt, Magnus: too much like camouflage) */diffuseColor.rgb=g*lum;}`+F.ground.split('diffuseColor.rgb=c;}')[0].replace('vec3 n3=normalize(vSWN);','vec3 n3=normalize(cross(dFdx(vSWP),dFdy(vSWP)));n3*=sign(n3.y+1e-4);')+'diffuseColor.rgb=c;}'+F.snowtop;
+  /* the gravel road as the ground, but its snow packed and the wheel tracks showing through (roadCol sets rdSnow) */
+  F.road=F.ground.replace('/*road*/','*rdSnow');
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+SEAS_GLSL).replace('#include <color_fragment>',(kind==='birch'?'':'#include <color_fragment>\n')+F[kind]);}
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
 /* the season's values into the uniforms and the water's ice, once per date */
