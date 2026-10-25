@@ -1597,7 +1597,9 @@ function buildWorldTry(seed,tryK,type,move){
     const clearRun=(p,n,L)=>{for(let t=6;t<=L+4;t+=3){const x=p.x+n.x*t,y=p.y+n.y*t;if(!wet(cellIdx(x,y))||heightAt(x,y)>-.3)return false;}return true;};
     for(const c of cand){if(D.jetties.length>=16)break;if(D.jetties.some(j=>Math.hypot(j.x-c.x,j.y-c.y)<110))continue;const L=14+Rd()*10;if(!clearRun(c,c.n,L))continue;
       const a=Math.atan2(c.n.y,c.n.x),j={x:c.x,y:c.y,a,len:L,top:c.top};D.jetties.push(j);
-      {const bx=c.x-c.n.x*9,by=c.y-c.n.y*9,bc=cellIdx(bx,by);if(Rd()<.55&&(G0[bc]===LAND||G0[bc]===BEACH)&&!W.road[bc])(D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:heightAt(bx,by)});}
+      /* its boathouse, if any, at the first spot 5 to 12 m up from the jetty that is level and not on an edge (issue 62) */
+      if(Rd()<.55)for(let t=5;t<=12;t++){const bx=c.x-c.n.x*t,by=c.y-c.n.y*t,bc=cellIdx(bx,by);if(!(G0[bc]===LAND||G0[bc]===BEACH)||W.road[bc])continue;const f=footLevel(bx,by,a,2.5,2,c.n.x,c.n.y);if(!bodOK(f))continue;
+        (D.sheds||(D.sheds=[])).push({x:bx,y:by,a,h:f.lo});break;}
       if(Rd()<.6){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L*.45),y:c.y+c.n.y*(L*.45)};D.boats.push({x:e.x+c.n.y*2.6*side,y:e.y-c.n.x*2.6*side,a:a+PI/2,kind:'eka'});}
       if(Rd()<.75){const side=Rd()<.5?-1:1,e={x:c.x+c.n.x*(L-3),y:c.y+c.n.y*(L-3)};D.boats.push({x:e.x-c.n.y*3.6*side,y:e.y+c.n.x*3.6*side,a:a+(Rd()<.5?0:PI),kind:Rd()<.4?'sail':'motor'});}}
     /* lights and houses at least 200 m apart (decided 17 okt, Magnus: nobody wants a green light shining straight into the house):
@@ -1766,6 +1768,16 @@ function heightAt(x,y){const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1;const fx=clamp(x/WW
 // lowest safe camera height at x,z: clear of the terrain within the near-plane radius
 function camFloor(x,z){let h=heightAt(x,z);for(let k=0;k<8;k++){const a=k*PI/4;h=Math.max(h,heightAt(x+Math.cos(a)*3,z+Math.sin(a)*3));}return Math.max(h,0)+1.8;}
 const groundY=(x,y)=>Math.max(heightAt(x,y),0);
+/* a boathouse stands level and not on an edge (decided 25 okt, Magnus, issue 62: on 3198 the harbour's boathouses stood on the edge of
+   the granite wall, their corners 7 to 9 m apart in height). The lowest and highest ground under its corners and middle, for a
+   footprint of half-length hl along the angle a and half-width hw across, may differ by 1.2 m at most, as for the crofts; it stands
+   at most 5 m over the sea (the coast by the jetties is mostly 4 to 5 m high a few metres in, so 2.5 m left almost none); and the
+   ground 3 m out from its side towards the water (sx, sy) falls at most 2.5 m below its foot, so it is not on the brink of a wall.
+   It is built at the lowest corner, so a slope buries its foot */
+const BOD={lo:.6,hi:5,span:1.2,brink:2.5};
+function footLevel(x,y,a,hl,hw,sx,sy){const c=Math.cos(a),s=Math.sin(a);let lo=1e9,hi=-1e9;for(const[u,v]of[[-hl,-hw],[hl,-hw],[-hl,hw],[hl,hw],[0,0]]){const h=heightAt(x+u*c-v*s,y+u*s+v*c);lo=Math.min(lo,h);hi=Math.max(hi,h);}
+  let edge=lo;if(sx!=null){const r=Math.max(hl,hw)+3;for(const o of[-1,0,1]){const ex=x+sx*r-sy*o*hl,ey=y+sy*r+sx*o*hl;edge=Math.min(edge,heightAt(ex,ey));}}return{lo,hi,edge};}
+const bodOK=f=>f.lo>BOD.lo&&f.hi<=BOD.hi&&f.hi-f.lo<=BOD.span&&(f.edge<=.3||f.lo-f.edge<=BOD.brink);
 
 /* ---------- game state ---------- */
 const TYPES={
@@ -4905,7 +4917,7 @@ function mkPlateMesh(q){const g=new THREE.Group(),h=Math.max(.5,q.y3-q.lo+.6),S=
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
 function mkPointMesh(r){
   const g=new THREE.Group(),C=0x8a8f8c,D=0x5d625f,ROOF=0x4a5058;let topY=12;
-  g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
+  if(r.type!=='hamn')g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
   if(r.type==='central'){g.add(mesh(box(11,5.5,8),mat(C),-2,3,0));g.add(mesh(box(11.4,.6,8.4),mat(ROOF),-2,6,0));g.add(mesh(box(4,3,4),mat(D),3,7.6,-1));
     for(const z of[-2.2,0,2.2])g.add(mesh(box(.2,.9,1.1),R3.winMat,3.55,3.6,z));
     g.add(mesh(cyl(.25,.35,16,6),mat(0x9aa0a4),-5,14,2));g.add(mesh(box(3,.15,.15),mat(0x9aa0a4),-5,19,2));g.add(mesh(box(.15,.15,3),mat(0x9aa0a4),-5,17,2));topY=22.5;
@@ -4916,17 +4928,21 @@ function mkPointMesh(r){
   else if(r.type==='radar'){g.add(mesh(box(6,3.5,6),mat(C),-3,2,2));g.add(mesh(cyl(1,1.3,9,8),mat(0x9aa0a4),2,5,-2));
     const dish=new THREE.Group();const d=mesh(cyl(3.6,.6,1.2,14,1,true),mat(0xd8dcd6));d.rotation.z=PI/2.6;dish.add(d);dish.add(mesh(box(.3,.3,2.4),mat(0x5d625f),0,0,0));dish.position.set(2,10.6,-2);g.add(dish);g.userData.dish=dish;
     const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(-3,4.6,2);g.add(top);g.userData.top=top;}
-  else if(r.type==='hamn'){// harbour office: a low white house with a flagless signal mast
-    g.add(mesh(box(8,3.4,5.5),mat(0xe4e1d8),-2,2.1,0));g.add(mesh(box(8.6,.4,6.1),mat(ROOF),-2,4,0));for(const z of[-1.6,0,1.6])g.add(mesh(box(.2,.9,1),R3.winMat,2.05,2.4,z));
-    g.add(mesh(cyl(.18,.26,12,6),mat(0x9aa0a4),4.5,6,-4));g.add(mesh(box(3.2,.14,.14),mat(0x9aa0a4),4.5,10,-4));
-    const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(4.5,12.6,-4);g.add(top);g.userData.top=top;}
+  else if(r.type==='hamn'){/* the harbour point is a lamp post, not a building (decided 25 okt, Magnus, issue 70: the harbour office
+       stood 11 m from the point on the quay or the slope and floated over the ground there): a grey post with a lamp on an arm and
+       the point's light on top */
+    g.add(mesh(cyl(.12,.16,6.5,6),mat(0x9aa0a4),0,3.25,0));g.add(mesh(box(1,.12,.12),mat(0x9aa0a4),.45,5.9,0));g.add(mesh(box(.42,.3,.42),R3.lampMat,.85,5.7,0));
+    const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(0,7.1,0);g.add(top);g.userData.top=top;}
   else{ // forward yard: open gantry over a slab with a crane
     for(const[x,z]of[[-6,-5],[6,-5],[-6,5],[6,5]])g.add(mesh(box(.6,8,.6),mat(0xd0a640),x,4.2,z));
     g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,-5));g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,5));g.add(mesh(box(.6,.6,10.6),mat(0xd0a640),0,8.2,0));
     g.add(mesh(box(4,1.4,3),mat(0x5d625f),-3,1.2,0));g.add(mesh(box(2.4,2,1.2),mat(0x8a8f8c),4,1.5,3));
     const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(0,9.4,0);g.add(top);g.userData.top=top;}
   // the building sits beside the capture point, so vehicles taking it do not drive into the walls
-  if(g.userData.top)g.userData.top.scale.setScalar(1.7);
+  if(g.userData.top)g.userData.top.scale.setScalar(r.type==='hamn'?1.1:1.7);
+  /* the harbour's post stands 3.5 m from the point towards where the office stood, on the ground under itself */
+  if(r.type==='hamn'){const b=pointBld(r),d=Math.hypot(b.x-r.x,b.y-r.y)||1,px=r.x+(b.x-r.x)/d*3.5,py=r.y+(b.y-r.y)/d*3.5,dy=groundY(px,py)-groundY(r.x,r.y)-.2;
+    for(const c of g.children){c.position.x+=px-r.x;c.position.z+=py-r.y;c.position.y+=dy;}return g;}
   const b=pointBld(r);for(const c of g.children){c.position.x+=b.x-r.x;c.position.z+=b.y-r.y;}
   return g;
 }
@@ -6073,7 +6089,7 @@ function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group()
      boathouses along the shore beyond the quay and a store shed behind the pier. Scenery only, clear of the stretch behind
      Birka's side ramp and of the way from the quay onto the pier; everything ashore checks the ground first */
   const land=(li,lt)=>{const q=P(li,lt);return heightAt(q.x,q.y)>.6;},solid=(li,lt,hl,hw2,rl)=>{const c=Math.cos(rl||0),s2=Math.sin(rl||0);for(const[a,b]of[[-hl,-hw2],[hl,-hw2],[-hl,hw2],[hl,hw2],[0,0]])if(!land(li+a*c+b*s2,lt-a*s2+b*c))return false;return true;};
-  const Rv=rng(W.seed*61+3),TR=mat(TRIM),place=(o,li,lt,rl)=>{const q=P(li,lt);o.position.set(q.x,groundY(q.x,q.y),q.y);o.rotation.y=g.rotation.y+(rl||0);st.add(o);return o;};
+  const Rv=rng(W.seed*61+3),TR=mat(TRIM),ua=Math.atan2(u.y,u.x),place=(o,li,lt,rl,y)=>{const q=P(li,lt);o.position.set(q.x,y!=null?y:groundY(q.x,q.y),q.y);o.rotation.y=g.rotation.y+(rl||0);st.add(o);return o;};
   {const RED=mat(0xc8402e),WH=mat(0xf1efe8),zp=K.lt0+8;
     const pump=new THREE.Group();pump.add(mesh(box(.6,1.5,.45),RED,0,.75,0));pump.add(mesh(box(.64,.35,.5),WH,0,1.35,0));pump.add(mesh(cyl(.05,.05,1.2,5),DARK,.35,.9,0));
     pump.position.set(2.6,top,zp);g.add(pump);const pump2=pump.clone();pump2.position.z=zp+4;g.add(pump2);
@@ -6086,14 +6102,18 @@ function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group()
     const b=mkBoat({kind,x:0,y:0,a:0}),o=new THREE.Group();b.position.set(0,1.2,0);b.rotation.set(0,0,0);o.add(b);
     for(const x of[-1.8,1.8])o.add(mesh(box(.35,1.15,1.4),mat(0x6a5a46),x,.57,0));
     if(kind!=='eka'&&cov)o.add(mesh(box(kind==='sail'?7.6:5.4,1.1,2.5),mat([0x2f5f8a,0x3c6e4a,0x8a8478][cc]),0,2.1,0));place(o,li,lt,rl);}
-  for(let lt=K.lt0-14,i=0;lt>K.app-30&&i<3;lt-=12+Rv()*6){const L2=4.5+Rv()*2,li=3+Rv()*2,red=Rv()<.8;if(!solid(li,lt,2.2,L2/2,0))continue;i++;
+  /* the boathouses along the shore beyond the quay, each at the first spot from 3 to 9 m up from the quay line that is level and not
+     on the brink of the granite (issue 62); the house is L2 long up the shore and 4 m wide along it, and stands at its lowest corner */
+  for(let lt=K.lt0-14,i=0;lt>K.app-30&&i<3;lt-=12+Rv()*6){const L2=4.5+Rv()*2,li0=3+Rv()*2,red=Rv()<.8;let li=null,f=null;
+    for(const d of[0,-1,1,2,3,4,5,6]){const l2=li0+d,q=P(l2,lt),ff=footLevel(q.x,q.y,ua,L2/2,2,-u.x,-u.y);if(bodOK(ff)){li=l2;f=ff;break;}}if(li==null)continue;i++;
     const h=new THREE.Group();h.add(mesh(box(L2,3.1,4),mat(red?FALU:0xd8cfa6),0,1.55,0));roofOn(h,L2+.6,4,3.7,0x34343a);
     h.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),L2/2+.02,1.1,0));for(const[x,z]of[[-L2/2,-2],[L2/2,-2],[-L2/2,2],[L2/2,2]])h.add(mesh(box(.22,3.1,.22),TR,x,1.55,z));
-    place(h,li,lt,PI);}
-  {const li=K.back+8,lt=K.p1-6;if(solid(li,lt,4.6,8.2)){
+    place(h,li,lt,PI,f.lo);}
+  /* the store shed behind the pier, 9 by 16 m: on level ground only, at its lowest corner (issue 62) */
+  {const li=K.back+8,lt=K.p1-6,q0=P(li,lt),fs=footLevel(q0.x,q0.y,ua,4.6,8.2);if(fs.lo>BOD.lo&&fs.hi-fs.lo<=BOD.span){
     const m=new THREE.Group(),c=mat(0x8f969a);m.add(mesh(box(9,5,16),c,0,2.5,0));const r=new THREE.Group();roofOn(r,16.8,9,5.6,0x5a3a30);r.rotation.y=PI/2;m.add(r);
     m.add(mesh(box(.15,3.6,4.2),mat(0x5e6468),-4.52,1.8,0));for(const z of[-5.5,5.5])m.add(mesh(box(.15,1,1.6),winMatFor(H.x+1,H.y),-4.52,3.4,z));
-    place(m,li,lt,0);}}
+    place(m,li,lt,0,fs.lo);}}
   return{g,lamps,poolM,headM,boats};}
 function buildStatic(){
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
