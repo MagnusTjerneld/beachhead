@@ -4871,19 +4871,24 @@ function sh(g){g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=tru
    repaints it whole */
 const _bm=new THREE.Matrix4(),_bc=new THREE.Color();
 function vcMat(){if(!MATS.has('vc'))MATS.set('vc',new THREE.MeshLambertMaterial({vertexColors:true}));return MATS.get('vc');}
-const vcOK=m=>m.isMeshLambertMaterial&&!m.vertexColors&&!m.map&&!m.transparent&&!m.userData.lit&&m.emissive.r+m.emissive.g+m.emissive.b===0;/* lit: the lamps and windows, which glow at night */
-function bake(root,vc){
-  root.updateMatrixWorld(true);const keep=new Set();
+const vcOK=m=>m.isMeshLambertMaterial&&!m.vertexColors&&!m.map&&!m.transparent&&!m.userData.lit&&m.emissive.r+m.emissive.g+m.emissive.b===0&&m.side===THREE.FrontSide&&m.onBeforeCompile===THREE.Material.prototype.onBeforeCompile&&!m.alphaTest&&!m.polygonOffset&&m.depthWrite&&m.depthTest&&m.fog;/* a shader of its own (the season, the wet shore) or two-sided paint keeps its material *//* lit: the lamps and windows, which glow at night */
+/* X (25 okt, the island's fixed scenery and the buildings): keep, objects the game holds and moves or hides on their own, which stay
+   separate; strict, only plain lit pieces are merged (no instanced, textured, vertex-coloured, shader or uncullable meshes) and the
+   merged pieces keep their shadows and draw order */
+const bakeOK=c=>!c.isInstancedMesh&&!Array.isArray(c.material)&&!c.material.map&&!c.material.vertexColors&&!c.material.isShaderMaterial&&c.frustumCulled&&!!c.geometry.attributes.normal&&!c.geometry.morphAttributes.position&&c.onBeforeRender===THREE.Object3D.prototype.onBeforeRender&&(c.material.isMeshLambertMaterial||c.material.isMeshStandardMaterial||c.material.isMeshPhongMaterial||c.material.isMeshBasicMaterial);
+function bake(root,vc,X){
+  root.updateMatrixWorld(true);const keep=new Set(X&&X.keep),strict=!!(X&&X.strict);
   const note=v=>{if(!v)return;if(Array.isArray(v)){for(const x of v)note(Array.isArray(x)?x[0]:x);}else if(v.isObject3D)keep.add(v);};
   root.traverse(o=>{for(const k in o.userData)note(o.userData[k]);});
   const pass=r=>{const inv=new THREE.Matrix4().copy(r.matrixWorld).invert(),groups=new Map(),drop=[];
-    const walk=o=>{for(const c of o.children){if(keep.has(c)&&c!==r)continue;if(c.isMesh&&c.visible&&!c.userData.solo){const v=vc&&vcOK(c.material),k=v?'vc':c.material.uuid;if(!groups.has(k))groups.set(k,{m:v?vcMat():c.material,g:[],v});_bm.multiplyMatrices(inv,c.matrixWorld);const g=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();g.applyMatrix4(_bm);if(v){const n=g.attributes.position.count,C=new Float32Array(n*3);_bc.copy(c.material.color);for(let i=0;i<n;i++){C[i*3]=_bc.r;C[i*3+1]=_bc.g;C[i*3+2]=_bc.b;}g.userData.vc=C;}groups.get(k).g.push(g);drop.push(c);}walk(c);}};
+    const walk=o=>{for(const c of o.children){if(keep.has(c)&&c!==r)continue;if(c.isMesh&&c.visible&&!c.userData.solo&&(!strict||bakeOK(c))){const v=vc&&vcOK(c.material),k=(v?'vc':c.material.uuid)+(strict?':'+c.castShadow+c.receiveShadow+c.renderOrder:'');if(!groups.has(k))groups.set(k,{m:v?vcMat():c.material,g:[],v,cs:c.castShadow,rs:c.receiveShadow,ro:c.renderOrder});_bm.multiplyMatrices(inv,c.matrixWorld);const g=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();g.applyMatrix4(_bm);if(v){const n=g.attributes.position.count,C=new Float32Array(n*3);_bc.copy(c.material.color);for(let i=0;i<n;i++){C[i*3]=_bc.r;C[i*3+1]=_bc.g;C[i*3+2]=_bc.b;}g.userData.vc=C;}groups.get(k).g.push(g);drop.push(c);}walk(c);}};
     walk(r);
     for(const c of drop)c.parent.remove(c);
-    for(const{m,g,v}of groups.values()){let n=0;for(const x of g)n+=x.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=v?new Float32Array(n*3):null;let o=0;
+    for(const{m,g,v,cs,rs,ro}of groups.values()){let n=0;for(const x of g)n+=x.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=v?new Float32Array(n*3):null;let o=0;
       for(const x of g){P.set(x.attributes.position.array,o*3);N.set(x.attributes.normal.array,o*3);if(C)C.set(x.userData.vc,o*3);o+=x.attributes.position.count;x.dispose();}
-      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));if(C)bg.setAttribute('color',new THREE.BufferAttribute(C,3));bg.computeBoundingSphere();r.add(new THREE.Mesh(bg,m));}};
-  pass(root);for(const k of keep)if(!k.isMesh)pass(k);
+      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));if(C)bg.setAttribute('color',new THREE.BufferAttribute(C,3));bg.computeBoundingSphere();const nm=new THREE.Mesh(bg,m);if(strict){nm.castShadow=cs;nm.receiveShadow=rs;nm.renderOrder=ro;}r.add(nm);}};
+  const under=k=>{for(let q=k.parent;q;q=q.parent)if(q===root)return true;return false;};
+  pass(root);for(const k of keep)if(!k.isMesh&&under(k))pass(k);
   return root;}
 const drawCalls=g=>{let n=0;g.traverse(o=>{if(o.isMesh&&o.visible)n++;});return n;};
 /* strategic buildings; each keeps a beacon (magenta held by the enemy, blue once taken) */
@@ -5612,7 +5617,7 @@ function mkStructMesh(st){
   else if(st.kind==='depot'){g.add(mesh(box(15,5,9),mat(0x7a837e),0,2.5,0));g.add(mesh(box(15.4,.4,9.4),mat(0x4f5753),0,5.2,0));g.add(mesh(box(.2,3.6,4.5),mat(0x3c4440),7.6,1.8,0));for(const x of[-4,0,4])g.add(mesh(box(2,.7,.12),WM,x,3.9,4.52));for(const z of[-3,3])g.add(mesh(box(2,1.4,1.4),mat(0x6b6a3a),9.2,.7,z));}
   else if(st.kind==='fuel'){for(const x of[-4,4]){g.add(mesh(cyl(3.3,3.3,4.6,14),mat(0xcfc6b2),x,2.3,0));g.add(mesh(cyl(3.35,3.35,.6,14),mat(0xc27a2c),x,3.4,0));}const pp=mesh(cyl(.25,.25,8,6),mat(0x555555),0,.6,2.6);pp.rotation.z=PI/2;g.add(pp);}
   else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}const d=mesh(new THREE.SphereGeometry(1.2,10,6,0,TAU,0,PI/2),mat(0xe0e2e0),0,19,.9);d.rotation.x=PI/2;g.add(d);g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
-  g.rotation.y=-st.a;g.position.set(st.x,groundY(st.x,st.y),st.y);return sh(g);
+  g.rotation.y=-st.a;g.position.set(st.x,groundY(st.x,st.y),st.y);return sh(bake(g,true,{strict:true}));
 }
 /* vehicles blown apart (decided 16 okt, Magnus: a destroyed vehicle vanished in a fireball and a dark box took its place): the hull
    stays as a charred wreck of the vehicle itself, the turret is torn off and tumbles away, and a dozen plates fly out, bounce and
@@ -6266,10 +6271,30 @@ function buildStatic(){
   if(R3.lhBeam)for(const m of R3.lhBeam.beam.children){m.castShadow=false;m.receiveShadow=false;}
   // boats throw their shadow on the water surface, not on the seabed metres below (that made them look as if they hovered)
   if(R3.seabed){R3.seabed.castShadow=false;R3.seabed.receiveShadow=false;}
-  mkFoamRings(W,st);
+  mkFoamRings(W,st);statBake(st);
   R3.scene.add(st);R3.stat=st;R3.seed=W.seed+':'+W.doc;R3.snap=true;setWaterDepth();
   try{TITLE.vSync=null;}catch(_){}/* new movers: place the intro's VARG patrol again */
 }
+/* the fixed scenery in fewer objects (decided 25 okt, Magnus: the benchmark's fights were bound by the CPU, and most of it was three.js
+   walking 2,800 objects once a view): each group of the island's scenery (houses, sheds, jetties, boats, the lighthouse) is merged into one
+   geometry for its plain paint plus one per lamp or special material, and the loose single pieces (the skerries' stones, the shoals'
+   stones and the like) into one per 250 m square. What the game holds in R3 to move, sink, hide or light (the boats, the houses that
+   fall, the bobbing buoys, the lighthouse's beam) stays its own object; the jetties, which find their broken planks by their shapes, are
+   left as they are. The shadows and the picture are as before */
+function r3Held(){const out=new Set(),skip=new Set([R3.stat,R3.scene,R3.dyn]);
+  const walk=(v,d)=>{if(!v||d>4||typeof v!=='object')return;if(v.isObject3D){if(!skip.has(v))out.add(v);return;}if(v.isMaterial||v.isBufferGeometry||v.isTexture||ArrayBuffer.isView(v))return;
+    if(Array.isArray(v)){for(const x of v)walk(x,d+1);return;}if(v instanceof Map||v instanceof Set){for(const x of v.values())walk(x,d+1);return;}
+    if(Object.getPrototypeOf(v)===Object.prototype)for(const k in v)walk(v[k],d+1);};
+  for(const k in R3)walk(R3[k],0);return out;}
+function statBake(st){const held=r3Held(),T=250,tiles=new Map();
+  const jet=new Set();for(const g of R3.jetM||[])g.traverse(o=>jet.add(o));
+  for(const c of st.children.slice()){
+    if(jet.has(c))continue;let hasJet=false;c.traverse(o=>{if(jet.has(o)&&o!==c)hasJet=true;});if(hasJet)continue;
+    if(c.isMesh){if(held.has(c)||!bakeOK(c)||!c.visible||c.userData.solo)continue;if(!c.geometry.boundingSphere)c.geometry.computeBoundingSphere();
+      c.updateMatrixWorld();const r=c.geometry.boundingSphere.radius*c.matrixWorld.getMaxScaleOnAxis();if(r>60)continue;/* the terrain, the seabed, the water */
+      const p=new THREE.Vector3().setFromMatrixPosition(c.matrixWorld),k=Math.floor(p.x/T)+','+Math.floor(p.z/T);let g=tiles.get(k);if(!g){g=new THREE.Group();tiles.set(k,g);}g.attach(c);continue;}
+    if(c.type==='Group'||c.type==='Object3D')bake(c,true,{keep:held,strict:true});}
+  for(const g of tiles.values()){bake(g,true,{keep:held,strict:true});st.add(g);}}
 /* ---------- time of day: sun by day, moon by night (dark blue, never black), pooled lamps ---------- */
 const SKY=[ // hour, sky/fog, hemi sky, hemi ground, hemi I, key colour, key I, night
   [0,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1],[4.6,0x1d2b49,0x5a74a6,0x1c2232,.5,0xa2b6e2,.32,1],
