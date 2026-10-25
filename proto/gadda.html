@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GÄDDA modell</title>
+<style>html,body{margin:0;height:100%;background:#0b1015;color:#eef1ea;font:13px "Share Tech Mono",ui-monospace,monospace}#c{display:block;width:100%;height:100%}
+#hud{position:fixed;left:12px;top:10px;letter-spacing:.2em}</style>
+</head><body>
+<canvas id="c"></canvas><div id="hud">GÄDDA · dra för att vrida · hjul zoomar · L lyfter rören · F skjuter</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="gadda.js"></script>
+<script>
+/* GÄDDA's test bench (25 okt): the boat on a calm Baltic evening off a rocky shore, in the game's kind of light. window.shot(cam,look,w,h,state)
+   renders a still for proto/gaddabild.js; in a browser it turns with the mouse */
+const cv=document.getElementById('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;
+const S=new THREE.Scene(),CAM=new THREE.PerspectiveCamera(40,1,.1,3000);
+{const c=document.createElement('canvas');c.width=4;c.height=256;const x=c.getContext('2d'),gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#7f9fb8');gr.addColorStop(.55,'#c9d3d6');gr.addColorStop(1,'#e3ddcf');x.fillStyle=gr;x.fillRect(0,0,4,256);S.background=new THREE.CanvasTexture(c);}
+S.fog=new THREE.Fog(0xd2d6d4,250,1400);
+S.add(new THREE.HemisphereLight(0xdfe8ee,0x4a5a50,.75));
+const sun=new THREE.DirectionalLight(0xfff1dc,.95);sun.position.set(60,55,-35);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14,near:1,far:200});sun.shadow.bias=-.0006;S.add(sun);S.add(sun.target);
+// the water: a darker blue-green with fine ripples in a normal map, and the sun's glitter
+const ripple=(()=>{const n=256,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d'),im=x.createImageData(n,n);
+  const h=(i,j)=>Math.sin(i*.19+Math.sin(j*.07)*2)*.5+Math.sin(j*.23+i*.05)*.35+Math.sin((i+j)*.11)*.25;
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const dx=h(i+1,j)-h(i-1,j),dy=h(i,j+1)-h(i,j-1),k=(j*n+i)*4;im.data[k]=128+dx*40;im.data[k+1]=128+dy*40;im.data[k+2]=255;im.data[k+3]=255;}
+  x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(220,220);return t;})();
+const water=new THREE.Mesh(new THREE.PlaneGeometry(4000,4000),new THREE.MeshPhongMaterial({color:0x2f5262,specular:0x58666c,shininess:40,normalMap:ripple,normalScale:new THREE.Vector2(.35,.35)}));
+water.rotation.x=-Math.PI/2;water.receiveShadow=true;S.add(water);
+// a rocky shore with pines to starboard and holms behind, as in the archipelago
+{const rock=new THREE.MeshLambertMaterial({color:0x8a8478,flatShading:true}),rock2=new THREE.MeshLambertMaterial({color:0x6f6a60,flatShading:true}),
+  pine=new THREE.MeshLambertMaterial({color:0x2f4a2e,flatShading:true}),trunk=new THREE.MeshLambertMaterial({color:0x6b4a32}),grass=new THREE.MeshLambertMaterial({color:0x6f7f4a,flatShading:true});
+  let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+  const isle=(cx,cz,r,h,n)=>{for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,d=Math.sqrt(rnd())*r,s=r*.18+rnd()*r*.35,m=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),rnd()<.5?rock:rock2);
+      m.position.set(cx+Math.cos(a)*d,h*(1-d/r)-s*.45,cz+Math.sin(a)*d);m.scale.y=.45+rnd()*.3;m.rotation.set(rnd()*3,rnd()*3,rnd()*3);m.castShadow=m.receiveShadow=true;S.add(m);}
+    const top=new THREE.Mesh(new THREE.CylinderGeometry(r*.55,r*.8,h*.6,9),grass);top.position.set(cx,h*.45,cz);top.receiveShadow=true;S.add(top);
+    for(let i=0;i<n/2;i++){const a=rnd()*Math.PI*2,d=Math.sqrt(rnd())*r*.55,x=cx+Math.cos(a)*d,z=cz+Math.sin(a)*d,y=h*.72,hh=7+rnd()*7;
+      const t=new THREE.Mesh(new THREE.CylinderGeometry(.18,.26,hh*.5,5),trunk);t.position.set(x,y+hh*.25,z);S.add(t);
+      for(let k=0;k<3;k++){const c=new THREE.Mesh(new THREE.ConeGeometry(hh*(.32-k*.07),hh*.42,7),pine);c.position.set(x,y+hh*(.42+k*.2),z);c.castShadow=true;S.add(c);}}};
+  isle(10,60,34,6,46);isle(-60,140,26,5,30);isle(120,-40,40,8,50);isle(-160,-120,60,9,60);isle(260,180,70,10,70);}
+// the boat, its wake and the robot
+let boat=null;const robotGrp=new THREE.Group();S.add(robotGrp);
+const foam=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.clearRect(0,0,128,128);
+  for(let i=0;i<900;i++){x.fillStyle='rgba(255,255,255,'+(.15+Math.random()*.5)+')';const r=Math.random()*2.2+.4;x.beginPath();x.arc(Math.random()*128,Math.random()*128,r,0,6.3);x.fill();}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;})();
+const wake=new THREE.Group();S.add(wake);
+function mkWake(speed){wake.clear();if(!speed)return;const L=26*speed;
+  const fm=a=>new THREE.MeshBasicMaterial({map:foam,transparent:true,opacity:a,depthWrite:false});
+  // the white water from the jets straight aft, and the two arms of the V spreading behind
+  const j=new THREE.Mesh(new THREE.PlaneGeometry(L*.55,2.0),fm(.85));j.rotation.x=-Math.PI/2;j.position.set(-4.5-L*.27,.03,0);wake.add(j);
+  for(const s of[-1,1]){const a=new THREE.Mesh(new THREE.PlaneGeometry(L,1.3),fm(.55));a.rotation.x=-Math.PI/2;a.rotation.z=s*.33;a.position.set(-4-L*.47,.025,s*L*.16);wake.add(a);
+    const b=new THREE.Mesh(new THREE.PlaneGeometry(5.5,.7),fm(.8));b.rotation.x=-Math.PI/2;b.rotation.z=s*.5;b.position.set(2.2,.04,s*1.55);wake.add(b);}}
+function setState(st){st=st||{};if(boat)S.remove(boat);boat=mkGadda(THREE,{color:st.color!=null?st.color:0x2fb3a8,lift:st.lift||0,robots:st.robots==null?4:st.robots});
+  boat.rotation.y=st.yaw||0;boat.position.y=st.squat||0;boat.rotation.z=st.trim||0;S.add(boat);mkWake(st.speed||0);wake.rotation.y=st.yaw||0;
+  robotGrp.clear();if(st.robot){const r=mkGaddaRobot(THREE,st.color!=null?st.color:0x2fb3a8);r.position.set(...st.robot.p);r.rotation.z=st.robot.a||-.9;robotGrp.add(r);
+    // the exhaust flame and a trail of smoke behind it
+    const fl=new THREE.Mesh(new THREE.ConeGeometry(.16,1.1,8),new THREE.MeshBasicMaterial({color:0xffd28a}));fl.position.set(0,-1.1,0);fl.rotation.z=Math.PI;r.add(fl);
+    const sm=new THREE.MeshLambertMaterial({color:0xe8e8e2,transparent:true,opacity:.55,depthWrite:false});
+    const dir=new THREE.Vector3(0,1,0).applyEuler(r.rotation);for(let i=0;i<7;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.3+i*.07,8,6),sm);s.position.copy(r.position).addScaledVector(dir,-(1.6+i*.9));s.material=sm.clone();s.material.opacity=.55-i*.035;robotGrp.add(s);}}}
+window.shot=(cam,look,w,h,st,fov)=>{setState(st);R.setPixelRatio(1);R.setSize(w,h,false);CAM.aspect=w/h;CAM.fov=fov||40;CAM.updateProjectionMatrix();CAM.position.set(...cam);CAM.lookAt(...look);
+  R.render(S,CAM);return R.domElement.toDataURL('image/jpeg',.9);};
+// interactive: orbit with the mouse
+setState({speed:.6});let az=.7,el=.18,dist=22,lift=0,rob=4,drag=null;
+const fit=()=>{const w=innerWidth,h=innerHeight;R.setPixelRatio(devicePixelRatio);R.setSize(w,h,false);CAM.aspect=w/h;CAM.updateProjectionMatrix();};
+addEventListener('resize',fit);cv.addEventListener('pointerdown',e=>drag=[e.clientX,e.clientY,az,el]);addEventListener('pointerup',()=>drag=null);
+addEventListener('pointermove',e=>{if(!drag)return;az=drag[2]-(e.clientX-drag[0])*.008;el=Math.max(.02,Math.min(1.4,drag[3]+(e.clientY-drag[1])*.006));});
+cv.addEventListener('wheel',e=>{dist=Math.max(8,Math.min(120,dist*(1+Math.sign(e.deltaY)*.1)));e.preventDefault();},{passive:false});
+addEventListener('keydown',e=>{if(e.key==='l'||e.key==='L'){lift=lift?0:1;setState({speed:.6,lift,robots:rob});}if((e.key==='f'||e.key==='F')&&lift&&rob>0){rob--;setState({speed:.6,lift,robots:rob,robot:{p:[2,6,0],a:-.9}});}});
+if(!/shot/.test(location.search)){fit();const loop=()=>{CAM.fov=40;CAM.updateProjectionMatrix();CAM.position.set(Math.cos(az)*Math.cos(el)*dist,Math.sin(el)*dist+.5,Math.sin(az)*Math.cos(el)*dist);CAM.lookAt(0,1.2,0);R.render(S,CAM);requestAnimationFrame(loop);};loop();}
+window.ready=true;
+</script></body></html>
