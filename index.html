@@ -4450,7 +4450,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={get BENCH(){return BENCH;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -8924,18 +8924,32 @@ window.addEventListener('beforeunload',e=>{if(REC.ev.length&&!REC.saved){e.preve
    camera; the only scenario where the simulation runs). The hour is held and dynamic resolution is off. A tab in the background does not
    render, so keep it in front. The result is a table against a locked baseline (the first run, or one marked &label=bas or with its
    button), and one block to copy and paste back. ---------- */
-const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],gpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',run:'',dyn0:null,rnd0:null,boomT:0,R:null,
+const BENCH={on:false,i:-1,phase:'',t0:0,gaps:[],cpus:[],sims:[],ns:[],gpus:[],calls:[],tris:[],res:[],last:0,el:null,label:'',run:'',dyn0:null,rnd0:null,boomT:0,R:null,
   seeds:[1234,2024,4711],warm:2500,len:8000};
 /* the benchmark always plays on 22 September, so its day, dusk and night look alike on every island and every run */
-const BENCH_DOY=doyOf(8,22);BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
-  BENCH.all.push({seed:sd,tod:12,main:'map',view:'ö'});BENCH.all.push({seed:sd,tod:23.5,main:'cam',view:'strid'});}
+const BENCH_DOY=doyOf(8,22),BENCH_SLAG=[4,10,20];BENCH.all=[];for(const sd of BENCH.seeds){for(const h of[12,17.8,23.5])BENCH.all.push({seed:sd,tod:h,main:'cam',view:'ö'});
+  BENCH.all.push({seed:sd,tod:12,main:'map',view:'ö'});BENCH.all.push({seed:sd,tod:23.5,main:'cam',view:'strid'});
+  /* a real fight in three sizes: n of ours against n of theirs, so the simulation and the draw calls that grow with the units are measured */
+  for(const n of BENCH_SLAG)BENCH.all.push({seed:sd,tod:12,main:'cam',view:'slag',n});}
 /* the first island once more at the end: shows whether the first scenarios are slow because they come first (a graphics card still clocking up) */
 BENCH.all.push({seed:BENCH.seeds[0],tod:12,main:'cam',view:'ö',again:true});
-const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':sc.view==='strid'?'strid':'3D')+(sc.again?' igen':'');
+const benchName=sc=>'ö '+sc.seed+'  '+(sc.tod===12?'dag':sc.tod<20?'skymning':'natt')+'  '+(sc.main==='map'?'sjökort':sc.view==='strid'?'strid':sc.view==='slag'?'slag '+sc.n:'3D')+(sc.again?' igen':'');
 /* the fixed views, from the island itself: out at sea off the landing beach looking in over the island, or close on a point inland */
 function benchView(sc){const L=WORLD.landing,dx=CX-L.x,dy=CY-L.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;
   if(sc.view==='strid'){const tx=L.x+ux*130,ty=L.y+uy*130;return{px:tx-ux*75,py:groundY(tx-ux*75,ty-uy*75)+22,pz:ty-uy*75,ax:tx,ay:groundY(tx,ty)+4,az:ty,tx,ty};}
+  if(sc.view==='slag'){let d=150;for(let k=60;k<600;k+=10)if(heightAt(L.x+ux*k,L.y+uy*k)>1){d=k+90;break;}/* 90 m past the shoreline, so both sides stand on land */
+    const tx=L.x+ux*d,ty=L.y+uy*d;return{px:tx-ux*170,py:groundY(tx-ux*170,ty-uy*170)+45,pz:ty-uy*170,ax:tx,ay:groundY(tx,ty)+4,az:ty,tx,ty,ux,uy};}
   return{px:L.x-ux*90,py:38,pz:L.y-uy*90,ax:CX,ay:groundY(CX,CY)+6,az:CY};}
+/* the fight: our units (three VARG to a HÖK, each VARG with its MUS) in rows 55 m short of the point, theirs (a mix of every kind) as far beyond it, on land, all
+   seen, so they open fire at once. benchTick tops up health, ammunition and fuel every frame, so the same number fights all the measured seconds */
+function benchSlag(n){const v=BENCH.v,f={x:v.ux,y:v.uy},s={x:-f.y,y:f.x},EK=['tank','light','inf','at','turret','aa','rb'];
+  G.units=[];G.wings={};G.selIds=[];G.sel=null;for(const e of G.enemies)if(Math.hypot(e.x-v.tx,e.y-v.ty)<500)e.dead=true;
+  const at=(i,side,k)=>{const d=55+Math.floor(i/5)*16+k*8,c=i%5-2;return{x:v.tx+side*f.x*d+s.x*c*16,y:v.ty+side*f.y*d+s.y*c*16};};
+  const spot=(i,side)=>{for(let k=0;k<30;k++){const p=at(i,side,side<0?-k*.5:k);if(heightAt(p.x,p.y)>.5)return p;}return at(i,side,0);};
+  for(let i=0;i<n;i++){const p=spot(i,-1),u=TF.put(i%4===3?'drone':'tank',p.x,p.y,Math.atan2(f.y,f.x));if(u.air)u.alt=30;
+    const q=spot(i,1);G.enemies.push(makeEnemy({id:'BX'+(i+1),kind:EK[i%EK.length],x:q.x,y:q.y}));}
+  TF.reveal();}
+function benchTopUp(){for(const o of G.units){o.hp=o.maxhp;o.ammo=o.maxAmmo;o.fuel=o.maxFuel;}for(const e of G.enemies)if(e.id.startsWith('BX')&&!e.dead){e.hp=e.maxhp;if(e.mag)e.ammo=e.mag;}}
 function benchCam(){const v=BENCH.v;if(!v)return;R3.cam.position.set(v.px,v.py,v.pz);R3.lookAt.set(v.ax,v.ay,v.az);R3.cam.lookAt(R3.lookAt);R3.snap=false;}
 function benchStart(){if(BENCH.on)return;let q=null;try{q=new URLSearchParams(location.search);}catch(_){}
   BENCH.warm=+(q&&q.get('benchwarm'))||2500;BENCH.len=+(q&&q.get('benchlen'))||8000;BENCH.run=(q&&q.get('label'))||'';
@@ -8945,18 +8959,20 @@ function benchStart(){if(BENCH.on)return;let q=null;try{q=new URLSearchParams(lo
 function benchNext(){BENCH.i++;if(BENCH.i>=BENCH.list.length)return benchDone();const sc=BENCH.list[BENCH.i];
   // the same random numbers and the same fresh island every time, so two runs see the same frames
   BENCH.R=rng(9001+BENCH.i);Math.random=BENCH.R;restart(sc.seed,undefined,{doy:BENCH_DOY,tod:sc.tod});startGame();G.speed=1;G.tod=sc.tod;
-  if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}BENCH.v=benchView(sc);G.paused=sc.view!=='strid';
+  if(G.mainMode!==sc.main){G.mainMode=sc.main;placePanes();}BENCH.v=benchView(sc);G.paused=sc.view!=='strid'&&sc.view!=='slag';
   if(sc.view==='strid'){const v=BENCH.v;for(let k=0;k<4;k++){const a=k*TAU/4;startFire(v.tx+Math.cos(a)*18,v.ty+Math.sin(a)*18,60,1,0);}}
+  if(sc.view==='slag')benchSlag(sc.n);
   uiTick(true);BENCH.label=(BENCH.i+1)+'/'+BENCH.list.length+'  '+benchName(sc);BENCH.phase='warm';BENCH.t0=performance.now();BENCH.boomT=0;
-  BENCH.gaps=[];BENCH.cpus=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
+  BENCH.gaps=[];BENCH.cpus=[];BENCH.sims=[];BENCH.ns=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];BENCH.last=0;}
 const benchPct=(a,q)=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(q*b.length))];};
 function benchTick(now,P){if(!BENCH.on)return;const sc=BENCH.list[BENCH.i];if(!sc)return;G.tod=sc.tod;G.doy=BENCH_DOY;const t=performance.now()-BENCH.t0,gap=BENCH.last?now-BENCH.last:0;BENCH.last=now;
   // the staged fight: a blast and a puff of smoke near the fires every 0.3 s of game time
   if(sc.view==='strid'&&G.time-BENCH.boomT>=.3){BENCH.boomT=G.time;const v=BENCH.v,R=BENCH.R,x=v.tx+(R()-.5)*60,y=v.ty+(R()-.5)*60;
     G.fx.push({k:'boom',x,y,t:0,ttl:1.1,big:R()<.3});G.fx.push({k:'puff',x,y,h:groundY(x,y)+1,t:0,ttl:1.2,c:0x6a665e,s:2.4,hit:false,ws:'cannon'});}
-  if(BENCH.phase==='warm'){if(t>=BENCH.warm){BENCH.phase='run';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];}return;}
-  if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
-  if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),gpu:BENCH.gpus.length?benchPct(BENCH.gpus,.25):null,gpu50:BENCH.gpus.length?benchPct(BENCH.gpus,.5):null,gpu95:BENCH.gpus.length?benchPct(BENCH.gpus,.95):null,
+  if(sc.view==='slag')benchTopUp();
+  if(BENCH.phase==='warm'){if(t>=BENCH.warm){BENCH.phase='run';BENCH.t0=performance.now();BENCH.gaps=[];BENCH.cpus=[];BENCH.sims=[];BENCH.ns=[];BENCH.gpus=[];BENCH.calls=[];BENCH.tris=[];}return;}
+  if(gap>0){BENCH.gaps.push(gap);BENCH.cpus.push(performance.now()-P[0]);BENCH.sims.push(P.length>1?P[1]-P[0]:0);BENCH.ns.push(G.units.length+G.enemies.filter(e=>!e.dead).length);if(R3){BENCH.calls.push(R3.renderer.info.render.calls);BENCH.tris.push(R3.renderer.info.render.triangles/1000);}}
+  if(t>=BENCH.len){BENCH.res.push({name:benchName(sc),gap:benchPct(BENCH.gaps,.5),p95:benchPct(BENCH.gaps,.95),worst:Math.max(0,...BENCH.gaps),cpu:benchPct(BENCH.cpus,.5),sim:benchPct(BENCH.sims,.5),sim95:benchPct(BENCH.sims,.95),ns:benchPct(BENCH.ns,.5),gpu:BENCH.gpus.length?benchPct(BENCH.gpus,.25):null,gpu50:BENCH.gpus.length?benchPct(BENCH.gpus,.5):null,gpu95:BENCH.gpus.length?benchPct(BENCH.gpus,.95):null,
     calls:Math.round(benchPct(BENCH.calls,.5)),tri:Math.round(benchPct(BENCH.tris,.5)),n:BENCH.gaps.length});benchNext();}}
 /* the clipboard API needs https and a permitted frame; the fallback selects the text in a box and copies from there, and if even that fails the box stays for a manual copy */
 async function benchCopy(el,btn){const txt=el._csv;let ok=false;
@@ -8972,15 +8988,15 @@ function benchDone(){BENCH.on=false;BENCH.label='';BENCH.v=null;Math.random=BENC
   const f=(n,d)=>n.toFixed(d),pad=(x,n)=>String(x).padStart(n),dl=(a,b)=>(a-b>=0?'+':'')+f(a-b,1);
   let gpu='okänt';try{const gl=R3&&R3.renderer.getContext(),x=gl&&gl.getExtension('WEBGL_debug_renderer_info');if(x)gpu=gl.getParameter(x.UNMASKED_RENDERER_WEBGL);}catch(_){}
   const run={label:BENCH.run||'',date:new Date().toISOString().slice(0,16),gpu,screen:innerWidth+'x'+innerHeight+' dpr '+(window.devicePixelRatio||1),
-    rows:BENCH.res.map(r=>({name:r.name,gap:+f(r.gap,2),p95:+f(r.p95,2),worst:Math.round(r.worst),cpu:+f(r.cpu,2),gpu:r.gpu==null?null:+f(r.gpu,2),gpu50:r.gpu50==null?null:+f(r.gpu50,2),gpu95:r.gpu95==null?null:+f(r.gpu95,2),calls:r.calls,tri:r.tri}))};
+    rows:BENCH.res.map(r=>({name:r.name,gap:+f(r.gap,2),p95:+f(r.p95,2),worst:Math.round(r.worst),cpu:+f(r.cpu,2),sim:+f(r.sim,2),sim95:+f(r.sim95,2),ns:r.ns,gpu:r.gpu==null?null:+f(r.gpu,2),gpu50:r.gpu50==null?null:+f(r.gpu50,2),gpu95:r.gpu95==null?null:+f(r.gpu95,2),calls:r.calls,tri:r.tri}))};
   // the baseline is locked: the first run, or a run marked &label=bas, or one made the baseline with its button
   let base=benchLoad();if(!base||run.label==='bas'){benchSave(run);base=null;}
   const draw=()=>{const bm=base&&Object.fromEntries(base.rows.map(r=>[r.name,r]));
-    const head='scenario                   bild ms  (Δ bas)   p95  värst  gpu p25  (Δ bas)  cpu ms  anrop  tri k';
-    const lines=run.rows.map(r=>{const o=bm&&bm[r.name];return r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',9)+pad(f(r.p95,1),7)+pad(r.worst,6)+pad(r.gpu==null?'-':f(r.gpu,2),9)+pad(o&&r.gpu!=null&&o.gpu!=null?dl(r.gpu,o.gpu):'',9)+pad(f(r.cpu,1),8)+pad(r.calls,7)+pad(r.tri,7);});
+    const head='scenario                   bild ms  (Δ bas)   p95  värst  gpu p25  (Δ bas)  cpu ms  sim ms  sim p95  objekt  anrop  tri k';
+    const lines=run.rows.map(r=>{const o=bm&&bm[r.name];return r.name.padEnd(26)+pad(f(r.gap,1),7)+pad(o?dl(r.gap,o.gap):'',9)+pad(f(r.p95,1),7)+pad(r.worst,6)+pad(r.gpu==null?'-':f(r.gpu,2),9)+pad(o&&r.gpu!=null&&o.gpu!=null?dl(r.gpu,o.gpu):'',9)+pad(f(r.cpu,1),8)+pad(r.sim==null?'-':f(r.sim,1),8)+pad(r.sim95==null?'-':f(r.sim95,1),9)+pad(r.ns??'-',8)+pad(r.calls,7)+pad(r.tri,7);});
     const avg=(a,k='gap')=>a.reduce((s,r)=>s+(r[k]||0),0)/a.length,same=base&&base.rows.length===run.rows.length,hasG=run.rows.every(r=>r.gpu!=null),baseG=same&&base.rows.every(r=>r.gpu!=null);
     const sum='\nsnitt bild '+f(avg(run.rows),1)+' ms'+(same?' ('+dl(avg(run.rows),avg(base.rows))+' mot baslinjen'+(base.label?' '+base.label:'')+' '+base.date+')':'')+'  fps ca '+Math.round(1000/avg(run.rows))+(hasG?'\nsnitt gpu (25:e percentilen) '+f(avg(run.rows,'gpu'),2)+' ms'+(baseG?' ('+dl(avg(run.rows,'gpu'),avg(base.rows,'gpu'))+' mot baslinjen)':''):'\ngpu-tid saknas'+(GPUT.ok?' (tidsfrågan gav inga svar under körningen)':' i denna webbläsare'));
-    const tab=r=>'scenario;bild_ms;p95_ms;varst_ms;gpu_p25_ms;gpu_med_ms;gpu_p95_ms;cpu_ms;anrop;tri_k\n'+r.rows.map(x=>[x.name,x.gap,x.p95,x.worst,x.gpu??'',x.gpu50??'',x.gpu95??'',x.cpu,x.calls,x.tri].join(';')).join('\n');
+    const tab=r=>'scenario;bild_ms;p95_ms;varst_ms;gpu_p25_ms;gpu_med_ms;gpu_p95_ms;cpu_ms;sim_ms;sim_p95_ms;objekt;anrop;tri_k\n'+r.rows.map(x=>[x.name,x.gap,x.p95,x.worst,x.gpu??'',x.gpu50??'',x.gpu95??'',x.cpu,x.sim??'',x.sim95??'',x.ns??'',x.calls,x.tri].join(';')).join('\n');
     const meta=r=>(r.label?'etikett '+r.label+'  ':'')+r.date+'\ngrafik '+r.gpu+'\nskärm '+r.screen;
     BENCH.el._csv='BENCHMARK Uppdrag Arkipelag\nsiktavstånd '+SIKT_N[SIKT.k]+'  skuggor '+(R3&&R3.renderer.shadowMap.enabled?'på':'av')+'\nwebbläsare '+navigator.userAgent+
       '\n\nDENNA KÖRNING  '+meta(run)+'\n'+tab(run)+'\n\nBASLINJE  '+(base?meta(base)+'\n'+tab(base):'(den här körningen är baslinjen)');
