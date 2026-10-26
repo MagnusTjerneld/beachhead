@@ -123,10 +123,15 @@ button:disabled{opacity:.45;cursor:default}
 .stage.bred .roster{grid-column:1/-1}
 .stage.bred #subSlot{aspect-ratio:auto;max-height:none}
 /* the active view's mark and the second camera (24 okt) */
-.vact{display:none;position:absolute;left:6px;top:6px;z-index:4;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--dim);background:rgba(17,26,34,.86);padding:0;cursor:pointer}
-.stage.bred .vact{display:block}
-.vact[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);box-shadow:0 0 0 2px rgba(17,26,34,.86)}
-.stage.bred .slot .vlabel{left:28px}
+.vact{display:none;position:absolute;left:6px;top:6px;z-index:4;height:20px;min-width:20px;border-radius:3px;border:1px solid rgba(240,244,240,.18);background:rgba(17,26,34,.86);padding:0 5px;cursor:pointer;align-items:center;gap:5px;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;color:var(--signal)}
+.stage.bred .vact{display:inline-flex}
+.vact::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid var(--dim);box-sizing:border-box;flex:none}
+/* the active view says so in words (Magnus 26 okt: the dot alone was missed, and with it what Q swaps) */
+.vact[aria-pressed="true"]{border-color:var(--signal)}
+.vact[aria-pressed="true"]::before{background:var(--signal);border-color:var(--signal)}
+.vact[aria-pressed="true"]::after{content:"AKTIV"}
+.stage.bred .slot .vlabel{left:32px}
+.stage.bred .slot:has(.vact[aria-pressed="true"]) .vlabel{left:72px}
 .feed.big{position:absolute;inset:0;aspect-ratio:auto;max-height:none;border:0;border-radius:0}
 .feed.big .fl{font-size:13px;padding:18px 10px 6px}
 .feed.big .fpin{right:8px;top:40px;font-size:11px;padding:2px 7px}
