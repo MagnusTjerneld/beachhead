@@ -33,7 +33,7 @@ th:first-child,td:first-child{text-align:left}
 <main>
   <h1>Ljudbänk: HÖK, GETING och GÄDDA</h1>
   <p>Det gamla rotorljudet (före 25 okt) och det nya, som i spelet. Välj enhet och version och tryck Spela. Växla med A/B medan det spelar, eller låt Växla själv byta var tredje sekund. Kurvan visar spektrumet; det gula fältet är 1 till 4 kHz, där örat är som känsligast och där det gamla ljudet hade sin vissling.</p>
-  <p>GÄDDA är robotbåten, som inte finns i spelet än: två elmotorer på batteri driver var sin vattenjet. Det som hörs är mest vattnet: strålen ur munstyckena, skumvattnet akterut och vågorna mot skrovet, med pumphjulens brum under. Stilla puttrar jetarna och vattnet klunkar mot skrovet. Variant A har motorerna nästan tysta, variant B en tydlig elmotorton som stiger med farten. Avfyra robot spelar startladdningen och raketmotorn när roboten lämnar båten.</p>
+  <p>GÄDDA är robotbåten, som inte finns i spelet än: två elmotorer på batteri driver var sin vattenjet. Det som hörs är mest vattnet: strålen ur munstyckena, skumvattnet akterut och vågorna mot skrovet, med pumphjulens brum under. Stilla puttrar jetarna och vattnet klunkar mot skrovet. Variant A är utan motorton och är den som valts (Magnus 26 okt); variant B har en elmotorton som stiger med farten och sparas för jämförelse. Avfyra robot spelar startladdningen och raketmotorn när roboten lämnar båten.</p>
   <div class="row"><span class="lab">Enhet</span><button data-u="drone" aria-pressed="true">HÖK</button><button data-u="scout" aria-pressed="false">GETING</button><button data-u="wing" aria-pressed="false">Wing: 2 HÖK och 2 GETING</button><button data-u="gadda" aria-pressed="false">GÄDDA</button></div>
   <div class="row"><span class="lab">Version</span><button data-v="old" aria-pressed="false">Gammalt</button><button data-v="new" aria-pressed="true">Nytt</button><button id="ab">A/B</button><button id="auto" aria-pressed="false">Växla själv</button><button id="fire" hidden>Avfyra robot</button></div>
   <div class="row"><span class="lab">Fart</span><input id="mv" type="range" min="0" max="1.2" step=".01" value=".6"><span class="meter" id="mvv">0.60</span></div>
@@ -100,13 +100,13 @@ function gaddaLaunch(c,dest,noise){const t=c.currentTime;
 function build(c,dest,unit,ver,mv){const buf=noiseBuf(c),nodes=[],st=n=>{nodes.push(n);if(n.start)n.start();return n;};
   const noise=()=>{const s=c.createBufferSource();s.buffer=buf;s.loop=true;s.loopStart=Math.random();return s;};
   const kinds=unit==='wing'?['drone','drone','scout','scout']:[unit],crowd=ver==='new'?1/Math.sqrt(kinds.length):1,vs=[];
-  kinds.forEach((k,i)=>{const out=c.createGain();const R=k==='gadda'?gaddaVoice(c,st,out,noise,ver==='new'?1:.3):(ver==='new'?rotorVoice:oldVoice)(c,k,st,out,noise);out.gain.value=R.base*crowd;out.connect(dest);R.set(0,mv*(1+(i%2)*.08));vs.push({R,out,base:R.base*crowd,i});});
+  kinds.forEach((k,i)=>{const out=c.createGain();const R=k==='gadda'?gaddaVoice(c,st,out,noise,ver==='new'?1:0):(ver==='new'?rotorVoice:oldVoice)(c,k,st,out,noise);out.gain.value=R.base*crowd;out.connect(dest);R.set(0,mv*(1+(i%2)*.08));vs.push({R,out,base:R.base*crowd,i});});
   return{nodes,vs,noise,set:m=>vs.forEach(v=>v.R.set(0,m*(1+(v.i%2)*.08)))};}
 
 let ctx=null,master,an,cur=null,unit='drone',ver='new',autoT=null;
 const $=id=>document.getElementById(id),NAME={drone:'HÖK',scout:'GETING',wing:'wing',gadda:'GÄDDA'};
 // GÄDDA has two variants instead of old and new, and a button to fire
-function labels(){const g=unit==='gadda';document.querySelector('[data-v="old"]').textContent=g?'A: motorn tyst':'Gammalt';document.querySelector('[data-v="new"]').textContent=g?'B: med motorton':'Nytt';$('fire').hidden=!g;}
+function labels(){const g=unit==='gadda';document.querySelector('[data-v="old"]').textContent=g?'A: utan motorton (vald)':'Gammalt';document.querySelector('[data-v="new"]').textContent=g?'B: med motorton':'Nytt';$('fire').hidden=!g;}
 function ensure(){if(ctx)return;ctx=new AudioContext();master=ctx.createGain();master.gain.value=+$('vol').value;an=ctx.createAnalyser();an.fftSize=4096;an.smoothingTimeConstant=.8;master.connect(an);an.connect(ctx.destination);draw();}
 function stopCur(){if(!cur)return;const c=cur;cur=null;const t=ctx.currentTime;c.vs.forEach(v=>v.out.gain.setTargetAtTime(0,t,.05));setTimeout(()=>c.nodes.forEach(n=>{try{n.stop()}catch(_){}}),300);}
 function start(){ensure();ctx.resume();stopCur();cur=build(ctx,master,unit,ver,+$('mv').value);$('now').textContent=(unit==='gadda'?(ver==='new'?'B':'A'):(ver==='new'?'Nytt':'Gammalt'))+' · '+NAME[unit];}
