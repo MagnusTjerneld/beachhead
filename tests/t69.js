@@ -37,7 +37,12 @@ const foe=(G,kind,x,y)=>{const e=B.makeEnemy({id:'Q'+kind,kind,x,y});e.seen=true
   ok(v.orders[0]&&v.orders[0].toNet&&h.orders[0]&&h.orders[0].toNet,'after 3 s idle outside the net both head back ('+(v.orders[0]?v.orders[0].type:'none')+', '+(h.orders[0]?h.orders[0].type:'none')+')');
   for(let i=0;i<120*20&&!(B.inNet(v.x,v.y)&&B.inNet(h.x,h.y));i++)B.step(.05);
   for(let i=0;i<30;i++)B.step(.05);
-  ok(B.inNet(v.x,v.y)&&B.inNet(h.x,h.y)&&!v.offNet&&!h.offNet,'and are inside it again with contact');}
+  ok(B.inNet(v.x,v.y)&&B.inNet(h.x,h.y)&&!v.offNet&&!h.offNet,'and are inside it again with contact');
+  /* and GÄDDA, at sea outside the net, by water */
+  let g=null;for(let r=1000;r<1800&&!g;r+=50)for(let a=0;a<64&&!g;a++){const x=C.x+Math.cos(a/64*6.283)*r,y=C.y+Math.sin(a/64*6.283)*r;if(!B.inNet(x,y)&&B.heightAt(x,y)<-2&&B.gaddaNetPt({x,y}))g=B.makeUnit('gadda',x,y);}
+  G.units.push(g);g.orders=[];for(let i=0;i<6*20;i++)B.step(.05);const gw=g.orders[0]&&g.orders[0].toNet;
+  for(let i=0;i<150*20&&!B.inNet(g.x,g.y);i++)B.step(.05);for(let i=0;i<30;i++)B.step(.05);
+  ok(gw&&B.inNet(g.x,g.y)&&!g.offNet&&B.heightAt(g.x,g.y)<0,'a GÄDDA idle outside it comes back in by water ('+(gw?'sent':'not sent')+')');}
 // 5. on scouted but unsecured land a BÄVER on Defensiv is not set down; on Offensiv it is, with a line in the log
 {const drop=post=>{const G=setup(1490),L=G.relays[0],k=G.kroks[0],u=G.units.find(v=>v.kind==='eng');G.known.fill(0);
     for(let y=-90;y<=90;y+=5)for(let x=-90;x<=90;x+=5)if(x*x+y*y<90*90)G.known[B.cellIdx(L.x+x,L.y+y)]=1;G.knownV++;
