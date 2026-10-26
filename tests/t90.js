@@ -70,4 +70,13 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
     until(()=>{const dx=u.x-C.x,dy=u.y-C.y,L={lat:-dx*f.y+dy*f.x,fwd:dx*f.x+dy*f.y};if(Math.abs(L.lat)<20&&Math.abs(L.fwd)<56)bad++;return !u.orders.length;},150);
     const dx=u.x-C.x,dy=u.y-C.y,lt=-dx*f.y+dy*f.x,fw=dx*f.x+dy*f.y;if(!u.orders.length&&Math.abs(lt)>20&&Math.abs(lt)<40&&Math.abs(fw)<35)ok2++;G().units=G().units.filter(v=>v!==u);}
   ok(ok2>=3&&!bad,'home from four sides it lies along Birkas side ('+ok2+' of 4), never in her hull or on her ramps ('+bad+' steps)');}
+// 12. omprov 26 okt: a full turn at full speed keeps its way (36 knots, not 27) on a tighter turn than before
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const nf=B.navField(B.W);let bi=0;for(let i=0;i<nf.length;i++)if(B.seaPass(i)&&nf[i]>nf[bi]&&nf[i]<400)bi=i;
+  const u=boat((bi%220)*10+5,Math.floor(bi/220)*10+5);u.heading=0;u.v=0;G().ctrl=u.id;B.CTRL.thr=1;B.CTRL.steer=0;until(()=>false,15);B.CTRL.steer=1;const pts=[];for(let i=0;i<200;i++){B.step(.05);if(i>100)pts.push([u.x,u.y]);}
+  let mx=0,my=0;pts.forEach(q=>{mx+=q[0];my+=q[1];});mx/=pts.length;my/=pts.length;const r=pts.reduce((s,q)=>s+Math.hypot(q[0]-mx,q[1]-my),0)/pts.length;B.CTRL.thr=0;B.CTRL.steer=0;G().ctrl=null;
+  ok(u.v>17&&r<18,'full lock at full speed: '+(u.v*1.944).toFixed(0)+' knots on a turn of '+r.toFixed(1)+' m');}
+// 13. the crane: the boat goes up clear of the gantry before it leaves the bay, and the gantry is not in the way
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;B.queueBuild('gadda');until(()=>G().units.some(u=>u.kind==='gadda'),40);const u=G().units.find(v=>v.kind==='gadda');let low=0,ph=new Set();
+  until(()=>{const P=u.launch&&u.launch.pose;if(P){ph.add(P.ph);const L=B.shipLocal(u.x,u.y);if(P.ph===2&&Math.hypot(L.lat-9,L.fwd-2)>2&&u.craneH<B.DECK_Y+15)low++;}return !u.launch;},40);
+  ok(ph.size===4&&!low&&B.heightAt(u.x,u.y)<0,'the crane takes it through all four steps, '+(low?low+' steps low over the deck':'over the gantry')+', into the water');}
 process.exit(fail?1:0);
