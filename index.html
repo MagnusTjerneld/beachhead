@@ -9164,6 +9164,10 @@ const fVarg=i=>fA('v'+i,()=>mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][
 const fUnit=(key,kind,col)=>fA(key,()=>mkUnitMesh({kind,color:col||PAL[0][0],ammo:4}));
 const fEnemy=(key,kind)=>fA(key,()=>mkEnemyMesh({kind,id:key}));
 function fGround(x,z){return Math.max(0,groundY(x,z));}
+/* a load hung on KROK in the film as the game hangs it (krokLoad3D): the wire paid out so that the hook sits above the load and four
+   slings take it at half its height (director's pass 26 okt, Magnus: the BÄVER hung free under a hook on a wire of the default length) */
+function fHang(km,bm){const ud=km.userData;if(!ud.sw)return;const b=krokBox(bm),sl=Math.max(KROK_SLING,b.h*.5+1),yt=bm.position.y+b.c.y-km.position.y,yh=yt+sl,L=Math.max(.3,-yh-KROK_HOOK_H);
+  ud.sw.rotation.set(0,0,0);ud.cable.visible=ud.hook.visible=true;ud.cable.scale.y=L/5;ud.cable.position.y=-L/2;ud.hook.position.y=-L;krokSlings(ud,true,-L-KROK_HOOK_H,-L-KROK_HOOK_H-sl,b.hx,b.hz);}
 /* on the ground (or afloat), pitched and rolled with the slope; the model's nose is +x */
 function fPlace(m,x,z,hd,lift){const c=Math.cos(hd),s=Math.sin(hd),L=3,g=(a,b)=>fGround(a,b);
   const pitch=Math.atan2(g(x+c*L,z+s*L)-g(x-c*L,z-s*L),2*L),roll=Math.atan2(g(x+s*2,z-c*2)-g(x-s*2,z+c*2),4);
@@ -9308,7 +9312,7 @@ const FILM_SHOTS=[
   {const q=shipPos(4.5,PAD_FWD);u0.x=q[0];u0.y=q[1];}
   const iv=fDir(FILM.b0,WORLD.landing),pv={x:-iv.z,z:iv.x},lift=sm(clamp((tau-.5)/3.6,0,1))*11+Math.max(0,tau-4)*2,by=DECK_Y+lift,hd=Math.atan2(iv.z,iv.x);
   bm.position.set(u0.x,by,u0.y);bm.rotation.set(0,-hd,Math.sin(tau*1.3)*.02*clamp(lift,0,1));FILM.beaverHeld=true;
-  km.position.set(u0.x,by+8+Math.sin(tau*2)*.15,u0.y);km.rotation.set(Math.sin(tau*1.1)*.02,-hd,.03);km.userData.cable.visible=true;km.userData.hook.visible=true;
+  km.position.set(u0.x,by+8+Math.sin(tau*2)*.15,u0.y);km.rotation.set(Math.sin(tau*1.1)*.02,-hd,.03);fHang(km,bm);
   /* the legs, as in the game: down over the deck while it lifts, folded once it is away */km.userData.legT=1-sm(clamp((tau-2.5)/1.5,0,1));krokLegs(km.userData,km.userData.legT);
   if(km.userData.spin)for(const sp of km.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;
   // rotor wash: spray thrown off the deck edge and the water
@@ -9327,7 +9331,7 @@ const FILM_SHOTS=[
 /* 4. KROK carries BÄVER across the water toward the beach, tracked alongside, the island and the low sun beyond */
 {k:7,id:'krok',f(tau,dur,dtr,S){const B=FILM.b0,iv=fDir(B,WORLD.landing),pv={x:-iv.z,z:iv.x},hd=Math.atan2(iv.z,iv.x);
   const km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng');const d=lerp(75,170,tau/dur),x=B.x+iv.x*d,z=B.y+iv.z*d,y=27+Math.sin(tau*.9)*.4;
-  km.position.set(x,y,z);km.rotation.set(Math.sin(tau*.7)*.03,-hd,-.06);km.userData.cable.visible=true;km.userData.hook.visible=true;krokLegs(km.userData,0);/* in flight: legs folded */bm.position.set(x,y-8,z);bm.rotation.set(Math.sin(tau*1.1)*.04,-hd-.1*Math.sin(tau*.6),Math.sin(tau*.8)*.03);
+  km.position.set(x,y,z);km.rotation.set(Math.sin(tau*.7)*.03,-hd,-.06);krokLegs(km.userData,0);/* in flight: legs folded */bm.position.set(x,y-8,z);bm.rotation.set(Math.sin(tau*1.1)*.04,-hd-.1*Math.sin(tau*.6),Math.sin(tau*.8)*.03);fHang(km,bm);
   const cx=x-iv.x*26-pv.x*34,cz=z-iv.z*26-pv.z*34;fCam(cx,y-3,cz,x+iv.x*8,y-4,z+iv.z*8,.05);FILM.fov=40;}},
 /* 5. the landing (director's pass 26 okt, Magnus: Birka on the beach and vehicles rolling off): HMS Birka glides the last metres in
    onto the sand as in the game (WORLD.beach), stops, lowers her bow ramp and two VARG and a BÄVER drive down it onto the beach, past a low
@@ -9337,10 +9341,12 @@ const FILM_SHOTS=[
   const g=3.5*(1-sm(clamp(tau/1.4,0,1)));moveCarrier(B.x+f.x*g,B.y+f.z*g,B.a);G.ramp={bow:clamp((tau-.4)/1.1,0,1),side:0};
   if(tau<1.4&&Math.random()<dtr*14)vargSpray(B.tip.x+f.x*8+fr()*10,B.tip.y+f.z*8+fr()*10,3,dtr*3);/* the bow pushing the shallows */
   /* along the hull's axis: on deck, down the ramp (DECK_Y at the hinge to the sand at its tip) and on over the beach; each one pulls
-     away at 3 m/s2 up to 7 m/s */
+     away at 3 m/s2 up to 7 m/s, and over the hinge and onto the sand the slope is rounded off over 3 m, so that it tips over them and
+     does not snap (director's pass, Magnus: they juddered; the run also jumped 2 m where it reached full speed) */
   const tipH=fGround(B.tip.x,B.tip.y),reach=Math.sqrt(Math.max(1,RAMP.len*RAMP.len-(DECK_Y-tipH)**2)),slope=Math.atan2(DECK_Y-tipH,reach);
-  const drive=(m,lat,fw0,t0,lift)=>{const t=Math.max(0,tau-t0),run=t<7/6?1.5*t*t:7*t-49/12,fw=fw0-run,q=shipPos(lat,fw),x=q[0],z=q[1],on=RAMP.bow-fw;
-    if(on<=0){m.position.set(x,DECK_Y+lift,z);m.rotation.set(0,-hd,0);}else if(on<reach){m.position.set(x,DECK_Y-(DECK_Y-tipH)*on/reach+lift,z);m.rotation.set(0,-hd,-slope);}
+  const W=1.5,gR=u=>u<=-W?0:u<W?(u+W)**2/(4*W):u<reach-W?u:u<reach+W?reach-(reach+W-u)**2/(4*W):reach,dR=u=>u<=-W||u>=reach+W?0:u<W?(u+W)/(2*W):u<reach-W?1:(reach+W-u)/(2*W);
+  const drive=(m,lat,fw0,t0,lift)=>{const t=Math.max(0,tau-t0),run=t<7/3?1.5*t*t:7*t-49/6,fw=fw0-run,q=shipPos(lat,fw),x=q[0],z=q[1],on=RAMP.bow-fw;
+    if(on<reach+W){m.position.set(x,DECK_Y-(DECK_Y-tipH)*gR(on)/reach+lift,z);m.rotation.set(0,-hd,-Math.atan(Math.tan(slope)*dR(on)));}
     else{fPlace(m,x,z,hd,lift);if(t>0&&Math.random()<dtr*26)fxDust(x-Math.cos(hd)*3,fGround(x,z),z-Math.sin(hd)*3,1.3);}};
   drive(fVarg(0),-5.5,-41,1.45,HOVER_Y);drive(fVarg(1),6,-33,1.95,HOVER_Y);drive(fUnit('bav','eng'),0,-24,2.6,0);
   const cx=B.tip.x-f.x*27+p.x*10,cz=B.tip.y-f.z*27+p.z*10;fCam(cx,fGround(cx,cz)+1.4,cz,B.tip.x+f.x*8,3.4,B.tip.y+f.z*8,.02);FILM.fov=46;}},
@@ -9450,11 +9456,11 @@ const FILM_SHOTS=[
   const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,HOVER_Y);
   const cx=wx+42,cz=wz-30;fCam(cx-tau*.8,fGround(cx,cz)+1.6,cz+tau*.3,wx,fGround(wx,wz)+4+tau*.4,wz,0);FILM.fov=34;}},
 /* 21. HMS Birka comes into the harbour in the blue hour, lights on. On the navigator's own way in, diagonally through the mouth at
-   3 m/s, and she stops short of the turn to her berth (director's pass 26 okt, Magnus: the old shot was far too fast, 8 m/s, and only
+   3 m/s, and the shot ends well before the turn to her berth (director's pass 26 okt, Magnus: the old shot was far too fast, 8 m/s, and only
    sideways). The camera stands ashore at the inner end of the basin and turns with her as she comes */
 {k:33,id:'hamn',birka:false,f(tau,dur,dtr,S){const P=WORLD.birkaPath,H=WORLD.harbor;if(!P)return;G.harbor.secured=true;
   if(!S.R){const R=P.route;let e=R.length-1;while(e>0&&!(R[e].v===0&&R[e-1].v>0))e--;const L=[0];for(let i=1;i<=e;i++)L.push(L[i-1]+Math.hypot(R[i].x-R[i-1].x,R[i].y-R[i-1].y));S.R=R;S.e=e;S.L=L;}
-  const R=S.R,L=S.L,e=S.e,d=L[e]-4-(dur-tau)*3;let i=1;while(i<e&&L[i]<d)i++;const a=R[i-1],b=R[i],u=clamp((d-L[i-1])/((L[i]-L[i-1])||1),0,1);
+  const R=S.R,L=S.L,e=S.e,d=L[e]-14-(dur-tau)*3;/* it ends 14 m short of the turn: the diagonal is the shot (Magnus) */let i=1;while(i<e&&L[i]<d)i++;const a=R[i-1],b=R[i],u=clamp((d-L[i-1])/((L[i]-L[i-1])||1),0,1);
   const x=lerp(a.x,b.x,u),y=lerp(a.y,b.y,u),an=a.a+angWrap(b.a-a.a)*u;moveCarrier(x,y,an);G.ramp={bow:0,side:0};
   const qx=H.x+30,qz=H.y+22;fCam(qx,fGround(qx,qz)+12,qz,x,6,y,0);FILM.fov=44;}},
 /* 22. up and away over the dark island, the lighthouse ahead sweeping its beam. The flight ends where the lighthouse is seen
