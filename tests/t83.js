@@ -2,7 +2,7 @@
 // and waits where it lifted when nothing is said; a new order cancels a lift that waits; a HÖK striking a target is not taken off to
 // spot it but counts as the spotter while it strikes; the wing does not wait for a VARG far from its staging point; and every mast stands where the net can reach it
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.COAST.n=0;/* the defence before the coast's bunkers (26 okt), which this test's islands were picked on */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find(l=>re.test(l.text));
 // 1. KROK and BÄVER on ö 3019
 {B.newGame(3019);const G=B.G;G.running=true;G.netAll=true;const k=G.kroks[0],u=G.units.find(v=>v.kind==='eng');

@@ -53,4 +53,7 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 {B.newGame(9052,'fastning');G().running=true;const R=G().relays,lc=R.find(r=>r.type==='central');lc.captured=true;B.step(.05);B.checkWin&&B.checkWin();
   const early=G().over;for(const r of R)r.captured=true;B.checkWin();ok(!early&&G().over,'taking LC alone does not win, all '+R.length+' points do');
   B.newGame(9052,'fastning');B.WIN.all=false;G().relays.find(r=>r.type==='central').captured=true;B.checkWin();ok(G().over,'the old goal: LC alone');B.WIN.all=true;}
+// 10. the enemy guards its coast: COAST.n bunkers up from open water on every island, taken from its own budget
+{let all=true,where=[];for(const seed of[2024,9052,1490]){B.newGame(seed);const c=G().enemies.filter(e=>e.coast);if(c.length!==B.COAST.n||G().enemies.length===0)all=false;where.push(seed+': '+c.length);}
+  ok(all,'two coastal bunkers on each island ('+where.join(', ')+')');}
 process.exit(fail?1:0);
