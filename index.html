@@ -5627,6 +5627,8 @@ function mkUnitMesh(u){
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
     if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
+/* a part built in its parent's frame moved onto a pivot of its own at (x,y,z), where it stands as before */
+function pivotOn(T,x,y,z){for(const c of T.children){c.position.x-=x;c.position.y-=y;c.position.z-=z;}T.position.set(x,y,z);return T;}
 function mkEnemyMesh(e){
   const g=new THREE.Group();
   const RUST=mat(0x6a2a22),RUST2=mat(0x7a3328),RUST3=mat(0x5a241e),DK=mat(0x2a1a18),BLK=mat(0x1b1c1e),MET=mat(0x4a4440),OLV=mat(0x4b4632),SKIN=mat(0xb08a6a);
@@ -5714,19 +5716,23 @@ function mkEnemyMesh(e){
     const gl=mesh(box(1.8,.16,4.4),RUST,3.4,1.75,0);gl.rotation.z=-.4;g.add(gl);for(const z of[-1.6,1.6])g.add(mesh(box(.2,.25,.4),DK,4.0,1.6,z));
     g.add(mesh(box(2.4,.1,3.8),mat(0x8a5a4a),-2.5,2.22,0));for(let i=0;i<5;i++)g.add(mesh(box(.12,.06,3),DK,-3.45+i*.42,2.3,0));/* off the turret's back face (24 okt: one shared it and flickered) */
     for(const z of[-1.3,1.3])g.add(mesh(box(.5,.45,.7),DK,-3.75,1.95,z));
-    g.add(mesh(box(3.6,1.3,3.2),RUST2,-.4,2.85,0));for(const sz of[-1,1]){const ch=mesh(box(1.4,1.2,1.3),RUST2,1.4,2.8,sz*.95);ch.rotation.y=sz*.4;g.add(ch);}
-    g.add(mesh(box(1.4,.6,2.6),RUST3,-2.4,2.9,0));g.add(mesh(cyl(.38,.42,.4,8),RUST3,-.8,3.65,-.7));g.add(mesh(box(.45,.3,.4),DK,.3,3.6,.75));
-    for(const sz of[-1,1])for(let i=0;i<3;i++){const sm=mesh(cyl(.08,.08,.35,6),DK,.8-i*.22,3.2,sz*1.65);sm.rotation.x=sz*.8;g.add(sm);}
-    g.add(mesh(box(.7,.8,1.0),DK,2.05,3.0,0));const b=mesh(cyl(.24,.28,5.5,8),DK,4.6,3.1,0);b.rotation.z=PI/2;g.add(b);g.add(mesh(cyl(.32,.32,.7,8),DK,4.0,3.1,0).rotateZ(PI/2));
-    g.add(mesh(cyl(.025,.025,2,4),DK,-1.8,4.4,.9));}
+    /* the turret, cupola, gun and all, is its own part on a pivot in its middle, so that it goes up whole when the tank blows up
+       (Magnus 26 okt: the whole turret should fly straight up, as it does) */
+    const T=new THREE.Group(),t=(o)=>{T.add(o);return o;};
+    t(mesh(box(3.6,1.3,3.2),RUST2,-.4,2.85,0));for(const sz of[-1,1]){const ch=mesh(box(1.4,1.2,1.3),RUST2,1.4,2.8,sz*.95);ch.rotation.y=sz*.4;t(ch);}
+    t(mesh(box(1.4,.6,2.6),RUST3,-2.4,2.9,0));t(mesh(cyl(.38,.42,.4,8),RUST3,-.8,3.65,-.7));t(mesh(box(.45,.3,.4),DK,.3,3.6,.75));
+    for(const sz of[-1,1])for(let i=0;i<3;i++){const sm=mesh(cyl(.08,.08,.35,6),DK,.8-i*.22,3.2,sz*1.65);sm.rotation.x=sz*.8;t(sm);}
+    t(mesh(box(.7,.8,1.0),DK,2.05,3.0,0));const b=mesh(cyl(.24,.28,5.5,8),DK,4.6,3.1,0);b.rotation.z=PI/2;t(b);t(mesh(cyl(.32,.32,.7,8),DK,4.0,3.1,0).rotateZ(PI/2));
+    t(mesh(cyl(.025,.025,2,4),DK,-1.8,4.4,.9));pivotOn(T,-.4,2.85,0);g.add(T);g.userData.head=T;}
   else{
     // light armour: a six-wheeled carrier with a boat-shaped bow, hatches, a small turret with an autocannon and an antenna
     for(const x of[-2,0,2])for(const z of[-1.55,1.55]){const w=mesh(cyl(.6,.6,.45,10),BLK,x,.6,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.25,.25,.47,6),MET,x,.6,z);hb.rotation.x=PI/2;g.add(hb);}
     g.add(mesh(box(5.6,1.3,3.0),mat(0x7a2e26),-.2,1.45,0));const bow=mesh(box(1.4,1.0,2.9),mat(0x7a2e26),2.9,1.35,0);bow.rotation.z=.55;g.add(bow);
     g.add(mesh(box(5.2,.12,3.1),mat(0x8a3a30),-.4,2.12,0));for(const z of[-1.6,1.6])g.add(mesh(box(5,.35,.12),mat(0x5a2420),-.3,1.6,z));
     g.add(mesh(box(.8,.12,.8),DK,-1.8,2.2,.8));g.add(mesh(box(.8,.12,.8),DK,-1.8,2.2,-.8));for(const z of[-1.2,1.2])g.add(mesh(box(.15,.22,.35),DK,3.2,1.7,z));
-    g.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));g.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
-    const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;g.add(b);g.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));
+    const T=new THREE.Group();/* its turret, as the tank's */
+    T.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));T.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
+    const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;T.add(b);T.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));pivotOn(T,-.4,2.6,0);g.add(T);g.userData.head=T;
     g.add(mesh(cyl(.025,.025,2,4),DK,-1.4,3.8,.9));}
   {const r=sh(bake(g,!String(e.id).startsWith('hulk')));/* the rusting hulks keep a geometry per colour, so each part gets its own rust */if(e.kind==='tank'||e.kind==='light'||e.kind==='aa'){contactShadow(r,.02);r.scale.setScalar(.8);}/* ground vehicles at 0.8, like ours */return r;}
 }
@@ -6192,7 +6198,8 @@ const headOf=m=>m.userData.head||m.userData.tur||null;
 function debAdd(o,v,w,r,smoke,tag){o.traverse(c=>{if(c.isMesh&&!c.userData.noShadow){c.castShadow=true;c.layers.disable(FILM_SHL);}});R3.scene.add(o);DEB.push({m:o,v,w,r,smoke,rest:!v,t:0,tag});}
 function blowApart(m,tag,H){m.updateMatrixWorld(true);const c=new THREE.Vector3().setFromMatrixPosition(m.matrixWorld),R=Math.random;
   if(H&&H.parent){H.updateMatrixWorld(true);const p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();H.matrixWorld.decompose(p,q,sc);H.parent.remove(H);charred(H);
-    H.position.copy(p);H.quaternion.copy(q);H.scale.copy(sc);H.rotation.order='XYZ';debAdd(H,new THREE.Vector3((R()-.5)*6,13+R()*4,(R()-.5)*6),new THREE.Vector3((R()-.5)*9,(R()-.5)*7,(R()-.5)*9),.8,1.2,tag);}
+    H.position.copy(p);H.quaternion.copy(q);H.scale.copy(sc);H.rotation.order='XYZ';/* whole and straight up, turning slowly about the upright with a little tumble, as a turret goes when the ammunition goes (Magnus 26 okt) */
+    debAdd(H,new THREE.Vector3((R()-.5)*1.4,15+R()*4,(R()-.5)*1.4),new THREE.Vector3((R()-.5)*1.4,(R()<.5?-1:1)*(1.5+R()*1.5),(R()-.5)*1.4),.8,1.2,tag);}
   if(!CHAR_M)charred(new THREE.Group());
   for(let i=0;i<12;i++){const sx=.4+R()*1.3,sy=.08+R()*.25,sz=.3+R()*1,d=new THREE.Mesh(box(sx,sy,sz),R()<.6?CHAR_M:CHAR_M2),a=R()*TAU,sp=5+R()*10;
     d.position.set(c.x+Math.cos(a)*1.2,c.y+1.5+R()*1.2,c.z+Math.sin(a)*1.2);d.rotation.set(R()*3,R()*3,R()*3);
@@ -9359,7 +9366,7 @@ const FILM_SHOTS=[
   FILM.mapUnits.forEach((m,i)=>{const g=goals[i%goals.length],f=sm(clamp(u*1.15-i*.03,0,1));m.x=lerp(m.film.x,g[0],f*(m.kind==='eng'?.4:1));m.y=lerp(m.film.y,g[1],f*(m.kind==='eng'?.4:1));m.heading=Math.atan2(g[1]-m.film.y,g[0]-m.film.x);});
   mv.free=true;mv.z=lerp(2.1,2.7,sm(u));mv.cx=lerp(1560,1470,u);mv.cy=lerp(720,770,u);fCam(1500,60,700,1400,0,780,0);}},
 /* 7. contact: an enemy tank breaks out of the forest into the meadow, dust off its tracks, and fires */
-{k:13,id:'skogen',lanes:()=>[[1262,782,1332,734,12]],f(tau,dur,dtr,S){const m=fEnemy('et1','tank'),P=[[1262,782],[1322,741]],q=fPath(P,lerp(0,68,sm(clamp(tau/3.9,0,1))));fPlace(m,q.x,q.z,q.hd,0);
+{k:13,id:'skogen',lanes:()=>[[1262,782,1332,734,12]],f(tau,dur,dtr,S){const m=fEnemy('et1','tank');headOf(m).visible=true;const P=[[1262,782],[1322,741]],q=fPath(P,lerp(0,68,sm(clamp(tau/3.9,0,1))));fPlace(m,q.x,q.z,q.hd,0);
   if(tau<3.9&&Math.random()<dtr*25)fxDust(q.x-Math.cos(q.hd)*4,fGround(q.x,q.z),q.z-Math.sin(q.hd)*4,1.6);
   if(tau>3.55&&!S.shot){S.shot=1;const c=Math.cos(q.hd),s=Math.sin(q.hd),y=fGround(q.x,q.z)+3.1;fxFlash(q.x+c*7.6,y,q.z+s*7.6,3.5);for(let k=0;k<8;k++)fP(q.x+c*8,y,q.z+s*8,{v:[c*(6+k*1.5)+fr()*2,.5+Math.random(),s*(6+k*1.5)+fr()*2],s0:1.2,s1:4.5,a:.35,ttl:1.6,c:0xa8a29a,drag:1.6});}
   const cx=1340,cz=721;fCam(cx-tau*.5,fGround(cx,cz)+1.1,cz+tau*.2,q.x,fGround(q.x,q.z)+2.6,q.z,tau>3.55?.25*Math.max(0,1-(tau-3.55)*2):.02);FILM.fov=32;}},
@@ -9399,17 +9406,17 @@ const FILM_SHOTS=[
   const c=Math.cos(hd),s=Math.sin(hd),cx=x-c*10+s*4.5,cz=z-s*10-c*4.5;fCam(cx,fGround(cx,cz)+3.4,cz,lerp(x,tx,.55),fGround(tx,tz)+2,lerp(z,tz,.55),(S.rk!=null&&tau-S.rk<.4)?.3:.02);FILM.fov=40;}},
 /* 13. HÖK rockets: the four leave the rails one by one and streak down on the enemy tank in the meadow, which blows up in the
    next shot (decided 17 okt: cause and effect; they used to fall on the AA truck, which was not there) */
-{k:23,id:'robotar',f(tau,dur,dtr,S){const h=fUnit('hok1','drone'),P=FILM_ET1,et=fEnemy('et1','tank'),q=fPath([[P[0][0]-18,P[0][1]+10],P[0],P[1]],tau*8);fPlace(et,q.x,q.z,q.hd,0);
+{k:23,id:'robotar',f(tau,dur,dtr,S){const h=fUnit('hok1','drone'),P=FILM_ET1,et=fEnemy('et1','tank');headOf(et).visible=true;const q=fPath([[P[0][0]-18,P[0][1]+10],P[0],P[1]],tau*8);fPlace(et,q.x,q.z,q.hd,0);
   const tx=P[0][0],tz=P[0][1],x0=tx+150,z0=tz-40,hd=Math.atan2(tz-z0,tx-x0),x=x0+Math.cos(hd)*tau*22,z=z0+Math.sin(hd)*tau*22,y=48;
   h.position.set(x,y,z);h.rotation.set(0,-hd,-.04);const R=h.userData.rockets||[];
   R.forEach((rk,i)=>{const tf=.15+i*.22;rk.visible=tau<tf;if(tau>=tf&&!(S['r'+i])){S['r'+i]=1;rk.visible=true;h.updateMatrixWorld();const p=new THREE.Vector3();rk.getWorldPosition(p);rk.visible=false;
     fxMissile({x:p.x,y:p.y,z:p.z},{x:tx+fr()*4,y:fGround(tx,tz)+1.5,z:tz+fr()*4},dur+.7-tf,-4,0);}});
   const c=Math.cos(hd),s=Math.sin(hd);fCam(x-c*14-s*7,y+2.5,z-s*14+c*7,lerp(x+c*30,tx,.35),lerp(y-12,fGround(tx,tz),.35),lerp(z+s*30,tz,.35),.03);FILM.fov=46;}},
 /* 14. a hit: the enemy tank on the move takes HÖK's rockets, blows up and burns */
-{k:24,id:'traff',lanes:()=>[[FILM_ET1[0][0]-18,FILM_ET1[0][1]+10,...FILM_ET1[1],12]],f(tau,dur,dtr,S){const m=fEnemy('et1','tank'),P=FILM_ET1,q=fPath(P,Math.min(tau,.7)*9);fPlace(m,q.x,q.z,q.hd,0);
+{k:24,id:'traff',lanes:()=>[[FILM_ET1[0][0]-18,FILM_ET1[0][1]+10,...FILM_ET1[1],12]],f(tau,dur,dtr,S){const m=fEnemy('et1','tank');headOf(m).visible=true;const P=FILM_ET1,q=fPath(P,Math.min(tau,.7)*9);fPlace(m,q.x,q.z,q.hd,0);
   if(S.first){const e=fPath(P,6.3),y=fGround(e.x,e.z);fxMissile({x:e.x+70,y:y+44,z:e.z-22},{x:e.x,y:y+1.5,z:e.z},.7,-2,0);fxMissile({x:e.x+64,y:y+46,z:e.z-30},{x:e.x+6,y:y+.5,z:e.z+5},.52,-2,.6);}
-  if(tau>.7&&!S.b){S.b=1;const y=fGround(q.x,q.z);fxBoom(q.x,y+1,q.z,1.5);fxFire(q.x,y+2,q.z,1.2);}
-  if(S.b)m.rotation.x+=Math.min(.12,(tau-.7)*.4);
+  if(tau>.7&&!S.b){S.b=1;const y=fGround(q.x,q.z);fxBoom(q.x,y+1,q.z,1.5);fxFire(q.x,y+2,q.z,1.2);m.rotation.x=.08;m.updateMatrixWorld(true);fxWreck(m);}/* the turret goes straight up (Magnus 26 okt) */
+  if(S.b)m.visible=false;
   const cx=q.x+20,cz=q.z-30;fCam(cx,fGround(cx,cz)+2,cz,q.x,fGround(q.x,q.z)+3,q.z,S.b?Math.max(.03,.7-(tau-.7)):.02);FILM.fov=40;}},
 /* 15. MUS: the little rover races in on a bunker and the charge goes off. It comes in from the south-east: from the north-east
    it went through the boundary wall (17 okt) */
@@ -9453,7 +9460,7 @@ const FILM_SHOTS=[
   if(tau>FILM_BAR&&!S.b){S.b=1;const e=fEnemy('et4','tank');e.updateMatrixWorld(true);fxWreck(e);e.visible=false;fxBoom(tx,fGround(tx,tz)+1,tz,3);fxFire(tx,fGround(tx,tz)+2,tz,2);}
   const cx=1482,cz=748;fCam(cx-tau*.6,fGround(cx,cz)+2,cz,tx,fGround(tx,tz)+9,tz+8,.02);FILM.fov=38;}},
 /* 20. after: the music drops away; the wreck burns into the dusk and a VARG goes slowly by in front of it */
-{k:31,id:'efter',f(tau,dur,dtr,S){const wx=1332,wz=734;const w=fEnemy('et1','tank');fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.5);}
+{k:31,id:'efter',f(tau,dur,dtr,S){const wx=1332,wz=734;const w=fEnemy('et1','tank');headOf(w).visible=false;/* its turret went up in the hit */fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.5);}
   const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,HOVER_Y);
   const cx=wx+42,cz=wz-30;fCam(cx-tau*.8,fGround(cx,cz)+1.6,cz+tau*.3,wx,fGround(wx,wz)+4+tau*.4,wz,0);FILM.fov=34;}},
 /* 21. HMS Birka comes into the harbour in the blue hour, lights on. On the navigator's own way in, diagonally through the mouth at
