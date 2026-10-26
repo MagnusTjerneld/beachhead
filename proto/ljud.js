@@ -1,4 +1,4 @@
-// Measures the sound bench headless: three seconds of HÖK, GETING and a wing, old and new, A-weighted level relative to the old HÖK
+// Measures the sound bench headless: three seconds of HÖK, GETING and a wing, old and new, and GÄDDA in both variants, A-weighted level relative to the old HÖK
 // and the share of the energy below 1 kHz, between 1 and 4 kHz and above 4 kHz (node proto/ljud.js, a few seconds)
 const path=require('path'),fs=require('fs'),{execSync}=require('child_process');
 const {chromium}=require(execSync('npm root -g').toString().trim()+'/playwright');

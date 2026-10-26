@@ -1,4 +1,4 @@
-# Builds proto/ljud.html, the sound bench for HÖK and GETING, from proto/ljud.src.html and the game's rotorVoice in ../index.html,
+# Builds proto/ljud.html, the sound bench for HÖK, GETING and GÄDDA, from proto/ljud.src.html and the game's rotorVoice in ../index.html,
 # so that the bench always plays the game's own sound. Run it whenever rotorVoice changes.
 import os
 here=os.path.dirname(os.path.abspath(__file__))
