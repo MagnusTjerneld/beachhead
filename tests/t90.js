@@ -56,8 +56,12 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 {let all=true,where=[];for(const seed of[2024,9052,1490]){B.newGame(seed);const c=G().enemies.filter(e=>e.coast);if(c.length!==B.COAST.n||G().enemies.length===0)all=false;where.push(seed+': '+c.length);}
   ok(all,'two coastal bunkers on each island ('+where.join(', ')+')');}
 // 11. after the test round of 26 okt: the robot's flight, the air defence firing at it, a robot at a known place, the berth along Birka
-{const f={x1:0,y1:0,h1:2,x2:260,y2:0,h2:2};B.launch({x:-3.4,y:0,kind:'gadda'},null,260,0,2,'gadda','f',true,0,'gadda');const r=G().fx[G().fx.length-2];
-  ok(r.ttl>2.6&&r.ttl<3.4&&B.gaddaAt(r,.35).s<.06&&r.arc>=80,'a robot flies 260 m in '+r.ttl.toFixed(1)+' s, slowly out of the box ('+Math.round(B.gaddaAt(r,.35).s*100)+' % after 0.35 s), up to '+Math.round(r.arc)+' m');G().fx.length=0;}
+{const f={x1:0,y1:0,h1:2,x2:260,y2:0,h2:2};B.launch({x:1.6,y:0,kind:'gadda',heading:0},null,260,0,2,'gadda','f',true,0,'gadda');const r=G().fx[G().fx.length-2];
+  ok(r.ttl>2.6&&r.ttl<3.4&&B.gaddaAt(r,.35).s<.06&&r.arc>=80,'a robot flies 260 m in '+r.ttl.toFixed(1)+' s, slowly out of the box ('+Math.round(B.gaddaAt(r,.35).s*100)+' % after 0.35 s), up to '+Math.round(r.arc)+' m');G().fx.length=0;
+  /* out of the box over the bow and round onto the target (Magnus 26 okt): abeam it starts ahead, astern it comes round wide, not over the boat */
+  const fire=hd=>{G().fx.length=0;B.launch({x:0,y:0,kind:'gadda',heading:hd},null,260,0,2,'gadda','f',true,0,'gadda');return G().fx[G().fx.length-2];};
+  const b=fire(Math.PI/2),p=B.gaddaAt(b,.4),c=fire(Math.PI);let near=1e9;for(let i=8;i<=40;i++){const q=B.gaddaAt(c,c.ttl*i/40);near=Math.min(near,Math.hypot(q.x,q.y));}
+  ok(p.y>2*Math.abs(p.x)&&b.ttl<r.ttl+.8&&near>15&&c.ttl<r.ttl+1.6,'abeam it leaves ahead ('+p.y.toFixed(1)+' m ahead, '+p.x.toFixed(1)+' m toward the target after 0.4 s) in '+b.ttl.toFixed(1)+' s; astern it turns wide (never nearer the boat than '+Math.round(near)+' m after the start) in '+c.ttl.toFixed(1)+' s');G().fx.length=0;}
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;B.testfall('glv');G().paused=false;const u=G().units.find(v=>v.kind==='gadda'),T=G().enemies.find(e=>!e.dead&&e.kind==='turret'),A=G().enemies.find(e=>!e.dead&&e.kind==='aa');
   const k0=B.GADDA.aaDown;B.GADDA.aaDown=1;B.giveOrder(u,{type:'attack',enemy:T,post:'off'});let flak=0,mid=false;const seen=new Set();
   until(()=>{for(const f of G().fx){if(f.k==='shot'&&f.ws==='flak'&&f.a===A&&!seen.has(f)){seen.add(f);flak++;}if(f.k==='shot'&&f.ws==='gadda'&&f.done&&f.t<f.ttl-.05)mid=true;}return (G().gaddaDown||0)>0;},40);B.GADDA.aaDown=k0;
