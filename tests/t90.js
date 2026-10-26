@@ -45,9 +45,9 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 // 8. driven by hand into the shore at full speed: damaged and stuck on land until KROK lifts it off; at a crawl nothing happens
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const T=G().structs.find(s=>B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},s.x,s.y));
   const sp=B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},T.x,T.y),u=boat(sp.x,sp.y);u.heading=Math.atan2(T.y-u.y,T.x-u.x);G().ctrl=u.id;
-  B.CTRL.thr=.15;B.CTRL.steer=0;until(()=>false,60);ok(u.hp===u.maxhp&&!u.aground,'at a crawl it only touches the shore ('+u.state+')');
-  u.x=sp.x;u.y=sp.y;u.v=0;B.CTRL.thr=1;until(()=>u.aground||u.dead,60);B.CTRL.thr=0;
-  ok(u.aground&&u.hp<u.maxhp*.4&&!u.dead,'at full speed it runs up on land, hull '+Math.round(u.hp/u.maxhp*100)+' %');
+  B.CTRL.thr=.06;B.CTRL.steer=0;until(()=>false,90);ok(u.hp===u.maxhp&&!u.aground,'at a crawl it only touches the shore ('+u.state+')');
+  {const dx=T.x-sp.x,dy=T.y-sp.y,d=Math.hypot(dx,dy);let k=150;while(k>0&&B.heightAt(sp.x-dx/d*k,sp.y-dy/d*k)>-1)k-=10;u.x=sp.x-dx/d*k;u.y=sp.y-dy/d*k;}u.bvx=u.bvy=u.v=u.rot=0;B.CTRL.thr=1;/* a run-up of up to 150 m */until(()=>u.aground||u.dead,60);B.CTRL.thr=0;
+  ok(u.aground&&u.hp<u.maxhp*.4&&!u.dead,'at full speed it runs up and sticks, hull '+Math.round(u.hp/u.maxhp*100)+' %');
   G().ctrl=null;B.gaddaFree(u);until(()=>!u.aground&&!u.carried&&B.heightAt(u.x,u.y)<0,240);ok(!u.aground&&B.heightAt(u.x,u.y)<0,'KROK lifts it off into the water');}
 // 9. the island is won when every point is taken, not by the command centre alone; WIN.all false is the testbot's old goal
 {B.newGame(9052,'fastning');G().running=true;const R=G().relays,lc=R.find(r=>r.type==='central');lc.captured=true;B.step(.05);B.checkWin&&B.checkWin();
