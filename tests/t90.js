@@ -7,14 +7,13 @@ require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.l
 const G=()=>B.G,until=(f,s)=>{for(let i=0;i<s*20;i++){if(f())return true;B.step(.05);}return !!f();};
 const wet=(x,y)=>B.heightAt(x,y)<0;
 const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
-// 1. built in the bay for 220 and put in the water by KROK, or by the crane when there is no KROK
+// 1. built in the bay for 220 and put in the water by Birka's crane (KROK stays free); KROK lifts it afloat to another place on order
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;const r0=G().res;B.queueBuild('gadda');
-  until(()=>G().units.some(u=>u.kind==='gadda'),40);const u=G().units.find(v=>v.kind==='gadda');let lifted=false;
-  ok(r0-G().res===220,'GÄDDA costs 220 ('+(r0-G().res)+')');until(()=>{if(u.carried)lifted=true;return !u.launch;},120);
-  ok(lifted&&!u.launch&&wet(u.x,u.y)&&B.atBirkaSide(u),'built in the bay, KROK puts it in the water beside Birka ('+u.state+')');
-  // with no KROK, Birka's crane launches the next one
-  {for(const k of G().kroks)k.dead=true;B.queueBuild('gadda');until(()=>G().units.filter(v=>v.kind==='gadda').length>1,40);const u2=G().units.filter(v=>v.kind==='gadda')[1];
-    until(()=>!u2.launch,40);ok(!u2.launch&&wet(u2.x,u2.y),'with no KROK the crane puts it in the water ('+Math.round(G().time)+' s)');G().units=G().units.filter(v=>v!==u2);}
+  until(()=>G().units.some(u=>u.kind==='gadda'),40);const u=G().units.find(v=>v.kind==='gadda');let lifted=false,t0=G().time;
+  ok(r0-G().res===220,'GÄDDA costs 220 ('+(r0-G().res)+')');until(()=>{if(u.carried)lifted=true;return !u.launch;},60);
+  ok(!lifted&&!u.launch&&wet(u.x,u.y)&&B.atBirkaSide(u)&&G().time-t0<B.GADDA.crane+2,'built in the bay, the crane puts it in the water beside Birka in '+Math.round(G().time-t0)+' s ('+u.state+')');
+  {const k=G().kroks.find(x=>!x.dead),w={x:u.x+Math.cos(B.CARRIER.a)*120,y:u.y+Math.sin(B.CARRIER.a)*120};const o=B.krokDefault(k,{unit:u});B.krokOrder(k,o,false);B.krokOrder(k,{type:'drop',x:w.x,y:w.y},true);let up=false;
+    until(()=>{if(u.carried)up=true;return up&&!u.carried;},150);ok(up&&!u.carried&&wet(u.x,u.y)&&Math.hypot(u.x-w.x,u.y-w.y)<30,'KROK lifts it afloat and sets it down in the water '+Math.round(Math.hypot(u.x-w.x,u.y-w.y))+' m from the point');}
   // 2. a way on the water to a point far off round the island, never over land
   let best=null;for(let i=0;i<B.GW*B.GW;i+=7){if(!B.seaPass(i))continue;const c={x:(i%B.GW)*10+5,y:Math.floor(i/B.GW)*10+5},d=Math.hypot(c.x-u.x,c.y-u.y);if(d>700&&d<900&&(!best||d<best.d))best={...c,d};}
   for(const e of G().enemies)e.dead=true;B.giveOrder(u,{type:'move',x:best.x,y:best.y,post:'off'});let dry=0;
@@ -56,4 +55,19 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 // 10. the enemy guards its coast: COAST.n bunkers up from open water on every island, taken from its own budget
 {let all=true,where=[];for(const seed of[2024,9052,1490]){B.newGame(seed);const c=G().enemies.filter(e=>e.coast);if(c.length!==B.COAST.n||G().enemies.length===0)all=false;where.push(seed+': '+c.length);}
   ok(all,'two coastal bunkers on each island ('+where.join(', ')+')');}
+// 11. after the test round of 26 okt: the robot's flight, the air defence firing at it, a robot at a known place, the berth along Birka
+{const f={x1:0,y1:0,h1:2,x2:260,y2:0,h2:2};B.launch({x:-3.4,y:0,kind:'gadda'},null,260,0,2,'gadda','f',true,0,'gadda');const r=G().fx[G().fx.length-2];
+  ok(r.ttl>2.6&&r.ttl<3.4&&B.gaddaAt(r,.35).s<.06&&r.arc>=80,'a robot flies 260 m in '+r.ttl.toFixed(1)+' s, slowly out of the box ('+Math.round(B.gaddaAt(r,.35).s*100)+' % after 0.35 s), up to '+Math.round(r.arc)+' m');G().fx.length=0;}
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;B.testfall('glv');G().paused=false;const u=G().units.find(v=>v.kind==='gadda'),T=G().enemies.find(e=>!e.dead&&e.kind==='turret'),A=G().enemies.find(e=>!e.dead&&e.kind==='aa');
+  const k0=B.GADDA.aaDown;B.GADDA.aaDown=1;B.giveOrder(u,{type:'attack',enemy:T,post:'off'});let flak=0,mid=false;const seen=new Set();
+  until(()=>{for(const f of G().fx){if(f.k==='shot'&&f.ws==='flak'&&f.a===A&&!seen.has(f)){seen.add(f);flak++;}if(f.k==='shot'&&f.ws==='gadda'&&f.done&&f.t<f.ttl-.05)mid=true;}return (G().gaddaDown||0)>0;},40);B.GADDA.aaDown=k0;
+  ok((G().gaddaDown||0)>0&&mid&&flak>=3&&T.hp===T.maxhp,'the air defence fires at the robot ('+flak+' bursts) and brings it down in the air');}
+{B.newGame(9052,'fastning');G().running=true;B.testfall('gvanta');G().paused=false;const u=G().units.find(v=>v.kind==='gadda'),T=G().enemies.find(e=>!e.dead&&e.kind==='turret');
+  for(const v of G().units)if(v.kind==='drone')v.dead=true;B.giveOrder(u,{type:'attack',enemy:T,post:'off'});until(()=>u.orders[0]&&u.orders[0].waitTold,40);ok(u.orders[0]&&u.orders[0].waitTold&&u.ammo===4,'waiting for a painter, it says so once in the log');
+  B.giveOrder(u,{type:'strike',x:T.lx,y:T.ly,n:1,post:'off'});until(()=>u.ammo<4&&!G().fx.some(f=>f.k==='shot'&&f.ws==='gadda'&&!f.done),30);ok(u.ammo===3,'Robot mot platsen fires at once at an unseen bunker ('+Math.round(T.hp/T.maxhp*100)+' % left)');}
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const C=B.CARRIER,f={x:Math.cos(C.a),y:Math.sin(C.a)};let bad=0,ok2=0;
+  for(const[lat,fwd]of[[-200,-150],[180,120],[60,-260],[-90,240]]){const u=B.makeUnit('gadda',C.x-f.y*lat+f.x*fwd,C.y+f.x*lat+f.y*fwd);if(!B.seaPass(B.cellIdx(u.x,u.y))){G().units.length;continue;}G().units.push(u);u.ammo=0;B.giveOrder(u,{type:'rtb',post:'off'});u.rtb=true;
+    until(()=>{const dx=u.x-C.x,dy=u.y-C.y,L={lat:-dx*f.y+dy*f.x,fwd:dx*f.x+dy*f.y};if(Math.abs(L.lat)<20&&Math.abs(L.fwd)<56)bad++;return !u.orders.length;},150);
+    const dx=u.x-C.x,dy=u.y-C.y,lt=-dx*f.y+dy*f.x,fw=dx*f.x+dy*f.y;if(!u.orders.length&&Math.abs(lt)>20&&Math.abs(lt)<40&&Math.abs(fw)<35)ok2++;G().units=G().units.filter(v=>v!==u);}
+  ok(ok2>=3&&!bad,'home from four sides it lies along Birkas side ('+ok2+' of 4), never in her hull or on her ramps ('+bad+' steps)');}
 process.exit(fail?1:0);

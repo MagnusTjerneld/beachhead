@@ -21,5 +21,5 @@ const drive=(u,thr,s)=>{G().ctrl=u.id;B.CTRL.thr=thr;B.CTRL.steer=0;until(()=>u.
 {const u=go('gomlad'),T=G().enemies.find(e=>!e.dead&&e.kind==='turret');B.giveOrder(u,{type:'attack',enemy:T,post:'off'});until(()=>u.ammo<1,30);
   ok(until(()=>B.atBirkaSide(u)&&u.ammo===0&&!(u.orders[0]&&u.orders[0].type==='rtb'),200),'gomlad: out of robots it goes to Birka');until(()=>false,10);ok(u.ammo===0,'gomlad: and waits for the captain');
   const r0=G().svcSpent||0;B.gaddaRearm(u);const h=G().units.find(v=>v.kind==='drone');const dead=until(()=>{if(h)h.fuel=h.maxFuel;return T.dead;},320);/* the HÖK's battery kept up: the round trip outlasts it */ok(dead&&(G().svcSpent||0)-r0===160,'gomlad: approved, it loads four for 160 and goes on to finish the bunker ('+((G().svcSpent||0)-r0)+', '+u.state+')');}
-{go('gsjo');B.queueBuild('gadda');let lifted=false;ok(until(()=>{const u=boat();if(u&&u.carried)lifted=true;return u&&!u.launch;},150)&&lifted,'gsjo: built and put in the water by KROK');}
+{go('gsjo');B.queueBuild('gadda');let lifted=false;ok(until(()=>{const u=boat();if(u&&u.carried)lifted=true;return u&&!u.launch;},80)&&!lifted&&B.heightAt(boat().x,boat().y)<0,'gsjo: built and put in the water by the crane, KROK left alone');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

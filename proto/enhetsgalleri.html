@@ -215,7 +215,8 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
   return g;}
 function mkUnitMesh(u){
   const g=new THREE.Group();
-  if(u.kind==='gadda')return sh(bake(mkGadda(THREE,{color:u.color}),true));
+  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();root.add(sh(bake(m,true)));root.add(L);root.add(ram);
+    L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0});return root;}
   if(u.kind==='mus'){
     // MUS: a small remote-controlled rover. A body with sloped nose and tail, fenders over four fat wheels with hubs, a bumper and
     // lamp, a camera head on a short mast, a whip antenna, and the charge on the back with warning stripes
@@ -523,7 +524,7 @@ const TYPES={
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
   mus:{label:'MUS',tag:'M',role:'spaning',cost:30,build:15,hp:10,speed:14,vision:70},
-  gadda:{label:'GÄDDA',tag:'GÄ',role:'robotbåt',cost:220,build:20,hp:50,speed:18,vision:150,range:260,dmg:60,rate:1/3,acc:.95,ammo:4,sea:true}
+  gadda:{label:'GÄDDA',tag:'GÄ',role:'robotbåt',cost:220,build:20,hp:50,speed:22,vision:150,range:260,dmg:60,rate:1/3,acc:1,ammo:4,sea:true}/* a robot at a target someone sees always hits, so a bunker takes exactly two (Magnus 26 okt: two for the economy); only an air defence takes one down */
 };
 
 const MG={range:80,dmg:3,rate:2,acc:.6};
@@ -536,7 +537,7 @@ const SIZE_ACC={krok:1.1,drone:1,scout:.5};
 
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
 
-const GADDA={draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:.95,spread:12.5,blast:8,navD:10,turn:1.6,accel:6,brake:10,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4};
+const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:12,swing:4,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4};
 
 const COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
 const KROK_SRC="kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},post:'def',heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};";
