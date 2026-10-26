@@ -65,7 +65,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
         for(const [k,m] of acts){const x=m.position.x,z=m.position.z,g=F.fGround(x,z),air=m.position.y-g>3;if(air)continue;
           (tr.act[k]||(tr.act[k]=[])).push([x,z]);
           v3.set(x,m.position.y+1,z);if(!fr.containsPoint(v3)||C.distanceTo(v3)>320)continue;
-          const bb=boxOf(k,m),hd=-m.rotation.y,c=Math.cos(hd),s=Math.sin(hd),wet=hAt(x,z)<0,floats=/^v\d|^varg/.test(k);
+          const bb=boxOf(k,m),hd=-m.rotation.y,c=Math.cos(hd),s=Math.sin(hd),wet=hAt(x,z)<0,floats=/^v\d|^varg|^gadda/.test(k);/* VARG is a hovercraft, GÄDDA a boat */
           if(wet&&!floats){const key=k+' vatten';if(!hits.has(key))hits.set(key,{k,what:'vatten',x,z,tau});}
           for(const o of near(x,z,14)){const dx=o.x-x,dz=o.z-z,u=dx*c+dz*s,w=-dx*s+dz*c;
             if(u>bb.x0-o.r*.8&&u<bb.x1+o.r*.8&&w>bb.z0-o.r*.8&&w<bb.z1+o.r*.8){const key=k+' '+o.k+' '+Math.round(o.x/10)+','+Math.round(o.z/10);

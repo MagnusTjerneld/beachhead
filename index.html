@@ -9053,11 +9053,11 @@ function filmCam(dtr){
   if(FILM.state==='play'&&t>=FILM_END+1.5){FILM.state='done';$('tPress').textContent='SPELA IGEN';$('tPress').hidden=false;$('title').classList.remove('clean');filmSaveBtn(true);}
   let i=0;while(i<FILM_SHOTS.length-1&&t>=filmShotT(i+1))i++;const S=FILM_SHOTS[i],t0=filmShotT(i),dur=(i<FILM_SHOTS.length-1?filmShotT(i+1):FILM_END)-t0;
   $('title').classList.toggle('filmlogo',FILM.on);
-  if(i!==FILM.i){FILM.i=i;filmClear();FILM.S={first:true};FILM.useMovers=false;filmMapShow(false);if(S.birka!==false)filmBirka(null);G.harbor.secured=S.birka===false;
+  if(i!==FILM.i){FILM.i=i;filmClear();FILM.S={first:true};FILM.useMovers=false;filmMapShow(false);if(S.birka!==false)filmBirka(null);G.ramp=null;G.harbor.secured=S.birka===false;
     if(S.id!=='logga'){$('logoWrap').hidden=true;if(FILM.state==='play')$('title').classList.add('clean');}}
   for(const k in FILM.act)FILM.act[k].visible=false;FILM.useMovers=false;FILM.fov=40;FILM.sunEl=null;FILM.fadeA=0;FILM.hideBeaver=i>=2&&i<24;
   S.f(Math.min(t-t0,dur),dur,dtr,FILM.S);FILM.S.first=false;
-  if(S.k>=20&&S.k<31&&FILM.state!=='idle')filmBattle(dtr);
+  if(S.k>=20&&S.k<31&&!S.quiet&&FILM.state!=='idle')filmBattle(dtr);
   if(R3.cam.fov!==FILM.fov){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
   for(const m of(R3.movers||[]))if(m.varg){m.g.visible=FILM.useMovers;m.wake.mesh.visible=FILM.useMovers;}
   {const bu=G.units.find(u=>u.kind==='eng'),bm=bu&&R3.units.get(bu.id);if(bm&&FILM.hideBeaver&&!FILM.beaverHeld)bm.visible=false;else if(bm)bm.visible=true;FILM.beaverHeld=false;}
@@ -9219,7 +9219,7 @@ function fxTracer(a,b,v,c,thick){const d=new THREE.Vector3(b.x-a.x,b.y-a.y,b.z-a
   const m=new THREE.Mesh(R3.film_trGeo||(R3.film_trGeo=new THREE.CylinderGeometry(.5,.5,1,5)),new THREE.MeshBasicMaterial({color:c||0xffd27a,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d);m.scale.set(thick||.12,Math.min(9,L*.3),thick||.12);R3.scene.add(m);FX.tr.push({m,a:new THREE.Vector3(a.x,a.y,a.z),d,L,v:v||300,s:0,hit:b.hit});}
 /* a missile or rocket: a bright head and a smoke trail along an arc from a to b over dur seconds, a blast at the end */
-function fxMissile(a,b,dur,arc,boom){const m=new THREE.Group();R3.scene.add(m);FX.ms.push({m,a,b,dur,arc:arc||0,t:0,boom:boom??1,em:0});}
+function fxMissile(a,b,dur,arc,boom,path){const m=new THREE.Group();R3.scene.add(m);FX.ms.push({m,a,b,dur,arc:arc||0,t:0,boom:boom??1,em:0,path});}/* path(k): the place at k of the way, for GÄDDA's robot in its curve */
 /* the AA truck blown apart in the trailer: the same as in the game (blowApart), on a copy of the film's actor */
 function fxWreck(m){m.updateMatrixWorld(true);const w=m.clone(true),hi=m.children.indexOf(headOf(m));charred(w);
   w.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.layers.enable(FILM_SHL);});w.visible=true;w.rotation.z+=.06;w.position.y-=.2;R3.scene.add(w);w.updateMatrixWorld(true);
@@ -9236,7 +9236,7 @@ function fxTick(dtr){const P=FX.parts;
   for(let i=FX.tr.length-1;i>=0;i--){const q=FX.tr[i];q.s+=q.v*dtr;if(q.s>=q.L){R3.scene.remove(q.m);q.m.material.dispose();FX.tr.splice(i,1);
       const e=q.a.clone().addScaledVector(q.d,q.L);if(q.hit!==false){for(let k=0;k<5;k++)fP(e.x,e.y,e.z,{v:[fr()*14,4+Math.random()*8,fr()*14],g:18,s0:.3,s1:.15,a:1,ttl:.35,c:0xffd080,add:true});if(e.y<fGround(e.x,e.z)+2){fxDust(e.x,e.y,e.z,1.4);fxDust(e.x,e.y,e.z,1.8);}}continue;}
     q.m.position.copy(q.a).addScaledVector(q.d,q.s);}
-  for(let i=FX.ms.length-1;i>=0;i--){const q=FX.ms[i];q.t+=dtr;const k=Math.min(1,q.t/q.dur),x=lerp(q.a.x,q.b.x,k),z=lerp(q.a.z,q.b.z,k),y=lerp(q.a.y,q.b.y,k)+Math.sin(k*PI)*q.arc;
+  for(let i=FX.ms.length-1;i>=0;i--){const q=FX.ms[i];q.t+=dtr;const k=Math.min(1,q.t/q.dur),Q=q.path?q.path(k):null,x=Q?Q.x:lerp(q.a.x,q.b.x,k),z=Q?Q.z:lerp(q.a.z,q.b.z,k),y=Q?Q.y:lerp(q.a.y,q.b.y,k)+Math.sin(k*PI)*q.arc;
     q.em+=dtr*70;while(q.em>1){q.em--;fP(x+fr()*.4,y+fr()*.4,z+fr()*.4,{v:[fr(),.4,fr()],s0:.7,s1:2.6,a:.5,ttl:1.6,c:0xc8c4bc,drag:1});}
     fP(x,y,z,{s0:1.6,s1:1.2,a:.9,ttl:.06,c:0xfff0c0,add:true});fLight(x,y,z,0xffd090,2,30,.05);
     if(k>=1){if(q.boom)fxBoom(q.b.x,q.b.y,q.b.z,q.boom);R3.scene.remove(q.m);FX.ms.splice(i,1);}}
@@ -9329,20 +9329,21 @@ const FILM_SHOTS=[
   const km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng');const d=lerp(75,170,tau/dur),x=B.x+iv.x*d,z=B.y+iv.z*d,y=27+Math.sin(tau*.9)*.4;
   km.position.set(x,y,z);km.rotation.set(Math.sin(tau*.7)*.03,-hd,-.06);km.userData.cable.visible=true;km.userData.hook.visible=true;krokLegs(km.userData,0);/* in flight: legs folded */bm.position.set(x,y-8,z);bm.rotation.set(Math.sin(tau*1.1)*.04,-hd-.1*Math.sin(tau*.6),Math.sin(tau*.8)*.03);
   const cx=x-iv.x*26-pv.x*34,cz=z-iv.z*26-pv.z*34;fCam(cx,y-3,cz,x+iv.x*8,y-4,z+iv.z*8,.05);FILM.fov=40;}},
-/* 5. the landing: VARG come out of the water onto the beach past a low camera, BÄVER set down behind, Birka out at sea */
-{k:9,id:'strand',lanes(){const LD=WORLD.landing,iv=fDir(FILM.b0,LD),pv={x:-iv.z,z:iv.x},b={x:LD.x+iv.x*18-pv.x*34,z:LD.y+iv.z*18-pv.z*34};
-    return[[LD.x-iv.x*90,LD.y-iv.z*90,LD.x+iv.x*55,LD.y+iv.z*55,46],[b.x,b.z,b.x,b.z,20]];},
-  f(tau,dur,dtr,S){const B=FILM.b0,LD=WORLD.landing,iv=fDir(B,LD),pv={x:-iv.z,z:iv.x};
-  const lane=[[-1,0,-14],[0,0,0],[1,-9,14]];
-  lane.forEach(([i,back,lat],n)=>{const m=fVarg(n),d=lerp(-80,45,tau/dur)+back+(n===1?6:0),x=LD.x+iv.x*d+pv.x*lat,z=LD.y+iv.z*d+pv.z*lat,hd=Math.atan2(iv.z,iv.x),gy=groundY(x,z);
-    if(m.userData.tur)m.userData.tur.rotation.y=0;
-    if(gy<.3){m.position.set(x,0,z);m.rotation.set(0,-hd,0);fVargWater(m,dtr,FILM.t,n,170);}
-    else{fPlace(m,x,z,hd,HOVER_Y);if(Math.random()<dtr*30)fxDust(x-iv.x*3,gy,z-iv.z*3,1.3);if(gy<1.5)vargSpray(x,z,14,dtr*2.2);}});
-  // BÄVER set down by KROK to one side
-  {const km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng'),x=LD.x+iv.x*18-pv.x*34,z=LD.y+iv.z*18-pv.z*34,gy=fGround(x,z),dn=sm(clamp(tau/3.6,0,1)),hd=Math.atan2(iv.z,iv.x);
-    bm.position.set(x,lerp(gy+7,gy,dn),z);bm.rotation.set(0,-hd,0);km.position.set(x,lerp(gy+15,gy+8.6,dn)+(tau>3.8?(tau-3.8)*3:0),z);km.rotation.set(0,-hd,.02);km.userData.cable.visible=tau<4;km.userData.hook.visible=tau<4;krokLegs(km.userData,1);/* setting down: legs down */
-    if(dn>.6)fxDust(x+fr()*8,gy,z+fr()*8,1.6);}
-  const cx=LD.x+iv.x*38+pv.x*6,cz=LD.y+iv.z*38+pv.z*6;fCam(cx,fGround(cx,cz)+1.6,cz,LD.x-iv.x*20,2.5,LD.y-iv.z*20,.03);FILM.fov=44;}},
+/* 5. the landing (director's pass 26 okt, Magnus: Birka on the beach and vehicles rolling off): HMS Birka glides the last metres in
+   onto the sand as in the game (WORLD.beach), stops, lowers her bow ramp and two VARG and a BÄVER drive down it onto the beach, past a low
+   camera on the sand ahead of her bow */
+{k:9,id:'strand',lanes(){const B=WORLD.beach;if(!B)return[];const f={x:Math.cos(B.a),z:Math.sin(B.a)};return[[B.tip.x+f.x*4,B.tip.y+f.z*4,B.tip.x-f.x*44,B.tip.y-f.z*44,34]];},
+  f(tau,dur,dtr,S){const B=WORLD.beach;if(!B)return;const f={x:Math.cos(B.a),z:Math.sin(B.a)},p={x:-f.z,z:f.x},hd=B.a+PI;
+  const g=3.5*(1-sm(clamp(tau/1.4,0,1)));moveCarrier(B.x+f.x*g,B.y+f.z*g,B.a);G.ramp={bow:clamp((tau-.4)/1.1,0,1),side:0};
+  if(tau<1.4&&Math.random()<dtr*14)vargSpray(B.tip.x+f.x*8+fr()*10,B.tip.y+f.z*8+fr()*10,3,dtr*3);/* the bow pushing the shallows */
+  /* along the hull's axis: on deck, down the ramp (DECK_Y at the hinge to the sand at its tip) and on over the beach; each one pulls
+     away at 3 m/s2 up to 7 m/s */
+  const tipH=fGround(B.tip.x,B.tip.y),reach=Math.sqrt(Math.max(1,RAMP.len*RAMP.len-(DECK_Y-tipH)**2)),slope=Math.atan2(DECK_Y-tipH,reach);
+  const drive=(m,lat,fw0,t0,lift)=>{const t=Math.max(0,tau-t0),run=t<7/6?1.5*t*t:7*t-49/12,fw=fw0-run,q=shipPos(lat,fw),x=q[0],z=q[1],on=RAMP.bow-fw;
+    if(on<=0){m.position.set(x,DECK_Y+lift,z);m.rotation.set(0,-hd,0);}else if(on<reach){m.position.set(x,DECK_Y-(DECK_Y-tipH)*on/reach+lift,z);m.rotation.set(0,-hd,-slope);}
+    else{fPlace(m,x,z,hd,lift);if(t>0&&Math.random()<dtr*26)fxDust(x-Math.cos(hd)*3,fGround(x,z),z-Math.sin(hd)*3,1.3);}};
+  drive(fVarg(0),-5.5,-41,1.45,HOVER_Y);drive(fVarg(1),6,-33,1.95,HOVER_Y);drive(fUnit('bav','eng'),0,-24,2.6,0);
+  const cx=B.tip.x-f.x*27+p.x*10,cz=B.tip.y-f.z*27+p.z*10;fCam(cx,fGround(cx,cz)+1.4,cz,B.tip.x+f.x*8,3.4,B.tip.y+f.z*8,.02);FILM.fov=46;}},
 /* 6. the chart: the same moment as the game shows it, the landing party fanning out from the beach over the island */
 {k:11,id:'sjokort',birka:true,f(tau,dur,dtr,S){if(S.first){filmMapShow(true);FILM.mapUnits=[];
     const LD=WORLD.landing;for(const [kind,dx,dy] of[['tank',0,-14],['tank',6,0],['tank',0,14],['eng',-10,-30],['scout',-10,0],['drone',-30,10],['drone',-30,24]]){const u=makeUnit(kind,LD.x+dx,LD.y+dy);u.orders=[];u.hold=true;u.film={x:LD.x+dx,y:LD.y+dy};G.units.push(u);FILM.mapUnits.push(u);}
@@ -9365,22 +9366,30 @@ const FILM_SHOTS=[
   h1.position.set(x,y+Math.sin(tau*1.3)*.12,z);h1.rotation.set(-.05,-hd,0);
   const j=sm(clamp(tau/3.6,0,1)),ox=lerp(-24,-9,j),oy=lerp(10,1.5,j),ol=lerp(20,11,j);h2.position.set(x+iv.x*ox+pv.x*ol,y+oy,z+iv.z*ox+pv.z*ol);h2.rotation.set(lerp(-.35,-.08,j),-hd,0);
   const cx=x-iv.x*22-pv.x*9,cz=z-iv.z*22-pv.z*9;fCam(cx,y+1.6,cz,x+iv.x*4+pv.x*5,y+1.2,z+iv.z*4+pv.z*5,0);FILM.fov=38;FILM.sunEl=.05;/* the sun in the picture */}},
-/* 10. more of them: enemy armour rolls out of the trees past a camera at track height */
-{k:19,id:'fiender',f(tau,dur,dtr,S){const P=[[1278,748],[1420,716]],cx=1346,cz=745;
-  [['et2','tank',0],['el1','light',-17],['et3','tank',-36]].forEach(([key,kind,back])=>{const m=fEnemy(key,kind),q=fPath(P,lerp(48,70,tau/dur)+back);fPlace(m,q.x,q.z,q.hd,0);if(Math.random()<dtr*22)fxDust(q.x-Math.cos(q.hd)*4,fGround(q.x,q.z),q.z-Math.sin(q.hd)*4,1.7);});
-  fCam(cx,fGround(cx,cz)+.9,cz,cx-14,fGround(cx,cz)+2.4,cz-12,.05);FILM.fov=54;}},
+/* 10. GÄDDA at full speed (director's pass 26 okt, Magnus): the robot boat carves a hard turn on the open water off the landing, heeled
+   over, a rooster tail off the jets and foam behind, tracked from low on the water outside the turn with the low sun beyond */
+{k:19,id:'gadda',f(tau,dur,dtr,S){const m=fUnit('gadda','gadda'),R=26,v=18,w=v/R,C={x:1768,z:575},a=-.55+w*tau,x=C.x+Math.cos(a)*R,z=C.z+Math.sin(a)*R,hd=a+PI/2;
+  m.position.set(x,.05+Math.sin(tau*5)*.03,z);m.rotation.order='YXZ';m.rotation.set(w*v*.022,-hd,.045);const U=m.userData;if(U.setLift){U.setLift(0);U.caps.forEach(c=>{c.visible=true;});}
+  gaddaSpray({x,y:z,heading:hd,speed:22},v,dtr);
+  /* the foam it leaves: low, slow and long-lived where the jets went */
+  S.fo=(S.fo||0)+dtr*26;while(S.fo>1){S.fo--;const l=fr()*1.2;fP(x-Math.cos(hd)*4.8-Math.sin(hd)*l,.15,z-Math.sin(hd)*4.8+Math.cos(hd)*l,{v:[fr()*.4,.05,fr()*.4],s0:1.2,s1:3.4,a:.22,ttl:2.2,c:0xeceae4,drag:2});}
+  const ca=a-.38,cr=R+12;fCam(C.x+Math.cos(ca)*cr,1.5,C.z+Math.sin(ca)*cr,x+Math.cos(hd)*3,1.2,z+Math.sin(hd)*3,.03);FILM.fov=40;}},
 /* 11. round the AA truck as it opens up on the HÖK overhead: tracers into the darkening sky */
 {k:20,id:'lv',f(tau,dur,dtr,S){const m=fEnemy('aa1','aa'),x=1340,z=690,hd=2.2;fPlace(m,x,z,hd,0);const H=m.userData.head;
   const tgt={x:x+80-tau*20,y:75,z:z-60};if(H){H.rotation.y=hd-Math.atan2(tgt.z-z,tgt.x-x)+PI;}
+  {const h=fUnit('hok2','drone',PAL[3][0]);h.position.set(tgt.x,tgt.y,tgt.z);h.rotation.set(0,PI,-.12);}/* what it fires at (director's pass 26 okt: tracers into an empty sky) */
   S.cd=(S.cd||0)-dtr;if(tau>.4&&S.cd<=0){S.cd=.11;const mp=new THREE.Vector3(-.22,2.41,(S.n=(S.n||0)+1)%2?.45:-.45);if(H){H.updateMatrixWorld();H.localToWorld(mp);}
-    fxFlash(mp.x,mp.y,mp.z,1.6,0xffe0a0);fxTracer(mp,{x:tgt.x+fr()*16,y:tgt.y+fr()*10,z:tgt.z+fr()*16,hit:false},330,0xffe08a,.3);}
+    fxFlash(mp.x,mp.y,mp.z,1.6,0xffe0a0);fxTracer(mp,{x:tgt.x+fr()*9,y:tgt.y+fr()*6,z:tgt.z+fr()*9,hit:false},330,0xffe08a,.3);}
   const a=2.4+tau*.36,r=17;fCam(x+Math.cos(a)*r,fGround(x,z)+2.2,z+Math.sin(a)*r,x,fGround(x,z)+3.4,z,.05);FILM.fov=44;}},
-/* 12. a VARG fires: over its shoulder, flash, the tracer streaking off, the dust ring at the muzzle */
-{k:22,id:'eld',f(tau,dur,dtr,S){const m=fVarg(0),x=1446,z=738,tx=1300,tz=762,hd=Math.atan2(tz-z,tx-x);fPlace(m,x,z,hd,HOVER_Y);const T=m.userData.tur;
+/* 12. a VARG fires: over its shoulder from behind, flash, the tracer streaking off, the dust ring at the muzzle; the enemy light armour it fires
+   at is there in the meadow, takes the first round and goes up on the second (director's pass 26 okt: it fired at nothing) */
+{k:22,id:'eld',lanes:()=>[[1330,760,1352,748,12]],f(tau,dur,dtr,S){const m=fVarg(0),x=1446,z=738,tx=1341,tz=754,hd=Math.atan2(tz-z,tx-x);fPlace(m,x,z,hd,HOVER_Y);const T=m.userData.tur;
+  const e=fEnemy('el2','light');if(!S.b)fPlace(e,tx,tz,hd+PI-.5,0);else e.visible=false;
   for(const [t,n] of[[.25,1],[1.35,2]])if(tau>t&&(S.n||0)<n){S.n=n;S.rk=tau;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4);
-    fxTracer(mp,{x:tx+fr()*10,y:fGround(tx,tz)+2,z:tz+fr()*10},520,0xffe0a0,.18);for(let k=0;k<10;k++){const a=k/10*TAU;fP(mp.x,fGround(mp.x,mp.z)+.4,mp.z,{v:[Math.cos(a)*8,1,Math.sin(a)*8],s0:1,s1:4,a:.5,ttl:1.2,c:0x8a7a62,drag:2});}}
+    fxTracer(mp,{x:tx+fr()*2,y:fGround(tx,tz)+1.6,z:tz+fr()*2},520,0xffe0a0,.18);for(let k=0;k<10;k++){const a=k/10*TAU;fP(mp.x,fGround(mp.x,mp.z)+.4,mp.z,{v:[Math.cos(a)*8,1,Math.sin(a)*8],s0:1,s1:4,a:.5,ttl:1.2,c:0x8a7a62,drag:2});}}
+  if(tau>1.35+106/520&&!S.b){S.b=1;e.updateMatrixWorld(true);fxWreck(e);e.visible=false;const y=fGround(tx,tz);fxBoom(tx,y+1,tz,1.2);fxFire(tx,y+1.5,tz,1);}
   if(T)T.position.x=.2-(S.rk!=null?Math.max(0,.45-(tau-S.rk)*2.4):0);
-  const c=Math.cos(hd),s=Math.sin(hd),cx=x+c*12+s*7,cz=z+s*12-c*7;fCam(cx,fGround(x,z)+2.6,cz,x+c*3,fGround(x,z)+3,z+s*3,(S.rk!=null&&tau-S.rk<.4)?.3:.02);FILM.fov=42;}},
+  const c=Math.cos(hd),s=Math.sin(hd),cx=x-c*10+s*4.5,cz=z-s*10-c*4.5;fCam(cx,fGround(cx,cz)+3.4,cz,lerp(x,tx,.55),fGround(tx,tz)+2,lerp(z,tz,.55),(S.rk!=null&&tau-S.rk<.4)?.3:.02);FILM.fov=40;}},
 /* 13. HÖK rockets: the four leave the rails one by one and streak down on the enemy tank in the meadow, which blows up in the
    next shot (decided 17 okt: cause and effect; they used to fall on the AA truck, which was not there) */
 {k:23,id:'robotar',f(tau,dur,dtr,S){const h=fUnit('hok1','drone'),P=FILM_ET1,et=fEnemy('et1','tank'),q=fPath([[P[0][0]-18,P[0][1]+10],P[0],P[1]],tau*8);fPlace(et,q.x,q.z,q.hd,0);
@@ -9401,39 +9410,53 @@ const FILM_SHOTS=[
   if(!S.b)fPlace(m,q.x,q.z,q.hd,0);else m.visible=false;if(!S.b&&Math.random()<dtr*40)fxDust(q.x,fGround(q.x,q.z),q.z,.8);
   if(tau>1.45&&!S.b){S.b=1;fxBoom(bx,fGround(bx,bz)+1,bz,2);fxFire(bx,fGround(bx,bz)+2,bz,1);}
   const c=Math.cos(q.hd),s=Math.sin(q.hd);if(!S.b||!S.cp)S.cp={x:q.x-c*7+s*1.5,z:q.z-s*7-c*1.5};const cp=S.cp;fCam(cp.x,fGround(cp.x,cp.z)+1.1,cp.z,bx,fGround(bx,bz)+2,bz,S.b?Math.max(.04,.8-(tau-1.45)*.8):.04);FILM.fov=50;}},
-/* 16. high and wide over the battle at dusk: tracers crossing, fires burning, a HÖK passing */
-{k:26,id:'oversikt',f(tau,dur,dtr,S){if(S.first){fxFire(1332,fGround(1332,734)+2,734,1.4);fxFire(1392,fGround(1392,738)+2,738,1);fxFire(1300,fGround(1300,700)+2,700,.9);}
-  S.cd=(S.cd||0)-dtr;if(S.cd<=0){S.cd=.1;const a={x:1440+fr()*30,y:fGround(1440,705)+3,z:705+fr()*40},b={x:1300+fr()*50,y:fGround(1300,740)+2,z:740+fr()*50};fxTracer(a,b,380,Math.random()<.5?0xffd27a:0xff7a50,.6);}
-  if(tau>1&&!S.b){S.b=1;fxBoom(1310,fGround(1310,760)+1,760,1.3);}
-  const h=fUnit('hok2','drone',PAL[3][0]);h.position.set(1470-tau*28,58,640+tau*18);h.rotation.set(0,-2.55,-.1);
-  fCam(1478-tau*6,64,640+tau*3,1355,0,735,0);FILM.fov=50;}},
+/* 16. GETING's down camera from high up (director's pass 26 okt, Magnus): the ground battle straight down from 115 m, the picture
+   turning slowly as the drone holds station: three VARG pushing across the meadow, the enemy firing back from the trees, tracers both
+   ways, fires burning, and an enemy light armour going up */
+{k:26,id:'getingned',f(tau,dur,dtr,S){const cx=1362,cz=748;
+  if(S.first)fxFire(1392,fGround(1392,738)+2,738,.7);
+  const P=[[1452,748],[1300,760]];const V=[0,1,2].map(n=>{const m=fVarg(n),q=fPath(P,tau*7+[42,30,20][n]),lat=[-14,0,14][n],x=q.x-Math.sin(q.hd)*lat,z=q.z+Math.cos(q.hd)*lat;fPlace(m,x,z,q.hd,HOVER_Y);if(Math.random()<dtr*16)fxDust(x,fGround(x,z),z,1.6);return{x,z};});
+  const E=[['et2','tank',1318,724],['el1','light',1312,772]].map(([k,kind,x,z])=>{const e=fEnemy(k,kind);if(k==='el1'&&S.b)e.visible=false;else fPlace(e,x,z,0,0);return{x,z,k};});
+  S.cd=(S.cd||0)-dtr;if(S.cd<=0){S.cd=.12;const ours=Math.random()<.6,a=ours?V[Math.floor(Math.random()*3)]:E[Math.random()<.5?0:1],b=ours?E[Math.random()<.5?0:1]:V[Math.floor(Math.random()*3)];
+    fxTracer({x:a.x,y:fGround(a.x,a.z)+2.5,z:a.z},{x:b.x+fr()*3,y:fGround(b.x,b.z)+1.5,z:b.z+fr()*3},420,ours?0xffd27a:0xff6a4a,.5);}
+  if(tau>1.1&&!S.b){S.b=1;const e=fEnemy('el1','light');e.updateMatrixWorld(true);fxWreck(e);e.visible=false;fxBoom(1312,fGround(1312,772)+1,772,1.4);fxFire(1312,fGround(1312,772)+1.5,772,1.1);}
+  const r=1.45+tau*.05;/* the fight across the picture */fCam(cx,115,cz,cx+Math.cos(r)*.6,0,cz+Math.sin(r)*.6,0);FILM.fov=40;}},
 /* 17. the AA truck is hit by rockets from above while it fires */
 {k:27,id:'lvtraff',f(tau,dur,dtr,S){const m=fEnemy('aa1','aa'),x=1340,z=690,hd=2.2;fPlace(m,x,z,hd,0);const H=m.userData.head;if(H)H.rotation.y=.6;
   S.cd=(S.cd||0)-dtr;if(tau<1&&S.cd<=0){S.cd=.11;const mp=new THREE.Vector3(-.22,2.41,(S.n=(S.n||0)+1)%2?.45:-.45);if(H){H.updateMatrixWorld();H.localToWorld(mp);}fxFlash(mp.x,mp.y,mp.z,1.6,0xffe0a0);fxTracer(mp,{x:x+40+fr()*20,y:90,z:z-60+fr()*20,hit:false},330,0xffe08a,.3);}
   if(S.first){for(let i=0;i<3;i++)fxMissile({x:x+70+i*6,y:80+i*4,z:z-60},{x:x+fr()*4,y:fGround(x,z)+2,z:z+fr()*4},1+i*.07,0,i===2?1.6:.6);}
   if(tau>1.05)m.visible=tau<1.07;if(tau>1.07&&!S.w){S.w=1;fxFire(x,fGround(x,z)+1.5,z,1.3);fxWreck(m);}
   const cx=x+24,cz=z+16;fCam(cx,fGround(cx,cz)+2.4,cz,x,fGround(x,z)+5,z,tau>1?Math.max(.03,.9-(tau-1)*.9):.03);FILM.fov=42;}},
-/* 18. the VARG push on through the smoke past the burning wreck, headlights on */
-{k:28,id:'genom',f(tau,dur,dtr,S){const wx=1332,wz=734;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.3);for(let i=0;i<30;i++)fxSmoke(wx+fr()*40,fGround(wx,wz)+2,wz+fr()*40,3,0x34302e,5,.6);}
-  const w=fEnemy('et1','tank');fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;
-  const P=[[1452,740],[1288,754]];[0,1,2].forEach(n=>{const m=fVarg(n),q=fPath(P,tau*11+[50,32,18][n]),lat=[-10,0,10][n];const x=q.x-Math.sin(q.hd)*lat,z=q.z+Math.cos(q.hd)*lat;fPlace(m,x,z,q.hd,HOVER_Y);if(Math.random()<dtr*20)fxDust(x,fGround(x,z),z,1.4);});
-  const cx=1362,cz=711;fCam(cx,fGround(cx,cz)+1.4,cz,1338,fGround(1338,740)+3,740,.03);FILM.fov=42;}},
-/* 19. three VARG fire in turn on the beat, silhouetted against the last of the light, and at the forest edge it goes up */
-{k:29,id:'salva',f(tau,dur,dtr,S){const tx=1272,tz=742,beat=FILM_BAR/4;
+/* 18. GÄDDA fires (director's pass 26 okt, Magnus): the boat lies off the coast in the dusk with its launcher up, the robot leaves the box
+   over the bow, turns onto the coastal bunker in its curve (the game's own flight, gaddaFly) and the bunker goes up. Seen from low on the
+   water off its side, away from the target, so the climb out of the box and the turn show */
+{k:28,id:'gaddaeld',quiet:true,lanes:()=>[[1596,778,1610,786,14]],f(tau,dur,dtr,S){const m=fUnit('gadda','gadda'),bx=1602,bz=782,x=1712-tau*.6,z=826,ta=Math.atan2(bz-z,bx-x),hd=ta-.38;
+  m.position.set(x,.05+Math.sin(tau*2)*.04,z);m.rotation.order='YXZ';m.rotation.set(Math.sin(tau*1.3)*.015,-hd,.01);const U=m.userData;if(U.setLift){U.setLift(1);U.caps.forEach((c,i)=>{c.visible=i<(S.f?2:3);});}
+  const bk=fEnemy('kb1','turret');if(!S.w)fPlace(bk,bx,bz,ta+PI,0);else bk.visible=false;
+  if(tau>.12&&!S.f){S.f=1;const F={x1:0,y1:0,h1:0,x2:bx,y2:bz,h2:fGround(bx,bz)+1.5,a:{kind:'gadda',x,y:z,heading:hd}};gaddaFly(F);
+    const c=Math.cos(hd),s=Math.sin(hd),mx=F.x1,mz=F.y1;fxFlash(mx,F.h1,mz,3,0xfff0c0);for(let k=0;k<14;k++)fP(mx-c*2,F.h1-.4,mz-s*2,{v:[-c*(4+k*.6)+fr()*2,.6+Math.random()*1.5,-s*(4+k*.6)+fr()*2],s0:1,s1:4.5,a:.45,ttl:1.8,c:0xb8b4ac,drag:1.4});
+    fxMissile(null,{x:bx,y:F.h2,z:bz},F.ttl,0,0,k=>{const P=gaddaAt(F,k*F.ttl);return{x:P.x,y:P.h,z:P.y};});S.T=tau+F.ttl;}
+  if(S.T&&tau>=S.T&&!S.w){S.w=1;bk.updateMatrixWorld(true);fxWreck(bk);const y=fGround(bx,bz);fxBoom(bx,y+1,bz,1.8);fxFire(bx,y+2,bz,1.3);}
+  const c=Math.cos(hd),s=Math.sin(hd),cx=x-c*14+s*30,cz=z-s*14-c*30;fCam(cx,3,cz,lerp(x,bx,.5),10,lerp(z,bz,.5),S.w?Math.max(.03,.5-(tau-S.T)*.6):.02);FILM.fov=52;}},
+/* 19. three VARG fire in turn on the beat, silhouetted against the last of the light, and at the forest edge the enemy tank goes up */
+{k:29,id:'salva',lanes:()=>[[1262,742,1284,742,14]],f(tau,dur,dtr,S){const tx=1272,tz=742,beat=FILM_BAR/4;
+  {const e=fEnemy('et4','tank');if(!S.b)fPlace(e,tx,tz,0,0);else e.visible=false;}/* what they fire at, there at the forest edge (director's pass 26 okt) */
   [[1452,736],[1440,752],[1455,768]].forEach(([x,z],n)=>{const hd=Math.atan2(tz-z,tx-x),m=fVarg(n);fPlace(m,x,z,hd,HOVER_Y);
     const tf=beat*(1+n),T=m.userData.tur;if(tau>tf&&!S['f'+n]){S['f'+n]=1;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4.5);fxTracer(mp,{x:tx+fr()*20,y:fGround(tx,tz)+2,z:tz+fr()*20,hit:false},600,0xffe0a0,.2);}});
-  if(tau>FILM_BAR&&!S.b){S.b=1;fxBoom(tx,fGround(tx,tz)+1,tz,3);fxFire(tx,fGround(tx,tz)+2,tz,2);}
+  if(tau>FILM_BAR&&!S.b){S.b=1;const e=fEnemy('et4','tank');e.updateMatrixWorld(true);fxWreck(e);e.visible=false;fxBoom(tx,fGround(tx,tz)+1,tz,3);fxFire(tx,fGround(tx,tz)+2,tz,2);}
   const cx=1482,cz=748;fCam(cx-tau*.6,fGround(cx,cz)+2,cz,tx,fGround(tx,tz)+9,tz+8,.02);FILM.fov=38;}},
 /* 20. after: the music drops away; the wreck burns into the dusk and a VARG goes slowly by in front of it */
 {k:31,id:'efter',f(tau,dur,dtr,S){const wx=1332,wz=734;const w=fEnemy('et1','tank');fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.5);}
   const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,HOVER_Y);
   const cx=wx+42,cz=wz-30;fCam(cx-tau*.8,fGround(cx,cz)+1.6,cz+tau*.3,wx,fGround(wx,wz)+4+tau*.4,wz,0);FILM.fov=34;}},
-/* 21. HMS Birka comes into the harbour in the blue hour, lights on, gliding past the quay */
+/* 21. HMS Birka comes into the harbour in the blue hour, lights on. On the navigator's own way in, diagonally through the mouth at
+   3 m/s, and she stops short of the turn to her berth (director's pass 26 okt, Magnus: the old shot was far too fast, 8 m/s, and only
+   sideways). The camera stands ashore at the inner end of the basin and turns with her as she comes */
 {k:33,id:'hamn',birka:false,f(tau,dur,dtr,S){const P=WORLD.birkaPath,H=WORLD.harbor;if(!P)return;G.harbor.secured=true;
-  const o=lerp(60,6,sm(tau/dur*.85+.15*tau/dur)),p={x:H.dock.x+H.nx*o,y:H.dock.y+H.ny*o};moveCarrier(p.x,p.y,H.dock.a);/* in sideways on her thrusters to her berth (23 okt) */
-  /* the camera stands ashore beyond the quay's far end (the quay berth, decided 18 okt), and Birka glides in sideways to her berth;
-     her ramps are up while she moves */
-  G.ramp={bow:0,side:0};const qx=H.x-H.nx*30+H.ny*(KAJ.lt0-25),qz=H.y-H.ny*30-H.nx*(KAJ.lt0-25);fCam(qx,fGround(qx,qz)+10,qz,p.x,6,p.y,0);FILM.fov=46;}},
+  if(!S.R){const R=P.route;let e=R.length-1;while(e>0&&!(R[e].v===0&&R[e-1].v>0))e--;const L=[0];for(let i=1;i<=e;i++)L.push(L[i-1]+Math.hypot(R[i].x-R[i-1].x,R[i].y-R[i-1].y));S.R=R;S.e=e;S.L=L;}
+  const R=S.R,L=S.L,e=S.e,d=L[e]-4-(dur-tau)*3;let i=1;while(i<e&&L[i]<d)i++;const a=R[i-1],b=R[i],u=clamp((d-L[i-1])/((L[i]-L[i-1])||1),0,1);
+  const x=lerp(a.x,b.x,u),y=lerp(a.y,b.y,u),an=a.a+angWrap(b.a-a.a)*u;moveCarrier(x,y,an);G.ramp={bow:0,side:0};
+  const qx=H.x+30,qz=H.y+22;fCam(qx,fGround(qx,qz)+12,qz,x,6,y,0);FILM.fov=44;}},
 /* 22. up and away over the dark island, the lighthouse ahead sweeping its beam. The flight ends where the lighthouse is seen
    whole (filmLhView), and starts 260 m further back along the same bearing */
 {k:36,id:'fyren',birka:false,f(tau,dur,dtr,S){const V=filmLhView(),bp=V.bp,e=sm(tau/dur);
