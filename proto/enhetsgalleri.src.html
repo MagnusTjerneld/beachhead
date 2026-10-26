@@ -142,6 +142,7 @@ const US=[
   {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
   {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
   {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
+  {id:'gadda',name:'GÄDDA',mk:()=>mkUnitMesh({kind:'gadda',color:C}),move:'Vattenjet',note:'Obemannad robotbåt på batteri (26 okt). Ser nästan inget på land själv, men skjuter fyra stora robotar på det någon annan ser, eller mot en punkt på kartan, från utom fiendens räckvidd. Omladdning vid Birka när du godkänner den.'},
   {id:'bjorn',name:'BJÖRN',mk:bjorn,move:'Band',plan:true,note:'Tung stridsvagn på band, beslutad form. Kommer i land med kranen när Birka har dockat. Värdena är inte bestämda.'}
 ];
 const THEM=[
@@ -161,9 +162,10 @@ const KR=(()=>{const m={};for(const k of['hp','speed','vision'])m[k]=+(KROK_SRC.
 function usStats(u){const T=TYPES[u.id];if(u.id==='bjorn')return[['Status','ej i spelet']];
   if(u.id==='krok')return[['Kostnad',KROK_COST+' material'],['Byggtid',KROK_BUILD+' s'],['Skrov',KR.hp],['Fart',KR.speed+' m/s'],['Syn',KR.vision+' m'],['Antal',KROK_MAX+' högst'],['Träffas av luftvärn',pct(SIZE_ACC.krok)+' av grundvärdet']];
   const r=[['Kostnad',T.cost+' material'],['Byggtid',T.build+' s'],['Skrov',T.hp],['Fart',T.speed+' m/s'],['Syn',T.vision+' m']];
-  if(T.range)r.push(['Räckvidd',T.range+(u.id==='drone'?' m ('+(T.range+ROCKET_EXT)+' m utpekat)':' m')]);
+  if(T.range)r.push(['Räckvidd',(u.id==='gadda'?GADDA.minR+' till ':'')+T.range+(u.id==='drone'?' m ('+(T.range+ROCKET_EXT)+' m utpekat)':' m')]);
   if(T.dmg)r.push(['Skada per skott',T.dmg],['Eldtakt',nf(T.rate,1)+' skott/s'],['Träffchans',pct(T.acc)],['Skada per sekund',nf(T.dmg*T.rate*T.acc,1)]);
-  if(T.ammo)r.push(['Robotar',T.ammo+' st'],['Kulspruta',MG.range+' m, '+MG.dmg+' skada, '+MG.rate+' skott/s']);
+  if(u.id==='gadda')r.push(['Robotar',T.ammo+' st, '+GADDA.robot+' material styck'],['Syn in över land',GADDA.landSee+' m'],['Luftvärnet skjuter ned',pct(GADDA.aaDown)+' av robotarna'],['Mot en punkt',GADDA.spread+' m spridning']);
+  else if(T.ammo)r.push(['Robotar',T.ammo+' st'],['Kulspruta',MG.range+' m, '+MG.dmg+' skada, '+MG.rate+' skott/s']);
   if(T.fuel)r.push(['Batteri',Math.round(T.fuel/60)+' min']);
   if(SIZE_ACC[u.id])r.push(['Träffas av luftvärn',pct(SIZE_ACC[u.id])+' av grundvärdet']);
   if(u.id==='tank'){const d=T.dmg*T.rate*T.acc;r.push(['Slår ut en stridsvagn',nf(ENEMY.tank.hp/d)+' s ensam']);}

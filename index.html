@@ -323,6 +323,7 @@ button:disabled{opacity:.45;cursor:default}
         <div class="row">
           <button class="btn" id="bStop" type="button">Stoppa</button>
           <button class="btn" id="bRtb" type="button">Till service</button>
+          <button class="btn" id="bRearm" type="button" hidden title="GÄDDA vid HMS Birka: ladda om robotarna">Ladda om</button>
           <button class="btn" id="bExplore" type="button" hidden title="GETING utforskar ön fritt; zon väljer du i hjulet">Utforska</button>
           <button class="btn" id="bMus" type="button" hidden title="X: sätter ut VARG:ens MUS och tar kontroll över den">MUS (X)</button>
           <button class="btn" id="bRecycle" type="button" hidden title="Plockar isär valda enheter vid HMS Birka för 80 % av byggkostnaden">Återvinn</button>
@@ -397,6 +398,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Uppdrag:</span> eskort, följ och observera är uppdrag som ligger kvar. En inropning är tillfällig: enheten gör den och går sedan tillbaka till sitt uppdrag (en HÖK på eskort anfaller luftvärnet och återgår till eskorten). Skift plus B, H eller V gör inropningen till ett nytt uppdrag i stället. En vanlig order (klick eller drag) ersätter uppdraget. Enhetskortet visar uppdraget på en egen rad, och Stoppa avslutar det.</li>
       <li><span class="em">Vyer:</span> den lilla vyn tar order som den stora; Q eller Byt vy byter plats på dem, och inget annat flyttar dem, inte heller Ta kontroll. Två små livebilder: den första visar den enhet du har valt (om huvudkameran inte redan visar den), den andra den enhet som senast rapporterade i loggen, eller byggbädden när du startar ett bygge på fartyget. Har en bild inget att visa tar den den enhet som just strider. Dra med musknappen nedtryckt i kamerabilden för en enhet du inte styr så vrider du kameran runt den, i sidled och upp och ner; den går tillbaka när du släpper. Scrollhjulet i kamerabilden flyttar kameran närmare eller längre bort; zoomen ligger kvar tills kameran visar en annan enhet. När kameran visar en GETING finns en kamera rakt nedåt i hörnet, med norr uppåt som på sjökortet. Klick i hörnbilden byter plats på den och huvudbilden, så att du följer striden ovanifrån och har GETING bakifrån i hörnet; klicka igen för att byta tillbaka. Valet gäller nästa GETING också. Samma klick byter KROK:s nedåtkamera när du flyger KROK. FÄST låser en bild vid enheten, klick visar den i kameran. Livebilder under Inställningar växlar mellan 60 bilder per sekund (från början), 15 och av; hinner datorn inte med 60 bilder per sekund ser livebilderna kortare och ritas mer sällan, och går tillbaka när det finns marginal. Dra i listen mellan huvudvyn och sidopanelen för större livebilder; dubbelklick återställer. Skärmlayout under Inställningar: bred ställer den andra vyn bredvid huvudvyn, lika stor (listen mellan dem fördelar bredden), och livebilderna över varandra i sidopanelen; auto väljer bred på skärmar i 21:9 och bredare. I bred layout kan båda de stora vyerna vara kameror: den andra kameran (KAMERA 2) visar det den första livebilden skulle visa, med skuggor och i huvudvyns upplösning, och sjökortet blir då den första lilla bilden. Den ena stora vyn är aktiv, markerad med en tänd prick uppe till vänster (från början den till höger); klicka på pricken, eller i KAMERA 2, för att göra en vy aktiv. Q, Byt vy och ett klick på den lilla bilden byter den aktiva vyn mot den lilla bilden, så att ett andra tryck byter tillbaka. Tar du kontroll över en enhet när huvudkameran är den lilla bilden flyttas den upp till den aktiva vyn. Raden under huvudvyn har alla enheter: klick väljer, dubbelklick visar kameran.</li>
       <li><span class="em">Ta kontroll (E):</span> E tar och släpper kontrollen över vald enhet. Byter du själv kamera till en annan enhet släpps kontrollen också. Kör med W A S D. X sätter ut en vald VARG:s MUS och ger dig kontrollen; F spränger den. G får enhetens wing (eller de som var valda tillsammans med den) att följa dig i formation; HÖK i gruppen skyddar den. Det du skjuter på blir gruppens mål i 8 s efter senaste skottet: följarna bekämpar det när det är inom räckhåll, och HÖK på Offensiv anfaller det. V och H tar i första hand gruppens egna VARG och HÖK. Släpper du kontrollen stannar gruppen. I en VARG: klicka i kamerabilden så styr musen tornet och klick skjuter, högerklick frigör musen. I en HÖK: klicka i bilden så svänger musen HÖK och tippar kameran, klick skjuter kulsprutan och R avfyrar en robot mot målet i siktet. Utan musen skjuter båda automatiskt. Släpper du kontrollen går enheten tillbaka till sitt uppdrag.</li>
+      <li><span class="em">GÄDDA är robotbåten.</span> Den byggs på varvet (220: skrovet och fyra robotar) och går bara på sjön, runt land, grund och kända fienders räckvidd. Själv ser den nästan inget på land, men den skjuter långt: på sjökortet ger ett klick på en fiende ett anfall som avfyras när någon annan ser fienden, ett klick på en byggnad eller på land en robot mot den punkten, och ett klick på vattnet en förflyttning. Den lägger sig själv där ingen känd fiende når den. Luftvärn nära målet skjuter ibland ned en robot. Utan robotar går den till HMS Birka, där du godkänner omladdningen med Ladda om (40 material per robot).</li>
       <li><span class="em">Lufttransport:</span> KROK kan lyfta VARG och BÄVER över klippor och spärrar. Välj KROK, klicka på ett fordon för att lyfta och på kartan för att sätta ned; Skift lägger i kö. Pekar du på Birka följer nedsättningen henne även när hon rör sig, och fordonet hamnar på närmaste lediga H-platta (BÄVER i sin ruta). Eller högerklicka med fordonet valt: Flyg dit med KROK, eller Lyft med KROK i fordonets egen meny, och klicka sedan på kartan där det ska sättas ned. KROK är tålig men kan skjutas ned av allt som skjuter mot luften, och med last förloras båda. Under halva skrovet avbryter den och drar sig tillbaka. KROK har två hållningar. KROK:s hållning gäller luftrummet. Defensiv (standard) håller den vid liv: den flyger bara över spanad mark utanför kända hot, samma regel som vid bärgning, och drar sig tillbaka under halva skrovet. Offensiv följer dina egna order även in i hot och okänt område och avbryter inte, också när du pekar ut ett vrak att bärga. Måste KROK ändå dra sig tillbaka från ett beställt vrak stryks beställningen, och du beställer igen för ett nytt försök. På väg hem utan last tar den nästa beställning direkt. Båda väljer den säkraste kända vägen. Om marken räcker avgör lastens egen hållning: ett fordon som inte står på Offensiv sätts bara ned på en säkrad plats, spanad mark där allt land inom 300 m är spanat, så att inget ospanat luftvärn når den. Ett fordon på Offensiv sätts ned där du pekar, och loggen säger till när det är osäkrad mark. Finns ingen säkrad plats flyger KROK ändå dit och väntar med lasten i kroken, med en knapp för att sätta fordonet på Offensiv och sätta ned. BÄVER sätts bara ned på land eller däck: pekar du i vattnet väljer KROK närmaste land inom 300 m. Har KROK last och ingen order väntar den där den är, eller över Birka om ett känt luftvärn når platsen. Ger du ett fordon som väntar på KROK en ny order avbeställs lyftet. Luftvärnet ser den stora helikoptern längre bort än en drönare och skjuter på KROK redan på 275 m (HÖK 200 m, GETING först inom radarns 110 m). Du kan också flyga KROK själv: välj den och tryck E. Då gäller inga säkerhetsmarginaler, en kamera rakt nedåt visar vad som är under kroken och F lyfter fordonet eller högen under dig, eller sätter ned lasten. Håll stilla medan den kopplar. KROK tar ingen av serviceplattorna: utan uppdrag cirklar den över Birka, och den går ned lågt över sin egen plats i aktern bara för att lämna last eller lagas. Den behöver aldrig tankas. En förlorad KROK byggs om på varvet.</li>
       <li><span class="em">Hotbild och räckvidd:</span> med en enhet vald tonas varje känd fiendes räckvidd mot just den enheten på sjökortet: mot mark för VARG, BÄVER och MUS, mot flyg för HÖK, GETING och KROK. Det är zonerna enhetens vägval håller sig ifrån. Pekar du på en fiende visas dess räckvidd mot mark (heldragen) och mot flyg (streckad), pekar du på en egen enhet dess vapenräckvidd och sikt.</li>
       <li><span class="em">Spanat område:</span> det som är oskuggat på sjökortet. Flygande enheter spanar hela sin synvidd, markfordon bara 60 m runt sig (längre bort ser de inte kamouflage), tagna punkter 110 m och en tagen radarstation 320 m. Byggnader och material syns först där.</li>
@@ -1796,7 +1798,8 @@ const TYPES={
   drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.85,ammo:4},
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
-  mus:{label:'MUS',tag:'M',role:'spaning',cost:30,build:15,hp:10,speed:14,vision:70}
+  mus:{label:'MUS',tag:'M',role:'spaning',cost:30,build:15,hp:10,speed:14,vision:70},
+  gadda:{label:'GÄDDA',tag:'GÄ',role:'robotbåt',cost:220,build:20,hp:50,speed:18,vision:150,range:260,dmg:60,rate:1/3,acc:.95,ammo:4,sea:true}
 };
 /* MUS: a small remote-controlled ground scout that every VARG carries one of. No autonomy: it moves only when the captain drives it
    (X puts it out and takes control, E lets go). It works within 200 m of its VARG, sees camouflage and troops in the woods at its
@@ -1868,7 +1871,7 @@ function newGame(seed,doc,when){
   const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed,doc==='auto'?null:doc);WORLD.cfgKey=cfgKey;}
   setDefense(WORLD,doc==='auto'?drawDoctrine(WORLD):doc);
   if(WORLD.carrier0)Object.assign(CARRIER,WORLD.carrier0);/* Birka starts outside the beach again, even on the same island after a docking */
-  G={seed,doc:WORLD.plan.doctrine,time:0,masts:[],res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
+  G={seed,doc:WORLD.plan.doctrine,time:0,masts:[],res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0,gadda:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
     relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
@@ -1924,7 +1927,7 @@ function selectKrok(k){setSel([]);G.selK=k.id;}
 const selKrok=()=>{const k=G.selK?G.kroks.find(x=>x.id===G.selK):null;return k&&!k.dead?k:null;};
 function clearKrok(k){for(const x of k.orders)if(x.unit&&x.unit.awaitKrok===k.id)x.unit.awaitKrok=null;k.orders=[];k.path=null;}
 function oText(o,krok){const P=o.post&&POST[o.post]?' · '+POST[o.post].toLowerCase():'';switch(o.type){
-  case'explore':return o.zone!=null?'Utforska zonen vid '+zoneSq(o.zone):'Utforska fritt';case'move':return(krok?'Flyg till ':'Gå till ')+sq(o.x,o.y)+P;case'obs':return'Observera '+sq(o.x,o.y);case'capture':return'Ta '+pname(o.relay)+P;case'attack':return'Anfall '+ename(o.enemy);
+  case'explore':return o.zone!=null?'Utforska zonen vid '+zoneSq(o.zone):'Utforska fritt';case'move':return(krok?'Flyg till ':'Gå till ')+sq(o.x,o.y)+P;case'obs':return'Observera '+sq(o.x,o.y);case'capture':return'Ta '+pname(o.relay)+P;case'attack':return'Anfall '+ename(o.enemy);case'strike':return o.s?'Robot mot '+slabel(o.s):'Robot mot ruta '+sq(o.x,o.y);
   case'follow':return(o.escort?'Eskortera ':'Följ ')+o.unit.name+P;case'clear':return'Spräng spärr '+o.barrier.id+P;case'demine':return'Röj minfält '+o.mine.id+P;case'rtb':return'Till fartyget';case'demolish':return'Riv '+slabel(o.s);case'mast':return'Koppla in radiomasten';case'raze':return'Skjut sönder '+slabel(o.s);
   case'lift':return'Lyft '+o.unit.name;case'drop':return'Sätt ned i '+sq(o.x,o.y);case'salvage':return'Bärga '+wlabel(o.wreck);case'repair':return'Laga '+o.unit.name;}return o.type;}
 function toggleSel(id){if(G.selIds.includes(id))setSel(G.selIds.filter(x=>x!==id));else setSel([...G.selIds,id]);}
@@ -2225,7 +2228,7 @@ function step(dt){
     e.reveal=Math.max(0,e.reveal-dt);
     let spot=null;const camo=!!e.camo;
     const flash=e.reveal>0,hid=camo&&hides(e);
-    let spotIn=null;for(const u of G.units){if(u.dead||u.carried)continue;if(e.cls==='inf'&&!flash&&highG(u))continue;const rr=!camo||flash||u.kind==='mus'?u.vision:u.air?(hid?Math.min(HIDE_AIR,u.vision):u.vision):60;if(dist(u,e)<rr&&sees(u,e)||(flash&&e.flashOn===u)){if(!spot)spot=u;if(netOf(u)){spotIn=u;break;}}}
+    let spotIn=null;for(const u of G.units){if(u.dead||u.carried)continue;if(e.cls==='inf'&&!flash&&highG(u))continue;const rr=u.kind==='gadda'?gaddaSeeR(u,e):!camo||flash||u.kind==='mus'?u.vision:u.air?(hid?Math.min(HIDE_AIR,u.vision):u.vision):60;if(dist(u,e)<rr&&sees(u,e)||(flash&&e.flashOn===u)){if(!spot)spot=u;if(netOf(u)){spotIn=u;break;}}}
     /* the one being shot at always sees the shooter while the flash lasts, however far it is (decided 14 okt): nobody fires from where
        its target cannot see it */
     let vis=!!spot,rep=!!spotIn;if(spotIn)spot=spotIn;
@@ -2255,7 +2258,8 @@ function step(dt){
   if(!G.kroks.some(k=>!k.dead)&&!G.build.some(b=>b.kind==='krok')&&G.res<KROK_COST){if(G.reserveT==null){G.reserveT=G.time+KROK_RESERVE.t;say(null,'Ingen KROK och inte nog material för en ny. Ny KROK från reserven om '+Math.round(KROK_RESERVE.t/60)+' minuter.');}
     else if(G.time>=G.reserveT){G.reserveT=null;const k=makeKrok();G.kroks.push(k);say(k,'Reserv-KROK klar.');}}else G.reserveT=null;
   if(G.build.length){const b=G.build[0];b.t-=dt;if(b.t<=0){G.build.shift();if(b.kind==='krok'){const k=makeKrok();G.kroks.push(k);say(k,'Ny bärgningshelikopter klar.');}else{const sp=shipPos(BAY.lat,BAY.fwd),u=makeUnit(b.kind,sp[0],sp[1]);u.heading=u.camH=u.turret=CARRIER.a;
-      if(b.kind==='eng'){const q=deckSpot(G.units.filter(v=>v.kind==='eng'&&!v.dead&&onDeck(v.x,v.y)).length);u.deckTo={x:q[0],y:q[1]};}G.units.push(u);
+      if(b.kind==='eng'){const q=deckSpot(G.units.filter(v=>v.kind==='eng'&&!v.dead&&onDeck(v.x,v.y)).length);u.deckTo={x:q[0],y:q[1]};}
+      if(b.kind==='gadda'){const q=shipPos(30,BAY.fwd),c=nearestPass(cellIdx(q[0],q[1]),seaPass),w=c<0?{x:q[0],y:q[1]}:cellCenter(c);u.x=w.x;u.y=w.y;}G.units.push(u);
       if(u.air)u.alt=DECK_Y+1.2;else if(u.kind==='tank'){const off=shipPos(34+(G.count.tank%3)*8,BAY.fwd-6+(G.count.tank%2)*12);u.orders=[{type:'move',x:off[0],y:off[1],post:'def'}];}say(u,b.kind==='eng'?'Klar på HMS Birka. Väntar i uppställningsrutan akter om byggbädden; KROK lyfter mig i land därifrån när jag får en order.':'Sjösatt och redo.');}}}
   mineTick(dt);
   if(G.fbuild.length){const b=G.fbuild[0],r=G.relays.find(x=>x.id===b.at);
@@ -2279,7 +2283,7 @@ function step(dt){
 /* service: the ship, a taken workshop (full rate) or a taken forward yard (half rate). A station is not closed when enemies come
    near (decided 18 okt, issue 34: the units judge the threat themselves): aircraft skip one inside a known air threat, vehicles one
    inside a known ground threat */
-function homeFor(u,p){p=p||u;const landOnly=u.kind==='eng'&&passLand(cellIdx(u.x,u.y))&&!berthed();let best={x:CARRIER.x,y:CARRIER.y,ship:true,r:48,rate:1,name:'HMS Birka'},bd=Math.hypot(p.x-CARRIER.x,p.y-CARRIER.y);
+function homeFor(u,p){p=p||u;if(u.kind==='gadda')return{x:CARRIER.x,y:CARRIER.y,ship:true,r:48,rate:1,name:'HMS Birka'};const landOnly=u.kind==='eng'&&passLand(cellIdx(u.x,u.y))&&!berthed();let best={x:CARRIER.x,y:CARRIER.y,ship:true,r:48,rate:1,name:'HMS Birka'},bd=Math.hypot(p.x-CARRIER.x,p.y-CARRIER.y);
   if(landOnly){best={x:WORLD.landing.x,y:WORLD.landing.y,ship:false,r:14,rate:0,name:'stranden'};bd=1e9;}
   for(const r of G.relays)if(r.captured&&(r.type==='verkstad'||r.type==='varv')){if(lockedAt(r.x,r.y))continue;const sp=stationPt(r);if(u.air?airDanger(u,sp.x,sp.y):threatAt(sp.x,sp.y))continue;const d=Math.hypot(p.x-sp.x,p.y-sp.y);if(d>=bd)continue;
     bd=d;best={x:sp.x,y:sp.y,ship:false,r:u.air?44:22,rate:r.type==='varv'?.5:1,name:(r.type==='varv'?'fältvarv ':'verkstad ')+r.id,rid:r.id};}return best;}
@@ -2448,6 +2452,7 @@ function attackDone(u){const o=u.orders[0];u.orders.shift();u.path=null;if(!u.ai
 const HOK_SEP=14;
 function updateUnit(u,dt){
   if(u.kind==='mus'){if(!u.dead)roverTick(u,dt);return;}
+  if(u.kind==='gadda'){if(!u.dead)gaddaTick(u,dt);return;}
   if(u.kind==='scout'&&!u.dead)gClimb(u,dt);
   if(u.kind==='eng'&&u.deckTo&&!u.dead&&deckDrive(u,dt))return;
   if(u.kind==='tank'&&!u.dead)roverSupply(u,dt);
@@ -2518,6 +2523,139 @@ function updateUnit(u,dt){
   }
   move(u,dt);
 }
+
+/* GÄDDA, the robot boat (concept 25 okt, decided 26 okt, Magnus). An unmanned boat of 9 m on two battery-driven water jets that runs
+   along the coast, sees next to nothing ashore itself (GADDA.landSee m in from the waterline) and fires four big robots, each worth two
+   of HÖK's, from beyond the reach of everything on the island. It fires only on order, from the chart: at an enemy that a unit sees
+   right now, with high precision, or at a point on the map, where the robot lands within GADDA.spread m and hurts what stands there.
+   An air defence within its reach of the target has GADDA.aaDown to shoot each robot down. 18 m/s, sharp turns and a short stop on
+   reversed jets as Stridsbåt 90, a battery that lasts the whole round. Its captain plans its way round the land, the holms and the
+   shoals of the chart (Birka's navigation field). With no robots left it goes back to HMS Birka by itself, but the captain approves the
+   reload, GADDA.robot material a robot. Hull 60 and four robots, 220 in all. Not yet: the 3D model's moving launcher, KROK putting it in
+   the water from the build bay, running aground */
+const GADDA={draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:.95,spread:12.5,blast:8,navD:10,turn:1.6,accel:6,brake:10,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4};
+/* how far a known enemy reaches the boat: its reach, GADDA.threat m more, and GADDA.mob m more for troops and vehicles that move */
+const gReach=e=>e.range+GADDA.threat+(e.mobile?GADDA.mob:0);
+/* water deep enough for it: the grid's shallow cells reach up the beach (a cell can be 3 m over the sea at its middle), so the ground
+   itself is read, at the cell's middle and 4 m out to each side, and must lie GADDA.draft m under the surface everywhere */
+function gaddaDeep(){const W=WORLD;if(W._gDeep)return W._gDeep;const N=GW*GH,A=new Uint8Array(N),g=W.baseGrid||W.grid;
+  for(let i=0;i<N;i++){if(g[i]!==DEEP&&g[i]!==SHAL)continue;const c=cellCenter(i);let ok=1;for(const[dx,dy]of[[0,0],[4,0],[-4,0],[0,4],[0,-4]])if(heightAt(c.x+dx,c.y+dy)>-GADDA.draft){ok=0;break;}A[i]=ok;}return W._gDeep=A;}
+/* and clear of HMS Birka's hull, 10 m round it, wherever she lies */
+const seaPass=i=>{if(gaddaDeep()[i]!==1||navField(WORLD)[i]<GADDA.navD)return false;const c=cellCenter(i),L=shipLocal(c.x,c.y);return !(Math.abs(L.lat)<26&&Math.abs(L.fwd)<55);};
+const atBirkaSide=u=>Math.hypot(u.x-CARRIER.x,u.y-CARRIER.y)<GADDA.berth;
+/* how far the boat sees an enemy: its full sight at sea, ashore only GADDA.landSee m past the nearest shore */
+function gaddaSeeR(u,e){if(heightAt(e.x,e.y)<=0)return u.vision;return Math.min(u.vision,navField(WORLD)[cellIdx(u.x,u.y)]+GADDA.landSee);}
+/* where to lie to fire on (tx,ty): navigable water between GADDA.minR and the reach, out of reach of every known enemy that fires on
+   the ground (GADDA.threat m margin), nearest the boat. With no such water the nearest place in reach, and o.exp says who reaches it */
+function gaddaSpot(u,tx,ty){const R=u.range-10,r0=GADDA.minR+10,ks=G.enemies.filter(e=>!e.dead&&e.seen&&e.canGround&&e.range);
+  const x0=Math.max(0,Math.floor((tx-R)/CELL)),x1=Math.min(GW-1,Math.floor((tx+R)/CELL)),y0=Math.max(0,Math.floor((ty-R)/CELL)),y1=Math.min(GH-1,Math.floor((ty+R)/CELL));
+  let best=null,bc=1e18;
+  for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const i=gy*GW+gx;if(!seaPass(i))continue;const x=gx*CELL+CELL/2,y=gy*CELL+CELL/2,d=Math.hypot(x-tx,y-ty);if(d>R||d<r0)continue;
+    let n=0,cl=1e9;for(const e of ks){const m=Math.hypot(x-e.lx,y-e.ly)-gReach(e);if(m<=0)n++;else cl=Math.min(cl,m);}
+    /* nearest the boat, but with GADDA.clear m to spare beyond every reach when the water allows */
+    const c=Math.hypot(x-u.x,y-u.y)+n*5000+Math.max(0,GADDA.clear-cl)*4;if(c<bc){bc=c;best={x,y,n};}}
+  if(best&&best.n)best.exp=ks.filter(e=>Math.hypot(best.x-e.lx,best.y-e.ly)<=gReach(e)).map(e=>ename(e)).join(', ');
+  return best;}
+/* the water inside the reach of a known enemy that fires on the ground (and GADDA.threat m more): the way goes round it when it can,
+   at forty times the cost per metre. Renewed when what is known changes, at most once a second */
+function gaddaHot(){const H=G.gHot||(G.gHot={t:-9,k:'',v:0,m:new Uint8Array(GW*GH)});if(G.time-H.t<1)return H;H.t=G.time;
+  const ks=G.enemies.filter(e=>!e.dead&&e.seen&&e.canGround&&e.range),k=ks.map(e=>e.id+':'+Math.round(e.lx)+':'+Math.round(e.ly)).join();if(k===H.k)return H;
+  H.k=k;H.v++;H.m.fill(0);for(const e of ks){const R=gReach(e),x0=Math.max(0,Math.floor((e.lx-R)/CELL)),x1=Math.min(GW-1,Math.floor((e.lx+R)/CELL)),y0=Math.max(0,Math.floor((e.ly-R)/CELL)),y1=Math.min(GH-1,Math.floor((e.ly+R)/CELL));
+    for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++)if(Math.hypot(gx*CELL+5-e.lx,gy*CELL+5-e.ly)<=R)H.m[gy*GW+gx]=1;}
+  H.cost=i=>H.m[i]?40:1;return H;}
+/* the boat's way and its motion: a path on the navigation field, renewed when the goal moves; the bow turns at GADDA.turn rad/s, the
+   speed falls in a sharp turn and towards the end of the way so that it stops on the point */
+function gaddaGo(u,tx,ty,dt,arr){const d=Math.hypot(tx-u.x,ty-u.y);
+  if(d<=arr){u.v=Math.max(0,(u.v||0)-GADDA.brake*dt);u.path=null;gaddaStep(u,dt);return true;}
+  if(!u.path||!u.pathT||Math.hypot(u.pathT.x-tx,u.pathT.y-ty)>8||u.pathV!==gaddaHot().v){u.path=astar(u.x,u.y,tx,ty,seaPass,gaddaHot().cost)||[{x:tx,y:ty}];u.pathT={x:tx,y:ty};u.pathV=gaddaHot().v;}
+  let p=u.path[0];while(u.path.length>1&&Math.hypot(p.x-u.x,p.y-u.y)<Math.max(8,(u.v||0)*.7)){u.path.shift();p=u.path[0];}
+  /* close in by the shore, outside the field the way is planned on: first straight out to the nearest open water */
+  if(!seaPass(cellIdx(u.x,u.y))&&u.blockT>0){const n=nearestPass(cellIdx(u.x,u.y),seaPass);if(n>=0)p=cellCenter(n);}
+  const a=Math.atan2(p.y-u.y,p.x-u.x),err=Math.abs(angWrap(a-u.heading));u.heading=turnTo(u.heading,a,GADDA.turn*dt);
+  const dp=Math.hypot(p.x-u.x,p.y-u.y);let rest=dp;for(let i=1;i<u.path.length;i++)rest+=Math.hypot(u.path[i].x-u.path[i-1].x,u.path[i].y-u.path[i-1].y);
+  /* slow enough into a bend to make it on the turn it has */
+  let vc=u.speed;if(u.path.length>1){const b=Math.abs(angWrap(Math.atan2(u.path[1].y-p.y,u.path[1].x-p.x)-a));vc=u.speed*Math.max(.3,1-b/PI*1.4);}
+  const want=Math.min(u.speed*Math.max(.25,Math.cos(Math.min(err,PI/2))),Math.sqrt(2*GADDA.brake*Math.max(0,rest-arr*.5))+1,Math.sqrt(vc*vc+2*GADDA.brake*Math.max(0,dp-6)));
+  u.v=want>(u.v||0)?Math.min(want,(u.v||0)+GADDA.accel*dt):Math.max(want,(u.v||0)-GADDA.brake*dt);gaddaStep(u,dt);return false;}
+/* a step on the water: never onto land, and out of Birka's hull if it would come inside it */
+const wetAt=(x,y)=>heightAt(x,y)<-GADDA.draft*.5;
+function gaddaStep(u,dt){u.blockT=Math.max(0,(u.blockT||0)-dt);if(!(u.v>0))return;const dx=Math.cos(u.heading)*u.v*dt,dy=Math.sin(u.heading)*u.v*dt;let nx=clamp(u.x+dx,6,WW-6),ny=clamp(u.y+dy,6,WH-6);
+  /* the shore ahead: it slides along it at a crawl, and finds open water again before it goes on */
+  if(!wetAt(nx,ny)){u.blockT=2;u.path=null;u.v=Math.min(u.v,3);if(wetAt(u.x+dx,u.y))ny=u.y;else if(wetAt(u.x,u.y+dy))nx=u.x;else{u.v=0;return;}}u.x=nx;u.y=ny;
+  const L=shipLocal(u.x,u.y);if(Math.abs(L.lat)<19&&Math.abs(L.fwd)<48){const s=L.lat<0?-1:1,p=shipPos(s*19,L.fwd);u.x=p[0];u.y=p[1];}}
+const gaddaPainted=e=>!e.dead&&e.visibleNow;
+const gaddaExposed=u=>G.enemies.some(e=>!e.dead&&e.seen&&e.canGround&&e.range&&Math.hypot(u.x-e.lx,u.y-e.ly)<=gReach(e));
+/* a robot at an enemy a unit sees now, if the robots already on their way will not finish it */
+function gaddaFire(u,e){if(u.cd>0||u.ammo<1)return false;
+  const inbound=G.fx.reduce((s,f)=>f.k==='shot'&&!f.done&&f.side==='f'&&f.tg===e&&f.ws==='gadda'?s+f.dmg*dmgMult(f.a,e,'gadda'):s,0);if(inbound>=e.hp)return false;
+  u.cd=1/u.rate;u.ammo-=1;G.gaddaFired=(G.gaddaFired||0)+1;if(!e.isStruct)e.reveal=Math.max(e.reveal,2);shoot(u,e,u.dmg,GADDA.acc,'f','gadda');gaddaAfter(u);return true;}
+/* a robot at a point: it lands within GADDA.spread m of it */
+function gaddaFirePt(u,x,y){if(u.cd>0||u.ammo<1)return false;u.cd=1/u.rate;u.ammo-=1;G.gaddaFired=(G.gaddaFired||0)+1;const r=Math.sqrt(Math.random())*GADDA.spread,a=Math.random()*TAU,x2=x+Math.cos(a)*r,y2=y+Math.sin(a)*r;
+  launch(u,null,x2,y2,groundY(x2,y2)+.3,'gadda','f',true,u.dmg,'gadda');const f=G.fx[G.fx.length-2];if(f&&f.k==='shot')f.coord=true;
+  for(const m of G.enemies)if(m.mobile&&!m.dead&&Math.hypot(m.x-x,m.y-y)<320)m.alert={x:u.x,y:u.y,t:G.time};gaddaAfter(u);return true;}
+/* out of robots: home to Birka first, the rest of the queue after; the robots are loaded when the captain approves it there */
+function gaddaAfter(u){if(u.ammo>=1)return;gaddaHome(u);say(u,'Robotarna slut. Återvänder till HMS Birka. Du godkänner omladdningen där'+(u.orders.length>1?', sedan fortsätter jag med kön.':'.'));}
+function gaddaHome(u){if(u.orders[0]&&u.orders[0].type==='rtb')return;u.orders=u.orders.filter(o=>o.type!=='rtb');u.orders.unshift({type:'rtb',post:u.post});u.path=null;u.rtb=true;}
+/* a robot over an air defence's reach of where it lands: each air defence there has GADDA.aaDown to shoot it down */
+function gaddaDown(f){for(const e of G.enemies){if(e.dead||e.kind!=='aa'||Math.hypot(e.x-f.x2,e.y-f.y2)>e.range)continue;if(Math.random()<GADDA.aaDown){e.reveal=Math.max(e.reveal,2);G.gaddaDown=(G.gaddaDown||0)+1;
+    G.fx.push({k:'puff',x:(f.x1+f.x2)/2*.3+f.x2*.7,y:(f.y1+f.y2)/2*.3+f.y2*.7,h:f.h2+18,t:0,ttl:1.2,c:0x2a2a2a,s:3,hit:false,ws:'flak'});
+    if(f.a&&!f.a.dead&&G.time-(f.a.downMsgT||-99)>8){f.a.downMsgT=G.time;say(f.a,'Roboten skjuten ned av '+ename(e)+'.');}return true;}}return false;}
+/* a robot at a point: the blast hurts what stands within GADDA.blast m, half at the edge */
+function gaddaBlast(f){const R=GADDA.blast;decorHit(f.x2,f.y2,5);G.fx.push({k:'boom',x:f.x2,y:f.y2,t:0,ttl:1,small:true});
+  for(const e of G.enemies){if(e.dead)continue;const d=Math.hypot(e.x-f.x2,e.y-f.y2);if(d>=R)continue;e.hp-=f.dmg*dmgMult(f.a,e,'gadda')*(1-d/R*.5);e.reveal=Math.max(e.reveal,3);if(e.hp<=0)killEnemy(e,f.a);}
+  for(const s of G.structs){if(s.dead)continue;const d=Math.hypot(s.x-f.x2,s.y-f.y2);if(d>=R+4)continue;s.hp-=f.dmg*dmgMult(f.a,s,'gadda')*(1-Math.min(1,d/(R+4))*.5);if(s.hp<=0)killStruct(s,f.a,'shot');}}
+/* the reload the captain approves: as many robots as are missing and the material pays for, loaded one per GADDA.load s at Birka */
+function gaddaRearm(u){if(!u||u.dead)return;if(!atBirkaSide(u)){say(u,'Omladdning går bara vid HMS Birka.');return;}
+  const miss=u.maxAmmo-u.ammo-(u.rearm||0),n=Math.min(miss,Math.floor(G.res/GADDA.robot));if(miss<=0){say(u,'Robotmagasinet är redan fullt.');return;}
+  if(n<=0){say(u,'Inte nog material för en robot ('+GADDA.robot+').');return;}G.res-=n*GADDA.robot;G.svcSpent=(G.svcSpent||0)+n*GADDA.robot;u.rearm=(u.rearm||0)+n;
+  say(u,'Laddar om '+n+(n>1?' robotar':' robot')+' för '+n*GADDA.robot+' material.');}
+const gaddaRearmCost=u=>Math.max(0,u.maxAmmo-u.ammo-(u.rearm||0))*GADDA.robot;
+function gaddaManual(u,dt){u.path=null;const dir=CTRL.thr<0?-1:1;u.heading+=CTRL.steer*GADDA.turn*dt*dir;const want=u.speed*CTRL.thr*(CTRL.thr<0?.4:1);
+  u.v=want>(u.v||0)?Math.min(want,(u.v||0)+GADDA.accel*dt):Math.max(want,(u.v||0)-GADDA.brake*dt);
+  if(u.v<0){const nx=u.x-Math.cos(u.heading)*-u.v*dt,ny=u.y-Math.sin(u.heading)*-u.v*dt;if(wetAt(nx,ny)){u.x=nx;u.y=ny;}else u.v=0;}else gaddaStep(u,dt);u.state='Manuell styrning';}
+function gaddaTick(u,dt){
+  u.cd-=dt;if(u.carried)return;
+  /* service alongside Birka: the hull is mended as on her pads, the approved robots go aboard one by one */
+  const side=atBirkaSide(u)&&(u.v||0)<3;
+  if(side&&u.hp<u.maxhp){const dh=Math.min(u.maxhp-u.hp,8*dt);if(svcPay(u,dh*SVC_COST.hp))u.hp+=dh;}
+  if(side&&u.rearm>0){u.loadT=(u.loadT||0)+dt;if(u.loadT>=GADDA.load){u.loadT=0;u.rearm--;u.ammo=Math.min(u.maxAmmo,u.ammo+1);if(u.ammo>=u.maxAmmo)say(u,'Robotmagasinet fullt.');}}
+  if(G.ctrl===u.id){gaddaManual(u,dt);return;}
+  if(!u.rtb&&G.time-u.lastHit<1&&u.hp<u.maxhp*.5){gaddaHome(u);say(u,'Skadad, skrovet '+Math.round(u.hp/u.maxhp*100)+' %. Återvänder till HMS Birka.');}
+  if(G.time-u.lastHit<1){const o=u.orders[0];if(o)o.fp=null;}/* fired on where it lies: a new place, now that the shooter is known */
+  const o=u.orders[0];
+  if(!o){u.rtb=false;gaddaGo(u,u.x,u.y,dt,1e9);u.state=side?(u.rearm>0?'Laddar om vid HMS Birka':u.ammo<u.maxAmmo?'Vid HMS Birka · '+u.ammo+' robotar, omladdning väntar på dig':'Vid HMS Birka'):'Ligger still i ruta '+sq(u.x,u.y);return;}
+  if(o.type==='move'){const p=o.wp||(o.wp=(()=>{const c=cellIdx(o.x,o.y);if(seaPass(c))return{x:o.x,y:o.y};const n=nearestPass(c,seaPass);return n<0?{x:u.x,y:u.y}:cellCenter(n);})());
+    if(gaddaGo(u,p.x,p.y,dt,8)){u.orders.shift();return;}u.state='På väg till '+sq(p.x,p.y);return;}
+  if(o.type==='rtb'){const sd=o.sd||(o.sd=(()=>{const L=shipLocal(u.x,u.y),p=shipPos(L.lat<0?-30:30,clamp(L.fwd,-30,30)),c=cellIdx(p[0],p[1]);if(seaPass(c))return{x:p[0],y:p[1]};const n=nearestPass(c,seaPass);return n<0?{x:p[0],y:p[1]}:cellCenter(n);})());
+    if(Math.hypot(sd.x-CARRIER.x,sd.y-CARRIER.y)>GADDA.berth-10)o.sd=null;/* Birka moved */
+    if(gaddaGo(u,sd.x,sd.y,dt,8)&&atBirkaSide(u)){if(u.hp>=u.maxhp-.5){u.orders.shift();u.rtb=false;
+        if(u.ammo<u.maxAmmo&&!(u.rearm>0)){const c=gaddaRearmCost(u);say(u,'Vid HMS Birka med '+u.ammo+' av '+u.maxAmmo+' robotar. Ladda om för '+c+' material?',[{l:'Ladda om ('+c+')',f:()=>gaddaRearm(u)}]);}}
+      u.state='Lagas vid HMS Birka '+Math.round(u.hp/u.maxhp*100)+' %';return;}
+    u.state='Återvänder till HMS Birka';return;}
+  if(o.type==='attack'||o.type==='strike'){const e=o.enemy,s=o.s;
+    if(e&&e.dead||s&&s.dead){u.orders.shift();u.path=null;return;}
+    if(u.ammo<1){if(u.rearm>0||atBirkaSide(u)){gaddaGo(u,u.x,u.y,dt,1e9);u.state=u.rearm>0?'Laddar om vid HMS Birka':'Vid HMS Birka · väntar på att du godkänner omladdningen';return;}gaddaHome(u);return;}
+    const tx=e?e.lx:s?s.x:o.x,ty=e?e.ly:s?s.y:o.y,d=Math.hypot(tx-u.x,ty-u.y),inR=d<=u.range&&d>=GADDA.minR;
+    const can=e?gaddaPainted(e):true,name=e?ename(e):s?slabel(s):'ruta '+sq(tx,ty);
+    /* it fires at the place it chose, which knew of every enemy it knows (and took the risk only when no water in reach was out of it),
+       or anywhere no known enemy reaches; not on the way while a known enemy reaches it */
+    if(inR&&can&&u.ammo>=1&&(u.v||0)<6&&(o.fp&&Math.hypot(o.fp.x-u.x,o.fp.y-u.y)<15||!gaddaExposed(u))){u.v=Math.max(0,(u.v||0)-GADDA.brake*dt);if(e?gaddaFire(u,e):s?gaddaFire(u,s):gaddaFirePt(u,tx,ty)){if(o.type==='strike'&&!s){o.n=(o.n||1)-1;if(o.n<=0){u.orders=u.orders.filter(x=>x!==o);if(u.orders[0]!==o)u.path=null;}}}
+      u.state='Skjuter mot '+name;return;}
+    if(!o.fp||G.time>=(o.fpT||0)||Math.hypot(o.fpE.x-tx,o.fpE.y-ty)>30){o.fpT=G.time+GADDA.spotT;o.fpE={x:tx,y:ty};const sp=gaddaSpot(u,tx,ty);
+      if(!sp){u.orders.shift();u.path=null;say(u,'Når inte '+name+' från vattnet: det finns inget farbart vatten inom '+u.range+' m.');return;}
+      if(!o.fp||Math.hypot(sp.x-o.fp.x,sp.y-o.fp.y)>15){o.fp=sp;u.path=null;}
+      if(sp.exp&&!o.expTold){o.expTold=1;say(u,'Skjutplatsen mot '+name+' nås av '+sp.exp+'. Ingen säkrare plats inom räckhåll.');}}
+    const at=gaddaGo(u,o.fp.x,o.fp.y,dt,8);
+    u.state=at||inR?(can?'I skjutläge mot '+name:'I skjutläge, väntar på att någon målar '+name):'Till skjutplatsen mot '+name;return;}
+  u.orders.shift();
+}
+/* the boat's orders from the chart: an enemy is a target to fire on when someone sees it, a building one to fire on at once, water a
+   place to go, land a point to send one robot at (Shift queues more) */
+function gaddaOrder(u,pk,post){if(pk.enemy&&!pk.enemy.dead)return{type:'attack',enemy:pk.enemy,post};
+  if(pk.struct&&!pk.struct.dead)return{type:'strike',s:pk.struct,post};
+  const p=pk.world||(pk.relay?{x:pk.relay.x,y:pk.relay.y}:pk.wreck?{x:pk.wreck.x,y:pk.wreck.y}:pk.barrier?{x:pk.barrier.x,y:pk.barrier.y}:null);if(!p)return null;
+  if(heightAt(p.x,p.y)<0)return{type:'move',x:clamp(p.x,10,WW-10),y:clamp(p.y,10,WH-10),post};
+  return{type:'strike',x:p.x,y:p.y,n:1,post};}
 
 function manualDrive(u,dt){
   u.hold=false;u.rtb=false;u.path=null;u.cd-=dt;
@@ -2920,7 +3058,7 @@ function costFor(post,tgt,w){
   const kn=G.known;
   return i=>{let c=1;/* water costs as much as land, now that VARG is as fast on it (17 okt; it was 1.35 for 0.7 speed) */if(road[i])c*=post==='wary'?1.7:.6;if(!kn[i]&&(g[i]===LAND||g[i]===BEACH))c*=FIRE.unk;return dz?c+dz[i]:c;};
 }
-function orderPt(o){if(o.type==='explore')return o.tgt||{x:o.ux||CARRIER.x,y:o.uy||CARRIER.y};if(o.type==='move'||o.type==='obs')return o;if(o.type==='clear')return{x:o.barrier.x,y:o.barrier.y};if(o.type==='demine')return{x:o.mine.x,y:o.mine.y};if(o.type==='capture')return o.relay;if(o.type==='attack')return{x:o.enemy.lx,y:o.enemy.ly};if(o.type==='follow')return o.unit;if(o.type==='raze'||o.type==='demolish'||o.type==='mast')return o.s;if(o.type==='repair')return o.unit;return o.hp||CARRIER;}
+function orderPt(o){if(o.type==='explore')return o.tgt||{x:o.ux||CARRIER.x,y:o.uy||CARRIER.y};if(o.type==='move'||o.type==='obs')return o;if(o.type==='clear')return{x:o.barrier.x,y:o.barrier.y};if(o.type==='demine')return{x:o.mine.x,y:o.mine.y};if(o.type==='capture')return o.relay;if(o.type==='attack')return{x:o.enemy.lx,y:o.enemy.ly};if(o.type==='strike')return o.s||o;if(o.type==='follow')return o.unit;if(o.type==='raze'||o.type==='demolish'||o.type==='mast')return o.s;if(o.type==='repair')return o.unit;return o.hp||CARRIER;}
 
 // a big, slow helicopter is seen and engaged further out than a drone (kRange); small drones only within radar range
 /* ground and air reach differ for some defenders: range is against ground, airRange (when set) against aircraft */
@@ -3350,12 +3488,13 @@ function updateEnemy(e,dt){
 }
 
 function dmgMult(a,t,w){
-  if(t.isStruct)return w==='mg'?.25:w==='rocket'?1.5:1;
+  if(t.isStruct)return w==='mg'?.25:w==='rocket'||w==='gadda'?1.5:1;
+  if(w==='gadda'&&t.cls)return{inf:1,light:1.3,armor:1}[t.cls];/* GÄDDA's robots carry a warhead made for bunkers */
   if(t.cls){if(w==='mg')return{inf:2,light:.6,armor:.15}[t.cls];if(w==='rocket')return{inf:1,light:1.3,armor:.5}[t.cls];return{inf:.5,light:1,armor:1}[t.cls];}
   const air=!!t.air;if(a.kind==='inf')return 1;if(a.kind==='rb')return air?1:.5;if(a.kind==='light')return air?1:.6;return 1;
 }
 /* shots are projectiles: visible flight from muzzle to target, damage lands on arrival */
-const WSPEC={cannon:{v:520,len:9,r:.55,col:0xffe6a8},mg:{v:430,len:5,r:.26,col:0xfff2b8},rocket:{v:115,len:2.2,r:.36,col:0xf4f4f0,trail:true},
+const WSPEC={cannon:{v:520,len:9,r:.55,col:0xffe6a8},mg:{v:430,len:5,r:.26,col:0xfff2b8},rocket:{v:115,len:2.2,r:.36,col:0xf4f4f0,trail:true},gadda:{v:150,len:3,r:.45,col:0xf4f4f0,trail:true},
   e_shell:{v:480,len:9,r:.55,col:0xff8a5a},e_rifle:{v:400,len:4,r:.2,col:0xff8a5a},e_at:{v:125,len:2,r:.32,col:0xffb090,trail:true},e_sam:{v:170,len:2.4,r:.34,col:0xffe0c0,trail:true},e_auto:{v:450,len:5,r:.3,col:0xff8a5a},flak:{v:520,len:5,r:.3,col:0xff9a6a,flak:true}};
 const EW={rb:'e_sam',turret:'e_shell',tank:'e_shell',aa:'flak',inf:'e_at',at:'e_at',light:'e_auto'};
 /* aircraft keep clear of tree tops, buildings and masts: the highest top within about 15 m (tallest trees reach some 20 m) plus a margin */
@@ -3429,7 +3568,8 @@ function shoot(a,t,dmg,acc,side,w){
 const JOLT={e_rifle:.2,e_auto:.45,e_shell:1,e_at:1,e_sam:1,flak:.8};
 function resolveShot(f){
   f.done=true;const t=f.tg,W=WSPEC[f.ws];
-  if(f.ws==='cannon'||f.ws==='e_shell'||f.ws==='rocket'||f.ws==='e_at')decorHit(f.x2,f.y2,f.ws==='rocket'?5:4);
+  if(f.ws==='gadda'){if(gaddaDown(f))return;if(f.coord){gaddaBlast(f);return;}}
+  if(f.ws==='cannon'||f.ws==='e_shell'||f.ws==='rocket'||f.ws==='gadda'||f.ws==='e_at')decorHit(f.x2,f.y2,f.ws==='rocket'||f.ws==='gadda'?5:4);
   const live=t&&!t.dead&&(!t.isStruct||!t.dead);
   if(W.flak||!f.hit||!live){G.fx.push({k:'puff',x:f.x2,y:f.y2,h:f.h2,t:0,ttl:W.flak?1.2:.9,c:W.flak?0x2a2a2a:f.h2>groundY(f.x2,f.y2)+1?0x6a665e:0x8a7458,s:W.flak?3:f.ws==='cannon'||f.ws==='e_shell'?2.4:1.1,hit:false,ws:f.ws});}
   if(!f.hit||!live)return;
@@ -4130,6 +4270,7 @@ function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.overrid
 function dropCtrl(){stopFollowMe();G.ctrl=null;G.joy=null;G.firing=false;G.mlook=false;if(typeof document!=='undefined'&&document.pointerLockElement)document.exitPointerLock();}
 function lastPost(u){return u.orders.length?u.orders[u.orders.length-1].post:u.post;}
 function defaultOrder(u,pk,post){
+  if(u.kind==='gadda')return gaddaOrder(u,pk,post);
   if(u.kind==='eng'&&pk.relay&&!pk.relay.captured)return{type:'capture',relay:pk.relay,post};
   if(pk.barrier&&!pk.barrier.cleared){if(u.kind==='eng')return{type:'clear',barrier:pk.barrier,post};const sd=barrierSide(pk.barrier,u);return{type:'move',x:sd.x,y:sd.y,post};}
   if(pk.mine&&!pk.mine.cleared){if(u.kind==='eng')return{type:'demine',mine:pk.mine,post};if(!u.air){const sd=mineSide(pk.mine,u);return{type:'move',x:sd.x,y:sd.y,post};}}
@@ -4207,7 +4348,7 @@ function groupOrder(pk,append,postOverride){append=append||WSHIFT;
   if(!tp)return;
   let cx=0,cy=0;for(const u of us){const p=append&&u.orders.length?orderPt(u.orders[u.orders.length-1]):u;cx+=p.x;cy+=p.y;}cx/=us.length;cy/=us.length;
   // HÖK in a group with ground units flies air cover for them instead of racing ahead to the point
-  const gnd=us.filter(v=>!v.air),cover=gnd.length?us.filter(v=>v.kind==='drone'):[];
+  const gnd=us.filter(v=>!v.air&&v.kind!=='gadda'),cover=gnd.length?us.filter(v=>v.kind==='drone'):[];
   if(cover.length){const lead=gnd.find(v=>v.kind==='tank')||gnd[0],grp=gnd.map(v=>v.id);
     /* (decided 14 okt) HÖK protects the wing as a whole, with its own stance; every new order to the wing reaches the HÖK as well.
        An explicit attack order to the wing makes every HÖK in it strike the target, whatever its stance (decided 18 okt, issue 32:
@@ -4223,7 +4364,8 @@ function groupOrder(pk,append,postOverride){append=append||WSHIFT;
   const offs=formation(rest.length,Math.atan2(tp.y-cy,tp.x-cx));
   rest.forEach((u,i)=>{
     const post=postOverride||(append?lastPost(u):u.post);let o;
-    if(pk.relay&&u.kind==='eng'&&!pk.relay.captured)o={type:'capture',relay:pk.relay,post};
+    if(u.kind==='gadda')o=gaddaOrder(u,pk,post);
+    else if(pk.relay&&u.kind==='eng'&&!pk.relay.captured)o={type:'capture',relay:pk.relay,post};
     else if(pk.barrier&&!pk.barrier.cleared&&u.kind==='eng')o={type:'clear',barrier:pk.barrier,post};
     else if(pk.mine&&!pk.mine.cleared&&u.kind==='eng')o={type:'demine',mine:pk.mine,post};
     else if(pk.enemy&&!pk.enemy.dead&&(u.kind==='tank'||u.kind==='drone')&&canHit(u,pk.enemy,true))o={type:'attack',enemy:pk.enemy,post:'off',accept:!!pk.accept};
@@ -4498,7 +4640,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},GADDA,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -4800,7 +4942,7 @@ function drawMap(ctx,w,h,small){
     const isSel=G.selIds.includes(u.id),isPri=u.id===G.sel;let from={x:u.x,y:u.y};const route=[from];
     u.orders.forEach((o,i)=>{
       const pts=[from];if(i===0&&u.path&&u.pathFor===o)pts.push(...u.path);const tp=orderPt(o);pts.push({x:tp.x,y:tp.y});route.push(...pts.slice(1));
-      const lc=o.type==='attack'||o.type==='raze'?ATK_INK:u.ink;/* an attack is drawn red whatever the unit's colour (decided 14 okt) */
+      const lc=o.type==='attack'||o.type==='raze'||o.type==='strike'?ATK_INK:u.ink;/* an attack is drawn red whatever the unit's colour (decided 14 okt) */
       ctx.globalAlpha=isSel?.95:.38;ctx.strokeStyle=lc;ctx.lineWidth=(isSel?2.2:1.6)*k;ctx.setLineDash(DASH[o.post].map(v=>v*k));
       ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(const p of pts.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();ctx.setLineDash([]);
       if(isPri){ctx.fillStyle=PAPER;ctx.beginPath();ctx.arc(tp.x,tp.y,7.5*k,0,TAU);ctx.fill();ctx.strokeStyle=lc;ctx.lineWidth=1.2*k;ctx.stroke();postIcon(ctx,tp.x,tp.y,o.post,k*.85,lc);}
@@ -4808,6 +4950,7 @@ function drawMap(ctx,w,h,small){
       ctx.globalAlpha=1;from={x:tp.x,y:tp.y};
     });
     if(isSel&&u.air&&u.maxFuel&&!u.rtb)drawBatteryLimit(ctx,u,route,k);
+    if(isSel&&u.kind==='gadda'){/* the robots' reach, from where it lies */ctx.globalAlpha=.55;ctx.strokeStyle=ATK_INK;ctx.lineWidth=1.2*k;ctx.setLineDash([6*k,5*k]);ctx.beginPath();ctx.arc(u.x,u.y,u.range,0,TAU);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
   }
   if(G.drag){ctx.strokeStyle='#e0a21f';ctx.lineWidth=2.4*k;ctx.setLineDash([5*k,4*k]);ctx.beginPath();ctx.moveTo(G.drag.from.x,G.drag.from.y);ctx.lineTo(G.drag.to.x,G.drag.to.y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#e0a21f';ctx.beginPath();ctx.arc(G.drag.to.x,G.drag.to.y,5*k,0,TAU);ctx.fill();}
   // units
@@ -4820,6 +4963,7 @@ function drawMap(ctx,w,h,small){
     if(u.kind==='tank')ctx.rect(u.x-8.5*k,u.y-7*k,17*k,14*k);
     else if(u.kind==='scout'){ctx.moveTo(u.x,u.y-7.5*k);ctx.lineTo(u.x+7.5*k,u.y);ctx.lineTo(u.x,u.y+7.5*k);ctx.lineTo(u.x-7.5*k,u.y);ctx.closePath();}
     else if(u.kind==='eng'){for(let i=0;i<6;i++){const a=i*PI/3;ctx.lineTo(u.x+Math.cos(a)*9.5*k,u.y+Math.sin(a)*9.5*k);}ctx.closePath();}
+    else if(u.kind==='gadda'){/* a hull with a pointed bow, along its heading */const c=Math.cos(u.heading),q=Math.sin(u.heading),P=(f,l)=>[u.x+(c*f-q*l)*k,u.y+(q*f+c*l)*k];for(const[f,l]of[[12,0],[4,7],[-9,7],[-9,-7],[4,-7]])ctx.lineTo(...P(f,l));ctx.closePath();}
     else ctx.arc(u.x,u.y,8*k,0,TAU);
     ctx.fill();
     if(u.kind==='eng'){ctx.strokeStyle='#e8b830';ctx.lineWidth=1.6*k;ctx.stroke();}
@@ -5011,8 +5155,83 @@ function contactShadow(g,y,k){
   g.updateMatrixWorld(true);const b=new THREE.Box3();g.traverse(o=>{if(o.isMesh&&!o.userData.noShadow){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();b.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));}});
   if(b.isEmpty())return g;k=k||1;const m=new THREE.Mesh(BLOB.geo,BLOB.mat);m.scale.set((b.max.x-b.min.x)*1.15*k,1,(b.max.z-b.min.z)*1.45*k);
   m.position.set((b.min.x+b.max.x)/2,y,(b.min.z+b.max.z)/2);m.castShadow=false;m.receiveShadow=false;m.userData.noShadow=true;m.renderOrder=2;g.add(m);g.userData.blob=m;g.userData.blobY=y;return g;}
+/* GÄDDA's model (proto/gadda.js, concept 25 okt): see the comment there; the launcher's lift and caps are kept on userData */
+function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=Math.PI*2,PI=Math.PI;
+  const M=c=>new THREE.MeshLambertMaterial({color:c}),B=c=>new THREE.MeshBasicMaterial({color:c});
+  const mesh=(ge,m,x,y,z)=>{const q=new THREE.Mesh(ge,m);q.position.set(x||0,y||0,z||0);return q;};
+  const box=(a,b,c)=>new THREE.BoxGeometry(a,b,c),cyl=(a,b,h,n)=>new THREE.CylinderGeometry(a,b,h,n||8);
+  const HULL=M(0x4c5864),HULL2=M(0x56626e),BOT=M(0x22272b),DECK=M(0x5e6973),DK=M(0x2a2e33),BLK=M(0x15181c),MET=M(0x7d7a72),
+    LCH=M(0x606b75),CAP=M(0xd8dde0),T=M(col),WH=B(0xf4f6f8),RED=B(0xd8261c),GRN=B(0x1fbf4a);
+  const g=new THREE.Group();
+  /* a side profile (x,y) extruded across the boat, narrowed towards the bow (bowT) and towards the keel (vee), so the hull reads as a V
+     with flat facets; the same shape cut at the waterline gives the dark bottom */
+  const hullGeo=(pts,beam,y0,y1)=>{const s=new THREE.Shape();s.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)s.lineTo(pts[i][0],pts[i][1]);
+    const ge=new THREE.ExtrudeGeometry(s,{depth:beam,bevelEnabled:false,curveSegments:1,steps:1});ge.translate(0,0,-beam/2);
+    const p=ge.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i);
+      const bowT=x>1.6?Math.max(.04,1-(x-1.6)/3.05):1,vee=y<.25?.3+.7*Math.max(0,(y+.55)/.8):1;p.setZ(i,p.getZ(i)*bowT*vee);}
+    ge.computeVertexNormals();return ge;};
+  const prof=[[-4.35,-.42],[2.4,-.5],[4.15,-.05],[4.65,.98],[1.5,1.0],[-4.35,.82]];
+  g.add(mesh(hullGeo(prof,2.6),HULL));
+  // the dark bottom: the hull below the waterline drawn again a hair wider, so the line between them is crisp
+  {const bp=[[-4.37,-.44],[2.42,-.52],[4.12,-.07],[4.28,.08],[-4.37,.08]];const b=mesh(hullGeo(bp,2.64),BOT);g.add(b);}
+  // the deck, a rubbing strip along the sheer, the side's colour under it, a lighter band on the bow's flare
+  const dk=new THREE.Shape();dk.moveTo(-4.25,-1.18);dk.lineTo(1.4,-1.18);dk.lineTo(4.4,0);dk.lineTo(1.4,1.18);dk.lineTo(-4.25,1.18);dk.lineTo(-4.25,-1.18);
+  const dg=new THREE.ExtrudeGeometry(dk,{depth:.06,bevelEnabled:false});dg.rotateX(-PI/2);
+  const deck=mesh(dg,DECK,0,.86,0);g.add(deck);
+  for(const sz of[-1,1]){
+    const rs=mesh(box(5.9,.09,.09),DK,-1.35,.86,sz*1.28);g.add(rs);
+    const st=mesh(box(5.6,.16,.04),T,-1.45,.66,sz*1.3);g.add(st);
+    const fw=mesh(box(3.2,.08,.08),DK,2.9,.92,sz*.64);fw.rotation.y=sz*.39;fw.rotation.z=.01;g.add(fw);
+    const fs=mesh(box(2.9,.14,.04),T,2.75,.72,sz*.66);fs.rotation.y=sz*.39;g.add(fs);}
+  // a non-slip walkway down the middle and two cleats aft
+  g.add(mesh(box(4.6,.02,.9),M(0x4a545d),-1.2,.93,0));for(const z of[-.95,.95])g.add(mesh(box(.3,.08,.08),MET,-3.95,.97,z));
+  /* the sensor house: faceted, lower and narrower forward, no windows, a dark band of sensors round its front and sides */
+  {const hs=new THREE.Shape();hs.moveTo(-.2,0);hs.lineTo(2.5,0);hs.lineTo(2.15,.62);hs.lineTo(1.9,.95);hs.lineTo(.2,1.05);hs.lineTo(-.2,.95);hs.lineTo(-.2,0);
+    const hg=new THREE.ExtrudeGeometry(hs,{depth:1.5,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:1,curveSegments:1});hg.translate(0,0,-.75);
+    g.add(mesh(hg,HULL2,0,.92,0));
+    const bs=new THREE.Shape();bs.moveTo(1.55,.52);bs.lineTo(2.33,.52);bs.lineTo(2.2,.7);bs.lineTo(1.98,.84);bs.lineTo(1.55,.84);
+    const bg=new THREE.ExtrudeGeometry(bs,{depth:1.72,bevelEnabled:false});bg.translate(0,0,-.86);g.add(mesh(bg,BLK,0,.92,0));
+    // the side lights on the house's flanks, red to port and green to starboard
+    g.add(mesh(box(.18,.1,.04),RED,1.2,1.62,-.86));g.add(mesh(box(.18,.1,.04),GRN,1.2,1.62,.86));
+    // the electro-optical ball under the front of the house's roof
+    const eo=new THREE.Group();eo.position.set(2.35,1.72,0);eo.add(mesh(cyl(.09,.09,.18,8),DK,0,.12,0));eo.add(mesh(new THREE.SphereGeometry(.24,10,8),DK,0,-.08,0));
+    eo.add(mesh(box(.06,.12,.2),BLK,.21,-.08,0));g.add(eo);
+    // a hatch and a vent on the roof
+    g.add(mesh(box(.7,.05,.7),DK,.6,2.03,0));g.add(mesh(box(.35,.12,.25),DK,-.05,2.06,.45));}
+  /* the mast: a tripod of short legs to a platform, the radar dome on top, two whips, the white mast light; a band in the side's colour */
+  {const mx=.85,my=2.0;g.add(mesh(cyl(.07,.09,1.0,6),DK,mx,my+.5,0));
+    for(const z of[-.35,.35]){const l=mesh(cyl(.035,.035,1.05,4),DK,mx-.15,my+.48,z*.55);l.rotation.x=z>0?-.33:.33;g.add(l);}
+    g.add(mesh(cyl(.32,.32,.06,10),DK,mx,my+1.0,0));g.add(mesh(cyl(.33,.33,.08,10),T,mx,my+1.07,0));
+    g.add(mesh(new THREE.SphereGeometry(.38,12,8,0,TAU,0,PI/2),M(0xdfe3e6),mx,my+1.1,0));
+    g.add(mesh(cyl(.07,.07,.12,6),WH,mx,my+1.53,0));
+    for(const z of[-.3,.3]){const w=mesh(cyl(.012,.02,1.7,4),BLK,mx-.35,my+1.5,z);w.rotation.z=.12;g.add(w);}}
+  /* the launcher: a box of four tubes, two by two, on a hinge at its after end; it lies along the deck and lifts its front to fire. The
+     caps on the tubes' front ends go one by one as they fire (robots: how many are left) */
+  {const L=new THREE.Group();L.position.set(-3.75,1.02,0);g.add(L);g.userData.launcher=L;
+    const lg=new THREE.Group();L.add(lg);
+    lg.add(mesh(box(2.55,.62,1.46),LCH,1.27,.31,0));lg.add(mesh(box(2.6,.05,1.5),HULL2,1.27,.64,0));
+    for(const z of[-.74,.74])lg.add(mesh(box(2.3,.05,.03),DK,1.2,.12,z));
+    lg.add(mesh(box(.08,.5,1.36),T,2.36,.31,0));
+    const caps=[];for(const[y,z]of[[.46,-.34],[.46,.34],[.16,-.34],[.16,.34]]){const c=mesh(cyl(.13,.13,.06,10),CAP,2.58,y,z);c.rotation.z=PI/2;lg.add(c);
+      const h=mesh(cyl(.12,.12,.05,10),BLK,2.56,y,z);h.rotation.z=PI/2;lg.add(h);caps.push(c);}
+    g.userData.caps=caps;
+    // the hinge block and the lifting ram, which stretches as the box lifts
+    g.add(mesh(box(.4,.22,1.2),DK,-3.75,.98,0));
+    const ram=mesh(cyl(.07,.07,1,6),MET,0,0,0);g.add(ram);g.userData.ram=ram;
+    const rob=o.robots==null?4:o.robots;caps.forEach((c,i)=>{c.visible=i<rob;});
+    g.userData.setLift=t=>{L.rotation.z=t*.62;L.updateMatrix();const a=new THREE.Vector3(-1.9,.98,0),b=new THREE.Vector3(1.6,.08,0).applyAxisAngle(new THREE.Vector3(0,0,1),t*.62).add(L.position);
+      const d=b.clone().sub(a);ram.position.copy(a).addScaledVector(d,.5);ram.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());ram.scale.set(1,Math.max(.2,d.length()),1);};
+    g.userData.setLift(o.lift||0);}
+  // the transom: two water jets with steering buckets, a step, the stern light
+  {const jets=[];for(const z of[-.62,.62]){const j=new THREE.Group();j.position.set(-4.38,.12,z);j.add(mesh(cyl(.2,.24,.36,10),DK,0,0,0).rotateZ(PI/2));j.add(mesh(cyl(.17,.2,.2,10),BLK,-.24,0,0).rotateZ(PI/2));g.add(j);jets.push(j);}
+    g.userData.jets=jets;g.add(mesh(box(.12,.1,2.1),DK,-4.38,.55,0));g.add(mesh(box(.06,.08,.14),WH,-4.4,.84,0));}
+  // a fender line low on the bow and the towing eye
+  g.add(mesh(cyl(.05,.05,.3,6),MET,4.52,.95,0).rotateZ(PI/2));
+  g.traverse(q=>{if(q.isMesh){q.castShadow=true;q.receiveShadow=true;}});
+  return g;}
 function mkUnitMesh(u){
   const g=new THREE.Group();
+  if(u.kind==='gadda')return sh(bake(mkGadda(THREE,{color:u.color}),true));
   if(u.kind==='mus'){
     // MUS: a small remote-controlled rover. A body with sloped nose and tail, fenders over four fat wheels with hubs, a bumper and
     // lamp, a camera head on a short mast, a whip antenna, and the charge on the back with warning stripes
@@ -6825,6 +7044,7 @@ function unitY(u,dtr){
   if(!u.carried){const ry=rampY(u.x,u.y);if(ry!=null)return Math.max(g,ry)+(u.kind==='tank'?HOVER_Y:0);}
   if(u.pad&&u.pad.key!=='ship'){const q=padPt(u);if(q&&Math.hypot(u.x-q.x,u.y-q.y)<PLATE/2)return Math.max(g,q.y3)+(u.kind==='tank'?HOVER_Y:0);}
   if(u.kind==='tank')return g+HOVER_Y+Math.sin(G.time*2.3+(u.id.charCodeAt(1)||0))*.04;
+  if(u.kind==='gadda')return Math.sin(G.time*1.7+(u.id.charCodeAt(1)||0))*.05;
   return g;
 }
 function sync3D(dtr){
@@ -6851,7 +7071,7 @@ function sync3D(dtr){
   /* VARG on the water: spray from the skirt that grows with speed. The boats' foam wake it had from 16 okt was taken away 17 okt
      (issue 4: it was painted on regardless of speed, drew corners in turns and began with a hard edge right behind VARG) */
   {const dt=G.running&&!G.paused?dtr*G.speed:0;if(!R3.uwake)R3.uwake=new Map();const live=new Set();
-    for(const u of G.units){if(u.kind!=='tank'||u.dead||u.carried)continue;live.add(u.id);let w=R3.uwake.get(u.id);
+    for(const u of G.units){if((u.kind!=='tank'&&u.kind!=='gadda')||u.dead||u.carried)continue;live.add(u.id);let w=R3.uwake.get(u.id);
       if(!w){w={lx:u.x,ly:u.y,sp:0};R3.uwake.set(u.id,w);}
       if(dt>0){w.sp=lerp(w.sp,Math.hypot(u.x-w.lx,u.y-w.ly)/dt,Math.min(1,dt*4));}w.lx=u.x;w.ly=u.y;
       if(heightAt(u.x,u.y)<=.05&&!onDeck(u.x,u.y))vargSpray(u.x,u.y,w.sp,dt);}
@@ -7333,6 +7553,7 @@ function selfItems(t){const it=[],sel=G.selIds.includes(t.id),sole=sel&&G.selIds
     it.push({l:(t.high?'Spana lågt':'Spana högt')+nc,off,f:()=>setHigh(t,!t.high)});
 }
   if(t.kind!=='mus'&&needsSvc(t))it.push({l:'Till service'+nc,off,f:()=>goRtb(t,'Återvänder till '+homeFor(t).name+'.',true)});
+  if(t.kind==='gadda'&&atBirkaSide(t)&&gaddaRearmCost(t))it.push({l:'Ladda om ('+gaddaRearmCost(t)+')',f:()=>gaddaRearm(t)});
   {const wk=wingOf(t.id),wu=wk?G.wings[wk].map(unitById).filter(v=>v&&!v.dead&&v.kind!=='mus'):[];
     if(wu.length>1&&wu.some(needsSvc))it.push({l:'Wing '+wk+' till service',f:()=>groupService(wu,'Wing '+wk)});}
   if(t.kind==='eng'){wheelPost=t.post;
@@ -7519,7 +7740,7 @@ $('bFollowMe').addEventListener('click',()=>{setFollowMe(!G.followMe);uiTick(tru
 $('bCtrl').addEventListener('click',()=>{const u=selUnit(),sk=selKrok();if(G.ctrl)setCtrl(null);else if(sk)setCtrl(sk.id);else if(u)setCtrl(u.id);uiTick(true);});
 const yardRow=$('yardRow'),buildAtRow=$('buildAtRow');
 const unitBuilds=()=>G.build.filter(b=>b.kind!=='krok').length+G.fbuild.length,krokCount=()=>G.kroks.length+G.build.filter(b=>b.kind==='krok').length;
-for(const k of['scout','drone','tank','eng','krok']){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.k=k;b.innerHTML='<span></span><small></small>';const T=k==='krok'?{label:'KROK',cost:KROK_COST,build:KROK_BUILD}:TYPES[k];b.firstChild.textContent=T.label;b.lastChild.textContent=T.cost+' · '+T.build+' s';
+for(const k of['scout','drone','tank','eng','gadda','krok']){const b=document.createElement('button');b.type='button';b.className='btn';b.dataset.k=k;b.innerHTML='<span></span><small></small>';const T=k==='krok'?{label:'KROK',cost:KROK_COST,build:KROK_BUILD}:TYPES[k];b.firstChild.textContent=T.label;b.lastChild.textContent=T.cost+' · '+T.build+' s';
   b.addEventListener('click',()=>{const alive=G.units.filter(u=>!u.dead&&u.kind!=='mus').length;if(G.res<T.cost)return;if(k==='krok'?krokCount()>=KROK_MAX:alive+unitBuilds()>=MAXUNITS)return;const fv=G.buildAt!=='ship'&&G.relays.find(r=>r.id===G.buildAt&&r.captured);if(fv&&!VARV_KINDS.includes(k))return;G.res-=T.cost;if(fv){G.fbuild.push({kind:k,t:T.build*VARV_SLOW,total:T.build*VARV_SLOW,at:fv.id});say(null,T.label+' i kö på fältvarvet '+fv.id+'.');}else{G.build.push({kind:k,t:T.build,total:T.build});G.feed2='bay';G.feed2T=G.time;say(null,T.label+' i byggkö.');}uiTick(true);});yardRow.appendChild(b);}
 $('bAuto').addEventListener('click',()=>{G.krokAuto=!G.krokAuto;G.krokMsg=null;say(null,G.krokAuto?'KROK hämtar allt i säkra områden.':'KROK hämtar bara det du beställer.');uiTick(true);});
 $('bStop').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);uiTick(true);return;}for(const u of noContact(selUnits())){if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3))u.holdHp=u.hp;u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);if(u.air)u.orbit={x:u.x,y:u.y};}uiTick(true);});
@@ -7563,6 +7784,7 @@ $('bMus').addEventListener('click',()=>{roverKey();uiTick(true);});
   if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Klicka igen: '+v+' material'+(w.length?' ('+w.join(', ')+')':'');clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('confirm');b.textContent='Återvinn';},4000);return;}
   clearTimeout(b._t);b.classList.remove('confirm');b.textContent='Återvinn';recycle(us);uiTick(true);});}
 $('bExplore').addEventListener('click',()=>{for(const v of noContact(selUnits()))if(v.kind==='scout')giveOrder(v,{type:'explore',post:'def'},false,'mission');uiTick(true);});
+$('bRearm').addEventListener('click',()=>{for(const u of selUnits())if(u.kind==='gadda')gaddaRearm(u);uiTick(true);});
 $('bRtb').addEventListener('click',()=>{const sk=selKrok();if(sk){clearKrok(sk);if(sk.cargo){const p=sk.cargo.kind==='eng'?deckSpot(0):shipPos(0,75);sk.orders.push({type:'drop',x:p[0],y:p[1]});}sk.orders.push({type:'move',x:sk.pad.x,y:sk.pad.y});uiTick(true);return;}for(const u of noContact(selUnits())){if(G.ctrl===u.id)setCtrl(null);u.orders=[{type:'rtb',post:u.post,cap:1}];u.saved=null;u.path=null;u.rtb=true;u.hold=false;u.override=false;}uiTick(true);});
 $('bOverride').addEventListener('click',()=>{for(const u of noContact(selUnits())){if(!(u.hold||(u.rtb&&u.saved&&u.saved.length)))continue;if(u.rtb&&u.saved&&u.saved.length){u.orders=u.saved;u.saved=null;u.rtb=false;u.path=null;}u.override=true;u.hold=false;G.overrides++;say(u,'Uppfattat. Fortsätter trots risk.');}uiTick(true);});
 $('bPause').addEventListener('click',()=>{setPaused(!G.paused);uiTick(true);});
@@ -7937,6 +8159,7 @@ function uiTick(force){
   $('bStop').disabled=!us.length&&!sk;$('bRtb').disabled=!us.length&&!sk;
   $('bOverride').hidden=!us.some(x=>x.hold||(x.rtb&&x.saved&&x.saved.length));
   $('bExplore').hidden=!selUnits().some(v=>v.kind==='scout');
+  {const gs=selUnits().filter(v=>v.kind==='gadda'),c=gs.reduce((a,v)=>a+gaddaRearmCost(v),0),rb=$('bRearm');rb.hidden=!gs.length;rb.textContent=c?'Ladda om ('+c+')':'Ladda om';rb.disabled=!c||!gs.some(atBirkaSide)||G.res<GADDA.robot;}
   {const rb=$('bRecycle'),us=selUnits().filter(atBirka);rb.hidden=!us.length;if(us.length&&!rb.classList.contains('confirm'))rb.textContent='Återvinn ('+us.reduce((a,u)=>a+recycleValue(u),0)+')';}
   $('bMus').hidden=!selUnits().some(v=>v.kind==='mus'||(v.kind==='tank'&&v.musId&&unitById(v.musId)&&!unitById(v.musId).dead));
   const bc=$('bCtrl');bc.textContent=G.ctrl?'Släpp kontroll (E)':'Ta kontroll (E)';{const bf=$('bFollowMe');bf.hidden=!G.ctrl;bf.setAttribute('aria-pressed',String(!!G.followMe));bf.textContent=G.followMe?'Gruppen följer · på (G)':'Gruppen följer (G)';}bc.setAttribute('aria-pressed',String(!!G.ctrl));bc.disabled=!G.ctrl&&!u&&!sk;
@@ -8058,6 +8281,34 @@ function rotorVoice(c,kind,st,out,noise){const hk=kind==='drone',f0=hk?150:240,b
   const lfo=st(c.createOscillator());lfo.type='sine';lfo.frequency.value=blade;const ld=c.createGain();ld.gain.value=.34;lfo.connect(ld);ld.connect(am.gain);
   return{base:hk?.62:.4,set:(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.12*mv),t,.25);b.frequency.setTargetAtTime(f0*1.006*(1+.12*mv),t,.25);
     lfo.frequency.setTargetAtTime(blade*(1+.25*mv),t,.25);lp.frequency.setTargetAtTime(f0*(2.8+.6*mv),t,.25);}};}
+// GÄDDA's water jets, in the game with no motor tone (whine 0, Magnus 26 okt); B with the tone is kept on the sound bench
+/* GÄDDA, the robot boat (26 okt, Magnus: "batteridrivna vattenjets"): no engine of its own to hear, so the water carries it. Two
+   electric motors drive a jet each: the motor a soft tone that rises with the revolutions (whine: 0 nearly silent, 1 clear), the
+   impellers' blades a low hum under it, the jets' stream a band of noise that opens upward with speed, the white water a hiss that
+   comes in only fast (all of it darker since Magnus's first listen, 26 okt), and the hull: at rest the jets burble and the water knocks at the hull now and then, under way the bow meets
+   the waves faster and harder. set(sp,mv) as rotorVoice, mv 0 to 1.2 */
+function gaddaVoice(c,st,out,noise,whine){whine=whine==null?1:whine;const G=v=>{const g=c.createGain();g.gain.value=v;return g;},
+    F=(type,f,q)=>{const b=c.createBiquadFilter();b.type=type;b.frequency.value=f;b.Q.value=q;return b;},O=(type,f)=>{const o=st(c.createOscillator());o.type=type;o.frequency.value=f;return o;};
+  // the motors: a sine and its second harmonic, the two jets' motors a hair apart so they beat slowly; a faint inverter tone in B
+  const m1=O('sine',150),m2=O('sine',151),m3=O('triangle',300),mg=G(.05*whine),m3g=G(.35);m1.connect(mg);m2.connect(mg);m3.connect(m3g);m3g.connect(mg);mg.connect(out);
+  const pw=O('sine',1450),pwg=G(.003*whine*whine);pw.connect(pwg);pwg.connect(out);
+  // the impellers: seven blades each, a filtered sawtooth at the blade rate
+  const im=O('sawtooth',48),ilp=F('lowpass',200,.7),ig=G(.13);im.connect(ilp);ilp.connect(ig);ig.connect(out);
+  // the jets' stream and the white water behind
+  const jn=st(noise()),jb=F('bandpass',300,.6),jg=G(.06);jn.connect(jb);jb.connect(jg);jg.connect(out);
+  const fn=st(noise()),fh=F('highpass',1800,.5),fl=F('lowpass',3200,.5),fg=G(0);fn.connect(fh);fh.connect(fl);fl.connect(fg);fg.connect(out);
+  // the burble at rest: a narrow band of noise, its level shaken by two quick, slightly different rates
+  const bn=st(noise()),bb=F('bandpass',220,2.2),bg=G(.22);bn.connect(bb);bb.connect(bg);bg.connect(out);
+  const b1=O('sine',8.3),b2=O('sine',12.7),bd=G(.14);b1.connect(bd);b2.connect(bd);bd.connect(bg.gain);
+  // the hull: low knocks, two slow rates that only now and then line up into a slap
+  const hn=st(noise()),hl=F('lowpass',160,.8),hg=G(.12);hn.connect(hl);hl.connect(hg);hg.connect(out);
+  const h1=O('sine',.61),h2=O('sine',.97),hd=G(.13);h1.connect(hd);h2.connect(hd);hd.connect(hg.gain);
+  return{base:.8,set:(sp,mv)=>{const t=c.currentTime,k=Math.min(1.2,Math.max(0,mv)),T=(p,v)=>p.setTargetAtTime(v,t,.35);
+    T(m1.frequency,150+330*k);T(m2.frequency,151+332*k);T(m3.frequency,300+660*k);T(mg.gain,(.03+.05*k)*whine);
+    T(im.frequency,48+110*k);T(ilp.frequency,200+180*k);T(ig.gain,.1+.07*k);
+    T(jb.frequency,300+500*k);T(jg.gain,.06+.3*k);T(fg.gain,.04*k*k);
+    T(bg.gain,.22*Math.max(0,1-k*1.6));T(bd.gain,.14*Math.max(0,1-k*1.6));
+    T(h1.frequency,.61+1.6*k);T(h2.frequency,.97+2.1*k);T(hg.gain,.14+.12*k);T(hd.gain,.13+.12*k);}};}
 function mkVoice(u){
   const c=AUD.ctx,out=c.createGain();out.gain.value=0;const pan=c.createStereoPanner?c.createStereoPanner():null;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=8000;
   out.connect(lp);if(pan){lp.connect(pan);pan.connect(AUD.master);}else lp.connect(AUD.master);
@@ -8072,6 +8323,7 @@ function mkVoice(u){
       ng.gain.setTargetAtTime(.12*mv,t,.2);cg.gain.setTargetAtTime(.12*mv,t,.2);cl.frequency.setTargetAtTime(3+9*mv,t,.3);};
     V.base=.55;
   }else if(u.kind==='drone'||u.kind==='scout'){const R=rotorVoice(c,u.kind,st,out,noiseSrc);V.set=R.set;V.base=R.base;
+  }else if(u.kind==='gadda'){const R=gaddaVoice(c,st,out,noiseSrc,0);V.set=R.set;V.base=R.base;
   }else if(u.kind==='mus'){ // MUS: a small electric drive, a thin whine and a little gravel
     const a=st(c.createOscillator());a.type='triangle';a.frequency.value=520;const g=c.createGain();g.gain.value=.18;a.connect(g);g.connect(out);
     const n=st(noiseSrc()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=3200;nf.Q.value=1.2;const ng=c.createGain();ng.gain.value=.08;n.connect(nf);nf.connect(ng);ng.connect(out);

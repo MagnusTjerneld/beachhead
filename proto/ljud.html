@@ -6,8 +6,8 @@
 <title>Ljudbänk</title>
 <!-- Ljudbänken för HÖK och GETING (25 okt): det gamla och det nya rotorljudet sida vid sida. Byggs av proto/mkljud.py, som klistrar in
      spelets rotorVoice ur index.html där det står ROTORVOICE nedan; det gamla ljudet är fruset här som det var före 25 okt.
-     GÄDDA (26 okt): robotbåtens batteridrivna vattenjetar i två varianter och robotens avfyrning. Båten finns inte i spelet än, så
-     gaddaVoice bor här tills den byggs; då flyttas den in i spelets mkVoice och klistras in härifrån som rotorVoice. -->
+     GÄDDA (26 okt): robotbåtens batteridrivna vattenjetar i två varianter och robotens avfyrning. gaddaVoice är spelets och klistras
+     in med rotorVoice; avfyrningen finns bara här. -->
 <style>
 :root{--bg:#0e1720;--panel:#172330;--line:#2a3946;--ink:#ebe6d6;--dim:#8d9caa;--signal:#f0c45a;--mag:#d6458a;--ok:#7fc8a0;color-scheme:dark}
 :root[data-theme="light"]{--bg:#0e1720}
@@ -54,14 +54,7 @@ function rotorVoice(c,kind,st,out,noise){const hk=kind==='drone',f0=hk?150:240,b
   const lfo=st(c.createOscillator());lfo.type='sine';lfo.frequency.value=blade;const ld=c.createGain();ld.gain.value=.34;lfo.connect(ld);ld.connect(am.gain);
   return{base:hk?.62:.4,set:(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.12*mv),t,.25);b.frequency.setTargetAtTime(f0*1.006*(1+.12*mv),t,.25);
     lfo.frequency.setTargetAtTime(blade*(1+.25*mv),t,.25);lp.frequency.setTargetAtTime(f0*(2.8+.6*mv),t,.25);}};}
-
-// the old voice, frozen as it was in the game before 25 okt
-function oldVoice(c,kind,st,out,noise){const f0=kind==='drone'?182:330;const a=st(c.createOscillator()),b=st(c.createOscillator());a.type=b.type='sawtooth';a.frequency.value=f0;b.frequency.value=f0*1.034;
-  const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f0*4;bp.Q.value=.9;a.connect(bp);b.connect(bp);const g=c.createGain();g.gain.value=.5;bp.connect(g);g.connect(out);
-  const n=st(noise()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.7;const ng=c.createGain();ng.gain.value=.25;n.connect(nf);nf.connect(ng);ng.connect(out);
-  return{base:kind==='drone'?.38:.22,set:(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.18*mv),t,.25);b.frequency.setTargetAtTime(f0*1.034*(1+.18*mv),t,.25);}};}
-
-const noiseBuf=c=>{const n=c.sampleRate*2,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b;};
+// GÄDDA's water jets, in the game with no motor tone (whine 0, Magnus 26 okt); B with the tone is kept on the sound bench
 /* GÄDDA, the robot boat (26 okt, Magnus: "batteridrivna vattenjets"): no engine of its own to hear, so the water carries it. Two
    electric motors drive a jet each: the motor a soft tone that rises with the revolutions (whine: 0 nearly silent, 1 clear), the
    impellers' blades a low hum under it, the jets' stream a band of noise that opens upward with speed, the white water a hiss that
@@ -89,6 +82,14 @@ function gaddaVoice(c,st,out,noise,whine){whine=whine==null?1:whine;const G=v=>{
     T(jb.frequency,300+500*k);T(jg.gain,.06+.3*k);T(fg.gain,.04*k*k);
     T(bg.gain,.22*Math.max(0,1-k*1.6));T(bd.gain,.14*Math.max(0,1-k*1.6));
     T(h1.frequency,.61+1.6*k);T(h2.frequency,.97+2.1*k);T(hg.gain,.14+.12*k);T(hd.gain,.13+.12*k);}};}
+
+// the old voice, frozen as it was in the game before 25 okt
+function oldVoice(c,kind,st,out,noise){const f0=kind==='drone'?182:330;const a=st(c.createOscillator()),b=st(c.createOscillator());a.type=b.type='sawtooth';a.frequency.value=f0;b.frequency.value=f0*1.034;
+  const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f0*4;bp.Q.value=.9;a.connect(bp);b.connect(bp);const g=c.createGain();g.gain.value=.5;bp.connect(g);g.connect(out);
+  const n=st(noise()),nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.7;const ng=c.createGain();ng.gain.value=.25;n.connect(nf);nf.connect(ng);ng.connect(out);
+  return{base:kind==='drone'?.38:.22,set:(sp,mv)=>{const t=c.currentTime;a.frequency.setTargetAtTime(f0*(1+.18*mv),t,.25);b.frequency.setTargetAtTime(f0*1.034*(1+.18*mv),t,.25);}};}
+
+const noiseBuf=c=>{const n=c.sampleRate*2,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b;};
 /* the robot leaving its tube: the gas generator's thump and pop, then the rocket motor's roar, darker and fainter as it climbs away */
 function gaddaLaunch(c,dest,noise){const t=c.currentTime;
   const th=c.createOscillator(),tg=c.createGain();th.frequency.setValueAtTime(90,t);th.frequency.exponentialRampToValueAtTime(32,t+.35);tg.gain.setValueAtTime(0,t);tg.gain.linearRampToValueAtTime(.9,t+.01);tg.gain.exponentialRampToValueAtTime(.001,t+.45);th.connect(tg);tg.connect(dest);th.start(t);th.stop(t+.5);
