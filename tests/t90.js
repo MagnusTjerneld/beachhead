@@ -7,10 +7,14 @@ require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.l
 const G=()=>B.G,until=(f,s)=>{for(let i=0;i<s*20;i++){if(f())return true;B.step(.05);}return !!f();};
 const wet=(x,y)=>B.heightAt(x,y)<0;
 const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
-// 1. built at Birka's side, in the water, for 220
+// 1. built in the bay for 220 and put in the water by KROK, or by the crane when there is no KROK
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;const r0=G().res;B.queueBuild('gadda');
-  until(()=>G().units.some(u=>u.kind==='gadda'),40);const u=G().units.find(v=>v.kind==='gadda');
-  ok(r0-G().res===220,'GÄDDA costs 220 ('+(r0-G().res)+')');ok(!!u&&wet(u.x,u.y)&&B.atBirkaSide(u),'built in the water at Birka\'s side');
+  until(()=>G().units.some(u=>u.kind==='gadda'),40);const u=G().units.find(v=>v.kind==='gadda');let lifted=false;
+  ok(r0-G().res===220,'GÄDDA costs 220 ('+(r0-G().res)+')');until(()=>{if(u.carried)lifted=true;return !u.launch;},120);
+  ok(lifted&&!u.launch&&wet(u.x,u.y)&&B.atBirkaSide(u),'built in the bay, KROK puts it in the water beside Birka ('+u.state+')');
+  // with no KROK, Birka's crane launches the next one
+  {for(const k of G().kroks)k.dead=true;B.queueBuild('gadda');until(()=>G().units.filter(v=>v.kind==='gadda').length>1,40);const u2=G().units.filter(v=>v.kind==='gadda')[1];
+    until(()=>!u2.launch,40);ok(!u2.launch&&wet(u2.x,u2.y),'with no KROK the crane puts it in the water ('+Math.round(G().time)+' s)');G().units=G().units.filter(v=>v!==u2);}
   // 2. a way on the water to a point far off round the island, never over land
   let best=null;for(let i=0;i<B.GW*B.GW;i+=7){if(!B.seaPass(i))continue;const c={x:(i%B.GW)*10+5,y:Math.floor(i/B.GW)*10+5},d=Math.hypot(c.x-u.x,c.y-u.y);if(d>700&&d<900&&(!best||d<best.d))best={...c,d};}
   for(const e of G().enemies)e.dead=true;B.giveOrder(u,{type:'move',x:best.x,y:best.y,post:'off'});let dry=0;
@@ -38,4 +42,15 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 {B.newGame(9052,'fastning');const A=G().enemies.find(e=>e.kind==='aa');for(const e of G().enemies)if(e!==A)e.dead=true;A.dead=false;let n=0;const N=4000;
   for(let i=0;i<N;i++){const f={x1:A.x-300,y1:A.y,x2:A.x+50,y2:A.y,h2:2,a:null};if(B.gaddaDown(f))n++;}
   ok(Math.abs(n/N-.15)<.03,'an air defence downs '+Math.round(n/N*100)+' % of the robots over its reach');}
+// 8. driven by hand into the shore at full speed: damaged and stuck on land until KROK lifts it off; at a crawl nothing happens
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const T=G().structs.find(s=>B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},s.x,s.y));
+  const sp=B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},T.x,T.y),u=boat(sp.x,sp.y);u.heading=Math.atan2(T.y-u.y,T.x-u.x);G().ctrl=u.id;
+  B.CTRL.thr=.15;B.CTRL.steer=0;until(()=>false,60);ok(u.hp===u.maxhp&&!u.aground,'at a crawl it only touches the shore ('+u.state+')');
+  u.x=sp.x;u.y=sp.y;u.v=0;B.CTRL.thr=1;until(()=>u.aground||u.dead,60);B.CTRL.thr=0;
+  ok(u.aground&&u.hp<u.maxhp*.4&&!u.dead,'at full speed it runs up on land, hull '+Math.round(u.hp/u.maxhp*100)+' %');
+  G().ctrl=null;B.gaddaFree(u);until(()=>!u.aground&&!u.carried&&B.heightAt(u.x,u.y)<0,240);ok(!u.aground&&B.heightAt(u.x,u.y)<0,'KROK lifts it off into the water');}
+// 9. the island is won when every point is taken, not by the command centre alone; WIN.all false is the testbot's old goal
+{B.newGame(9052,'fastning');G().running=true;const R=G().relays,lc=R.find(r=>r.type==='central');lc.captured=true;B.step(.05);B.checkWin&&B.checkWin();
+  const early=G().over;for(const r of R)r.captured=true;B.checkWin();ok(!early&&G().over,'taking LC alone does not win, all '+R.length+' points do');
+  B.newGame(9052,'fastning');B.WIN.all=false;G().relays.find(r=>r.type==='central').captured=true;B.checkWin();ok(G().over,'the old goal: LC alone');B.WIN.all=true;}
 process.exit(fail?1:0);

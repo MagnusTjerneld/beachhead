@@ -2,7 +2,7 @@ global.performance={now:()=>0};
 require('./g2.js');
 const B=globalThis.__BH;const V=process.argv[2]||'base';
 /* the old start and round islands, so results compare; the captain bot (tests/kapten.js) plays today's islands and start, as Magnus does */
-if(V!=='kapten'){B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;}if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;if(process.env.LOS)B.LOS.on=process.env.LOS!=='0';if(process.env.HEIGHT)B.HEIGHT_F.on=+process.env.HEIGHT;if(process.env.RANGEAIR)B.RANGE_F.air=+process.env.RANGEAIR;/* before any island is built: the piles get their value then */
+if(V!=='kapten'){B.WIN.all=false;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;}if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;if(process.env.LOS)B.LOS.on=process.env.LOS!=='0';if(process.env.HEIGHT)B.HEIGHT_F.on=+process.env.HEIGHT;if(process.env.RANGEAIR)B.RANGE_F.air=+process.env.RANGEAIR;/* before any island is built: the piles get their value then */
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 /* reachability without A*: the bot asked A* once per defender every tick, and for unreachable targets A* floods the whole map.
