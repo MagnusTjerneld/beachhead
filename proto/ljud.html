@@ -65,30 +65,30 @@ const noiseBuf=c=>{const n=c.sampleRate*2,b=c.createBuffer(1,n,c.sampleRate),d=b
 /* GÄDDA, the robot boat (26 okt, Magnus: "batteridrivna vattenjets"): no engine of its own to hear, so the water carries it. Two
    electric motors drive a jet each: the motor a soft tone that rises with the revolutions (whine: 0 nearly silent, 1 clear), the
    impellers' blades a low hum under it, the jets' stream a band of noise that opens upward with speed, the white water a hiss that
-   comes in only fast, and the hull: at rest the jets burble and the water knocks at the hull now and then, under way the bow meets
+   comes in only fast (all of it darker since Magnus's first listen, 26 okt), and the hull: at rest the jets burble and the water knocks at the hull now and then, under way the bow meets
    the waves faster and harder. set(sp,mv) as rotorVoice, mv 0 to 1.2 */
 function gaddaVoice(c,st,out,noise,whine){whine=whine==null?1:whine;const G=v=>{const g=c.createGain();g.gain.value=v;return g;},
     F=(type,f,q)=>{const b=c.createBiquadFilter();b.type=type;b.frequency.value=f;b.Q.value=q;return b;},O=(type,f)=>{const o=st(c.createOscillator());o.type=type;o.frequency.value=f;return o;};
   // the motors: a sine and its second harmonic, the two jets' motors a hair apart so they beat slowly; a faint inverter tone in B
-  const m1=O('sine',210),m2=O('sine',211.4),m3=O('triangle',420),mg=G(.05*whine),m3g=G(.35);m1.connect(mg);m2.connect(mg);m3.connect(m3g);m3g.connect(mg);mg.connect(out);
-  const pw=O('sine',2150),pwg=G(.004*whine*whine);pw.connect(pwg);pwg.connect(out);
+  const m1=O('sine',150),m2=O('sine',151),m3=O('triangle',300),mg=G(.05*whine),m3g=G(.35);m1.connect(mg);m2.connect(mg);m3.connect(m3g);m3g.connect(mg);mg.connect(out);
+  const pw=O('sine',1450),pwg=G(.003*whine*whine);pw.connect(pwg);pwg.connect(out);
   // the impellers: seven blades each, a filtered sawtooth at the blade rate
-  const im=O('sawtooth',62),ilp=F('lowpass',260,.7),ig=G(.09);im.connect(ilp);ilp.connect(ig);ig.connect(out);
+  const im=O('sawtooth',48),ilp=F('lowpass',200,.7),ig=G(.13);im.connect(ilp);ilp.connect(ig);ig.connect(out);
   // the jets' stream and the white water behind
-  const jn=st(noise()),jb=F('bandpass',420,.6),jg=G(.06);jn.connect(jb);jb.connect(jg);jg.connect(out);
-  const fn=st(noise()),fh=F('highpass',2600,.5),fl=F('lowpass',5000,.5),fg=G(0);fn.connect(fh);fh.connect(fl);fl.connect(fg);fg.connect(out);
+  const jn=st(noise()),jb=F('bandpass',300,.6),jg=G(.06);jn.connect(jb);jb.connect(jg);jg.connect(out);
+  const fn=st(noise()),fh=F('highpass',1800,.5),fl=F('lowpass',3200,.5),fg=G(0);fn.connect(fh);fh.connect(fl);fl.connect(fg);fg.connect(out);
   // the burble at rest: a narrow band of noise, its level shaken by two quick, slightly different rates
-  const bn=st(noise()),bb=F('bandpass',300,2.2),bg=G(.22);bn.connect(bb);bb.connect(bg);bg.connect(out);
+  const bn=st(noise()),bb=F('bandpass',220,2.2),bg=G(.22);bn.connect(bb);bb.connect(bg);bg.connect(out);
   const b1=O('sine',8.3),b2=O('sine',12.7),bd=G(.14);b1.connect(bd);b2.connect(bd);bd.connect(bg.gain);
   // the hull: low knocks, two slow rates that only now and then line up into a slap
-  const hn=st(noise()),hl=F('lowpass',200,.8),hg=G(.12);hn.connect(hl);hl.connect(hg);hg.connect(out);
+  const hn=st(noise()),hl=F('lowpass',160,.8),hg=G(.12);hn.connect(hl);hl.connect(hg);hg.connect(out);
   const h1=O('sine',.61),h2=O('sine',.97),hd=G(.13);h1.connect(hd);h2.connect(hd);hd.connect(hg.gain);
-  return{base:.62,set:(sp,mv)=>{const t=c.currentTime,k=Math.min(1.2,Math.max(0,mv)),T=(p,v)=>p.setTargetAtTime(v,t,.35);
-    T(m1.frequency,210+520*k);T(m2.frequency,211.4+523*k);T(m3.frequency,420+1040*k);T(mg.gain,(.03+.05*k)*whine);
-    T(im.frequency,62+150*k);T(ilp.frequency,260+260*k);T(ig.gain,.07+.05*k);
-    T(jb.frequency,420+900*k);T(jg.gain,.06+.3*k);T(fg.gain,.06*k*k);
+  return{base:.8,set:(sp,mv)=>{const t=c.currentTime,k=Math.min(1.2,Math.max(0,mv)),T=(p,v)=>p.setTargetAtTime(v,t,.35);
+    T(m1.frequency,150+330*k);T(m2.frequency,151+332*k);T(m3.frequency,300+660*k);T(mg.gain,(.03+.05*k)*whine);
+    T(im.frequency,48+110*k);T(ilp.frequency,200+180*k);T(ig.gain,.1+.07*k);
+    T(jb.frequency,300+500*k);T(jg.gain,.06+.3*k);T(fg.gain,.04*k*k);
     T(bg.gain,.22*Math.max(0,1-k*1.6));T(bd.gain,.14*Math.max(0,1-k*1.6));
-    T(h1.frequency,.61+1.6*k);T(h2.frequency,.97+2.1*k);T(hg.gain,.12+.1*k);T(hd.gain,.13+.12*k);}};}
+    T(h1.frequency,.61+1.6*k);T(h2.frequency,.97+2.1*k);T(hg.gain,.14+.12*k);T(hd.gain,.13+.12*k);}};}
 /* the robot leaving its tube: the gas generator's thump and pop, then the rocket motor's roar, darker and fainter as it climbs away */
 function gaddaLaunch(c,dest,noise){const t=c.currentTime;
   const th=c.createOscillator(),tg=c.createGain();th.frequency.setValueAtTime(90,t);th.frequency.exponentialRampToValueAtTime(32,t+.35);tg.gain.setValueAtTime(0,t);tg.gain.linearRampToValueAtTime(.9,t+.01);tg.gain.exponentialRampToValueAtTime(.001,t+.45);th.connect(tg);tg.connect(dest);th.start(t);th.stop(t+.5);
