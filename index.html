@@ -123,15 +123,15 @@ button:disabled{opacity:.45;cursor:default}
 .stage.bred .roster{grid-column:1/-1}
 .stage.bred #subSlot{aspect-ratio:auto;max-height:none}
 /* the active view's mark and the second camera (24 okt) */
-.vact{display:none;position:absolute;left:6px;top:6px;z-index:4;height:20px;min-width:20px;border-radius:3px;border:1px solid rgba(240,244,240,.18);background:rgba(17,26,34,.86);padding:0 5px;cursor:pointer;align-items:center;gap:5px;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;color:var(--signal)}
+.vact{display:none;position:absolute;left:8px;top:8px;z-index:4;border-radius:2px;border:0;box-shadow:inset 0 0 0 1px rgba(200,184,130,.3);background:rgba(17,26,34,.82);padding:3px 7px;line-height:inherit;cursor:pointer;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:rgba(200,184,130,.5)}/* the same box as the view's label beside it */
 .stage.bred .vact{display:inline-flex}
-.vact::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid var(--dim);box-sizing:border-box;flex:none}
-/* the active view says so in words (Magnus 26 okt: the dot alone was missed, and with it what Q swaps) */
-.vact[aria-pressed="true"]{border-color:var(--signal)}
+.vact::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(200,184,130,.5);box-sizing:border-box;flex:none}
+.vact::after{content:"AKTIV"}
+/* both large views say AKTIV, lit on the active one and a greyed yellow with an empty ring on the other (Magnus 26 okt: the dot
+   alone was missed, and with it what Q swaps) */
+.vact[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--signal);color:var(--signal)}
 .vact[aria-pressed="true"]::before{background:var(--signal);border-color:var(--signal)}
-.vact[aria-pressed="true"]::after{content:"AKTIV"}
-.stage.bred .slot .vlabel{left:32px}
-.stage.bred .slot:has(.vact[aria-pressed="true"]) .vlabel{left:72px}
+.stage.bred .slot .vlabel{left:77px}
 .feed.big{position:absolute;inset:0;aspect-ratio:auto;max-height:none;border:0;border-radius:0}
 .feed.big .fl{font-size:13px;padding:18px 10px 6px}
 .feed.big .fpin{right:8px;top:40px;font-size:11px;padding:2px 7px}
