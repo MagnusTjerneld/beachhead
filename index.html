@@ -8334,7 +8334,7 @@ function feedDraw(F){
 $('bFeeds').addEventListener('click',()=>{if(!FEED.on)setFeeds(true,true);else if(FEED.fast)setFeeds(true,false);else setFeeds(false);});
 $('bSwap').addEventListener('click',ev=>{ev.stopPropagation();swapViews();});
 window.addEventListener('keydown',e=>{
-  if(FILM.on){if(e.target&&e.target.id==='filmSave')return;/* the save button takes Enter and space itself */if(e.key==='Enter'||e.key===' '){e.preventDefault();filmClick();}else if(e.code==='KeyF')toggleFull();return;}
+  if(FILM.on){if(e.target&&e.target.closest&&e.target.closest('#filmSave'))return;/* the save buttons take Enter and space themselves */if(e.key==='Enter'||e.key===' '){e.preventDefault();filmClick();}else if(e.code==='KeyF')toggleFull();return;}
   if(TITLE.on){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();if(!$('intro').hidden&&e.key==='Escape'){$('intro').hidden=true;return;}titleWake(true);}return;}
   if(e.key==='Backspace'&&G.running&&!/INPUT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName||'')){e.preventDefault();haltSel();uiTick(true);return;}
   if(e.key==='Escape'){closeWheel();if(G.ctrl){setCtrl(null);uiTick(true);}else if(G.selK){G.selK=null;uiTick(true);}return;}
@@ -9090,12 +9090,18 @@ function filmLight(){const h=G.tod,up=clamp((18.45-h)/.45,0,1);
   const f=R3.lookAt;R3.sun.position.set(f.x+vDir.x*450,f.y+vDir.y*450,f.z+vDir.z*450);
   if(R3.sky){const U=R3.sky.material.uniforms,ce=Math.cos(el);U.uSunDir.value.set(hx/hl*ce,Math.sin(el),hz/hl*ce);U.uSunVis.value=clamp((el+.03)/.06,0,1);}}
 
-/* ---- Spara video: the film rendered frame by frame on the viewer's own machine, 1920x1080 at 60 frames a second, with the
+/* ---- Spara video: the film rendered frame by frame on the viewer's own machine, 1920x1080 or 2560x1440 at 60 frames a second, with the
    score, encoded in the browser (WebCodecs, mp4-muxer) to an mp4 that is downloaded. Each frame waits until it is drawn, so the
    file is smooth however slow the machine; the clocks the game reads (performance.now) are held to the film's own time while it
    runs. The chart, the logo with its line and the fades, which live as page elements in the live film, are painted into each
    frame. ---- */
 const FILM_EXP={W:1920,H:1080,fps:60,vbr:16e6,len:null,from:0};/* len and from: a stretch to render, for testing; the whole film by default */
+/* the sizes to save, each with its codecs in the order tried (H.264 High, Main, Baseline, then VP9 and AV1) at the lowest level that holds
+   it at 60 frames a second, and YouTube's recommended bit rate for it. 1440p (Magnus 27 okt): YouTube codes an upload of 1440p or more in
+   VP9 or AV1 at a higher bit rate, so its 1080p looks better too, and its player picks HD more readily; each frame is rendered at 2560x1440,
+   not scaled up, so it takes about twice as long */
+const FILM_RES={1080:{W:1920,H:1080,vbr:16e6,codecs:['avc1.64002A','avc1.4D002A','avc1.42002A','vp09.00.41.08','av01.0.09M.08']},
+  1440:{W:2560,H:1440,vbr:24e6,codecs:['avc1.640033','avc1.4D0033','avc1.420033','vp09.00.51.08','av01.0.12M.08']}};
 const FILM_BASE_W=1920,FILM_MAP_W=1280;/* the film's overlays are drawn for a 1920 wide frame; the chart's own logical width is 1280 */
 const MUXER_URL='https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js',MUXER_SRI='sha384-wr0AQH9RBAKio/g7bHM5245MBCU5B/b0Y9u42cTxRYQQJXKEijZvWEJKL9JG26hs';
 function filmLoadMuxer(){return window.Mp4Muxer&&Mp4Muxer.Muxer?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=MUXER_URL;sc.integrity=MUXER_SRI;sc.crossOrigin='anonymous';
@@ -9115,19 +9121,19 @@ function filmCompose(ctx,W,H){ctx.drawImage(R3.renderer.domElement,0,0,W,H);
     const fc=Math.round(12*k0),tc=COPYRIGHT,sc2=fc*.2;ctx.font=fc+'px "Share Tech Mono",ui-monospace,Menlo,monospace';let tcw=-sc2;for(const c of tc)tcw+=ctx.measureText(c).width+sc2;
     cx=(W-tcw)/2;const tcy=ty+fs*1.35+8*k0;ctx.fillStyle='rgba(238,241,234,.72)';for(const c of tc){ctx.fillText(c,cx,tcy);cx+=ctx.measureText(c).width+sc2;}ctx.restore();}
   if(FILM.fadeA>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,FILM.fadeA)+')';ctx.fillRect(0,0,W,H);}}
-async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
+async function filmExport(res){if(FILM.state!=='idle'&&FILM.state!=='done')return;const P=FILM_RES[res]||FILM_RES[1080];
   const say=t=>{const b=$('tPress');b.textContent=t;b.hidden=false;};
   if(!window.VideoEncoder){say('VIDEO KRÄVER CHROME, EDGE ELLER NYARE SAFARI');return;}
   FILM.state='load';filmSaveBtn(false);say('FÖRBEREDER VIDEO');
-  const E=FILM_EXP,W=E.W,H=E.H,sr=48000,dt=1/E.fps,r=R3&&R3.renderer;
+  const E=Object.assign({},FILM_EXP,res&&FILM_RES[res]?{W:P.W,H:P.H,vbr:P.vbr}:{}),W=E.W,H=E.H,sr=48000,dt=1/E.fps,r=R3&&R3.renderer;
   let venc=null,aenc=null,pn=null,pr=null,rendering=false,noSound=false;
   try{
     audInit();
     try{await filmLoadMuxer();}catch(e){throw Object.assign(new Error('KUNDE INTE LADDA VIDEOKODAREN ('+(e&&e.message||'okänt fel')+')'),{user:true});}
     while(!MUS.buf){if(MUS.failed)throw Object.assign(new Error('MUSIKEN GICK INTE ATT LADDA'),{user:true});await new Promise(q=>setTimeout(q,100));}
     /* H.264 plays everywhere; a browser without an H.264 encoder (Chromium without the licensed codecs) gets VP9 or AV1 in the same mp4,
-       which Chrome, Firefox and VLC play but QuickTime does not. Level 4.1 is the lowest that holds 1080p60 in both. */
-    let vc=null;for(const [c,m] of[['avc1.64002A','avc'],['avc1.4D002A','avc'],['avc1.42002A','avc'],['vp09.00.41.08','vp9'],['av01.0.05M.08','av1']]){try{const q=await VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:E.vbr,framerate:E.fps});if(q.supported){vc=[c,m];break;}}catch(_){}}
+       which Chrome, Firefox and VLC play but QuickTime does not. The levels in FILM_RES: H.264 4.2 and 5.1, VP9 4.1 and 5.1, AV1 4.1 and 5.0. */
+    let vc=null;for(const c of P.codecs){const m=c.slice(0,4)==='avc1'?'avc':c.slice(0,4)==='vp09'?'vp9':'av1';try{const q=await VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:E.vbr,framerate:E.fps});if(q.supported){vc=[c,m];break;}}catch(_){}}
     if(!vc)throw Object.assign(new Error('WEBBLÄSAREN KAN INTE KODA VIDEO'),{user:true});
     /* AAC for the sound if the browser can, otherwise Opus; with neither the film is saved without its score, and says so */
     let ac=null;if(window.AudioEncoder&&window.OfflineAudioContext)for(const [c,m] of[['mp4a.40.2','aac'],['opus','opus']]){try{const q=await AudioEncoder.isConfigSupported({codec:c,sampleRate:sr,numberOfChannels:2,bitrate:192000});if(q.supported){ac=[c,m];break;}}catch(_){}}
@@ -9140,7 +9146,7 @@ async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
       aenc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>err=e});aenc.configure({codec:ac[0],sampleRate:sr,numberOfChannels:2,bitrate:192000});}
     const feedAudio=upTo=>{while(buf&&ai<buf.length&&ai/sr<=upTo){const n=Math.min(N,buf.length-ai),d=new Float32Array(n*2);d.set(L.subarray(ai,ai+n),0);d.set(R.subarray(ai,ai+n),n);
       const a=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(ai/sr*1e6),data:d});aenc.encode(a);a.close();ai+=n;}};
-    // the picture: the renderer at 1920x1080, the clocks held to the film's time, one frame after another
+    // the picture: the renderer at the size chosen, the clocks held to the film's time, one frame after another
     say('RENDERAR 0 %');pn=performance.now.bind(performance);let vnow=pn();performance.now=()=>vnow;
     rendering=true;EXPORT_LOCK=true;pr=r.getPixelRatio();r.setPixelRatio(1);r.setSize(W,H,false);R3.cam.aspect=W/H;R3.cam.updateProjectionMatrix();
     const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
@@ -9155,7 +9161,7 @@ async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
     feedAudio(Infinity);
     await venc.flush();if(err)throw err;if(aenc){await aenc.flush();if(err)throw err;}
     mux.finalize();
-    const how=await saveFile('uppdrag-arkipelag-trailer.mp4',new Blob([mux.target.buffer],{type:'video/mp4'}),'video/mp4');
+    const how=await saveFile(res==1440?'uppdrag-arkipelag-trailer-1440p.mp4':'uppdrag-arkipelag-trailer.mp4',new Blob([mux.target.buffer],{type:'video/mp4'}),'video/mp4');
     if(how==='declined'){say('VIDEON SPARADES INTE · SPELA IGEN');return;}
     say(noSound?'VIDEON ÄR SPARAD UTAN LJUD (INGEN LJUDKODARE I WEBBLÄSAREN) · SPELA IGEN':'VIDEON ÄR SPARAD · SPELA IGEN');}
   catch(e){say(e&&e.user?e.message:'VIDEON MISSLYCKADES: '+(e&&e.message||e));}
@@ -9163,8 +9169,9 @@ async function filmExport(){if(FILM.state!=='idle'&&FILM.state!=='done')return;
     if(pn)performance.now=pn;EXPORT_LOCK=false;if(rendering){r.setPixelRatio(pr);}fitPanes();applyRes();FILM.state='done';$('logoWrap').hidden=true;$('title').classList.remove('clean');filmSaveBtn(true);}}
 /* one frame of the film off the screen loop: the same steps the loop takes */
 function filmFrame(dt){sync3D(dt);filmCam(dt);updateSky();filmLight();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);}
-function filmSaveBtn(on){let b=$('filmSave');if(!b){b=document.createElement('button');b.id='filmSave';b.type='button';b.className='btn';b.textContent='Spara video (1080p)';
-    b.style.cssText='position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:4';b.addEventListener('click',ev=>{ev.stopPropagation();filmExport();});$('title').appendChild(b);}
+function filmSaveBtn(on){let b=$('filmSave');if(!b){b=document.createElement('div');b.id='filmSave';b.style.cssText='position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:4;display:flex;gap:10px';
+    for(const r of[1080,1440]){const k=document.createElement('button');k.type='button';k.className='btn';k.textContent='Spara video ('+r+'p)';k.addEventListener('click',ev=>{ev.stopPropagation();filmExport(r);});b.appendChild(k);}
+    $('title').appendChild(b);}
   b.hidden=!on||!window.VideoEncoder;}
 /* ---- helpers: actors, placing, paths, the camera ---- */
 function fA(key,make){let m=FILM.act[key];if(!m){m=make();m.rotation.order='YXZ';m.traverse(o=>{if(o.isMesh&&!o.userData.noShadow)o.layers.enable(FILM_SHL);});R3.scene.add(m);FILM.act[key]=m;}m.visible=true;return m;}
