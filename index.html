@@ -7272,7 +7272,7 @@ function sync3D(dtr){
     if(m.userData.tur)m.userData.tur.rotation.y=-angWrap(u.turret-u.heading);
     /* GÄDDA lifts its launcher while it has a target in reach, and the caps go as the robots do */
     if(u.kind==='gadda'&&!u.carried){const U=m.userData,vf=u.vf||0,hump=.09*Math.exp(-(((vf-7)/4)**2))+.035*clamp(vf/u.speed,0,1)+.025*clamp(u.thr||0,0,1)-.03*clamp(-(u.thr||0),0,1)*clamp(vf/6,0,1),
-        roll=clamp((u.rot||0)*vf*.018,-.2,.2);U.pt=lerp(U.pt||0,hump,Math.min(1,dtr*3));U.rl=lerp(U.rl||0,roll,Math.min(1,dtr*4));m.rotation.order='YXZ';m.rotation.z=U.pt;m.rotation.x=U.rl;}
+        roll=clamp((u.rot||0)*vf*.022,-.3,.3);/* up to 17 degrees (Magnus 26 okt: it could heel more; at .2 every sharp turn sat on the cap) */U.pt=lerp(U.pt||0,hump,Math.min(1,dtr*3));U.rl=lerp(U.rl||0,roll,Math.min(1,dtr*4));m.rotation.order='YXZ';m.rotation.z=U.pt;m.rotation.x=U.rl;}
     if(m.userData.setLift){const U=m.userData,want=/^(Skjuter|I skjutläge)/.test(u.state||'')?1:0;U.lift=clamp(U.lift+Math.sign(want-U.lift)*dtr*.8,0,1);U.setLift(U.lift);U.caps.forEach((c,i)=>{c.visible=i<u.ammo;});}
   }
   /* VARG on the water: spray from the skirt that grows with speed. The boats' foam wake it had from 16 okt was taken away 17 okt
@@ -8440,9 +8440,16 @@ function musLevel(){if(!MUS.g)return;const menu=TITLE.on||!$('end').hidden;const
 function setMusic(on){MUS.on=on;try{localStorage.setItem('brohuvud2:music',on?'1':'0');}catch(_){}const b=$('bMusic');if(b){b.textContent=on?'Musik på':'Musik av';b.setAttribute('aria-pressed',String(on));}musLevel();}
 function setSound(on){AUD.on=on;try{localStorage.setItem('brohuvud2:sound',on?'1':'0');}catch(_){}if(AUD.master)AUD.master.gain.setTargetAtTime(on?AUD.vol:0,AUD.ctx.currentTime,.05);const b=$('bSound');if(b){b.textContent=on?'Ljud på':'Ljud av';b.setAttribute('aria-pressed',String(on));}}
 function noiseSrc(){const s=AUD.ctx.createBufferSource();s.buffer=AUD.noise;s.loop=true;s.loopStart=Math.random();return s;}
+/* the ear is the camera of the active view (Magnus 26 okt: driving GÄDDA in an active KAMERA 2, the VARG of camera 1 in a small
+   picture drowned it): KAMERA 2 when it is the active view, or the other large view's camera when the active one is the chart;
+   otherwise camera 1, as in the standard layout */
+function earCam(){if(typeof LAYOUT==='undefined'||!LAYOUT.on)return null;let v=VW[VW.act];if(v==='map')v=VW[VW.act==='main'?'sub':'main'];
+  const F=FEED.list[0];return v==='cam2'&&F&&F.isBig&&F.cam?F.cam:null;}
+const earV=hasDOM&&typeof THREE!=='undefined'?new THREE.Vector3():null;
 function updListener(){
-  const L=AUD.L;
-  if(R3&&R3.cam){const p=R3.cam.position;L.x=p.x;L.y=p.y;L.z=p.z;const dx=R3.lookAt.x-p.x,dz=R3.lookAt.z-p.z,d=Math.hypot(dx,dz)||1;L.rx=-dz/d;L.rz=dx/d;}
+  const L=AUD.L,ec=R3&&earCam();
+  if(ec){const p=ec.position;L.x=p.x;L.y=p.y;L.z=p.z;ec.getWorldDirection(earV);const d=Math.hypot(earV.x,earV.z)||1;L.rx=-earV.z/d;L.rz=earV.x/d;}
+  else if(R3&&R3.cam){const p=R3.cam.position;L.x=p.x;L.y=p.y;L.z=p.z;const dx=R3.lookAt.x-p.x,dz=R3.lookAt.z-p.z,d=Math.hypot(dx,dz)||1;L.rx=-dz/d;L.rz=dx/d;}
   else{const u=unitById(G.cam);if(u){L.x=u.x;L.y=30;L.z=u.y;}}
 }
 function spatial(x,h,z,ref){ // gain, pan and distance filter for a world point
@@ -9729,7 +9736,7 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
     return{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z};},c=P(o.cam),t=P(o.look);
   const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);/* fov: a longer lens draws the backdrop islands nearer */if(o.fov&&R3.cam.fov!==o.fov){R3.cam.fov=o.fov;R3.cam.updateProjectionMatrix();}};
   put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL(o.png?'image/png':'image/jpeg',o.q||.85);};
-globalThis.__BHt=()=>TITLE;globalThis.__BHui={mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,down:()=>({unit:downUnit(),swapped:downSwapped(),pip:pipRect(size.cam.w,size.cam.h),alt:R3&&R3.pipAlt,fov:R3&&R3.cam.fov,up:R3&&R3.cam.up.toArray()}),audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
+globalThis.__BHt=()=>TITLE;globalThis.__BHui={ear:()=>{const ec=earCam();updListener();const F=FEED.list[0];return{ear:ec?"cam2":"cam1",L:[AUD.L.x|0,AUD.L.z|0],cam1:[R3.cam.position.x|0,R3.cam.position.z|0],cam2:F&&F.cam?[F.cam.position.x|0,F.cam.position.z|0]:null,views:[VW.main,VW.sub,VW.small],act:VW.act};},mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,down:()=>({unit:downUnit(),swapped:downSwapped(),pip:pipRect(size.cam.w,size.cam.h),alt:R3&&R3.pipAlt,fov:R3&&R3.cam.fov,up:R3&&R3.cam.up.toArray()}),audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
 try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget');if(bu>0)ENEMY_CFG.budget=bu;}catch(_){}
