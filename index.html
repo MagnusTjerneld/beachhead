@@ -9054,6 +9054,7 @@ function filmCam(dtr){
   let i=0;while(i<FILM_SHOTS.length-1&&t>=filmShotT(i+1))i++;const S=FILM_SHOTS[i],t0=filmShotT(i),dur=(i<FILM_SHOTS.length-1?filmShotT(i+1):FILM_END)-t0;
   $('title').classList.toggle('filmlogo',FILM.on);
   if(i!==FILM.i){FILM.i=i;filmClear();FILM.S={first:true};FILM.useMovers=false;filmMapShow(false);if(S.birka!==false)filmBirka(null);G.ramp=null;G.harbor.secured=S.birka===false;
+    updateSky();/* the light of the new shot's hour at once, so the lamps are not lit a few frames into it (Magnus: a small jump in the harbour) */
     if(S.id!=='logga'){$('logoWrap').hidden=true;if(FILM.state==='play')$('title').classList.add('clean');}}
   for(const k in FILM.act)FILM.act[k].visible=false;FILM.useMovers=false;FILM.fov=40;FILM.sunEl=null;FILM.fadeA=0;FILM.hideBeaver=i>=2&&i<24;
   S.f(Math.min(t-t0,dur),dur,dtr,FILM.S);FILM.S.first=false;
@@ -9456,11 +9457,15 @@ const FILM_SHOTS=[
   const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,HOVER_Y);
   const cx=wx+42,cz=wz-30;fCam(cx-tau*.8,fGround(cx,cz)+1.6,cz+tau*.3,wx,fGround(wx,wz)+4+tau*.4,wz,0);FILM.fov=34;}},
 /* 21. HMS Birka comes into the harbour in the blue hour, lights on. On the navigator's own way in, diagonally through the mouth at
-   3 m/s, and the shot ends well before the turn to her berth (director's pass 26 okt, Magnus: the old shot was far too fast, 8 m/s, and only
+   3 m/s, between the turns, and the shot ends before the turn to her berth (director's pass 26 okt, Magnus: the old shot was far too fast, 8 m/s, and only
    sideways). The camera stands ashore at the inner end of the basin and turns with her as she comes */
 {k:33,id:'hamn',birka:false,f(tau,dur,dtr,S){const P=WORLD.birkaPath,H=WORLD.harbor;if(!P)return;G.harbor.secured=true;
-  if(!S.R){const R=P.route;let e=R.length-1;while(e>0&&!(R[e].v===0&&R[e-1].v>0))e--;const L=[0];for(let i=1;i<=e;i++)L.push(L[i-1]+Math.hypot(R[i].x-R[i-1].x,R[i].y-R[i-1].y));S.R=R;S.e=e;S.L=L;}
-  const R=S.R,L=S.L,e=S.e,d=L[e]-14-(dur-tau)*3;/* it ends 14 m short of the turn: the diagonal is the shot (Magnus) */let i=1;while(i<e&&L[i]<d)i++;const a=R[i-1],b=R[i],u=clamp((d-L[i-1])/((L[i]-L[i-1])||1),0,1);
+  /* the straight run in through the mouth: from where she has turned on the spot to the last stop before her berth, so that no turn
+     falls inside the shot (Magnus: a small jump was left, a turn on the spot at its start) */
+  if(!S.R){const R=P.route,L=[0];for(let i=1;i<R.length;i++)L.push(L[i-1]+Math.hypot(R[i].x-R[i-1].x,R[i].y-R[i-1].y));
+    let j=R.length-1;while(j>0&&!(R[j].v===0&&R[j-1].v>0))j--;j--;while(j>0&&!(R[j].v===0&&R[j-1].v>0))j--;let m=j-1;while(m>0&&L[m]-L[m-1]>.01)m--;
+    S.R=R;S.L=L;S.e=j;S.d0=Math.max(L[m]+1,L[j]-3-dur*3);}
+  const R=S.R,L=S.L,e=S.e,d=Math.min(L[e]-1,S.d0+tau*3);let i=1;while(i<e&&L[i]<d)i++;const a=R[i-1],b=R[i],u=clamp((d-L[i-1])/((L[i]-L[i-1])||1),0,1);
   const x=lerp(a.x,b.x,u),y=lerp(a.y,b.y,u),an=a.a+angWrap(b.a-a.a)*u;moveCarrier(x,y,an);G.ramp={bow:0,side:0};
   const qx=H.x+30,qz=H.y+22;fCam(qx,fGround(qx,qz)+12,qz,x,6,y,0);FILM.fov=44;}},
 /* 22. up and away over the dark island, the lighthouse ahead sweeping its beam. The flight ends where the lighthouse is seen
