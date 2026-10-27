@@ -7366,7 +7366,7 @@ function sync3D(dtr){
     else if(!e.mobile&&m.userData.head)m.userData.head.rotation.y=-e.aim;else m.rotation.y=-e.aim;
   }
   for(const[id,m]of R3.enemies)if(!seen.has(id)){const e=G.enemies.find(v=>v.id===id);if(e&&e.dead&&WRECK_KINDS.enemy.has(e.kind))blowApart(m,null,headOf(m));D.remove(m);R3.enemies.delete(id);}
-  debrisTick(G.running&&!G.paused&&!FILM.on?dtr*G.speed:0,null);if(!FILM.on)fxTick(G.running&&!G.paused?dtr*G.speed:0);
+  debrisTick(G.running&&!G.paused&&!FILM.on?dtr*G.speed:0,null);if(!FILM.on)fxTick(G.running&&!G.paused?dtr*G.speed:TITLE.on?dtr:0);/* the intro's particles (GÄDDA's spray) run on its own clock: held at 0 they stood frozen as two streaks where the boats had been, and once the 900 were used no more came (27 okt, Magnus) */
   seen.clear();
   for(const w of G.wrecks){seen.add(w.id);let m=R3.wrecks.get(w.id);if(!m){m=mkWreckMesh(w);D.add(m);R3.wrecks.set(w.id,m);}}
   for(const[id,m]of R3.wrecks)if(!seen.has(id)){D.remove(m);R3.wrecks.delete(id);}
