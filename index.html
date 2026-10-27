@@ -7889,7 +7889,9 @@ function openWheel(sx,sy,pk,srcEl,pick){
     title=u.name;sub='egen meny';items=selfItems(u);
     if(!items.length)return;
   }else if(!u){title=targetLabel(pk);sub='ropa in';}
-  else if(pk.wp){
+  /* a waypoint of the unit it was picked for, and still there: a digit with the menu open picks another wing and reopens the menu
+     with the old pick, and that unit has no such waypoint (27 okt, ö 3022: Cannot read properties of undefined) */
+  else if(pk.wp&&(!pk.wp.u||pk.wp.u===u)&&u.orders[pk.wp.i]){
     const o=u.orders[pk.wp.i];title=u.name;sub='punkt '+(pk.wp.i+1)+' av '+u.orders.length;postTarget=o;wheelPost=o.post;
     const fixRtb=()=>{if(o.type==='rtb'&&u.rtb){u.rtb=false;const sv=u.saved||[];u.saved=null;u.orders=u.orders.filter(x=>x!==o).concat(sv);}};
     items.push({l:'Ta bort punkt',danger:true,f:()=>{const i=u.orders.indexOf(o);if(i<0)return;if(o.type==='rtb'){fixRtb();}else u.orders.splice(i,1);u.path=null;}});
