@@ -6768,8 +6768,9 @@ function buildStatic(){
     {const VR=titleRoute(200),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;m.back=back;});}
     /* two GÄDDA in a pair, in the intro only (decided 27 okt, Magnus: the intro lacked GÄDDA): further out than the HÖK, at full speed
        the other way round, heeling into the bends with spray from the jets. Going the same way they kept level with the HÖK for the
-       whole loop (the band out there is longer), so they would never be met */
-    {const VR=titleRoute(150);[[0,0],[-12,-20]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'gadda',color:PAL[(i+4)%PAL.length][0],ammo:2});mv2(g,VR,20,0,2.6,5,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.gadda=i+1;m.back=back;});}
+       whole loop (the band out there is longer), so they would never be met. 30 m outside the HÖK's band with a short wake (Magnus
+       27 okt: only the foam was seen, the dark boats 65 m off under 140 m of white wake) */
+    {const VR=titleRoute(115);[[0,0],[-12,-20]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'gadda',color:PAL[(i+4)%PAL.length][0],ammo:2});mv2(g,VR,20,0,2.6,5,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.gadda=i+1;m.back=back;m.life=2.5;});}
     // a GETING on patrol round Birka, in the intro only (decided 27 okt, Magnus): flown in titleExtras, not a mover
     /* traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop. Speeds in
        m/s, kept below real service speeds (ferry 6.5 is about 13 knots): seen from a HÖK at 17 m/s the meeting speed is what the eye
