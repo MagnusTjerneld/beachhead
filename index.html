@@ -4907,14 +4907,15 @@ for(const sl of[mainSlot,subSlot]){const b=document.createElement('button');b.ty
   b.addEventListener('pointerdown',e=>e.stopPropagation());b.addEventListener('click',e=>{e.stopPropagation();setAct(b.dataset.slot);});sl.appendChild(b);}
 setAct(VW.act);
 function placePanes(){
-  const wide=!!LAYOUT.on,stage=paneCam.parentElement&&(paneCam.parentElement.id==='titleStage'||paneCam.parentElement.id==='opView')?paneCam.parentElement:null;
+  const wide=!!LAYOUT.on,pid=paneCam.parentElement&&paneCam.parentElement.id,stage=pid==='titleStage'&&TITLE.on||pid==='opView'&&OP.on?paneCam.parentElement:null;
   if(!wide&&G.mainMode==='cam2')G.mainMode='cam';
   if(wide&&VW.main!==G.mainMode)vwSwap('main',vwWhere(G.mainMode));/* asked for by the benchmark, the stills or a checkpoint */
   const pane={cam:paneCam,map:paneMap,cam2:cam2Pane()},big=wide?[VW.main,VW.sub]:G.mainMode==='map'?['map','cam']:['cam','map'],sm=wide?VW.small:'cam2';
   mainSlot.insertBefore(pane[big[0]],mainSlot.firstChild);subSlot.appendChild(pane[big[1]]);
   if(sm==='cam2'){pane.cam2.remove();smallSlot.hidden=true;}else{smallSlot.appendChild(pane[sm]);smallSlot.hidden=false;}
   /* the intro's or opening film's stage keeps the camera: a change of layout while it runs (the window resized across the wide
-     layout's limit) took the picture away into the game's hidden view and left the intro black (27 okt, Magnus) */
+     layout's limit) took the picture away into the game's hidden view and left the intro black (27 okt, Magnus). Only while it runs:
+     placePanes is also what brings the camera home when they end, and kept there the game's view stood black (27 okt, ö 6197) */
   if(stage)stage.appendChild(paneCam);
   feedBig(sm!=='cam2');HOV.el=null;HOV.pk=null;
   closeWheel();fitPanes();
