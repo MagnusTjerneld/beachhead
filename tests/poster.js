@@ -1,6 +1,6 @@
 // The poster (21 okt, Magnus chose it): a drone shot from the forest on the island out over the lighthouse and the sea, every unit in
-// the picture (three VARG on their way in to the point, KROK with BÄVER in the hook, two HÖK, GETING by the shore, MUS on the rock by
-// the lighthouse) and Birka in the roads with the other islands behind, in portrait 2:3 with the logo, the line and the copyright.
+// the picture (three VARG on their way in to the point, KROK with BÄVER in the hook, three HÖK in a wedge, two GÄDDA along the shore
+// (27 okt, Magnus; two HÖK before), GETING by the shore, MUS on the rock by the lighthouse) and Birka in the roads with the other islands behind, in portrait 2:3 with the logo, the line and the copyright.
 // It is staged in the trailer's film mode (?trailer, island 7341) with the film's own actors and effects: a scene takes the place of a
 // shot's script, the film is stepped up to the moment on its own clock and the frame is rendered and composed with the logo.
 // The lighthouse stands where the game has it, on the point (the trailer moves it up the height), and Birka is brought in to 380 m, into the bay
@@ -32,16 +32,24 @@ const varg=(K,n,sx,f,rel)=>{const q=K.gnd(sx,f),hd=K.yaw+rel,m=fVarg(n),gy=groun
 const air=(K,key,kind,sx,sy,d,rel,pitch,roll,col)=>{const q=K.ray(sx,sy,d),m=fUnit(key,kind,col);m.position.set(q.x,q.y,q.z);m.rotation.set(roll||0,-(K.yaw+rel),pitch||0);return m;};
 const krok=(K,sx,sy,d,rel,legs)=>{const q=K.ray(sx,sy,d),hd=K.yaw+rel,km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng');km.position.set(q.x,q.y,q.z);km.rotation.set(.02,-hd,-.06);
   km.userData.cable.visible=true;km.userData.hook.visible=true;krokLegs(km.userData,legs||0);bm.position.set(q.x,q.y-8,q.z);bm.rotation.set(0,-hd-.15,.03);return km;};
+// a GÄDDA on the water f m ahead at sx, at v m/s: it is placed where it will be at tau t0 and runs there, so its spray and foam trail behind
+const gadda=(K,key,sx,f,rel,v,t0)=>{const q0=K.gnd(sx,f),hd=K.yaw+rel,c=Math.cos(hd),s=Math.sin(hd),b=(tau-t0)*v,x=q0.x+c*b,z=q0.z+s*b,m=fUnit(key,'gadda');
+  m.position.set(x,.05,z);m.rotation.order='YXZ';m.rotation.set(0,-hd,.045);const U=m.userData;if(U.setLift){U.setLift(0);U.caps.forEach(q=>{q.visible=true;});}
+  gaddaSpray({x,y:z,heading:hd,speed:22},v,dtr);S['fo'+key]=(S['fo'+key]||0)+dtr*26;while(S['fo'+key]>1){S['fo'+key]--;const l=fr()*1.2;fP(x-c*4.8-s*l,.15,z-s*4.8+c*l,{v:[fr()*.4,.05,fr()*.4],s0:1.2,s1:3.4,a:.22,ttl:2.2,c:0xeceae4,drag:2});}return m;};
+// three HÖK in a wedge: the leader on the ray through (sx,sy) d m out, the two wingmen back m behind and side m out to either side, up m higher
+const wedge=(K,sx,sy,d,rel,pitch,roll,back,side,up)=>{const q=K.ray(sx,sy,d),hd=K.yaw+rel,c=Math.cos(hd),s=Math.sin(hd),cols=[undefined,PAL[3][0],PAL[5][0]];
+  [[0,0],[-back,-side],[-back,side]].forEach(([b,l],i)=>{const m=fUnit('hok'+(i+1),'drone',cols[i]);m.position.set(q.x+c*b-s*l,q.y+(i?up:0),q.z+s*b+c*l);m.rotation.set(roll||0,-hd,pitch||0);});};
 const mus=(K,sx,f,rel)=>{const q=K.gnd(sx,f),hd=K.yaw+rel,m=fUnit('mus','mus');fPlace(m,q.x,q.z,hd,0);if(Math.random()<dtr*40)fxDust(q.x-Math.cos(hd),fGround(q.x,q.z),q.z-Math.sin(hd),.6);return m;};
 `;
-const POSTER=[{namn:'fyren',host:'lyft',tau:1.5,steg:1.5,kod:`
+const POSTER=[{namn:'fyren',host:'lyft',tau:1.5,steg:2.5,kod:`
   FILM.tod=17.2;FILM.sunEl=.24;
   const a0=68*PI/180;filmBirka({x:L.x+Math.cos(a0)*380,y:L.y+Math.sin(a0)*380,a:a0+PI/2});
   const K=from(255,130,70,-.3,58,.05);
   mus(K,.18,108,PI-.5);
   varg(K,0,-.28,150,PI+.25);varg(K,1,.3,168,PI-.15);varg(K,2,.02,190,PI);
   krok(K,.35,.05,95,PI-.5);
-  air(K,'hok1','drone',-.42,.02,52,PI+.4,-.05,-.4);air(K,'hok2','drone',-.18,.12,66,PI+.4,-.05,-.4,PAL[3][0]);
+  wedge(K,-.5,-.02,52,PI+.4,-.05,-.4,8,5,1.5);
+  gadda(K,'gadda1',.66,222,PI-1.2,20,1.5);gadda(K,'gadda2',.56,236,PI-1.2,20,1.5);
   air(K,'geting','scout',.5,-.35,30,PI-.8,.05,.1);
 `}];
 const scener=(opt.scener?require(path.resolve(opt.scener)):POSTER).filter(s=>!bara||bara.includes(s.namn));
