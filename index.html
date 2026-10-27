@@ -605,6 +605,8 @@ function dayMD(doy){const d=new Date(Date.UTC(YEAR,0,doy));return{m:d.getUTCMont
 const isDst=doy=>doy>=DST[0]&&doy<DST[1];
 function seasonOf(doy){const m=dayMD(doy).m;return m===11||m<2?'vinter':m<5?'vår':m<8?'sommar':'höst';}
 function fmtDay(doy){const q=dayMD(doy);return q.d+' '+MON3[q.m];}
+/* the island's name on the title with its date and time (decided 27 okt, Magnus): "Ärtholmen (ö 1234) · 14 maj kl. 18.40" */
+function titleSeedText(sd){const q=dayMD(G.doy),hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60);return islandName(sd)+' (ö '+sd+') · '+q.d+' '+MONTHS[q.m]+' kl. '+String(hh).padStart(2,'0')+'.'+String(mm).padStart(2,'0');}
 const fmtHM=h=>{h=((h%24)+24)%24;let hh=Math.floor(h),mm=Math.round((h-hh)*60);if(mm===60){hh=(hh+1)%24;mm=0;}return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');};
 /* the sun's declination and the clock hour of true noon on that day */
 function sunDay(doy){const g=2*PI*(doy-1)/DAYS,
@@ -6764,6 +6766,11 @@ function buildStatic(){
     mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),4.5,hs(3),2.4,3.2,-1);R3.movers[R3.movers.length-1].leisure=.8;
     // three VARG on patrol in a V, in the intro film only, meeting the HÖK head on (shown and hidden with the title)
     {const VR=titleRoute(200),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;m.back=back;});}
+    /* two GÄDDA in a pair, in the intro only (decided 27 okt, Magnus: the intro lacked GÄDDA): further out than the HÖK, at full speed
+       the other way round, heeling into the bends with spray from the jets. Going the same way they kept level with the HÖK for the
+       whole loop (the band out there is longer), so they would never be met */
+    {const VR=titleRoute(150);[[0,0],[-12,-20]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'gadda',color:PAL[(i+4)%PAL.length][0],ammo:2});mv2(g,VR,20,0,2.6,5,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.gadda=i+1;m.back=back;});}
+    // a GETING on patrol round Birka, in the intro only (decided 27 okt, Magnus): flown in titleExtras, not a mover
     /* traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop. Speeds in
        m/s, kept below real service speeds (ferry 6.5 is about 13 knots): seen from a HÖK at 17 m/s the meeting speed is what the eye
        reads, and at real speeds the ferries looked like 50 knots (12 okt) */
@@ -7369,11 +7376,14 @@ function sync3D(dtr){
   if(R3.movers){const T=R3.decoT||0;
     for(const m of R3.movers){const RT=m.RT,at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const k=(lo+hi)>>1;if(RT.len[k]<=d)lo=k;else hi=k;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a2=RT.pts[lo],b2=RT.pts[(lo+1)%RT.N];return{x:lerp(a2.x,b2.x,f),z:lerp(a2.z,b2.z,f)};};
       const push=q=>{const dx=q.x-CARRIER.x,dz=q.z-CARRIER.y,d=Math.hypot(dx,dz)||1;if(d<170){q.x+=dx/d*(170-d);q.z+=dz/d*(170-d);}return q;};
-      if(m.title){const on=!!TITLE.on;m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
+      if(m.title){const on=!!TITLE.on&&(!FILM.on||!!m.varg);m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
       if(m.leisure!=null){const on=FILM.on||m.leisure<(R3.season?R3.season.boats:1);m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
       const dd=m.dir*T*m.speed+RT.L*m.ph,p0=push(at(dd)),p1=push(at(dd+m.dir*20)),hd=Math.atan2(p1.z-p0.z,p1.x-p0.x);
       if(m.lat){const lx=-Math.sin(hd)*m.lat,lz=Math.cos(hd)*m.lat;p0.x+=lx;p0.z+=lz;}
-      const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.12:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
+      const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.12:m.gadda?.05:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:m.gadda?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
+      /* GÄDDA heels into its turns and lifts its bow as in the trailer's turn, and throws spray from the jets */
+      if(m.gadda){const dT=T-(m.hT??T);if(dT>0&&dT<.5){const w=angWrap(hd-m.hP)/dT;m.w=(m.w??w)+(w-(m.w??w))*Math.min(1,dT*2);gaddaSpray({x:p0.x,y:p0.z,heading:hd,speed:22},m.speed,dT);}
+        m.hP=hd;m.hT=T;m.g.rotation.x=clamp((m.w||0)*m.speed*.022,-.3,.3)+Math.sin(T*1.3+m.ph)*.012;m.g.rotation.z=.045;}
       const sx=p0.x-Math.cos(hd)*m.half,sz=p0.z-Math.sin(hd)*m.half;
       if(m.trail.length&&Math.hypot(sx-m.trail[0].x,sz-m.trail[0].z)>Math.max(30,m.speed*2)){m.trail.length=0;m.tt=-1;}/* a mover that was placed anew (the film's VARG patrol) starts a fresh wake instead of drawing one from where it was */
       if(m.tt<0||T-m.tt>.25){m.tt=T;m.trail.unshift({x:sx,z:sz,t:T});if(m.trail.length>m.wake.N)m.trail.pop();}
@@ -8022,7 +8032,7 @@ confirmBtn('bBench',()=>{setMenu(false);benchStart();});
 /* the trailer from the settings, in the page itself (a page in a frame cannot always be reopened with ?trailer): the same start as a
    visit with ?trailer, on Sorkholmen; the game's own music is cut off, the film plays its own edit. Back to the game is a reload. */
 function trailerStart(){if(BENCH.on||FILM.on)return;setMenu(false);if(MUS.g)MUS.g.disconnect();clearTimeout(MUS.timer);MUS.timer=null;
-  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */TITLE.phase='press';showTitle();filmStart();$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';}
+  restart(7341);G.running=false;/* as at a fresh visit: the island stands still, the film moves what it shows */TITLE.phase='press';showTitle();filmStart();$('tSeed').textContent=titleSeedText(G.seed);}
 confirmBtn('bTrailer',trailerStart);
 /* Ny ö: a small dialog for the island number and the time of day at the start, each left empty for automatic */
 const niSeed=$('niSeed'),niTime=$('niTime'),niDate=$('niDate'),niName=$('niName'),niDoc=$('niDoc');
@@ -8084,7 +8094,7 @@ $('title').addEventListener('pointerdown',titleGrab);$('title').addEventListener
 $('title').addEventListener('click',ev=>{if(FILM.on){filmClick();return;}if(TITLE.man&&TITLE.man.dragged){TITLE.man.dragged=false;return;}/* the end of a drag, not a click */if(TITLE.phase==='press'){titleWake(false);return;}if(ev.target.closest('button,a,input,.tmenu,#intro'))return;$('title').classList.toggle('clean');});
 $('tPlay').addEventListener('click',ev=>{ev.stopPropagation();startGame();opStart(true);});
 $('tHow').addEventListener('click',ev=>{ev.stopPropagation();$('intro').hidden=false;$('bStart').textContent='Starta';});
-$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=islandName(sd)+' (ö '+sd+')';renderLog();uiTick(true);});
+$('tNew').addEventListener('click',ev=>{ev.stopPropagation();const sd=1000+Math.floor(Math.random()*9000);newGame(sd,'auto');if(R3)buildStatic();cardIds='';TITLE.route=null;TITLE.dir=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('tSeed').textContent=titleSeedText(sd);renderLog();uiTick(true);});
 /* doc: the enemy's doctrine; 'auto' lets it choose by the island (a new game), undefined is the island's base defence */
 function restart(seed,doc,when){if(R3){debClear(null);filmClear();R3.fxSeen=new WeakSet();if(R3.uwake)R3.uwake.clear();}/* the last island's debris */if(AUD.ctx){for(const V of AUD.voices.values())killVoice(V);}AUD.voices.clear();AUD.prev.clear();newGame(seed,doc,when);if(R3&&R3.seed!==WORLD.seed+':'+WORLD.doc){const t=performance.now();buildStatic();if(globalThis.__boot){__boot.rb=performance.now()-t;__boot.rbT=performance.now();__boot.rbF=0;}}else if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}for(const q of R3.parts)R3.dyn.remove(q.m);R3.parts.length=0;if(R3.route){R3.dyn.remove(R3.route);R3.route=null;}R3.snap=true;}cardIds='';$('end').hidden=true;G.running=true;placePanes();renderLog();uiTick(true);}
 $('bAgain').addEventListener('click',()=>{restart(G.seed,G.doc,G.start);opStart(false);});/* the same island, doctrine, date and starting hour */
@@ -8710,7 +8720,8 @@ function titleRoute(extra){extra=extra||85;
    The camera stands behind the HÖK a little off the line of sight, so the HÖK sits to one side and the subject beyond it. */
 function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h:10,w:1.3,id:'birka',r:1300,kind:'birka'}];
   let mv=null,stm=null;try{mv=R3&&R3.movers;stm=R3&&R3.steamer;}catch(_){}/* the headless tests have no 3D */
-  if(mv)mv.forEach((m,i)=>{if(m.title&&!m.g.visible)return;if(m.varg){if(m.varg===1)out.push({x:m.g.position.x,y:m.g.position.z,h:2,w:1,id:'vargar',r:1500,kind:'vargar',low:true});return;}const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,h:big?12:3,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900,kind:big?'fartyg':'bat'});});
+  if(mv)mv.forEach((m,i)=>{if(m.title&&!m.g.visible)return;if(m.varg){if(m.varg===1)out.push({x:m.g.position.x,y:m.g.position.z,h:2,w:1,id:'vargar',r:1500,kind:'vargar',low:true});return;}
+    if(m.gadda){if(m.gadda===1&&m.g.visible)out.push({x:m.g.position.x,y:m.g.position.z,h:1.5,w:1,id:'gaddor',r:1200,kind:'gaddor',low:true});return;}const big=(m.g.userData.len||0)>40,st=m.g===stm;out.push({x:m.g.position.x,y:m.g.position.z,h:big?12:3,w:big?1.1:st?.95:m.sail?.75:.6,id:'m'+i,r:big?1800:900,kind:big?'fartyg':'bat'});});
   if(D.light)out.push({x:D.light.x,y:D.light.y,h:D.light.h+9,w:1,id:'fyr',r:900,kind:'fyr'});
   // the small things that make it an archipelago: jetties and the boats at them, boats at anchor, villas, sector lights, the
   // harbour inlet, the beach and the cove
@@ -8721,6 +8732,8 @@ function titlePois(){const W=WORLD,D=W.decor||{},out=[{x:CARRIER.x,y:CARRIER.y,h
   for(const lb of W.labels)if(lb.t==='Hamn'||lb.t==='Vik'||lb.t==='Strand')out.push({x:lb.x,y:lb.y,h:1,w:lb.t==='Hamn'?.75:.45,id:'l'+lb.t,r:700,kind:lb.t.toLowerCase(),low:true});
   // the KROK landing BÄVER on the beach, while it is under way (film only)
   {let L=null;try{L=TITLE.on&&TITLE.land;}catch(_){}if(L){const tau=TITLE.t-L.t0;if(tau>L.hook-4&&tau<L.drop+6){const km=R3&&R3.kroks&&R3.kroks.get(L.k.id);if(km)out.push({x:km.position.x,y:km.position.z,h:km.position.y-4,w:1,id:'landsattning',r:1500,kind:'krok'});}}}
+  // the wing of three HÖK met head on (27 okt)
+  {let X=null;try{X=TITLE.ext;}catch(_){}if(X&&X.wing&&X.wing[0].visible){const g=X.wing[0];out.push({x:g.position.x,y:g.position.z,h:g.position.y,w:1,id:'hokar',r:1200,kind:'hokar'});}}
   // the inner archipelago, which always lies to the west: a look out over the backdrop islands
   out.push({x:-500,y:clamp(CARRIER.y,300,WH-300),h:0,w:.5,id:'skargard',r:2600,kind:'skargard'});
   return out;}
@@ -8744,7 +8757,7 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   const geo=q=>{const dx=q.x-p.x,dz=q.y-p.z,d=Math.hypot(dx,dz)||1,along=dx*hx+dz*hz,lat=Math.abs(dx*hz-dz*hx),r=relTo(q.x,q.y);
     return{d,along,lat,r,sweep:V/Math.max(lat,1)/deg,now:V*Math.abs(Math.sin(r))/d/deg};};
   const take=(id,track,until)=>{D.poi={id,track};D.until=until;};
-  const PRIO=id=>id==='birka'||id==='vargar'||id==='landsattning';/* priority subjects: none cuts another short except the landing */
+  const PRIO=id=>id==='birka'||id==='vargar'||id==='landsattning'||id==='gaddor';/* priority subjects: none cuts another short except the landing */
   /* Birka first: taken early, while still well ahead, so that the pan toward it is slow, and followed until it is behind. A close
      pass sweeps faster than the camera may pan; then the camera falls behind and lets it go rather than whip round. */
   {const g=geo({x:CARRIER.x,y:CARRIER.y});const closing=D.bd!=null&&g.d<D.bd-.05;D.bd=g.d;
@@ -8760,6 +8773,14 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   {const vq=titlePois().find(o=>o.id==='vargar');if(vq){const g=geo(vq),cl=D.vd!=null&&g.d<D.vd-.05;D.vd=g.d;
     if((!D.poi||!PRIO(D.poi.id))&&cl&&g.d<900&&g.along>0&&Math.abs(g.r)<70*deg&&T.t-(D.seen.vargar??-999)>90)take('vargar',true,T.t+75);/* (the landing outranks it) */
     if(D.poi&&D.poi.id==='vargar'&&((Math.abs(g.r)>150*deg&&g.d>200)||g.d>1600))D.until=0;}}
+  /* the GÄDDA pair (27 okt) likewise: taken when it is near and not behind, held while it runs beside us and draws ahead */
+  {const gq=titlePois().find(o=>o.id==='gaddor');if(gq){const g=geo(gq);
+    if((!D.poi||!PRIO(D.poi.id))&&g.d<500&&Math.abs(g.r)<80*deg&&T.t-(D.seen.gaddor??-999)>90)take('gaddor',true,T.t+40);
+    if(D.poi&&D.poi.id==='gaddor'&&((Math.abs(g.r)>130*deg)||g.d>900))D.until=0;}}
+  /* the wing of HÖK (27 okt): seen ahead as it comes in, let go before it sweeps past */
+  {const hq=titlePois().find(o=>o.id==='hokar');if(hq){const g=geo(hq);
+    if(!D.poi&&g.d<700&&g.d>250&&g.along>0&&Math.abs(g.r)<40*deg&&T.t-(D.seen.hokar??-999)>60)take('hokar',true,T.t+12);
+    if(D.poi&&D.poi.id==='hokar'&&(g.d<120||g.along<0))D.until=0;}}
   // the big lighthouse is always taken on the way past too, after Birka and the patrol, and also early
   {const L=WORLD.decor&&WORLD.decor.light;if(L&&(!D.poi||(!PRIO(D.poi.id)&&D.poi.id!=='fyr'))){const g=geo(L),cl=D.ld!=null&&g.d<D.ld-.05;D.ld=g.d;
     if(cl&&g.d<750&&g.along>0&&Math.abs(g.r)<65*deg&&T.t-(D.seen.fyr??-999)>120)take('fyr',true,T.t+45);}}
@@ -8767,7 +8788,7 @@ function titleDirector(dtr,p,hd,T){const RT=T.route,D=T.dir||(T.dir={yaw:0,vel:0
   if(D.poi&&D.poi.track&&!PRIO(D.poi.id)){const q=titlePois().find(o=>o.id===D.poi.id);if(!q||Math.abs(relTo(q.x,q.y))>120*deg||Math.hypot(q.x-p.x,q.y-p.z)>q.r*1.4)D.until=0;}
   if(D.poi&&T.t>D.until){D.seen[D.poi.id]=T.t;D.poi=null;D.next=T.t+DIR.gap[0]+Math.random()*(DIR.gap[1]-DIR.gap[0]);}
   if(!D.poi&&T.t>D.next){let best=null,bs=.22,bLock=false;
-    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr'||q.id==='vargar'||q.id==='landsattning')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
+    for(const q of titlePois()){if(q.id==='birka'||q.id==='fyr'||q.id==='vargar'||q.id==='landsattning'||q.id==='gaddor'||q.id==='hokar')continue;const g=geo(q);if(g.d<120||g.d>q.r||g.along<0)continue;
       // the pan to reach it, and whether it crosses the picture to the other side of the HÖK
       const pan=Math.abs(g.r-D.yaw),cross=Math.sign(g.r)!==Math.sign(D.yaw)&&Math.abs(g.r)>12*deg&&Math.abs(D.yaw)>12*deg;
       if(pan>55*deg||Math.abs(g.r)>70*deg)continue;
@@ -8797,6 +8818,10 @@ function titleVargSync(){let mv=null;try{mv=R3&&R3.movers;}catch(_){}if(!mv||!mv
   const at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0;while(lo<RT.N-1&&RT.len[lo+1]<=d)lo++;return RT.pts[lo];},pH=at(sH);
   for(const m of mv){if(!m.varg)continue;const VR=m.RT,sAt=VR.len[near(VR,pH)]+(m.dir<0?-1:1)*(m.back||0);/* the wingmen trail the leader */
     m.ph=((((sAt-m.dir*T*m.speed)/VR.L)%1)+1)%1;m.trail.length=0;m.tt=-1;}
+  /* the GÄDDA pair: met when the HÖK has flown about two thirds of the way to Birka, after the VARG patrol and before Birka
+     (27 okt). They are placed so they reach that point at that moment */
+  {const D0=RT.off+TITLE.t*17,fw=((sB-D0)%RT.L+RT.L)%RT.L,tm=fw*.62/17,pM=at(D0+fw*.62);
+    for(const m of mv){if(!m.gadda)continue;const VR=m.RT,sAt=VR.len[near(VR,pM)]+(m.dir<0?-1:1)*(m.back||0);m.ph=((((sAt-m.dir*(T+tm)*m.speed)/VR.L)%1)+1)%1;m.trail.length=0;m.tt=-1;m.hT=null;m.w=0;}}
   return true;}
 /* KROK lifts BÄVER off Birka's deck and sets it down on the beach, timed so that BÄVER touches down as the HÖK passes closest
    to the beach (decided 12 okt). Film only: the real KROK and BÄVER are moved by a fixed script and the game takes them back
@@ -8866,8 +8891,31 @@ function titleCam(dtr){
     // the HÖK itself may never leave the frame, so the limit gives way only at the frame's edge
     TITLE.vy=H.y+clamp(angWrap(TITLE.vy+TITLE.vyv*dt-H.y),-(CAMMAX.keep+6)*dg,(CAMMAX.keep+6)*dg);TITLE.vp=clamp(TITLE.vp+TITLE.vpv*dt,H.p-CAMMAX.keep*dg,H.p+CAMMAX.keep*dg);
     const L=tmpV2.set(c.x+Math.cos(TITLE.vy)*Math.cos(TITLE.vp)*100,c.y+Math.sin(TITLE.vp)*100,c.z+Math.sin(TITLE.vy)*Math.cos(TITLE.vp)*100);R3.cam.lookAt(L);R3.lookAt.copy(L);}
+  titleExtras(dtr);
   titleManual(dtr,m);
 }
+/* the intro's own flyers (decided 27 okt, Magnus: make the intro livelier, with more of our units). A wing of three HÖK in a V meets
+   the camera's HÖK head on along the same band round the island, a little out to sea and higher, slower than it; it is placed when
+   the film starts so that the meeting comes after Birka. A GETING circles Birka at 40 m. Both only in the intro, never in the trailer */
+const TWING={v:12,side:28,up:5,meet:.3,slots:[[0,0],[-11,-15],[11,-15]]},TGET={r:85,v:10,up:24};
+function titleExtras(dtr){const on=TITLE.on&&!FILM.on,RT=TITLE.route,X=TITLE.ext||(TITLE.ext={});
+  if(!X.wing){X.wing=TWING.slots.map((s,i)=>{const g=mkUnitMesh({kind:'drone',color:PAL[(i+1)%PAL.length][0],ammo:4});R3.scene.add(g);return g;});
+    X.get=mkUnitMesh({kind:'scout',color:PAL[3][0],ammo:1});R3.scene.add(X.get);}
+  for(const g of X.wing)g.visible=on;X.get.visible=on;if(!on||!RT)return;
+  const at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const k=(lo+hi)>>1;if(RT.len[k]<=d)lo=k;else hi=k;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a=RT.pts[lo],b=RT.pts[(lo+1)%RT.N];return{x:lerp(a.x,b.x,f),z:lerp(a.z,b.z,f)};};
+  /* where the wing is on the band at the film's start: it meets the HÖK when that has flown the share TWING.meet of the way from
+     Birka round to its own start, closing at 17 + TWING.v m/s */
+  if(X.for!==RT){X.for=RT;let bi=0,bd=1e18;for(let i=0;i<RT.N;i++){const d=(RT.pts[i].x-CARRIER.x)**2+(RT.pts[i].z-CARRIER.y)**2;if(d<bd){bd=d;bi=i;}}
+    const D=RT.off+TITLE.t*17,fw=((RT.len[bi]-D)%RT.L+RT.L)%RT.L,sM=D+fw+(RT.L-fw)*TWING.meet,tm=(sM-D)/17;X.s0=sM+TWING.v*tm;X.t0=TITLE.t;X.alt=null;X.hd=null;}
+  const s=X.s0-TWING.v*(TITLE.t-X.t0),p=at(s),q=at(s-25),hdRaw=Math.atan2(q.z-p.z,q.x-p.x);X.hd=X.hd==null?hdRaw:X.hd+angWrap(hdRaw-X.hd)*(1-Math.exp(-.9*dtr));
+  const bank=clamp(angWrap(hdRaw-X.hd)*1.4,-.35,.35),hd=X.hd,c=RT.c,ox=p.x-c.x,oz=p.z-c.y,ol=Math.hypot(ox,oz)||1;p.x+=ox/ol*TWING.side;p.z+=oz/ol*TWING.side;
+  let gm=0;for(let r=-40;r<=40;r+=20)gm=Math.max(gm,groundY(p.x+Math.cos(hd)*r,p.z+Math.sin(hd)*r));const want=Math.max(gm+30,(TITLE.alt||0))+TWING.up;
+  X.alt=X.alt==null?want:lerp(X.alt,want,Math.min(1,dtr*.6));const ch=Math.cos(hd),sh=Math.sin(hd);
+  X.wing.forEach((g,i)=>{const [lat,back]=TWING.slots[i];g.position.set(p.x+ch*back-sh*lat,X.alt+i*1.5+Math.sin(TITLE.t*1.2+i*2)*.5,p.z+sh*back+ch*lat);g.rotation.set(0,-hd,Math.sin(TITLE.t*.6+i)*.05+bank);
+    if(g.userData.spin)for(const sp of g.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;ductLean(g,dtr);});
+  // the GETING: a slow circle round Birka, banked a little into the turn
+  {const g=X.get,a=TITLE.t*TGET.v/TGET.r,x=CARRIER.x+Math.cos(a)*TGET.r,z=CARRIER.y+Math.sin(a)*TGET.r;g.position.set(x,DECK_Y+TGET.up+Math.sin(TITLE.t*.9)*1.2,z);g.rotation.set(0,-(a+PI/2),-.12);
+    if(g.userData.spin)for(const sp of g.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;}}
 /* turning the camera round the HÖK by hand (decided 17 okt, Magnus): with a mouse button held down the viewer drags the camera round
    the HÖK, the angle kept relative to its heading so it follows the turns; let go and the director takes over again. The director
    goes on underneath all the while, and the hand's angle is blended in round the HÖK (bearing, elevation and distance), in a third
@@ -8895,10 +8943,10 @@ function titleWake(skip){
   if(skip){TITLE.skip=4;TITLE.logoT=4;$('tMenu').hidden=false;}
 }
 function showTitle(){
-  TITLE.on=true;TITLE.man=null;TITLE.route=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
+  TITLE.on=true;TITLE.man=null;TITLE.route=null;if(TITLE.ext)TITLE.ext.for=null;TITLE.dir=null;TITLE.floor=null;TITLE.landFor=null;TITLE.vy=null;TITLE.alt=null;TITLE.cam=null;TITLE.sp=null;TITLE.savedTod=G.tod;$('title').hidden=false;$('titleStage').appendChild(paneCam);fitPanes();
 }
 function startGame(){
-  if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
+  if(TITLE.on){TITLE.on=false;$('title').hidden=true;if(TITLE.drone)TITLE.drone.visible=false;if(TITLE.ext&&TITLE.ext.wing){for(const g of TITLE.ext.wing)g.visible=false;TITLE.ext.get.visible=false;}if(TITLE.savedTod!=null)G.tod=TITLE.savedTod;placePanes();if(R3)R3.snap=true;}
   $('intro').hidden=true;G.running=true;G.paused=false;G.resumedAt=G.time;uiTick(true);
 }
 
@@ -9068,6 +9116,7 @@ function filmCam(dtr){
   if(S.k>=20&&S.k<31&&!S.quiet&&FILM.state!=='idle')filmBattle(dtr);
   if(R3.cam.fov!==FILM.fov){R3.cam.fov=FILM.fov;R3.cam.updateProjectionMatrix();}
   for(const m of(R3.movers||[]))if(m.varg){m.g.visible=FILM.useMovers;m.wake.mesh.visible=FILM.useMovers;}
+  if(TITLE.ext&&TITLE.ext.wing){for(const g of TITLE.ext.wing)g.visible=false;TITLE.ext.get.visible=false;}/* the intro's own flyers stay out of the trailer */
   {const bu=G.units.find(u=>u.kind==='eng'),bm=bu&&R3.units.get(bu.id);if(bm&&FILM.hideBeaver&&!FILM.beaverHeld)bm.visible=false;else if(bm)bm.visible=true;FILM.beaverHeld=false;}
   for(const k in FILM.act){const m=FILM.act[k];if(m.visible&&m.userData.spin)for(const sp of m.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;if(m.visible)ductLean(m,dtr);
     /* an actor's contact shadow only where it lies on the ground: not under a BÄVER hanging from KROK (24 okt) */
@@ -9826,7 +9875,7 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
     return{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z};},c=P(o.cam),t=P(o.look);
   const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);/* fov: a longer lens draws the backdrop islands nearer */if(o.fov&&R3.cam.fov!==o.fov){R3.cam.fov=o.fov;R3.cam.updateProjectionMatrix();}};
   put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);R3.renderer.render(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL(o.png?'image/png':'image/jpeg',o.q||.85);};
-globalThis.__BHt=()=>TITLE;globalThis.__BHui={ear:()=>{const ec=earCam();updListener();const F=FEED.list[0];return{ear:ec?"cam2":"cam1",L:[AUD.L.x|0,AUD.L.z|0],cam1:[R3.cam.position.x|0,R3.cam.position.z|0],cam2:F&&F.cam?[F.cam.position.x|0,F.cam.position.z|0]:null,views:[VW.main,VW.sub,VW.small],act:VW.act};},mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,down:()=>({unit:downUnit(),swapped:downSwapped(),pip:pipRect(size.cam.w,size.cam.h),alt:R3&&R3.pipAlt,fov:R3&&R3.cam.fov,up:R3&&R3.cam.up.toArray()}),audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
+globalThis.__BHt=()=>TITLE;/* the intro stepped without drawing, and one picture of it (intro review, 27 okt) */globalThis.__BHtR3=()=>R3;globalThis.__BHtstep=(dt,n,draw)=>{for(let i=0;i<n;i++){sync3D(dt);titleCam(dt);}if(!draw)return null;updateSky();cloudTick();treeCull(R3.cam,true);renderMain();return R3.renderer.domElement.toDataURL('image/jpeg',.85);};globalThis.__BHui={ear:()=>{const ec=earCam();updListener();const F=FEED.list[0];return{ear:ec?"cam2":"cam1",L:[AUD.L.x|0,AUD.L.z|0],cam1:[R3.cam.position.x|0,R3.cam.position.z|0],cam2:F&&F.cam?[F.cam.position.x|0,F.cam.position.z|0]:null,views:[VW.main,VW.sub,VW.small],act:VW.act};},mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,down:()=>({unit:downUnit(),swapped:downSwapped(),pip:pipRect(size.cam.w,size.cam.h),alt:R3&&R3.pipAlt,fov:R3&&R3.cam.fov,up:R3&&R3.cam.up.toArray()}),audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
 try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget');if(bu>0)ENEMY_CFG.budget=bu;}catch(_){}
@@ -9848,7 +9897,7 @@ function bootStep(txt,ms){const a=bootAt/bootSum;bootAt+=ms;$('bootStep').textCo
   return new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
 (async()=>{
 await bootStep('Ön tar form',BOOTT.island);
-newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('trailer')||BOOTQ.has('bench')?undefined:DOCTRINE[BOOTQ.get('doktrin')]?BOOTQ.get('doktrin'):'auto',bootWhen());/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &doktrin= chooses the enemy's doctrine */if($('tSeed'))$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';
+newGame(+BOOTQ.get('seed')||(BOOTQ.has('trailer')?7341:0)||1000+Math.floor(Math.random()*9000),BOOTQ.has('trailer')||BOOTQ.has('bench')?undefined:DOCTRINE[BOOTQ.get('doktrin')]?BOOTQ.get('doktrin'):'auto',bootWhen());/* the trailer is shot on Sorkholmen (ö 7341) with its base defence; &doktrin= chooses the enemy's doctrine */if($('tSeed'))$('tSeed').textContent=titleSeedText(G.seed);
 bootMark('island');
 await bootStep('Bygger scenen',BOOTT.scene);
 init3D();bootMark('init3d');
@@ -9859,7 +9908,7 @@ await bootStep('Förbereder grafiken',BOOTT.warm);
   await lightsWarm((k,n)=>{$('bootStep').textContent='Förbereder grafiken '+(k+1)+' av '+n;bootBar(a+w*k/n,a+w*(k+1)/n,BOOTT.warm/n);});}bootMark('warm');
 try{localStorage.setItem('bh.boot',JSON.stringify({island:BOOT.island-BOOT.js,scene:BOOT.scene-BOOT.island,warm:BOOT.warm-BOOT.scene}));}catch(_){}
 $('boot').hidden=true;
-placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=islandName(G.seed)+' (ö '+G.seed+')';showTitle();if(BOOTQ.has('trailer'))filmStart();
+placePanes();renderLog();uiTick(true);setSound(AUD.on);setMusic(MUS.on);$('tSeed').textContent=titleSeedText(G.seed);showTitle();if(BOOTQ.has('trailer'))filmStart();
 requestAnimationFrame(frame);
 if(BOOTQ.has('bench'))setTimeout(benchStart,1500);
 if(BOOTQ.has('rec'))recStart();
