@@ -24,6 +24,15 @@ Designdokumentet "Uppdrag Arkipelag: designdokument" (https://claude.ai/artifact
 - Allt som tar mer än cirka två minuter kräver att han sagt ja först.
 - Vänta aldrig med fasta sleeps. Korta jobb körs i förgrunden; längre jobb i bakgrunden med en .done-flagga och en kort poll-loop med tak.
 
+## Issues: projektledningen
+
+GitHub-issues (MagnusTjerneld/beachhead) är hela projektets lista över vad som är öppet. Den ska alltid stämma med spelet.
+
+- När något byggs som en issue gäller: nämn issuen i commiten ("issue 54") och i kodens kommentar. Stäng den med en kort kommentar om vad som byggdes och vilka commits, när ändringen når main. Når den bara en gren: skriv en kommentar på issuen om grenen och stäng den vid sammanslagningen.
+- Vid varje sammanslagning med main: gå igenom de öppna issues mot koden och stäng det som är klart (`state_reason` completed) eller inte längre gäller (not planned, med en rad om varför).
+- Ett nytt önskemål, en bugg eller en öppen fråga som inte löses i samma session blir en issue, med källan (provspel, ö, kontrollpunkt) och vad som ska avgöras. Ett beslut av Magnus skrivs som kommentar på issuen och förs samtidigt in i designdokumentet.
+- Etiketter: `bug`, `enhancement`, `question`, och `status: beslutad` när Magnus har beslutat men inget är byggt.
+
 ## Spelet
 
 - Spelet är en enda fil, `index.html` (Three.js r128 från cdnjs, sjökortet på 2D-canvas).
