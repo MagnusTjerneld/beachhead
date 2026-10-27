@@ -2564,7 +2564,7 @@ function updateUnit(u,dt){
    shoals of the chart (Birka's navigation field). With no robots left it goes back to HMS Birka by itself, but the captain approves the
    reload, GADDA.robot material a robot. Hull 60 and four robots, 220 in all. Not yet: the 3D model's moving launcher, KROK putting it in
    the water from the build bay, running aground */
-const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimA:.3,aimT:6,aimThr:.35};
+const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,clr:25,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimA:.3,aimT:6,aimThr:.35};
 /* its wake as rings (test round 26 okt, Magnus, to try out: another game draws circles that grow): every WRING.every m a ring of foam
    is left at the stern, grows and fades over WRING.ttl s, so the rings lay a widening wake behind the boat that bends with its turns.
    Kept on the boat with the game's clock (u.wk), so it stands still when the game is paused and shows in stills */
@@ -2622,11 +2622,25 @@ function gaddaPhys(u,T,S,dt){T=clamp(T,-1,1);S=clamp(S,-1,1);u.thr=T;const c=Mat
   /* the momentum stays with the water, not with the bow: the next step sees the turned hull and the old way as a slide. Its own fields:
      step() overwrites vx and vy with how far each unit moved, which a lift by KROK or a jump would turn into a wild speed */
   u.bvx=vf*c-vl*s;u.bvy=vf*s+vl*c;u.vf=vf;u.vl=vl;u.v=Math.hypot(u.bvx,u.bvy);}
+/* the boat's route, drawn as a navigator would (27 okt, Magnus, issue 84: a route between points through free water, not a straight
+   line and logic): the search keeps to the middle of the fairway, water nearer land than GADDA.clr m costing up to three times as much,
+   and the straightening draws a line between two points only where the water along it is as wide as the fairway the search found
+   (up to GADDA.clr m to land), so the route no longer cuts the corners close by the shore. Known threats as before (gaddaHot) */
+function gaddaRoute(sx,sy,tx,ty,pass){const nf=navField(WORLD),hot=gaddaHot().cost||(()=>1),C=GADDA.clr,s=cellIdx(sx,sy);let t=cellIdx(tx,ty),exact=true;
+  if(!pass(t)){t=nearestPass(t,pass);exact=false;if(t<0)return null;}const end=exact?{x:tx,y:ty}:cellCenter(t);if(s===t)return[end];
+  const cost=i=>hot(i)*(1+2*Math.max(0,(C-nf[i])/C));const cells=astarCells(s,t,pass,cost,.6);if(!cells)return null;
+  let m=C;for(let k=3;k<cells.length-3;k++)m=Math.min(m,nf[cells[k]]);/* the narrowest water on the way, away from its two ends */
+  const pts=[{x:sx,y:sy},...cells.map(cellCenter)];pts[pts.length-1]=end;
+  return smooth(pts,i=>pass(i)&&nf[i]>=m,hot).slice(1);}
 /* the captain's autopilot: a path on the navigation field, renewed when the goal moves; wheel on the bearing to the next point (less the
    turn already on), throttle for the speed it can carry into the next bend and still stop on the point */
 function gaddaGo(u,tx,ty,dt,arr){const d=Math.hypot(tx-u.x,ty-u.y);
   if(d<=arr){u.path=null;gaddaPhys(u,clamp(-(u.vf||0)*.5,-1,1),-(u.rot||0)*.5,dt);gaddaMove(u,dt);return true;}
-  if(!u.path||!u.pathT||Math.hypot(u.pathT.x-tx,u.pathT.y-ty)>8||u.pathV!==gaddaHot().v){u.path=astar(u.x,u.y,tx,ty,seaPass,gaddaHot().cost)||[{x:tx,y:ty}];u.pathT={x:tx,y:ty};u.pathV=gaddaHot().v;}
+  /* run aground head on where the planned way clipped a dry edge the grid does not show: it backs off and plans round the place
+     (27 okt, issue 84: on 1490 it stood nose to a rock for good, planning the same straight way again and again) */
+  if(u.backT>0){u.backT-=dt;gaddaPhys(u,-.6,0,dt);gaddaMove(u,dt);return false;}
+  if(!u.path||!u.pathT||Math.hypot(u.pathT.x-tx,u.pathT.y-ty)>8||u.pathV!==gaddaHot().v){const bm=u.bumps&&[...u.bumps].filter(([,t])=>G.time-t<60).map(([i])=>i);
+    u.path=bm&&bm.length&&gaddaRoute(u.x,u.y,tx,ty,i=>seaPass(i)&&!bm.includes(i))||gaddaRoute(u.x,u.y,tx,ty,seaPass)||[{x:tx,y:ty}];u.pathT={x:tx,y:ty};u.pathV=gaddaHot().v;}
   let p=u.path[0];while(u.path.length>1&&Math.hypot(p.x-u.x,p.y-u.y)<Math.max(8,(u.v||0)*.9)){u.path.shift();p=u.path[0];}
   /* close in by the shore, outside the field the way is planned on: first straight out to the nearest open water */
   if(!seaPass(cellIdx(u.x,u.y))&&u.blockT>0){const n=nearestPass(cellIdx(u.x,u.y),seaPass);if(n>=0)p=cellCenter(n);}
@@ -2639,14 +2653,22 @@ function gaddaGo(u,tx,ty,dt,arr){const d=Math.hypot(tx-u.x,ty-u.y);
   const dp=Math.hypot(p.x-u.x,p.y-u.y);let rest=dp;for(let i=1;i<u.path.length;i++)rest+=Math.hypot(u.path[i].x-u.path[i-1].x,u.path[i].y-u.path[i-1].y);
   /* slow enough into a bend to make it on the turn it has */
   let vc=u.speed;if(u.path.length>1){const b=Math.abs(angWrap(Math.atan2(u.path[1].y-p.y,u.path[1].x-p.x)-a));vc=u.speed*Math.max(.3,1-b/PI*1.4);}
-  const want=Math.min(u.speed*Math.max(.2,Math.cos(Math.min(ae,PI/2))),Math.sqrt(2*GADDA.brake*Math.max(0,rest-arr*.5))+1,Math.sqrt(vc*vc+2*GADDA.brake*Math.max(0,dp-6)));
+  /* turning about with open water round it, it carves round in an arc at speed instead of slowing to a crawl and turning on the spot: the
+     water it has (to the nearest land or shoal) sets how fast it may take the arc (27 okt, ö 3022, issue 84) */
+  const room=navField(WORLD)[cellIdx(u.x,u.y)]||0,carve=clamp((room-20)*.3,.2*u.speed,.55*u.speed);
+  const want=Math.min(Math.max(carve,u.speed*Math.cos(Math.min(ae,PI/2))),Math.sqrt(2*GADDA.brake*Math.max(0,rest-arr*.5))+1,Math.sqrt(vc*vc+2*GADDA.brake*Math.max(0,dp-6)));
   const vf=u.vf||0,T=want>=vf-.5?Math.min(1,(want/u.speed)**2+(want-vf)*.4):clamp((want-vf)*.35,-1,0);
-  gaddaPhys(u,ae>1.2&&vf<4?Math.max(T,.45):T,err*2.4-(u.rot||0)*.7,dt);gaddaMove(u,dt);return false;}
+  /* the reverse buckets steer the other way (gaddaPhys), so braking into a bend it puts the wheel over the other way too: with the wheel
+     as when driving ahead it turned away from the bend, overshot and came round the long way at a crawl (27 okt, ö 3022, issue 84) */
+  const Tg=ae>1.2&&vf<4?Math.max(T,.45):T;gaddaPhys(u,Tg,(Tg<0?-1:1)*(err*2.4-(u.rot||0)*.7),dt);gaddaMove(u,dt);return false;}
 /* a step on the water: the captain's boat never goes onto land (it slides along the shore at a crawl and finds open water again), and
    nothing goes through Birka's hull */
 const wetAt=(x,y)=>heightAt(x,y)<-GADDA.draft*.5;
 function gaddaMove(u,dt){u.blockT=Math.max(0,(u.blockT||0)-dt);if(!(u.v>.01))return;const dx=u.bvx*dt,dy=u.bvy*dt;let nx=clamp(u.x+dx,6,WW-6),ny=clamp(u.y+dy,6,WH-6);
-  if(!wetAt(nx,ny)){u.blockT=2;u.path=null;const k=Math.min(1,3/(u.v||1));if(wetAt(u.x+dx,u.y)){ny=u.y;u.bvy=0;u.bvx*=k;}else if(wetAt(u.x,u.y+dy)){nx=u.x;u.bvx=0;u.bvy*=k;}else{u.bvx=u.bvy=0;u.v=0;return;}u.v=Math.hypot(u.bvx,u.bvy);}
+  if(!wetAt(nx,ny)){u.blockT=2;u.path=null;const k=Math.min(1,3/(u.v||1));if(wetAt(u.x+dx,u.y)){ny=u.y;u.bvy=0;u.bvx*=k;}else if(wetAt(u.x,u.y+dy)){nx=u.x;u.bvx=0;u.bvy*=k;}else{u.bvx=u.bvy=0;u.v=0;
+    /* stopped dead: the cells at the dry point and ahead of it (not its own) are kept out of its next ways for a minute, and it backs off (gaddaGo) */
+    if(G.ctrl!==u.id){const b=u.bumps||(u.bumps=new Map()),me=cellIdx(u.x,u.y);for(const d of[0,6,12]){const i=cellIdx(clamp(nx+Math.cos(u.heading)*d,0,WW-1),clamp(ny+Math.sin(u.heading)*d,0,WH-1));if(i!==me)b.set(i,G.time);}u.backT=1;}
+    return;}u.v=Math.hypot(u.bvx,u.bvy);}
   u.x=nx;u.y=ny;gaddaHull(u);}
 function gaddaHull(u){const L=shipLocal(u.x,u.y);if(Math.abs(L.lat)<19&&Math.abs(L.fwd)<48){const s=L.lat<0?-1:1,p=shipPos(s*19,L.fwd);u.x=p[0];u.y=p[1];u.bvx*=.2;u.bvy*=.2;u.v=Math.hypot(u.bvx,u.bvy);}}
 const gaddaPainted=e=>!e.dead&&e.visibleNow;
@@ -4852,7 +4874,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;

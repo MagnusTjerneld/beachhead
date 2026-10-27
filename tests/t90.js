@@ -83,4 +83,15 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;B.queueBuild('gadda');until(()=>G().units.some(u=>u.kind==='gadda'),40);const u=G().units.find(v=>v.kind==='gadda');let low=0,ph=new Set();
   until(()=>{const P=u.launch&&u.launch.pose;if(P){ph.add(P.ph);const L=B.shipLocal(u.x,u.y);if(P.ph===2&&Math.hypot(L.lat-9,L.fwd-2)>2&&u.craneH<B.DECK_Y+15)low++;}return !u.launch;},40);
   ok(ph.size===4&&!low&&B.heightAt(u.x,u.y)<0,'the crane takes it through all four steps, '+(low?low+' steps low over the deck':'over the gantry')+', into the water');}
+// 14. issue 84 (provspel 27 okt, ö 3022): new orders at full speed. Braking into a bend on the reverse buckets it puts the wheel over the
+//     other way and carves round the point (it turned away, overshot and came round the long way at a crawl); and run aground head on at
+//     a dry edge the grid does not show, it backs off and plans round it (on 1490 it stood nose to a rock for good)
+{B.newGame(3022,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const u=boat(586,748);
+  u.heading=Math.PI*174/180;u.bvx=Math.cos(u.heading)*22;u.bvy=Math.sin(u.heading)*22;u.vf=u.v=22;B.giveOrder(u,{type:'move',x:385,y:875,post:'off'});let crawl=0;
+  const got=until(()=>{if(G().time>1&&u.v<6&&Math.hypot(u.x-385,u.y-875)>30)crawl+=.05;return !u.orders.length;},40);
+  ok(got&&crawl<1,'from 22 m/s west round the point to the south in '+Math.round(G().time)+' s, '+crawl.toFixed(1)+' s under 6 m/s (was 5)');}
+{B.newGame(1490,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const u=boat(235,1095);B.giveOrder(u,{type:'move',x:495,y:535,post:'off'});
+  until(()=>false,6);B.giveOrder(u,{type:'move',x:505,y:1455,post:'off'});const t0=G().time;let st=0,stMax=0;
+  const got=until(()=>{st=u.v<1?st+.05:0;stMax=Math.max(stMax,st);return !u.orders.length;},120);
+  ok(got&&stMax<2,'turned about by a rock on 1490, it gets off and reaches the point in '+Math.round(G().time-t0)+' s, still for at most '+stMax.toFixed(1)+' s');}
 process.exit(fail?1:0);
