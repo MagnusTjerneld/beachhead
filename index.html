@@ -5808,9 +5808,9 @@ function mkFoamRings(W,st){const U=R3.water&&R3.water.material.userData.U,src=R3
   const mt=new THREE.ShaderMaterial({uniforms:{uTime:U.uTime,uIce:U.uIce,uFoam:U.uFoam},side:THREE.DoubleSide,transparent:true,depthWrite:false,
     vertexShader:`attribute float aT,aA;varying float vT,vA;varying vec3 vW;void main(){vT=aT;vA=aA;vW=position;gl_Position=projectionMatrix*viewMatrix*vec4(position,1.0);}`,
     fragmentShader:`uniform float uTime,uIce;uniform vec3 uFoam;varying float vT,vA;varying vec3 vW;
-      void main(){float br=.55+.45*sin(vW.x*1.7+uTime*1.1)*sin(vW.z*1.3-uTime*.8)+.2*sin(vA*9.0+uTime*.6);float wave=smoothstep(.6,.95,sin(vT*5.0-uTime*1.5+br*1.4));
+      void main(){float vT=clamp(vT,0.0,1.0),br=.55+.45*sin(vW.x*1.7+uTime*1.1)*sin(vW.z*1.3-uTime*.8)+.2*sin(vA*9.0+uTime*.6);float wave=smoothstep(.6,.95,sin(vT*5.0-uTime*1.5+br*1.4));
         float al=(pow(1.0-vT,1.8)*(.3+.5*br)*.32+wave*(1.0-vT)*.1)*smoothstep(0.0,.12,vT+.05);
-        al*=(1.0-smoothstep(300.0,900.0,length(vW-cameraPosition)))*(1.0-smoothstep(.15,.5,uIce));gl_FragColor=vec4(uFoam,al);}`});
+        al*=(1.0-smoothstep(300.0,900.0,length(vW-cameraPosition)))*(1.0-smoothstep(.15,.5,uIce));gl_FragColor=vec4(uFoam,clamp(al,0.0,1.0));}`});
   const fm=new THREE.Mesh(g,mt);fm.renderOrder=5;fm.frustumCulled=false;fm.userData.noShadow=true;st.add(fm);}
 function mkIslets(list,st){
   const SN=new Map(),mat=(c,k)=>{const key=c+(k||'');if(!SN.has(key))SN.set(key,seasonMat(new THREE.MeshLambertMaterial({color:c}),k||'snowtop'));return SN.get(key);};/* the islets and their stones take snow (18 okt); the rock itself is the main island's (19 okt, issue 48) */
