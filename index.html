@@ -7588,7 +7588,7 @@ function cam2Pip(R,k){const sz=R.getSize(new THREE.Vector2()),W=sz.x,H=sz.y;if(!
 function renderAgain(r,cam){const s=R3.scene,a=s.autoUpdate;s.autoUpdate=false;try{r.render(s,cam);}finally{s.autoUpdate=a;}}
 /* the main view itself, without the unit's own model while it looks down from under it */
 function renderMain(){const m=downSwapped()?downMesh(downUnit()):null;if(m)m.visible=false;drawMain(R3.scene,R3.cam);if(m)m.visible=true;}
-/* efterbehandling (prototyp i grenen claude/efterbehandling, Magnus 28 okt): ?efter=knee eller aces, bloom, grade. Scenen ritas till en
+/* efterbehandling (issue 87, Magnus 28 okt, i main samma dag): ?efter=knee eller aces, bloom, grade. Scenen ritas till en
    buffert med flyttal (med kantutjämning där WebGL2 finns), så att ljus över vitt finns kvar, och ett sista steg lägger på bloom,
    tonkurva och färgton på hela bilden, också på våra egna shaders (vatten, himmel, mark). knee låter allt under 0,75 vara som förut och
    rundar av det ljusare, aces är filmkurvan. Utan parametern ritas allt som förut. */
