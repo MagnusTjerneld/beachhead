@@ -4874,7 +4874,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={get R3(){return R3;},get DETALJ(){return DETALJ;},mkUnitMesh:u=>mkUnitMesh(u),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_RESERVE,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -5268,7 +5268,12 @@ function camCorners(ctx,x,y,k){ctx.strokeStyle=NAVY;ctx.lineWidth=1.5*k;const r=
 let R3=null;
 const MATS=new Map(),GEOS=new Map();
 function mat(c){const key=typeof c==='string'?c:'#'+c.toString(16).padStart(6,'0');if(!MATS.has(key))MATS.set(key,new THREE.MeshLambertMaterial({color:new THREE.Color(key)}));return MATS.get(key);}
-function box(w,h,d){const k='b'+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
+/* modelldetalj (issue 75, prototyp i grenen claude/modelldetalj): ?detalj=ao,fas. fas fasar lådornas kanter, ao bakar skugga i vrårna
+   och ljusa ytterkanter i vertexfärgen när modellen slås ihop; bara de enheter som står i kinds (VARG), medan mkUnitMesh bygger dem */
+const DETALJ=(()=>{let q='';try{q=new URLSearchParams(location.search).get('detalj')||'';}catch(_){}const f=q.split(',');return{ao:f.includes('ao'),fas:f.includes('fas'),kinds:new Set(['tank']),on:null,ms:0};})();
+function fasBox(w,h,d){const b=Math.min(.07,.18*Math.min(w,h,d)),s=new THREE.Shape(),x=w/2-b,y=h/2-b;s.moveTo(-x,-y);s.lineTo(x,-y);s.lineTo(x,y);s.lineTo(-x,y);s.lineTo(-x,-y);
+  const g=new THREE.ExtrudeGeometry(s,{depth:Math.max(d-2*b,1e-3),bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:1,curveSegments:1});g.translate(0,0,-(d-2*b)/2);g.computeVertexNormals();return g;}
+function box(w,h,d){const f=DETALJ.on&&DETALJ.fas,k=(f?'f':'b')+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,f?fasBox(w,h,d):new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
 function cyl(a,b,h,n){const k='c'+a+','+b+','+h+','+n;if(!GEOS.has(k))GEOS.set(k,new THREE.CylinderGeometry(a,b,h,n));return GEOS.get(k);}
 function mesh(geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x||0,y||0,z||0);return o;}
 /* a small rotor like KROK's but smaller: a hub and n thin dark blades with light tips, spun as one group (one draw call per
@@ -5319,10 +5324,44 @@ function bake(root,vc,X){
     for(const c of drop)c.parent.remove(c);
     for(const{m,g,v,cs,rs,ro}of groups.values()){let n=0;for(const x of g)n+=x.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=v?new Float32Array(n*3):null;let o=0;
       for(const x of g){P.set(x.attributes.position.array,o*3);N.set(x.attributes.normal.array,o*3);if(C)C.set(x.userData.vc,o*3);o+=x.attributes.position.count;x.dispose();}
-      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));if(C)bg.setAttribute('color',new THREE.BufferAttribute(C,3));bg.computeBoundingSphere();const nm=new THREE.Mesh(bg,m);if(strict){nm.castShadow=cs;nm.receiveShadow=rs;nm.renderOrder=ro;}r.add(nm);}};
+      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));if(C)bg.setAttribute('color',new THREE.BufferAttribute(C,3));bg.computeBoundingSphere();const nm=new THREE.Mesh(bg,m);if(strict){nm.castShadow=cs;nm.receiveShadow=rs;nm.renderOrder=ro;}r.add(nm);}
+    if(DETALJ.on&&DETALJ.ao)bakeAO(r);};
   const under=k=>{for(let q=k.parent;q;q=q.parent)if(q===root)return true;return false;};
   pass(root);for(const k of keep)if(!k.isMesh&&under(k))pass(k);
   return root;}
+/* issue 75: the merged vertex-coloured mesh of a unit is split finer (edges under 0.6 m) so that the shading has vertices to sit on,
+   then every vertex sends 48 rays over its hemisphere against the whole model within 1.2 m; the share that gets out darkens the
+   colour (cavities, the deck under the turret, the skirt under the hull), and a vertex on an outer edge (faces of other directions
+   meet there and nothing covers it) is lightened as worn paint */
+function aoSplit(P,N,C,max){const oP=[],oN=[],oC=[],m2=max*max,L=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2;
+  const go=(t,d)=>{const[a,b,c]=t,l0=L(a.p,b.p),l1=L(b.p,c.p),l2=L(c.p,a.p),mx=Math.max(l0,l1,l2);
+    if(mx<=m2||d>9){for(const v of t){oP.push(...v.p);oN.push(...v.n);oC.push(...v.c);}return;}
+    const mid=(u,v)=>({p:u.p.map((x,i)=>(x+v.p[i])/2),n:u.n,c:u.c.map((x,i)=>(x+v.c[i])/2)});
+    if(mx===l0){const m=mid(a,b);go([a,m,c],d+1);go([m,b,c],d+1);}else if(mx===l1){const m=mid(b,c);go([a,b,m],d+1);go([a,m,c],d+1);}else{const m=mid(c,a);go([a,b,m],d+1);go([m,b,c],d+1);}};
+  const V=i=>({p:[P[i*3],P[i*3+1],P[i*3+2]],n:[N[i*3],N[i*3+1],N[i*3+2]],c:[C[i*3],C[i*3+1],C[i*3+2]]});
+  for(let i=0;i<P.length/3;i+=3)go([V(i),V(i+1),V(i+2)],0);return[new Float32Array(oP),new Float32Array(oN),new Float32Array(oC)];}
+function bakeAO(r){const t0=performance.now(),meshes=r.children.filter(c=>c.isMesh&&c.geometry.attributes.position);
+  // occluders: every triangle of the model as it was merged, with its box for a quick test of distance
+  const T=[];for(const m of meshes){const a=m.geometry.attributes.position.array;for(let i=0;i<a.length;i+=9)T.push(a.slice(i,i+9));}
+  const B=T.map(t=>[Math.min(t[0],t[3],t[6]),Math.min(t[1],t[4],t[7]),Math.min(t[2],t[5],t[8]),Math.max(t[0],t[3],t[6]),Math.max(t[1],t[4],t[7]),Math.max(t[2],t[5],t[8])]);
+  const R=1.2,K=48,dirs=[];for(let k=0;k<K;k++){const u=(k+.5)/K,ph=k*2.39996,s=Math.sqrt(u);dirs.push([s*Math.cos(ph),s*Math.sin(ph),Math.sqrt(1-u)]);}
+  const hit=(o,d,t)=>{const e1=[t[3]-t[0],t[4]-t[1],t[5]-t[2]],e2=[t[6]-t[0],t[7]-t[1],t[8]-t[2]],p=[d[1]*e2[2]-d[2]*e2[1],d[2]*e2[0]-d[0]*e2[2],d[0]*e2[1]-d[1]*e2[0]],det=e1[0]*p[0]+e1[1]*p[1]+e1[2]*p[2];
+    if(Math.abs(det)<1e-9)return false;const iv=1/det,s=[o[0]-t[0],o[1]-t[1],o[2]-t[2]],u=(s[0]*p[0]+s[1]*p[1]+s[2]*p[2])*iv;if(u<0||u>1)return false;
+    const q=[s[1]*e1[2]-s[2]*e1[1],s[2]*e1[0]-s[0]*e1[2],s[0]*e1[1]-s[1]*e1[0]],v=(d[0]*q[0]+d[1]*q[1]+d[2]*q[2])*iv;if(v<0||u+v>1)return false;const tt=(e2[0]*q[0]+e2[1]*q[1]+e2[2]*q[2])*iv;return tt>1e-4&&tt<R;};
+  for(const m of meshes){const g=m.geometry;if(!g.attributes.color)continue;
+    const[P,N,C]=aoSplit(g.attributes.position.array,g.attributes.normal.array,g.attributes.color.array,.6),n=P.length/3,memo=new Map(),key=i=>[0,1,2].map(j=>Math.round(P[i*3+j]*500)).join(',');
+    // the directions of the faces meeting at each point, for the worn outer edges
+    const dirsAt=new Map();for(let i=0;i<n;i++){const k=key(i);if(!dirsAt.has(k))dirsAt.set(k,[]);dirsAt.get(k).push(i);}
+    for(let i=0;i<n;i++){const nn=[N[i*3],N[i*3+1],N[i*3+2]],o=[P[i*3]+nn[0]*.004,P[i*3+1]+nn[1]*.004,P[i*3+2]+nn[2]*.004],mk=key(i)+'|'+nn.map(x=>Math.round(x*50)).join(',');
+      let ao=memo.get(mk);if(ao===undefined){const near=[];for(let j=0;j<T.length;j++){const b=B[j];if(o[0]<b[0]-R||o[0]>b[3]+R||o[1]<b[1]-R||o[1]>b[4]+R||o[2]<b[2]-R||o[2]>b[5]+R)continue;near.push(T[j]);}
+        const up=Math.abs(nn[1])<.9?[0,1,0]:[1,0,0],tx=[up[1]*nn[2]-up[2]*nn[1],up[2]*nn[0]-up[0]*nn[2],up[0]*nn[1]-up[1]*nn[0]],tl=Math.hypot(...tx);for(let j=0;j<3;j++)tx[j]/=tl;
+        const ty=[nn[1]*tx[2]-nn[2]*tx[1],nn[2]*tx[0]-nn[0]*tx[2],nn[0]*tx[1]-nn[1]*tx[0]];let free=0;
+        for(const[a,b,c]of dirs){const d=[tx[0]*a+ty[0]*b+nn[0]*c,tx[1]*a+ty[1]*b+nn[1]*c,tx[2]*a+ty[2]*b+nn[2]*c];let blk=false;for(const t of near)if(hit(o,d,t)){blk=true;break;}if(!blk)free++;}
+        ao=free/K;memo.set(mk,ao);}
+      let edge=false;for(const j of dirsAt.get(key(i)))if(N[j*3]*nn[0]+N[j*3+1]*nn[1]+N[j*3+2]*nn[2]<.6){edge=true;break;}
+      const f=.38+.62*ao,w=edge&&ao>.8?.1:0;for(let j=0;j<3;j++)C[i*3+j]=C[i*3+j]*f+w;}
+    g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('normal',new THREE.BufferAttribute(N,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));g.computeBoundingSphere();}
+  DETALJ.ms+=performance.now()-t0;}
 const drawCalls=g=>{let n=0;g.traverse(o=>{if(o.isMesh&&o.visible)n++;});return n;};
 /* strategic buildings; each keeps a beacon (magenta held by the enemy, blue once taken) */
 // the building stands beside the capture point, on the side facing away from the enemy positions guarding it,
@@ -5470,7 +5509,8 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
   g.add(mesh(cyl(.05,.05,.3,6),MET,4.52,.95,0).rotateZ(PI/2));
   g.traverse(q=>{if(q.isMesh){q.castShadow=true;q.receiveShadow=true;}});
   return g;}
-function mkUnitMesh(u){
+function mkUnitMesh(u){DETALJ.on=(DETALJ.ao||DETALJ.fas)&&DETALJ.kinds.has(u.kind);try{return mkUnitMesh0(u);}finally{DETALJ.on=null;}}
+function mkUnitMesh0(u){
   const g=new THREE.Group();
   if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();root.add(sh(bake(m,true)));root.add(L);root.add(ram);
     L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0});return root;}
