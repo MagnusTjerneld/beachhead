@@ -7005,7 +7005,10 @@ const ROAD_GLSL=`float rH(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx
     c=mix(c,g,smoothstep(.62,.8,rN(p*1.6+7.0))*smoothstep(core-1.1,core,d)*.8);
     rdSnow=1.0-edge*(.15+.35*tr);
     return mix(g,c,edge);}`;
-const NOISE_GLSL=`float sHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+/* the noise of snow, ice and the ground's detail hashes without a sine, like the sea's (wHash): a sine of large numbers is wrong on many
+   phone GPUs, and the ice's edge and the snow's patches came out as squares on a phone (issue 69, Magnus 24 okt); the pattern is a
+   different draw of the same kind on a computer */
+const NOISE_GLSL=`float sHash(vec2 p){vec3 p3=fract(vec3(p.xyx)*0.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
   float sNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sHash(i),sHash(i+vec2(1,0)),f.x),mix(sHash(i+vec2(0,1)),sHash(i+vec2(1,1)),f.x),f.y);}`;
 const SEAS_GLSL=`uniform float uSnow,uGrass,uBrown,uLeaf,uYoung,uAutumn;varying vec3 vSWP,vSWN;varying float vSLY;`+NOISE_GLSL+`\nfloat mdN(vec2 p){p+=vec2(sNoise(p*.41+3.1),sNoise(p*.41+7.7))*1.7-.85;vec2 q=mat2(.8,-.6,.6,.8)*p*1.13+11.0;float a=sNoise(p),b=sNoise(q);return clamp((a+b-1.0)*1.4+.5,0.0,1.0);}`;
 function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
@@ -7085,6 +7088,7 @@ function seasonApply(doy){const S=seasonAt(doy);R3.season=S;R3.seasonDoy=doy;
   const WU=R3.water&&R3.water.material.userData.U;if(WU){WU.uIce.value=S.ice;WU.uFloe.value=S.floe;}}
 /* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;
    foam where it is shallow, from a depth map of the seabed (see setWaterDepth) */
+const WTOK=(()=>{try{const v=+new URLSearchParams(location.search).get("wtok");return v>0?v:1;}catch(_){return 1;}})();/* ?wtok= for comparing how much the faded waves widen the glint */
 function mkWaterMat(){
   const m=new THREE.MeshPhongMaterial({color:0x21466f,transparent:true,opacity:.86,shininess:220,specular:0xdfe8ec});
   const U={uTime:{value:0},uWind:{value:.7},uWindDir:{value:new THREE.Vector2(1,0)},uHor:{value:new THREE.Color(0xa9bbc4)},uFoam:{value:new THREE.Color(0xe9f1f2)},uDepth:{value:null},uHasDepth:{value:0},uGrid:{value:new THREE.Vector2(1,1)},
@@ -7100,14 +7104,17 @@ function mkWaterMat(){
          cause as issue 69 in the ice and snow) */
       float wHash(vec2 i){i=mod(i,289.0);vec3 p3=fract(vec3(i.xyx)*0.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
       float wNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(wHash(i),wHash(i+vec2(1,0)),f.x),mix(wHash(i+vec2(0,1)),wHash(i+vec2(1,1)),f.x),f.y);}
-      vec2 wgrad(vec2 p,float t){vec2 g=vec2(0.0);
-        g+=vec2(0.83,0.55)*0.55*cos(dot(p,vec2(0.83,0.55))*0.55+t*1.1);
-        g+=vec2(-0.42,0.91)*0.9*0.7*cos(dot(p,vec2(-0.42,0.91))*0.9-t*1.3);
-        g+=vec2(0.97,-0.24)*1.7*0.38*cos(dot(p,vec2(0.97,-0.24))*1.7+t*1.9);
-        g+=vec2(-0.71,-0.7)*2.9*0.22*cos(dot(p,vec2(-0.71,-0.7))*2.9-t*2.6);
-        g+=vec2(0.2,0.98)*4.7*0.12*cos(dot(p,vec2(0.2,0.98))*4.7+t*3.3);
-        g+=vec2(0.6,-0.8)*8.3*0.06*cos(dot(p,vec2(0.6,-0.8))*8.3-t*4.1);
-        g+=vec2(-0.95,0.31)*12.1*0.04*cos(dot(p,vec2(-0.95,0.31))*12.1+t*5.2);
+      /* a wave shorter than about two pixels' footprint on the water cannot be drawn: it aliased into rings round the camera, onion
+         rings in the sun's glitter (Magnus 28 okt), so each wave fades out as its wavelength nears the footprint fp (metres per pixel) */
+      float wAA(float k,float fp){return 1.0-smoothstep(1.2,3.0,k*fp);}
+      vec2 wgrad(vec2 p,float t,float fp){vec2 g=vec2(0.0);
+        g+=vec2(0.83,0.55)*0.55*cos(dot(p,vec2(0.83,0.55))*0.55+t*1.1)*wAA(0.55,fp);
+        g+=vec2(-0.42,0.91)*0.9*0.7*cos(dot(p,vec2(-0.42,0.91))*0.9-t*1.3)*wAA(0.9,fp);
+        g+=vec2(0.97,-0.24)*1.7*0.38*cos(dot(p,vec2(0.97,-0.24))*1.7+t*1.9)*wAA(1.7,fp);
+        g+=vec2(-0.71,-0.7)*2.9*0.22*cos(dot(p,vec2(-0.71,-0.7))*2.9-t*2.6)*wAA(2.9,fp);
+        g+=vec2(0.2,0.98)*4.7*0.12*cos(dot(p,vec2(0.2,0.98))*4.7+t*3.3)*wAA(4.7,fp);
+        g+=vec2(0.6,-0.8)*8.3*0.06*cos(dot(p,vec2(0.6,-0.8))*8.3-t*4.1)*wAA(8.3,fp);
+        g+=vec2(-0.95,0.31)*12.1*0.04*cos(dot(p,vec2(-0.95,0.31))*12.1+t*5.2)*wAA(12.1,fp);
         return g;}`)
     .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
       {if(uHasDepth>0.5){vec2 uq=(vWPos.xz/2200.0*uGrid+0.5)/(uGrid+1.0);float dq=8.0;if(uq.x>0.0&&uq.y>0.0&&uq.x<1.0&&uq.y<1.0)dq=8.0-texture2D(uDepth,uq).r*16.0;
@@ -7122,9 +7129,24 @@ function mkWaterMat(){
       vec2 wpw=vWPos.xz+(vec2(wNoise(vWPos.xz/45.0),wNoise(vWPos.xz/45.0+9.0))-0.5)*14.0;
       /* and two small waves whose direction turns slowly over the surface, so the glints sit where the water itself tilts towards the sun
          and move with it; the waves flatten less with distance than before (320 m, was 220), so the far glitter stays fine glints */
-      float va=(wNoise(vWPos.xz/55.0)-0.5)*2.4;vec2 d1=vec2(cos(va+0.4),sin(va+0.4)),d2=vec2(cos(va*1.3-1.1),sin(va*1.3-1.1));
-      vec2 wg=(wgrad(wpw,uTime)+d1*6.1*0.09*cos(dot(wpw,d1)*6.1-uTime*3.6)+d2*9.7*0.05*cos(dot(wpw,d2)*9.7+uTime*4.6))*0.06*rough/(1.0+wDist/320.0);
+      /* (28 okt, Magnus: onion rings in the glitter) the direction turned with position, but the phase dot(p,d) is counted from the
+         world's origin, so 1.6 km out a small turn moved the phase hundreds of radians a metre: rings round every turn of the noise.
+         Now two pairs of fixed directions, blended by the noise, so the waves keep their own length everywhere */
+      float wva=smoothstep(0.25,0.75,wNoise(vWPos.xz/55.0)),wvA=sqrt(1.0-wva),wvB=sqrt(wva);
+      vec2 d1=vec2(0.92,0.39),d2=vec2(0.45,-0.89),d3=vec2(-0.23,0.97),d4=vec2(0.99,0.12);
+      #if __VERSION__>=300||defined(GL_OES_standard_derivatives)
+      vec2 wfw=fwidth(vWPos.xz);float wfp=max(wfw.x,wfw.y);
+      #else
+      float wfp=wDist*0.0016/max(abs(normalize(cameraPosition-vWPos).y),0.03);
+      #endif
+      float wS=0.06*rough/(1.0+wDist/320.0),wL=0.0;{float l;
+        l=1.0-wAA(0.55,wfp);wL+=0.30*l*l;l=1.0-wAA(0.9,wfp);wL+=0.40*l*l;l=1.0-wAA(1.7,wfp);wL+=0.42*l*l;l=1.0-wAA(2.9,wfp);wL+=0.41*l*l;
+        l=1.0-wAA(4.7,wfp);wL+=0.32*l*l;l=1.0-wAA(8.3,wfp);wL+=0.25*l*l;l=1.0-wAA(12.1,wfp);wL+=0.23*l*l;l=1.0-wAA(6.1,wfp);wL+=0.30*l*l;l=1.0-wAA(9.7,wfp);wL+=0.24*l*l;}
+      float wVar=wS*wS*wL*0.5;/* the slope variance of the waves too small to draw */
+      vec2 wg=(wgrad(wpw,uTime,wfp)+(d1*6.1*0.09*cos(dot(wpw,d1)*6.1-uTime*3.6)*wAA(6.1,wfp)+d2*9.7*0.05*cos(dot(wpw,d2)*9.7+uTime*4.6)*wAA(9.7,wfp))*wvA+(d3*6.1*0.09*cos(dot(wpw,d3)*6.1-uTime*3.6)*wAA(6.1,wfp)+d4*9.7*0.05*cos(dot(wpw,d4)*9.7+uTime*4.6)*wAA(9.7,wfp))*wvB)*0.06*rough/(1.0+wDist/320.0);
       normal=normalize((viewMatrix*vec4(normalize(vec3(-wg.x,1.0,-wg.y)),0.0)).xyz);`)
+    .replace('#include <lights_phong_fragment>',`#include <lights_phong_fragment>
+      material.specularShininess=shininess/(1.0+shininess*wVar*${WTOK.toFixed(2)});/* Toksvig: the slope of the waves faded out above widens the glint, so the glitter keeps its spread */`)
     .replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
       /* the glitter's core compressed, so the waves' own tilts show in it as structure instead of one white blob seen from high up (a
          mask of moving sparks laid on top was tried the same evening and taken away: it slid over the water like a texture, Magnus) */
