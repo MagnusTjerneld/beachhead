@@ -7612,13 +7612,13 @@ function ppSize(w,h){const o=(d)=>({type:THREE.HalfFloatType,format:THREE.RGBAFo
 function ppPass(m,u,to){const r=R3.renderer;EPP.quad.material=m;for(const k in u){const v=m.uniforms[k];if(v.value&&v.value.isVector2)v.value.copy(u[k]);else v.value=u[k];}r.setRenderTarget(to);r.render(EPP.scene,EPP.cam);}
 function drawMain(scene,cam){const r=R3.renderer;if(!EFTER.on){r.render(scene,cam);return;}
   if(!EPP)EPP=ppInit(r);r.getDrawingBufferSize(_ppv);const w=_ppv.x|0,h=_ppv.y|0;if(EPP.w!==w||EPP.h!==h)ppSize(w,h);
-  const keep=r.shadowMap.autoUpdate,sc=r.getScissorTest();r.setScissorTest(false);/* the camera panes leave the scissor on, which clipped the small buffers */r.setRenderTarget(EPP.rt);r.render(scene,cam);r.shadowMap.autoUpdate=false;/* the quads need no shadow pass */
+  const keep=r.shadowMap.autoUpdate,sc=r.getScissorTest();r.setScissorTest(false);/* the camera panes leave the scissor on, which clipped the small buffers */r.setRenderTarget(EPP.rt);r.render(scene,cam);r.shadowMap.autoUpdate=false;/* the quads need no shadow pass */r.info.autoReset=false;/* the passes add to the scene's draw calls instead of replacing them (the benchmark read 1 call and 0 triangles) */
   const px=t=>new THREE.Vector2(1/t.width,1/t.height);
   if(EFTER.bloom){ppPass(EPP.pre,{t:EPP.rt.texture,px:px(EPP.rt),th:EFTER.th},EPP.down[0]);
     for(let i=1;i<EPP.N;i++)ppPass(EPP.dn,{t:EPP.down[i-1].texture,px:px(EPP.down[i-1])},EPP.down[i]);
     let src=EPP.down[EPP.N-1];for(let i=EPP.N-2;i>=0;i--){ppPass(EPP.upm,{t:src.texture,cur:EPP.down[i].texture,px:px(src)},EPP.up[i]);src=EPP.up[i];}}
   ppPass(EPP.comp,{t:EPP.rt.texture,bl:EFTER.bloom?EPP.up[0].texture:EPP.rt.texture,bloom:EFTER.bloom?1:0,str:EFTER.str,ex:EFTER.exp,grade:EFTER.grade?1:0,tm:EFTER.tm},null);
-  r.shadowMap.autoUpdate=keep;r.setScissorTest(sc);}
+  r.shadowMap.autoUpdate=keep;r.info.autoReset=true;r.setScissorTest(sc);}
 function drawHud(ctx,w,h){
   ctx.clearRect(0,0,w,h);
   {const cu=unitById(G.cam);if(cu&&!cu.dead&&G.units.includes(cu)&&!heard(cu)){ctx.fillStyle='rgba(12,14,16,.94)';ctx.fillRect(0,0,w,h);ctx.fillStyle='#e8ece6';ctx.font='16px "Share Tech Mono",ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('INGEN SIGNAL',w/2,h/2-10);ctx.font='12px "Share Tech Mono",ui-monospace,monospace';ctx.fillText(cu.name+' UTANFÖR LEDNINGSNÄTET',w/2,h/2+12);return;}}
