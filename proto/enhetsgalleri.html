@@ -569,8 +569,9 @@ const ENEMY={
   /* the coast battery of Kustbatteriet (issue 73, Magnus 29 okt): a fixed 12 cm turret built into the rock, after ERSTA (12 cm
      tornautomatpjäs m/70). It fires only at what is military on the sea (GÄDDA, a vehicle in the water, Birka), with its own fire
      control out to seaRange, a little past GÄDDA's 260 m, so that GÄDDA can silence it but not stand off and win; nothing on land
-     or in the air. Only BÄVER blows it up (KUST); range 0 keeps it out of every threat on land */
-  kust:{hp:600,range:0,seaRange:280,vision:150,dmg:30,rate:1/2.5,acc:.6,value:0,label:'Kustartilleri',cls:'armor',camo:true,canAir:false,canGround:false,tag:'KA'}
+     or in the air. Only BÄVER blows it up (KUST); range 0 keeps it out of every threat on land. Damage 20 (sandbox gka, 29 okt: at 30
+     GÄDDA silenced it in 55 % and lost the boat in 45 %; at 20 it silences it every time with about one hit taken) */
+  kust:{hp:600,range:0,seaRange:280,vision:150,dmg:20,rate:1/2.5,acc:.6,value:0,label:'Kustartilleri',cls:'armor',camo:true,canAir:false,canGround:false,tag:'KA'}
 };
 
 const TYPES={

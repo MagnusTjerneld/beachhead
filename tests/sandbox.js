@@ -45,7 +45,9 @@ const SC={
   gbunker:{txt:'GÄDDA och en hög GETING mot en bunker 80 m upp från stranden',sea:1,own:{gadda:1,get:['def']},def:[['turret',80,0]],plan:'gadda'},
   gkust:{txt:'GÄDDA och en hög GETING mot två bunkrar och ett pansarvärnslag vid kusten',sea:1,own:{gadda:1,get:['def']},def:[['turret',60,-60],['turret',90,50],['at',40,0]],plan:'gadda'},
   glv:{txt:'GÄDDA och en hög GETING mot en bunker under ett luftvärn 70 m bakom den',sea:1,own:{gadda:1,get:['def']},def:[['turret',80,0],['aa',150,20]],plan:'gadda',order:[0,1]},
-  gdjup:{txt:'GÄDDA och en hög GETING mot en bunker 200 m upp från stranden',sea:1,own:{gadda:1,get:['def']},def:[['turret',200,0]],plan:'gadda'}
+  gdjup:{txt:'GÄDDA och en hög GETING mot en bunker 200 m upp från stranden',sea:1,own:{gadda:1,get:['def']},def:[['turret',200,0]],plan:'gadda'},
+  /* Kustbatteriet (issue 73, 29 okt): the coast artillery only falls silent to fire, so a win is GÄDDA silencing it */
+  gka:{txt:'GÄDDA och en hög GETING mot kustartilleriet 80 m upp från stranden (vinst: tystat)',sea:1,own:{gadda:1,get:['def']},def:[['kust',80,0]],plan:'gadda',tyst:true}
 };
 const args=process.argv.slice(2),flags=new Set(args.filter(a=>a.startsWith('--'))),pos=args.filter(a=>!a.startsWith('--')&&!a.includes('=')),sets=args.filter(a=>a.includes('='));
 if(flags.has('--list')){for(const[k,s]of Object.entries(SC))console.log(k.padEnd(10)+s.txt);process.exit(0);}
@@ -78,7 +80,7 @@ function play(name,rep){
   {const{D,f,n}=S.sea?seaArena():arena();for(let s=S.sea?0:-480;s<=(S.sea?240:160);s+=5)for(let l=-150;l<=150;l+=5){const i=Math.floor((D.y+f.y*s+n.y*l)/10)*220+Math.floor((D.x+f.x*s+n.x*l)/10);if(B.W.grid[i]>=4)B.W.grid[i]=B.W.baseGrid[i]=3;}}
   G.reachAll=null;B.computeLock();
   const{D,f,n}=S.sea?seaArena():arena(),at=(fw,la)=>({x:D.x+f.x*fw+n.x*la,y:D.y+f.y*fw+n.y*la});
-  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(!UNSEEN)e.seen=true;return e;});
+  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(kind==='kust')e.face=Math.atan2(-f.y,-f.x);if(!UNSEEN)e.seen=true;return e;});
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
   /* cover: troops hidden from the air as in buildings; moved: they moved this far since they were seen, so the known place is stale;
      hide: defenders nobody has seen yet; need: the ones that must fall for a win (default all) */
@@ -106,7 +108,7 @@ function play(name,rep){
     if(LOG&&S.sea&&Math.abs(t%10)<DT/2)for(const u of own)console.log(('     '+t.toFixed(0)).slice(-5)+'  · '+u.name+' '+Math.round(u.x)+','+Math.round(u.y)+' '+u.state+(u.kind==='gadda'?' · robotar '+u.ammo:''));
     for(const u of own){if(u.rtb&&!u.dead){rtbOnce.add(u.id);if(rtbT[u.id]==null)rtbT[u.id]=t;}else if(!u.dead)rtbT[u.id]=null;if(u.dead&&!seenDead.has(u.id)&&!u.spent){seenDead.add(u.id);const h=Object.entries(u.hitBy).sort((a,b)=>b[1]-a[1])[0],k=h&&G.enemies.find(e=>e.id===h[0]);
       deaths.push({kind:u.kind,rtb:rtbT[u.id]!=null,rtbS:rtbT[u.id]!=null?t-rtbT[u.id]:null,killer:k?k.kind:'?',d:k?Math.round(Math.hypot(k.x-u.x,k.y-u.y)):0});}}
-    if((S.need?S.need.map(k=>G.enemies[k]):G.enemies).every(e=>e.dead)){res='vinst';break;}
+    if(S.tyst?G.enemies.some(e=>e.silT>0):(S.need?S.need.map(k=>G.enemies[k]):G.enemies).every(e=>e.dead)){res='vinst';break;}
     // everyone out (the VARG, when there are any): play on for 25 s so that deaths on the way back count, then stop
     if(!S.sea&&own.filter(u=>!u.air||!own.some(v=>!v.air)).every(u=>u.dead||u.rtb||(u.air&&u.orders[0]&&u.orders[0].type==='rtb'))){/* HÖK in a wing with VARG follows them out */if(outT==null)outT=t;else if(t-outT>25){res='ute';break;}}else outT=null;}
   if(LOG)for(const l of [...G.log].reverse())console.log(('     '+(l.t!=null?l.t.toFixed(0):'')).slice(-5)+'  '+l.text);
