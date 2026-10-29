@@ -5791,8 +5791,9 @@ function mkEnemyMesh(e){
     g.add(mesh(box(.14,2.1,1.8),STL,-10.85,.75,0));g.add(mesh(box(.06,.12,.3),CON,-10.95,.9,.6));g.add(mesh(box(.2,.2,.3),mat(0x2a2a26),-10.9,2.05,0));
     for(const[x,z,r]of[[-8.2,1.4,.3],[-8.4,-1.6,-.4]]){const n=mesh(box(2.6,.06,2.4),NET,x,3.0,z);n.rotation.y=r;n.rotation.z=.35;g.add(n);}
     // ventilation hoods and the observation cupola with its slit, on the rock behind the turret
-    for(const[x,z]of[[-5.6,-3.2],[-5.2,3.4]]){g.add(mesh(cyl(.16,.16,1.6,6),STL,x,3.3,z));g.add(mesh(cyl(.45,.3,.25,8),STL,x,4.15,z));}
-    g.add(mesh(cyl(.95,1.15,1.1,10),STL,-3.6,3.5,6.2));g.add(mesh(cyl(1.0,1.0,.14,10),GRN2,-3.6,4.1,6.2));g.add(mesh(box(.3,.14,1.2),mat(0x15181c),-2.75,3.8,6.2));
+    /* the pipes and the cupola's concrete foot reach down into the rock, which falls away under them (Magnus 29 okt: the cupola hung in the air) */
+    for(const[x,z]of[[-5.6,-3.2],[-5.2,3.4]]){g.add(mesh(cyl(.16,.16,4,6),STL,x,2.1,z));g.add(mesh(cyl(.45,.3,.25,8),STL,x,4.15,z));}
+    g.add(mesh(cyl(1.35,1.9,4.2,10),CON2,-3.6,.9,6.2));g.add(mesh(cyl(.95,1.15,1.1,10),STL,-3.6,3.5,6.2));g.add(mesh(cyl(1.0,1.0,.14,10),GRN2,-3.6,4.1,6.2));g.add(mesh(box(.3,.14,1.2),mat(0x15181c),-2.75,3.8,6.2));
     g.add(mesh(cyl(.03,.03,3.2,4),STL,-4.4,5.4,6.8));
     // the turret: a faceted octagonal base, an angular body with a sloped front, the roof with its sights and camouflage, the mantlet and
     // the long barrel with its thermal sleeves, fume extractor and muzzle (+x is the muzzle)
