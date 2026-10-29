@@ -7,7 +7,7 @@
 //                                                 moln, cam:{rel,x,y,z}, look:{rel,x,y,z}}]}; rel = relative to the landing beach,
 //                                                 a missing y = that high over the ground (camUp, lookUp); rel:'birka' is Birka's own frame
 //                                                 (x across, z forward), rel:'station' the field station's plates (z out through them);
-//                                                 form (the island's shape, as ?form=); prep (in the series or a shot) is JavaScript run in the page first, with B = __BH and G = __BH.G
+//                                                 form (the island's shape, as ?form=); uppdrag (the mission, as ?uppdrag=; rel:'kust' is then the coast battery's frame, z out to sea); prep (in the series or a shot) is JavaScript run in the page first, with B = __BH and G = __BH.G
 // three.js r128 comes from tests/node_modules/three (npm install in tests) or the path in THREE_JS.
 const fs=require('fs'),path=require('path'),{execSync}=require('child_process');
 const {chromium}=require(execSync('npm root -g').toString().trim()+'/playwright');
@@ -31,7 +31,7 @@ const cloud=fs.existsSync('/opt/pw-browsers/chromium');
   // the screen layouts give the camera pane only part of the window, so render in a big window and scale down in the sheet
   const p=await b.newPage({viewport:{width:1600,height:900}});p.on('pageerror',e=>console.log('ERR',e.message));
   await p.route('**/*',r=>{const u=r.request().url();if(u.startsWith('file:'))return r.continue();if(u.includes('three.min.js'))return r.fulfill({path:three,contentType:'text/javascript'});r.abort();});
-  await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro'+(S.photo?'&photo':'')+(S.form?'&form='+S.form:''),{waitUntil:'commit',timeout:120000});
+  await p.goto(require('url').pathToFileURL(path.join(__dirname,'..','index.html')).href+'?seed='+seed+'&nointro'+(S.photo?'&photo':'')+(S.form?'&form='+S.form:'')+(S.uppdrag?'&uppdrag='+S.uppdrag:''),{waitUntil:'commit',timeout:120000});
   await p.waitForFunction(()=>globalThis.__BHstill&&globalThis.__BH&&__BH.G&&__BH.G.seed&&globalThis.__boot&&__boot.warm,null,{timeout:200000,polling:500});
   const prep=code=>code&&p.evaluate(c=>{const B=globalThis.__BH,G=B.G;return new Function('B','G',c)(B,G);},code);let prepped=false;
   // the flashing lights (sector lights, daymarks) are held lit unless the series or a shot says fyrar:false

@@ -544,7 +544,10 @@ const ENEMY={
   inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,mobile:true,leash:220,tag:'I'},
   at:{hp:35,range:170,vision:170,dmg:22,rate:.25,acc:.7,speed:4,value:0,label:'Pansarvärn',cls:'inf',camo:true,canAir:false,canGround:true,mobile:true,leash:220,tag:'PV'},
   light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,mobile:true,leash:500,tag:'LP'},
-  tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'}
+  tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'},
+  /* the coast battery of Kustbatteriet (issue 73, Magnus 29 okt): a fixed 12 cm turret built into the rock, after ERSTA (12 cm
+     tornautomatpjäs m/70). Step one is the model; what it fires at and that only BÄVER can blow it up come next */
+  kust:{hp:600,range:0,vision:150,dmg:0,rate:0,acc:0,value:0,label:'Kustartilleri',cls:'armor',camo:true,canAir:false,canGround:false,tag:'KA'}
 };
 /* salvage: buildings Bäver can demolish (full value) or guns can shoot apart (less, fuel depots explode) */
 const STRUCT={
@@ -4101,10 +4104,15 @@ const misOpen=(gx,gy,r)=>{if(misTreeW!==WORLD){misTreeW=WORLD;misTreeS=new Set((
 function misSetup(){const L=WORLD.landing,far=(x,y,d)=>Math.hypot(x-L.x,y-L.y)>d&&G.relays.every(r=>Math.hypot(x-r.x,y-r.y)>110),h=(gx,gy,k)=>hash2(gx,gy,G.seed*7+k);
   const addE=(id,kind,p,ex)=>{const e=makeEnemy(Object.assign({id,kind,x:p.x,y:p.y},ex||{}));G.enemies.push(e);return e;};
   if(G.mission==='kust'){/* two bunkers on the coast nearest the fairway, 40 to 60 m up from deep water, and the island's air defence a little inland */
-    const ok=(x,y,gx,gy)=>far(x,y,350)&&misNear(gx,gy,6,v=>v===DEEP)&&!misNear(gx,gy,3,v=>v===DEEP||v===SHAL)&&misOpen(gx,gy,1);
-    const a=misCell(ok,(x,y,gx,gy)=>-(fairX(WORLD,y)-x)+h(gx,gy,1)*40);if(!a){G.mission='frita';return;}
+    /* the battery on the granite of the coast, high over the water (Magnus 29 okt: built into the rock): bare rock round it counts most,
+       then height, then nearness to the fairway */
+    const hl=(x,y)=>{const W=WORLD;if(!W.hall)return 0;const nx=W.SX+1;let n=0;for(let dy=-20;dy<=20;dy+=10)for(let dx=-20;dx<=20;dx+=10)n+=W.hall[Math.round((y+dy)/WH*W.SY)*nx+Math.round((x+dx)/WW*W.SX)]?1:0;return n;};
+    const ok=(x,y,gx,gy)=>far(x,y,350)&&misNear(gx,gy,8,v=>v===DEEP)&&!misNear(gx,gy,2,v=>v===DEEP||v===SHAL)&&misOpen(gx,gy,1);
+    const a=misCell(ok,(x,y,gx,gy)=>hl(x,y)*12+heightAt(x,y)*4-(fairX(WORLD,y)-x)*.15+h(gx,gy,1)*20);if(!a){G.mission='frita';return;}
     const b=misCell((x,y,gx,gy)=>ok(x,y,gx,gy)&&Math.hypot(x-a.x,y-a.y)>30&&Math.hypot(x-a.x,y-a.y)<70,(x,y)=>-(fairX(WORLD,y)-x))||a;
-    G.misBat=[addE('KB1','turret',a,{bat:true}).id];if(b!==a)G.misBat.push(addE('KB2','turret',b,{bat:true}).id);
+    /* step one of the battery made over (Magnus 29 okt): one fixed turret in the rock, facing the fairway, in place of the two bunkers */
+    let sx=0,sy=0;for(let dy=-12;dy<=12;dy++)for(let dx=-12;dx<=12;dx++){const gx=Math.floor(a.x/CELL)+dx,gy=Math.floor(a.y/CELL)+dy;if(WORLD.grid[gy*GW+gx]===DEEP){sx+=dx;sy+=dy;}}
+    const fc=Math.atan2(sy,sx);/* out to the open water nearest it */const kb=addE('KB1','kust',a,{bat:true,face:fc});kb.aim=fc;G.misBat=[kb.id];void b;
     const lv=misCell((x,y,gx,gy)=>Math.hypot(x-a.x,y-a.y)>90&&Math.hypot(x-a.x,y-a.y)<140&&misOpen(gx,gy,1),(x,y,gx,gy)=>-(x-a.x)+h(gx,gy,2)*30);if(lv)addE('KLV','aa',lv);
     G.misHits=0;G.misNext=MIS_CFG.kustFirst;}
   else if(G.mission==='crew'){/* the crew in the island's far part, known within a ring; the ring's centre is off the crew */
@@ -5754,6 +5762,51 @@ function mkEnemyMesh(e){
     head.add(mesh(box(1.8,.4,2.4),RUST3,-.6,.9,0));head.add(mesh(box(.5,.5,.35),DK,.2,1.15,-.6));head.add(mesh(cyl(.02,.02,1.6,4),DK,-1.4,1.6,.8));
     head.add(mesh(box(.7,.8,1.0),MET,1.75,0,0));const b=mesh(cyl(.26,.3,5,8),DK,4.1,0,0);b.rotation.z=PI/2;head.add(b);head.add(mesh(box(.5,.42,.42),DK,6.55,0,0));
     g.add(head);g.userData.head=head;}
+  else if(e.kind==='kust'){
+    /* the coast battery (issue 73, Magnus 29 okt: a proper fixed coast artillery built into the rock), after ERSTA, 12 cm tornautomatpjäs
+       m/70: a granite knoll about 24 m across with the turret sunk in its top in a concrete collar, so that only the low faceted turret and
+       the long barrel stand above the rock. The turret is painted in the coast artillery's green, grey and brown; on the roof the
+       commander's sight, a periscope and a hatch. Behind it, on the landward side, a concrete portal cut into the rock with the steel door
+       to the works under it (where BÄVER puts its charge), two ventilation hoods and an armoured observation cupola on the rock, and a
+       camouflage net over the portal. +x is out to sea; the knoll turns with the coast (e.face) and the turret on its own */
+    const K=mkEnemyMesh.kust||(mkEnemyMesh.kust=(()=>{let s=7301;const rr=()=>(s=(s*16807)%2147483647)/2147483647;
+      const rock=sd=>{const ge=new THREE.IcosahedronGeometry(1,1),p=ge.attributes.position,key={};s=sd;
+        for(let i=0;i<p.count;i++){const kk=Math.round(p.getX(i)*9)+','+Math.round(p.getY(i)*9)+','+Math.round(p.getZ(i)*9);if(key[kk]===undefined)key[kk]=.84+rr()*.28;const f=key[kk];p.setXYZ(i,p.getX(i)*f,Math.max(p.getY(i)*f,-.35),p.getZ(i)*f);}
+        ge.computeVertexNormals();return ge;};
+      /* plain granite in two tones, so the bake merges the rock with the rest of the paint (vertex colours of its own were dropped
+         by the bake and the rock drew black) */
+      return{rocks:[rock(11),rock(23),rock(37),rock(41)]};})());
+    const CON=mat(0x8f897e),CON2=mat(0x77716a),STL=mat(0x3c3f3a),GRN=mat(0x5f6652),GRN2=mat(0x4a5143),BRN=mat(0x6d6450),NET=mat(0x3e4a30);
+    // the knoll: one big rock with the turret in its top, lower slabs out to sea and to the sides, the rear rock the portal is cut into
+    for(const[k,x,y,z,sx,sy,sz,ry]of[[0,1,-.9,0,9.5,4.4,9.5,0],[1,7.5,-.8,1.5,7,2.3,8,1.1],[2,0,-.7,8,6.5,2.9,4.5,.6],[3,0,-.7,-8,7,3.1,4.5,2.2],
+      [1,-5.5,-.6,0,5.5,5,5,0],[2,-8,-.6,6.8,4.6,3.2,4,.9],[3,-8,-.6,-6.8,4.6,3.4,4,2.6],[0,10,-.9,-4,4.5,1.4,4,.2],[1,4,-.9,-9.5,4,1.6,3.5,1.7]]){
+      const r=new THREE.Mesh(K.rocks[k],mat(k%2?0x8a857e:0x7f7b74));r.position.set(x,y-5,z);r.scale.set(sx,sy+5,sz);r.rotation.y=ry;g.add(r);}/* the foot 5 m deeper, so the rock does not float where the ground falls away to the sea */
+    // the concrete collar the turret turns in, its outer lip and a few drain slots
+    g.add(mesh(cyl(4.3,4.7,1.4,16),CON2,0,3.0,0));g.add(mesh(cyl(4.35,4.35,.18,16),CON,0,3.78,0));
+    for(let i=0;i<6;i++){const a=i/6*TAU+.26;g.add(mesh(box(.5,.12,.25),STL,Math.cos(a)*4.4,3.3,Math.sin(a)*4.4));}
+    // the portal on the landward side, in the face of the rear rock between two side rocks: a concrete face with a lintel, wing walls
+    // angled out, the steel door with its handle, a lamp over it, and a camouflage net hung over the rock above
+    g.add(mesh(box(2.4,2.8,5.2),CON2,-9.6,1.0,0));g.add(mesh(box(2.6,.4,5.8),CON,-9.7,2.5,0));
+    for(const sz of[-1,1]){const w=mesh(box(2.8,1.8,.45),CON2,-11.6,.5,sz*2.9);w.rotation.y=sz*.35;g.add(w);}
+    g.add(mesh(box(.14,2.1,1.8),STL,-10.85,.75,0));g.add(mesh(box(.06,.12,.3),CON,-10.95,.9,.6));g.add(mesh(box(.2,.2,.3),mat(0x2a2a26),-10.9,2.05,0));
+    for(const[x,z,r]of[[-8.2,1.4,.3],[-8.4,-1.6,-.4]]){const n=mesh(box(2.6,.06,2.4),NET,x,3.0,z);n.rotation.y=r;n.rotation.z=.35;g.add(n);}
+    // ventilation hoods and the observation cupola with its slit, on the rock behind the turret
+    for(const[x,z]of[[-5.6,-3.2],[-5.2,3.4]]){g.add(mesh(cyl(.16,.16,1.6,6),STL,x,3.3,z));g.add(mesh(cyl(.45,.3,.25,8),STL,x,4.15,z));}
+    g.add(mesh(cyl(.95,1.15,1.1,10),STL,-3.6,3.5,6.2));g.add(mesh(cyl(1.0,1.0,.14,10),GRN2,-3.6,4.1,6.2));g.add(mesh(box(.3,.14,1.2),mat(0x15181c),-2.75,3.8,6.2));
+    g.add(mesh(cyl(.03,.03,3.2,4),STL,-4.4,5.4,6.8));
+    // the turret: a faceted octagonal base, an angular body with a sloped front, the roof with its sights and camouflage, the mantlet and
+    // the long barrel with its thermal sleeves, fume extractor and muzzle (+x is the muzzle)
+    const head=new THREE.Group();head.position.y=3.85;
+    head.add(mesh(cyl(3.2,3.45,.8,8),GRN2,0,.4,0));head.add(mesh(box(4.6,1.05,4.3),GRN,-.5,1.3,0));
+    const gl=mesh(box(1.7,1.05,4.1),GRN,2.15,1.1,0);gl.rotation.z=-.55;head.add(gl);for(const sz of[-1,1]){const ch=mesh(box(1.4,1.0,1.2),GRN,1.4,1.25,sz*1.95);ch.rotation.y=sz*.5;head.add(ch);}
+    head.add(mesh(box(4.4,.14,4.1),GRN2,-.6,1.88,0));head.add(mesh(box(1.2,.7,3.4),GRN2,-3.1,1.25,0));
+    for(const[x,z,w,d,r,m]of[[.4,1.1,1.6,1.1,.4,BRN],[-1.9,-.9,1.4,1.5,-.3,BRN],[-.6,-1.6,1.1,.8,.9,STL],[-2.3,1.3,.9,1,.2,STL]]){const q=mesh(box(w,.04,d),m,x,1.97,z);q.rotation.y=r;head.add(q);}
+    head.add(mesh(cyl(.36,.42,.5,8),STL,-1.1,2.2,1.15));head.add(mesh(box(.2,.14,.5),mat(0x15181c),-.8,2.32,1.15));head.add(mesh(box(.42,.36,.6),STL,.5,2.13,-1.25));
+    head.add(mesh(cyl(.5,.5,.08,10),GRN2,-1.9,1.99,-.5));head.add(mesh(box(.5,.25,.5),STL,-3.2,1.75,1.3));
+    head.add(mesh(box(.9,1.1,1.5),GRN2,3.0,1.15,0));
+    const bar=(r1,r2,l,x)=>{const b=mesh(cyl(r1,r2,l,12),STL,x,1.15,0);b.rotation.z=PI/2;head.add(b);};
+    bar(.17,.21,7.6,7.2);bar(.25,.25,.45,4.4);bar(.25,.25,.45,6.1);bar(.28,.28,1.2,8.2);bar(.23,.23,.55,10.85);
+    g.add(head);g.userData.head=head;g.userData.face=true;}
   else if(e.kind==='aa'){
     // a light truck (made over 24 okt, Magnus: too lo-fi; the one before is kept in proto/modeller.html): a bonnet with grille, bumper
     // and lamps, a cab with a sloping windscreen, side windows, roof and mirrors, mudguards over three axles with hubs, a flatbed with
@@ -7492,6 +7545,9 @@ function sync3D(dtr){
     let m=R3.enemies.get(e.id);if(!m){m=mkEnemyMesh(e);D.add(m);R3.enemies.set(e.id,m);}
     const px=e.visibleNow?e.x:e.lx,py=e.visibleNow?e.y:e.ly;m.position.set(px,groundY(px,py),py);
     if(m.userData.truck){m.rotation.y=-e.hd;const st=!!e.sc&&(e.sc.ph!=='setup'||e.sc.t>SCOOT.aa.setup*.5);/* down while it packs and moves, up halfway through setting up */m.userData.head.rotation.y=st?PI:-(e.aim-e.hd);for(const b of m.userData.barrels)b.rotation.z=st?PI/2:PI/2-.9;}
+    else if(m.userData.face){m.rotation.y=-e.face;m.userData.head.rotation.y=-(e.aim-e.face);/* the coast battery's rock turns with the coast, its turret on its own */
+      /* and stands at the height of the ground at its portal, 11 m inland, where that is higher: the ground rises from the sea, and the portal was buried */
+      if(e.gy==null)e.gy=Math.max(groundY(px,py),groundY(px-Math.cos(e.face)*11,py-Math.sin(e.face)*11)-.3);m.position.y=e.gy;}
     else if(!e.mobile&&m.userData.head)m.userData.head.rotation.y=-e.aim;else m.rotation.y=-e.aim;
   }
   for(const[id,m]of R3.enemies)if(!seen.has(id)){const e=G.enemies.find(v=>v.id===id);if(e&&e.dead&&WRECK_KINDS.enemy.has(e.kind))blowApart(m,null,headOf(m));D.remove(m);R3.enemies.delete(id);}
@@ -10058,6 +10114,8 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
   /* rel: true for the landing beach, 'birka' for Birka's own frame (x across, z forward), 'station' for the field station's plates
      (z out from the building through the plates, x across) */
   const L=WORLD.landing,P=(v,d)=>{if(!v)return d;if(v.rel==='birka'){const q=shipPos(v.x,v.z);return{x:q[0],y:v.y,z:q[1]};}
+    /* rel:'kust' is the coast battery's own frame (z out to sea along its face, x across), shown as seen */
+    if(v.rel==='kust'){const e=G.enemies.find(q=>q.kind==='kust');if(e){e.seen=true;e.lx=e.x;e.ly=e.y;const a=e.face;return{x:e.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:e.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}}
     if(v.rel==='station'){const r=G.relays.find(q=>q.type==='verkstad'||q.type==='varv'),pd=servicePads(r),b=pointBld(r),m={x:pd.reduce((a,q)=>a+q.x,0)/pd.length,y:pd.reduce((a,q)=>a+q.y,0)/pd.length},a=Math.atan2(m.y-b.y,m.x-b.x);
       return{x:m.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:m.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}
     return{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z};},c=P(o.cam),t=P(o.look);

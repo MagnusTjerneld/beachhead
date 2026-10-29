@@ -426,6 +426,51 @@ function mkEnemyMesh(e){
     head.add(mesh(box(1.8,.4,2.4),RUST3,-.6,.9,0));head.add(mesh(box(.5,.5,.35),DK,.2,1.15,-.6));head.add(mesh(cyl(.02,.02,1.6,4),DK,-1.4,1.6,.8));
     head.add(mesh(box(.7,.8,1.0),MET,1.75,0,0));const b=mesh(cyl(.26,.3,5,8),DK,4.1,0,0);b.rotation.z=PI/2;head.add(b);head.add(mesh(box(.5,.42,.42),DK,6.55,0,0));
     g.add(head);g.userData.head=head;}
+  else if(e.kind==='kust'){
+    /* the coast battery (issue 73, Magnus 29 okt: a proper fixed coast artillery built into the rock), after ERSTA, 12 cm tornautomatpjäs
+       m/70: a granite knoll about 24 m across with the turret sunk in its top in a concrete collar, so that only the low faceted turret and
+       the long barrel stand above the rock. The turret is painted in the coast artillery's green, grey and brown; on the roof the
+       commander's sight, a periscope and a hatch. Behind it, on the landward side, a concrete portal cut into the rock with the steel door
+       to the works under it (where BÄVER puts its charge), two ventilation hoods and an armoured observation cupola on the rock, and a
+       camouflage net over the portal. +x is out to sea; the knoll turns with the coast (e.face) and the turret on its own */
+    const K=mkEnemyMesh.kust||(mkEnemyMesh.kust=(()=>{let s=7301;const rr=()=>(s=(s*16807)%2147483647)/2147483647;
+      const rock=sd=>{const ge=new THREE.IcosahedronGeometry(1,1),p=ge.attributes.position,key={};s=sd;
+        for(let i=0;i<p.count;i++){const kk=Math.round(p.getX(i)*9)+','+Math.round(p.getY(i)*9)+','+Math.round(p.getZ(i)*9);if(key[kk]===undefined)key[kk]=.84+rr()*.28;const f=key[kk];p.setXYZ(i,p.getX(i)*f,Math.max(p.getY(i)*f,-.35),p.getZ(i)*f);}
+        ge.computeVertexNormals();return ge;};
+      /* plain granite in two tones, so the bake merges the rock with the rest of the paint (vertex colours of its own were dropped
+         by the bake and the rock drew black) */
+      return{rocks:[rock(11),rock(23),rock(37),rock(41)]};})());
+    const CON=mat(0x8f897e),CON2=mat(0x77716a),STL=mat(0x3c3f3a),GRN=mat(0x5f6652),GRN2=mat(0x4a5143),BRN=mat(0x6d6450),NET=mat(0x3e4a30);
+    // the knoll: one big rock with the turret in its top, lower slabs out to sea and to the sides, the rear rock the portal is cut into
+    for(const[k,x,y,z,sx,sy,sz,ry]of[[0,1,-.9,0,9.5,4.4,9.5,0],[1,7.5,-.8,1.5,7,2.3,8,1.1],[2,0,-.7,8,6.5,2.9,4.5,.6],[3,0,-.7,-8,7,3.1,4.5,2.2],
+      [1,-5.5,-.6,0,5.5,5,5,0],[2,-8,-.6,6.8,4.6,3.2,4,.9],[3,-8,-.6,-6.8,4.6,3.4,4,2.6],[0,10,-.9,-4,4.5,1.4,4,.2],[1,4,-.9,-9.5,4,1.6,3.5,1.7]]){
+      const r=new THREE.Mesh(K.rocks[k],mat(k%2?0x8a857e:0x7f7b74));r.position.set(x,y-5,z);r.scale.set(sx,sy+5,sz);r.rotation.y=ry;g.add(r);}/* the foot 5 m deeper, so the rock does not float where the ground falls away to the sea */
+    // the concrete collar the turret turns in, its outer lip and a few drain slots
+    g.add(mesh(cyl(4.3,4.7,1.4,16),CON2,0,3.0,0));g.add(mesh(cyl(4.35,4.35,.18,16),CON,0,3.78,0));
+    for(let i=0;i<6;i++){const a=i/6*TAU+.26;g.add(mesh(box(.5,.12,.25),STL,Math.cos(a)*4.4,3.3,Math.sin(a)*4.4));}
+    // the portal on the landward side, in the face of the rear rock between two side rocks: a concrete face with a lintel, wing walls
+    // angled out, the steel door with its handle, a lamp over it, and a camouflage net hung over the rock above
+    g.add(mesh(box(2.4,2.8,5.2),CON2,-9.6,1.0,0));g.add(mesh(box(2.6,.4,5.8),CON,-9.7,2.5,0));
+    for(const sz of[-1,1]){const w=mesh(box(2.8,1.8,.45),CON2,-11.6,.5,sz*2.9);w.rotation.y=sz*.35;g.add(w);}
+    g.add(mesh(box(.14,2.1,1.8),STL,-10.85,.75,0));g.add(mesh(box(.06,.12,.3),CON,-10.95,.9,.6));g.add(mesh(box(.2,.2,.3),mat(0x2a2a26),-10.9,2.05,0));
+    for(const[x,z,r]of[[-8.2,1.4,.3],[-8.4,-1.6,-.4]]){const n=mesh(box(2.6,.06,2.4),NET,x,3.0,z);n.rotation.y=r;n.rotation.z=.35;g.add(n);}
+    // ventilation hoods and the observation cupola with its slit, on the rock behind the turret
+    for(const[x,z]of[[-5.6,-3.2],[-5.2,3.4]]){g.add(mesh(cyl(.16,.16,1.6,6),STL,x,3.3,z));g.add(mesh(cyl(.45,.3,.25,8),STL,x,4.15,z));}
+    g.add(mesh(cyl(.95,1.15,1.1,10),STL,-3.6,3.5,6.2));g.add(mesh(cyl(1.0,1.0,.14,10),GRN2,-3.6,4.1,6.2));g.add(mesh(box(.3,.14,1.2),mat(0x15181c),-2.75,3.8,6.2));
+    g.add(mesh(cyl(.03,.03,3.2,4),STL,-4.4,5.4,6.8));
+    // the turret: a faceted octagonal base, an angular body with a sloped front, the roof with its sights and camouflage, the mantlet and
+    // the long barrel with its thermal sleeves, fume extractor and muzzle (+x is the muzzle)
+    const head=new THREE.Group();head.position.y=3.85;
+    head.add(mesh(cyl(3.2,3.45,.8,8),GRN2,0,.4,0));head.add(mesh(box(4.6,1.05,4.3),GRN,-.5,1.3,0));
+    const gl=mesh(box(1.7,1.05,4.1),GRN,2.15,1.1,0);gl.rotation.z=-.55;head.add(gl);for(const sz of[-1,1]){const ch=mesh(box(1.4,1.0,1.2),GRN,1.4,1.25,sz*1.95);ch.rotation.y=sz*.5;head.add(ch);}
+    head.add(mesh(box(4.4,.14,4.1),GRN2,-.6,1.88,0));head.add(mesh(box(1.2,.7,3.4),GRN2,-3.1,1.25,0));
+    for(const[x,z,w,d,r,m]of[[.4,1.1,1.6,1.1,.4,BRN],[-1.9,-.9,1.4,1.5,-.3,BRN],[-.6,-1.6,1.1,.8,.9,STL],[-2.3,1.3,.9,1,.2,STL]]){const q=mesh(box(w,.04,d),m,x,1.97,z);q.rotation.y=r;head.add(q);}
+    head.add(mesh(cyl(.36,.42,.5,8),STL,-1.1,2.2,1.15));head.add(mesh(box(.2,.14,.5),mat(0x15181c),-.8,2.32,1.15));head.add(mesh(box(.42,.36,.6),STL,.5,2.13,-1.25));
+    head.add(mesh(cyl(.5,.5,.08,10),GRN2,-1.9,1.99,-.5));head.add(mesh(box(.5,.25,.5),STL,-3.2,1.75,1.3));
+    head.add(mesh(box(.9,1.1,1.5),GRN2,3.0,1.15,0));
+    const bar=(r1,r2,l,x)=>{const b=mesh(cyl(r1,r2,l,12),STL,x,1.15,0);b.rotation.z=PI/2;head.add(b);};
+    bar(.17,.21,7.6,7.2);bar(.25,.25,.45,4.4);bar(.25,.25,.45,6.1);bar(.28,.28,1.2,8.2);bar(.23,.23,.55,10.85);
+    g.add(head);g.userData.head=head;g.userData.face=true;}
   else if(e.kind==='aa'){
     // a light truck (made over 24 okt, Magnus: too lo-fi; the one before is kept in proto/modeller.html): a bonnet with grille, bumper
     // and lamps, a cab with a sloping windscreen, side windows, roof and mirrors, mudguards over three axles with hubs, a flatbed with
@@ -519,7 +564,10 @@ const ENEMY={
   inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,mobile:true,leash:220,tag:'I'},
   at:{hp:35,range:170,vision:170,dmg:22,rate:.25,acc:.7,speed:4,value:0,label:'Pansarvärn',cls:'inf',camo:true,canAir:false,canGround:true,mobile:true,leash:220,tag:'PV'},
   light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,mobile:true,leash:500,tag:'LP'},
-  tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'}
+  tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'},
+  /* the coast battery of Kustbatteriet (issue 73, Magnus 29 okt): a fixed 12 cm turret built into the rock, after ERSTA (12 cm
+     tornautomatpjäs m/70). Step one is the model; what it fires at and that only BÄVER can blow it up come next */
+  kust:{hp:600,range:0,vision:150,dmg:0,rate:0,acc:0,value:0,label:'Kustartilleri',cls:'armor',camo:true,canAir:false,canGround:false,tag:'KA'}
 };
 
 const TYPES={
@@ -541,7 +589,7 @@ const SIZE_ACC={krok:1.1,drone:1,scout:.5};
 
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
 
-const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimA:.3,aimT:6,aimThr:.35};
+const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,clr:25,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimA:.3,aimT:6,aimThr:.35};
 
 const COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
 const KROK_SRC="kind:'krok',name:n===1?'KROK':'KROK-'+n,tag:n===1?'K':'K'+n,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},post:'def',heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};";
@@ -594,6 +642,7 @@ const US=[
 ];
 const THEM=[
   {id:'turret',name:'Bunker',move:'Fast',note:'Kamouflerad kanon i en betonggrop. Skjuter mot mark och flyg.'},
+  {id:'kust',name:'Kustartilleri',move:'Fast',note:'Uppdraget Kustbatteriet (29 okt): fast 12 cm-torn i berget efter ERSTA, med port på landsidan. Första steget är modellen; vad det skjuter mot och att bara BÄVER kan spränga det kommer sedan.'},
   {id:'tank',name:'Stridsvagn',move:'Band',note:'Rörlig reserv. Lika räckvidd som VARG mot mark.'},
   {id:'light',name:'Lätt pansar',move:'Hjul',note:'Snabb sexhjulig pansarbil med automatkanon.'},
   {id:'aa',name:'Luftvärn',move:'Hjul',note:'Lätt lastbil med automatkanon, bara mot flyg. Flyttar efter strid och när VARG kommer nära.'},
