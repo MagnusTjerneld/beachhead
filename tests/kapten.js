@@ -86,7 +86,7 @@ return function tick(G){
     const near=threatNear;
     const safe=p=>(d(p,L0)<250||(vc0&&d(p,vc0)<300))&&lowShare(G,p,100)>=.6;
     const covered=b=>tanks.filter(t=>!busySvc(t)&&b.sides.some(sd=>sd.z!==b.far&&d(t,sd)<300)).length>=2;
-    const job=[...G.relays.filter(r=>!r.captured&&!r.guards.some(id=>G.enemies.find(x=>x.id===id&&!x.dead))).map(r=>({type:'capture',relay:r,at:r})),
+    const job=[...G.relays.filter(r=>!r.captured&&(!r.hid||r.seen)&&!r.guards.some(id=>G.enemies.find(x=>x.id===id&&!x.dead))).map(r=>({type:'capture',relay:r,at:r})),
       /* a barrier with the VARG beside it is blown under their cover (ö 1490: a stridsvagn seen behind S1 kept the BÄVER off it and the
          wing could not reach the stridsvagn, for 20 minutes) */
       ...G.barriers.filter(b=>!b.cleared&&((!near(b,5)&&!b.sides.some(sd=>sd.z!==b.far&&near(sd,5)))||covered(b))).map(b=>({type:'clear',barrier:b,at:b,cov:covered(b)})),
@@ -157,7 +157,7 @@ return function tick(G){
     K.tgt=e;K.tgtT=K.tgtAt=G.time;K.tgtAny=false;K.bound=null;K.from={x:vc.x,y:vc.y};ord(e.kind==='aa'||aaNear(e)?ready:ready.concat(cover),{enemy:e});return;}
   // nothing in reach: the next bound towards the nearest point or barrier the wing can drive to
   if(K.bound&&G.time-K.bound.t<60&&ready.some(t=>d(t,K.bound)>40)){K.why='på väg';return;}
-  const objs=[...G.relays.filter(r=>!r.captured).map(r=>({x:r.x,y:r.y})),...G.barriers.filter(b=>!b.cleared).flatMap(b=>b.sides.filter(s=>s.z!==b.far).map(s=>({x:s.x,y:s.y})))]
+  const objs=[...G.relays.filter(r=>!r.captured&&(!r.hid||r.seen)).map(r=>({x:r.x,y:r.y})),...G.barriers.filter(b=>!b.cleared).flatMap(b=>b.sides.filter(s=>s.z!==b.far).map(s=>({x:s.x,y:s.y})))]
     .filter(o=>d(o,vc)>80&&reach(vc.x,vc.y,o.x,o.y)).sort((a,b)=>d(a,vc)-d(b,vc));
   if(!objs.length){K.why='inget mål';return;}
   /* the first objective whose next bound is clear of seen ground weapons; a weapon the VARG cannot get at that closes every way on is
