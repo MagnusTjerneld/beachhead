@@ -384,12 +384,12 @@ button:disabled{opacity:.45;cursor:default}
       <button class="btn big" id="tHow" type="button">Hur man spelar</button>
       <button class="btn big" id="tNew" type="button">Ny ö</button>
     </div>
-    <div class="tfoot">Prototyp 2 · <span id="tSeed"></span> · Esc eller Enter hoppar över</div>
+    <div class="tfoot"><span class="ver"></span> · <span id="tSeed"></span> · Esc eller Enter hoppar över</div>
   </div>
 </div>
 <div class="ov" id="intro" hidden>
   <div class="panel">
-    <h2><small>Prototyp 2 · testbana Kustfästet</small>Uppdrag Arkipelag</h2>
+    <h2><small><span class="ver"></span> · testbana Kustfästet</small>Uppdrag Arkipelag</h2>
     <ul>
       <li><span class="em">Läget:</span> en främmande makt har besatt öarna i Stockholms yttre skärgård. Basfartyget ligger utanför med obemannade enheter. Ta tillbaka ön, ö för ö, och skona det som går att skona: stugorna, bryggorna och båtarna är någons.</li>
       <li><span class="em">Ön:</span> kusten är klippor. Markfordon går i land på stranden framför fartyget (försvarad), i hamnen (lättare bevakad) eller ibland i en vik. Ön består av zoner på olika höjd, åtskilda av klippkanter, bergsryggar och grova gränsmurar av sten, och förbundna av pass. Klippor, ryggar och murar kan inte köras över. Öarna har olika form och ruggad kust med uddar, holmar och vikar: rund, lång ås, hästsko kring en lagun, två eller tre öar förbundna av smala näs, eller en ö med en lång udde. Varje variant är en ny karta.</li>
@@ -1892,6 +1892,8 @@ function makeUnit(kind,x,y){
 function makeEnemy(e){const st=ENEMY[e.kind];return Object.assign({},st,e,{px:e.x,py:e.y,hd:Math.random()*TAU,ammo:st.mag||0,sc:null,stale:null,maxhp:st.hp,cd:Math.random(),seen:false,visibleNow:false,reveal:0,lx:e.x,ly:e.y,hx:e.x,hy:e.y,alert:null,dead:false,avoid:false,aim:Math.random()*TAU,dir:1,ri:e.route?Math.floor(e.route.length/2):0,route:e.route?e.route.map(p=>({x:p.x,y:p.y})):null});}
 /* the start: BÄVER and KROK, and material for the captain to build the rest. The old start (HÖK, two VARG, BÄVER, 300 material)
    is the same value; tests and the bot keep it so their results compare */
+/* running version number, set by tests/version.js before each push to main (issue 95, Magnus 30 okt) */
+const VERSION=461;if(typeof document!=='undefined'&&document.querySelectorAll)document.querySelectorAll('.ver').forEach(e=>e.textContent='v'+VERSION);
 const START={res:500,units:['eng']};
 // the build bay on Birka's deck (ship coordinates: metres to starboard, metres forward); new units start there
 const BAY={lat:9,fwd:2};
