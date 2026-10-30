@@ -24,7 +24,7 @@ const sea=e=>{for(let d=150;d<=260;d+=10)for(let a=-1;a<=1;a+=.1){const x=e.x+Ma
   ok(!g.orders.some(o=>o.type==='attack')&&g.ammo===4,'GÄDDA does not fire at it while it is silent');
   until(()=>!g.orders.length,40);ok(Math.hypot(g.x-e.x,g.y-e.y)>e.seaRange&&g.hp===g.maxhp,'and goes out of its reach before it wakes ('+Math.round(Math.hypot(g.x-e.x,g.y-e.y))+' m)');}
 {start();const e=bat(),hr=G().relays.find(r=>r.type==='hamn');G().running=true;G().paused=false;for(const u of G().units)if(!u.carried)u.dead=true;for(const q of G().enemies)q.dead=q!==e?true:q.dead;hr.captured=true;
-  until(()=>G().harbor&&G().harbor.route,30);const R=G().harbor&&G().harbor.route||[];let near=1e9;for(const q of R)near=Math.min(near,Math.hypot(q.x-e.x,q.y-e.y));
+  until(()=>G().harbor&&G().harbor.secured,30);B.harborGo();/* she goes only on the order (issue 93) */until(()=>G().harbor&&G().harbor.route,30);const R=G().harbor&&G().harbor.route||[];let near=1e9;for(const q of R)near=Math.min(near,Math.hypot(q.x-e.x,q.y-e.y));
   ok(R.length>2&&near>e.seaRange+40,'Birka plans her way to the harbour round its reach ('+Math.round(near)+' m at the nearest, '+R.length+' poses)');
   ok(until(()=>G().harbor.docked,600),'and berths in the harbour');}
 {start();const g=G();g.running=true;g.time=1801;B.checkWin();ok(g.over&&g.failed,'it fails when the time is out');}
