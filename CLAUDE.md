@@ -8,6 +8,8 @@ Designdokumentet "Uppdrag Arkipelag: designdokument" (https://claude.ai/artifact
 - När något i spelet ändras så att dokumentet blir fel, rättas dokumentet samtidigt.
 - Ändra bara det som beslutet berör. Säg i svaret vad som ändrades i dokumentet.
 - Är det oklart om något är ett beslut eller bara en idé: fråga, eller för in det som öppen fråga.
+- Dokumentet har två delar (Magnus 30 okt). Fliken "Designen nu" beskriver spelet som det är, ordnat efter ämne, kort nog att läsas i sin helhet; ett beslut skriver om sitt avsnitt där i stället för att läggas till sist. Fliken "Beslutslogg" är den gamla löpande texten, som får nya rader om vad som beslutades och byggdes när, men inte behöver läsas för att veta hur spelet fungerar. Ämnen som ännu inte har ett avsnitt i Designen nu finns bara i loggen; de flyttas ett i taget, och Magnus läser varje avsnitt.
+- En öppen fråga står aldrig bara i dokumentet. Den blir en issue eller en punkt i en samlingsissue (till exempel 90 för banans utformning), och dokumentet hänvisar till numret. Står det "öppet" i dokumentet utan issuenummer är något fel; kontrollera det vid varje sammanslagning.
 
 ## Språk och stil
 
