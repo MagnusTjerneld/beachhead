@@ -13,4 +13,12 @@ const W=t.wk||[];ok(W.length>0,'VARG on the water leaves rings ('+W.length+')');
 ok(W.every(q=>q.z===B.WRING.vargK),'the rings are the small size ('+B.WRING.vargK+')');
 const b=G().units.find(u=>u.kind==='tank'&&u!==t);if(b){const n=(b.wk||[]).length;ok(!b.wk||b.wk.every(q=>q.z),'other VARG list is fine ('+n+')');}
 ok(W.length<=40,'few enough rings to be cheap ('+W.length+' of '+t.speed+' m/s)');
+// the second round (issue 81, Magnus 30 okt): a foam trail behind it, not much of it, and none ashore
+const F=t.wf||[];ok(F.length>0,'VARG on the water leaves foam patches ('+F.length+')');ok(F.length<=24&&F.length<=B.WRING.foamPool,'the foam trail is kept short ('+F.length+' of '+B.WRING.foamPool+')');
+ok(F.every(q=>q.o>0&&q.o<=.6&&q.g<=5),'the patches are soft and small');
+{const L=B.LANDING;let pt=null;for(let r=20;r<200&&!pt;r+=10)for(let k=0;k<16&&!pt;k++){const x=L.x+Math.cos(k)*r,y=L.y+Math.sin(k)*r;if(B.heightAt(x,y)>2)pt={x,y};}
+  if(pt&&b){b.x=pt.x;b.y=pt.y;b.wk=null;b.wf=null;b.wkL=null;b.wkP=null;b.orders=[];B.giveOrder(b,{type:'move',x:pt.x+40,y:pt.y,post:'off'});for(let i=0;i<60;i++)B.step(.05);
+    ok(!(b.wf&&b.wf.length)&&!(b.wk&&b.wk.length),'no rings or foam on land');}}
+// the particle cap: four VARG at speed on the water never push the spray past what the shared list allows
+{let n=0;for(const u of G().units)if(u.kind==='tank')n+=(u.wf||[]).length;ok(n<=B.WRING.foamPool,'foam in all stays inside its pool ('+n+')');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
