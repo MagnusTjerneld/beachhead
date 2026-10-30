@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fiendens fordon</title>
+<style>
+:root{--bg:#1b222b;--ink:#e8eef0;--dim:#9aa6ae}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px system-ui,sans-serif}
+#c{display:block;width:100%;height:100%}
+#lab{position:fixed;left:12px;top:10px;max-width:calc(100vw - 24px);color:var(--dim)}
+#lab b{color:var(--ink)}
+</style></head><body>
+<canvas id="c"></canvas><div id="lab"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Testbänk för fiendens stridsvagn och lätta pansar (issue 107, Magnus 30 okt): den gamla modellen ur index.html bredvid
+   skissen till den nya, med samma hjälpfunktioner och material som spelet, så att den nya kan flyttas in i mkEnemyMesh som den är.
+   Framåt är +x, som i spelet; tornet är en egen grupp på en pivot (userData.head) så att det flyger upp när vagnen sprängs.
+   node proto/fiendefordon.js [ut.jpg] renderar jämförelsen och räknar trianglarna. */
+const PI=Math.PI,MATS=new Map(),GEOS=new Map();
+function mat(c){const key=typeof c==='string'?c:'#'+c.toString(16).padStart(6,'0');if(!MATS.has(key))MATS.set(key,new THREE.MeshLambertMaterial({color:new THREE.Color(key)}));return MATS.get(key);}
+function box(w,h,d){const k='b'+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
+function cyl(a,b,h,n){const k='c'+a+','+b+','+h+','+n;if(!GEOS.has(k))GEOS.set(k,new THREE.CylinderGeometry(a,b,h,n));return GEOS.get(k);}
+function mesh(geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x||0,y||0,z||0);return o;}
+function pivotOn(T,x,y,z){for(const c of T.children){c.position.x-=x;c.position.y-=y;c.position.z-=z;}T.position.set(x,y,z);return T;}
+const RUST=mat(0x6a2a22),RUST2=mat(0x7a3328),RUST3=mat(0x5a241e),DK=mat(0x2a1a18),BLK=mat(0x1b1c1e),MET=mat(0x4a4440);
+const GUN=mat(0x18191b),GUN2=mat(0x26282b),LOW=mat(0x423834),FIT=mat(0x2c2b29);/* skissens: eldrör, undre skrov, beslag */
+
+/* ---------- den gamla, kopierad ur index.html (30 okt) ---------- */
+function oldTank(){const g=new THREE.Group();
+  const tracks=(L,TZ,TW,col)=>{for(const sz of[-1,1]){const z=sz*TZ;g.add(mesh(box(L-.6,.3,TW),BLK,0,.15,z));g.add(mesh(box(L-1.1,.3,TW),BLK,.1,1.25,z));
+    const fr=mesh(box(1.0,.3,TW),BLK,L/2-.5,.7,z);fr.rotation.z=-1.05;g.add(fr);const bk=mesh(box(.9,.3,TW),BLK,-L/2+.55,.7,z);bk.rotation.z=1.05;g.add(bk);
+    for(let i=0;i<5;i++){const w=mesh(cyl(.45,.45,TW*.8,10),DK,-2.6+i*1.3,.55,z);w.rotation.x=PI/2;g.add(w);}
+    const sp=mesh(cyl(.5,.5,TW*.9,10),MET,-L/2+.5,.95,z);sp.rotation.x=PI/2;g.add(sp);const id=mesh(cyl(.42,.42,TW*.9,10),MET,L/2-.45,.95,z);id.rotation.x=PI/2;g.add(id);
+    g.add(mesh(box(L-1.3,.6,.1),col,.1,1.15,sz*(TZ+TW/2+.05)));}};
+  tracks(8.2,1.8,.95,RUST3);
+  g.add(mesh(box(7.2,1.0,2.6),RUST3,0,1.05,0));g.add(mesh(box(6.4,.65,4.4),RUST,-.3,1.85,0));
+  const gl=mesh(box(1.8,.16,4.4),RUST,3.4,1.75,0);gl.rotation.z=-.4;g.add(gl);for(const z of[-1.6,1.6])g.add(mesh(box(.2,.25,.4),DK,4.0,1.6,z));
+  g.add(mesh(box(2.4,.1,3.8),mat(0x8a5a4a),-2.5,2.22,0));for(let i=0;i<5;i++)g.add(mesh(box(.12,.06,3),DK,-3.45+i*.42,2.3,0));
+  for(const z of[-1.3,1.3])g.add(mesh(box(.5,.45,.7),DK,-3.75,1.95,z));
+  const T=new THREE.Group(),t=(o)=>{T.add(o);return o;};
+  t(mesh(box(3.6,1.3,3.2),RUST2,-.4,2.85,0));for(const sz of[-1,1]){const ch=mesh(box(1.4,1.2,1.3),RUST2,1.4,2.8,sz*.95);ch.rotation.y=sz*.4;t(ch);}
+  t(mesh(box(1.4,.6,2.6),RUST3,-2.4,2.9,0));t(mesh(cyl(.38,.42,.4,8),RUST3,-.8,3.65,-.7));t(mesh(box(.45,.3,.4),DK,.3,3.6,.75));
+  for(const sz of[-1,1])for(let i=0;i<3;i++){const sm=mesh(cyl(.08,.08,.35,6),DK,.8-i*.22,3.2,sz*1.65);sm.rotation.x=sz*.8;t(sm);}
+  t(mesh(box(.7,.8,1.0),DK,2.05,3.0,0));const b=mesh(cyl(.24,.28,5.5,8),DK,4.6,3.1,0);b.rotation.z=PI/2;t(b);t(mesh(cyl(.32,.32,.7,8),DK,4.0,3.1,0).rotateZ(PI/2));
+  t(mesh(cyl(.025,.025,2,4),DK,-1.8,4.4,.9));pivotOn(T,-.4,2.85,0);g.add(T);g.userData.head=T;return g;}
+function oldLight(){const g=new THREE.Group();
+  for(const x of[-2,0,2])for(const z of[-1.55,1.55]){const w=mesh(cyl(.6,.6,.45,10),BLK,x,.6,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.25,.25,.47,6),MET,x,.6,z);hb.rotation.x=PI/2;g.add(hb);}
+  g.add(mesh(box(5.6,1.3,3.0),mat(0x7a2e26),-.2,1.45,0));const bow=mesh(box(1.4,1.0,2.9),mat(0x7a2e26),2.9,1.35,0);bow.rotation.z=.55;g.add(bow);
+  g.add(mesh(box(5.2,.12,3.1),mat(0x8a3a30),-.4,2.12,0));for(const z of[-1.6,1.6])g.add(mesh(box(5,.35,.12),mat(0x5a2420),-.3,1.6,z));
+  g.add(mesh(box(.8,.12,.8),DK,-1.8,2.2,.8));g.add(mesh(box(.8,.12,.8),DK,-1.8,2.2,-.8));for(const z of[-1.2,1.2])g.add(mesh(box(.15,.22,.35),DK,3.2,1.7,z));
+  const T=new THREE.Group();
+  T.add(mesh(box(2,1.0,2.4),mat(0x5a2420),-.4,2.6,0));T.add(mesh(box(.45,.4,.5),DK,.4,3.2,-.7));
+  const b=mesh(cyl(.13,.15,3,8),DK,1.9,2.75,0);b.rotation.z=PI/2;T.add(b);T.add(mesh(box(.3,.22,.22),DK,3.4,2.75,0));pivotOn(T,-.4,2.6,0);g.add(T);g.userData.head=T;
+  g.add(mesh(cyl(.025,.025,2,4),DK,-1.4,3.8,.9));return g;}
+
+/* ---------- skissen ---------- */
+/* a side profile [[x,y],...] extruded w wide across z, centred; taper pulls the sides in above y0 to k of the width at y1, for
+   sloped hull and turret sides */
+function prof(pts,w,taper){const s=new THREE.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));
+  const g=new THREE.ExtrudeGeometry(s,{depth:w,bevelEnabled:false,steps:1});g.translate(0,0,-w/2);
+  if(taper){const[y0,y1,k]=taper,P=g.attributes.position;for(let i=0;i<P.count;i++){const y=P.getY(i);if(y>y0)P.setZ(i,P.getZ(i)*(1-(1-k)*Math.min(1,(y-y0)/(y1-y0))));}g.computeVertexNormals();}
+  return g;}
+/* a cylinder lying along x (barrels) or z (wheels, drums) */
+const cx=(r1,r2,l,n,m,x,y,z)=>{const o=mesh(cyl(r1,r2,l,n),m,x,y,z);o.rotation.z=-PI/2;return o;};
+const cz=(r,l,n,m,x,y,z)=>{const o=mesh(cyl(r,r,l,n),m,x,y,z);o.rotation.x=PI/2;return o;};
+
+/* enemy tank after a T-72: six road wheels a side and a rubber skirt, a long sloped glacis with a splash board, an engine deck with
+   grilles and two drums on the rear, a low cast dome turret narrowing to the back with the commander's cupola and its heavy machine
+   gun on the right, the searchlight beside the gun, smoke dischargers on the front, a stowage bin and snorkel at the back, and a long
+   125 mm gun with a thermal sleeve and fume extractor */
+function newTank(){const g=new THREE.Group(),L=8.0,TZ=1.75,TW=.9;
+  for(const sz of[-1,1]){const z=sz*TZ;
+    g.add(mesh(box(6.0,.2,TW),BLK,0,.1,z));g.add(mesh(box(7.0,.16,TW),BLK,0,1.33,z));
+    for(const sx of[-1,1]){const s=mesh(box(1.25,.2,TW),BLK,sx*3.47,.5,z);s.rotation.z=sx*.72;g.add(s);}
+    for(let i=0;i<6;i++)g.add(cz(.44,TW*.78,7,FIT,-2.6+i*1.04,.52,z));
+    g.add(cz(.46,TW*.85,8,MET,-L/2+.45,.95,z));g.add(cz(.4,TW*.85,8,MET,L/2-.45,.95,z));
+    g.add(mesh(box(6.6,.5,.06),LOW,-.1,1.42,sz*(TZ+TW/2+.03)));}
+  /* the hull: narrow between the tracks, and its top plate wide over them, the glacis running through both */
+  const H=[[-3.75,.55],[2.9,.55],[3.95,1.15],[4.05,1.35],[2.35,2.12],[-2.9,2.12],[-3.75,1.95]];
+  g.add(mesh(prof(H,2.7),LOW));
+  g.add(mesh(prof([[-3.75,1.5],[3.72,1.5],[2.35,2.12],[-2.9,2.12],[-3.75,1.95]],4.46),RUST));
+  {const sb=mesh(box(.1,.24,2.7),RUST2,3.15,1.86,0);sb.rotation.z=-.42;g.add(sb);}
+  for(const z of[-1.45,1.45])g.add(mesh(box(.22,.18,.22),FIT,3.05,1.86,z));
+  g.add(mesh(box(2.0,.05,2.7),mat(0x4a201a),-2.55,2.14,0));for(let i=0;i<4;i++)g.add(mesh(box(.1,.06,2.4),FIT,-3.3+i*.5,2.18,0));
+  for(const z of[-.62,.62])g.add(cz(.3,.95,7,MET,-4.02,1.72,z));
+  g.add(cz(.16,3.0,7,mat(0x4a3a2a),-3.55,2.12,0));
+  for(const x of[1.0,-.1,-1.2])g.add(mesh(box(.95,.36,.55),LOW,x,2.3,1.9));
+  /* the turret */
+  const T=new THREE.Group(),t=o=>{T.add(o);return o;};
+  /* the dome's height at (x,z), a little under its true curve since its facets lie inside it; the parts on it stand there */
+  const dy=(x,z)=>{const ux=(x+.35)/1.85,uz=z/(1.6*(ux<0?1+.2*ux:1));return 2.3+.8*Math.sqrt(Math.max(0,1-ux*ux-uz*uz))-.04;};
+  t(mesh(cyl(1.5,1.6,.22,12),RUST2,-.35,2.22,0));
+  {const d=new THREE.SphereGeometry(1,16,6,0,2*PI,0,PI/2),P=d.attributes.position;for(let i=0;i<P.count;i++){const x=P.getX(i);if(x<0)P.setZ(i,P.getZ(i)*(1+.2*x));}d.computeVertexNormals();
+    const dm=mesh(d,RUST2,-.35,2.3,0);dm.scale.set(1.85,.8,1.6);t(dm);}
+  t(mesh(box(.55,.6,1.0),RUST2,1.5,2.66,0));t(cx(.3,.34,.5,8,GUN2,1.85,2.66,0));
+  t(cx(.18,.2,2.5,8,GUN2,3.3,2.66,0));for(const x of[2.45,5.3])t(cx(.21,.21,.2,8,GUN,x,2.66,0));
+  t(cx(.26,.26,.75,8,GUN,4.6,2.66,0));t(cx(.15,.17,2.3,8,GUN2,6.1,2.66,0));t(cx(.17,.17,.22,8,GUN,7.35,2.66,0));
+  {const y=dy(.9,.9)+.16;t(mesh(box(.32,.36,.32),FIT,.9,y,.9));t(cx(.17,.17,.1,8,mat(0x8a8a70),1.1,y,.9));}
+  for(const sz of[-1,1])for(let i=0;i<3;i++){const x=.55-i*.22,z=sz*(1.05+i*.06),s=mesh(cyl(.07,.07,.34,5),FIT,x,dy(x,z)+.08,z);s.rotation.z=-1.1;s.rotation.x=sz*.35;t(s);}
+  {const y=dy(-.65,.62);t(mesh(cyl(.42,.46,.28,8),RUST3,-.65,y+.14,.62));t(mesh(cyl(.4,.4,.06,8),FIT,-.65,y+.31,.62));
+  t(mesh(box(.3,.14,.14),FIT,-.45,y+.4,.62));t(cx(.035,.035,1.1,5,FIT,.2,y+.43,.62));}
+  t(mesh(cyl(.34,.34,.06,8),FIT,-.7,dy(-.7,-.62)+.03,-.62));t(mesh(box(.3,.3,.32),FIT,.35,dy(.35,-.7)+.13,-.7));
+  t(mesh(box(.62,.52,2.1),LOW,-2.3,2.6,0));t(cz(.09,1.7,6,FIT,-2.3,2.95,0));
+  t(mesh(cyl(.02,.02,2.2,4),FIT,-1.4,dy(-1.4,-.85)+1.08,-.85));
+  pivotOn(T,-.35,2.6,0);g.add(T);g.userData.head=T;return g;}
+/* light armour after a BTR-82A: eight wheels in two pairs with the gap of the side door between them, a long boat hull with a wedge
+   nose, a splash board and sides sloping in above the wheels, roof hatches and the engine grille at the back, and a small turret
+   with a 30 mm cannon, a coaxial machine gun, the gunner's sight and smoke dischargers */
+function newLight(){const g=new THREE.Group(),HC=mat(0x7a2e26),HD=mat(0x5a2420);
+  for(const x of[-2.45,-1.1,.9,2.25])for(const sz of[-1,1]){g.add(cz(.56,.42,12,BLK,x,.56,sz*1.38));g.add(cz(.24,.46,8,MET,x,.56,sz*1.38));}
+  g.add(mesh(prof([[-3.5,.78],[2.6,.78],[3.7,1.25],[3.78,1.42],[-3.5,1.42]],2.9),LOW));g.add(mesh(prof([[-3.5,1.42],[3.78,1.42],[2.45,2.05],[-3.1,2.05],[-3.5,1.6]],2.9,[1.42,2.05,.74]),HC));
+  {const sb=mesh(box(.08,.42,2.1),HD,3.18,1.75,0);sb.rotation.z=-.62;g.add(sb);}
+  for(const z of[-.95,.95])g.add(cx(.1,.1,.12,8,mat(0x8a8a70),3.7,1.45,z));
+  for(const sz of[-1,1]){g.add(mesh(box(.75,.62,.06),LOW,-.1,1.15,sz*1.46));g.add(mesh(box(5.2,.08,.08),FIT,-.35,1.42,sz*1.47));}
+  for(const x of[-1.6,-.7])for(const z of[-.45,.45])g.add(mesh(box(.6,.05,.55),FIT,x,2.08,z));
+  g.add(mesh(box(1.3,.05,1.5),FIT,-2.5,2.08,0));for(let i=0;i<4;i++)g.add(mesh(box(.08,.06,1.4),HD,-3.05+i*.36,2.12,0));
+  for(const z of[-.8,.8])g.add(mesh(cyl(.02,.02,2.2,4),FIT,-2.9,3.15,z));
+  const T=new THREE.Group(),t=o=>{T.add(o);return o;};
+  t(mesh(cyl(.78,.82,.18,12),HD,.4,2.13,0));
+  t(mesh(prof([[-.55,2.15],[.95,2.15],[1.15,2.4],[.85,2.72],[-.45,2.72],[-.65,2.4]],1.5,[2.4,2.72,.78]),HD));
+  t(cx(.07,.08,2.5,6,GUN,2.35,2.48,-.1));t(cx(.1,.1,.24,6,GUN,3.65,2.48,-.1));t(cx(.11,.11,.4,6,GUN2,1.25,2.48,-.1));
+  t(cx(.035,.035,.8,5,GUN,1.5,2.36,.32));
+  t(mesh(box(.32,.26,.3),FIT,.15,2.86,.42));t(mesh(cyl(.28,.28,.05,8),FIT,.0,2.75,-.32));
+  for(const sz of[-1,1])for(let i=0;i<3;i++){const y=2.45+i*.11,w=.75*(1-.22*Math.min(1,(y-2.4)/.32));const s=mesh(cyl(.06,.06,.3,6),FIT,-.4,y,sz*(w+.07));s.rotation.x=sz*1.0;t(s);}/* on the turret's sloping side */
+  pivotOn(T,.4,2.45,0);g.add(T);g.userData.head=T;return g;}
+
+/* ---------- scenen ---------- */
+const R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(1);
+const S=new THREE.Scene();S.background=new THREE.Color(0x8ea4b4);
+S.add(new THREE.HemisphereLight(0xdfe8f0,0x5a5040,.75));const sun=new THREE.DirectionalLight(0xfff2e0,.85);sun.position.set(30,50,25);S.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0x6a7250));ground.rotation.x=-PI/2;S.add(ground);
+const tris=o=>{let n=0;o.traverse(c=>{if(!c.isMesh)return;const gg=c.geometry;n+=(gg.index?gg.index.count:gg.attributes.position.count)/3;});return Math.round(n);};
+const MODELS={tank:{old:oldTank,new:newTank},light:{old:oldLight,new:newLight}};
+let cur=null;
+function show(kind,ver){if(cur)S.remove(cur);cur=MODELS[kind][ver]();cur.scale.setScalar(.8);S.add(cur);return tris(cur);}
+/* a camera at the bearing a (degrees from the front, round to the left), height h and distance d, looking at the model's middle */
+const cam=new THREE.PerspectiveCamera(30,1,.1,500);
+function shoot(a,h,d,w,hh,lx,ly){R.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();const r=a*PI/180;cam.position.set(Math.cos(r)*d+(lx||0),h,Math.sin(r)*d);cam.lookAt(lx==null?.4:lx,ly==null?1.4:ly,0);R.render(S,cam);return R.domElement.toDataURL('image/jpeg',.9);}
+/* parts whose box, grown 2 cm, meets no other part's box: a floating part, or one only the eye can judge (on the dome) */
+function loose(){cur.updateMatrixWorld(true);const L=[];cur.traverse(c=>{if(c.isMesh)L.push({c,b:new THREE.Box3().setFromObject(c)});});
+  return L.filter(a=>!L.some(o=>o!==a&&a.b.clone().expandByScalar(.02).intersectsBox(o.b))).map(a=>{const p=a.b.getCenter(new THREE.Vector3());return a.c.geometry.type.replace('Geometry','')+' vid '+[p.x,p.y,p.z].map(v=>(v/.8).toFixed(2)).join(',');});}
+window.BENCH={show,shoot,tris:()=>tris(cur),loose};
+/* interactive: the new tank turning, unless the render script drives the page */
+if(!location.search.includes('bench')){const lab=document.getElementById('lab');let t0=performance.now(),k='tank',v='new';
+  const n=show(k,v);lab.innerHTML='<b>Ny stridsvagn</b> · '+n+' trianglar · klicka för att växla';
+  document.body.onclick=()=>{[k,v]=k==='tank'&&v==='new'?['tank','old']:k==='tank'?['light','new']:v==='new'?['light','old']:['tank','new'];
+    lab.innerHTML='<b>'+(v==='new'?'Ny':'Gammal')+' '+(k==='tank'?'stridsvagn':'lätt pansar')+'</b> · '+show(k,v)+' trianglar · klicka för att växla';};
+  const loop=()=>{const s=(performance.now()-t0)/1000;R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();
+    cam.position.set(Math.cos(s*.3)*16,6,Math.sin(s*.3)*16);cam.lookAt(.4,1.4,0);R.render(S,cam);requestAnimationFrame(loop);};loop();}
+</script></body></html>
