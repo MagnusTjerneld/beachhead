@@ -5099,13 +5099,19 @@ const TESTFALL=[
   set(){const T=TF.gtarget();TF.only(T.e.id);T.e.seen=true;TF.spotter(T.e,T.sp);const u=TF.boat(T.sp,Math.atan2(T.e.y-T.sp.y,T.e.x-T.sp.x),true);u.ammo=1;G.res=Math.max(G.res,400);G.tfPing={x:T.e.x,y:T.e.y};},
   check:()=>G.units.some(u=>u.kind==='gadda'&&u.ammo===1)},
  {id:'gsjo',t:'GÄDDA: bygge och sjösättning',seed:9052,when:TF_DAY,note:'Fienden är borta och lagret har 500 material. Bygg GÄDDA på varvet (220): den skrivs ut i byggbädden, portalkranen ställer sig i främre änden av rälsen, och Birkas stora kran svänger in över byggbädden, sänker kroken, hissar upp båten över portalkranen, svänger ut och sänker den i vattnet vid aktern på cirka 15 s. KROK ska inte röra sig.',
-  set(){for(const e of G.enemies)e.dead=true;G.res=500;},check:()=>G.res>=440}
+  set(){for(const e of G.enemies)e.dead=true;G.res=500;},check:()=>G.res>=440},
+/* the islands where the captain bot stands still for the whole game (issue 109): the game's own start, as the bot has it, with the coast's
+   bunkers, for Magnus to play and record (Spela in testrunda), so that the bot can learn how he opens */
+{id:'kap3019',t:'Kaptenboten fastnar: Råholmen',seed:3019,doc:'fastning',coast:true,when:{uppdrag:'frita'},keep:['eng'],note:'Spelets start på ö 3019 (fästning, Frita ön): BÄVER, KROK och 500 material. Kaptenboten bygger GETING och två VARG och står sedan still hela banan: lätt pansar P1 i ruta E6 täcks av luftvärn L2, och VARG når ingen eldställning mot L2. Spela in (Spela in testrunda) och lös det som du skulle göra.',
+  set(){},check:()=>G.res===500&&G.units.length===1&&G.units[0].kind==='eng'&&G.enemies.length>40},
+{id:'kap2718',t:'Kaptenboten fastnar: ö 2718',seed:2718,doc:'fastning',coast:true,when:{uppdrag:'frita'},keep:['eng'],note:'Spelets start på ö 2718 (fästning, Frita ön): BÄVER, KROK och 500 material. Kaptenboten bygger GETING och två VARG och står sedan still: lätt pansar P1 cirka 650 m bort spärrar nästa steg, och husen vid landstigningen står inom fiendens räckvidd, så BÄVER river inget och materialet tar slut. Spela in (Spela in testrunda) och lös det som du skulle göra.',
+  set(){},check:()=>G.res===500&&G.units.length===1&&G.units[0].kind==='eng'&&G.enemies.length>40}
 ];
 /* start a case: the island, the units on it, paused, and the note in the log */
 function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(hasDOM&&TITLE.on)startGame();
   /* a fixed doctrine: auto draws one at random each start, and the cases name the enemy's guns */
   /* the cases were set up on the defence before the coast's bunkers (26 okt) and name its guns, so they keep it */
-  const c0=COAST.n;COAST.n=0;try{if(hasDOM)restart(T.seed,T.doc||'framskjutet',T.when||{});else newGame(T.seed,T.doc||'framskjutet',T.when||{});}finally{COAST.n=c0;}
+  const c0=COAST.n;COAST.n=T.coast?c0:0;try{if(hasDOM)restart(T.seed,T.doc||'framskjutet',T.when||{});else newGame(T.seed,T.doc||'framskjutet',T.when||{});}finally{COAST.n=c0;}
   G.units=G.units.filter(u=>T.keep&&T.keep.includes(u.kind));G.wings={};G.selIds=[];G.sel=null;T.set();G.testfall=T.id;G.running=true;G.paused=true;
   if(hasDOM){if(R3){for(const m of[R3.units,R3.enemies,R3.wrecks,R3.fx,R3.kroks,R3.structs]){for(const o of m.values())R3.dyn.remove(o);m.clear();}R3.snap=true;}
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
