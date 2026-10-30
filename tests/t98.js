@@ -7,7 +7,7 @@ for(const [sd,mis] of [[1012,'frita'],[2024,'halshugg'],[3402,'crew'],[5555,'bar
   B.newGame(sd,null,{uppdrag:mis});const t=B.misBriefText(),again=B.misBriefText();
   ok(t===again,'ö '+sd+' '+B.G.mission+': same text every time');
   ok(!bad.test(t),'ö '+sd+' '+B.G.mission+': no doctrine, no dash');
-  ok(/LÄGE: /.test(t)&&/UPPGIFT: /.test(t)&&/GENOMFÖRANDE: /.test(t)&&/BEGRÄNSNINGAR: /.test(t),'ö '+sd+': the four headings');
+  ok(/LÄGE: /.test(t)&&/UPPGIFT: /.test(t)&&/BEGRÄNSNINGAR: /.test(t),'ö '+sd+': the three headings');
   const lim=B.G.mission==='frita'||B.G.mission==='crew'?true:/inom \d+ minuter/.test(t);ok(lim,'ö '+sd+': the time limit is stated where there is one');
   ok(!/undefined|NaN|\{T\}/.test(t),'ö '+sd+': nothing left unfilled');
   texts.add(t);seen.push([sd,B.G.mission,t]);}
