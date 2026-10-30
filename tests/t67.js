@@ -29,7 +29,7 @@ ok(B.SIZE_ACC.scout<B.SIZE_ACC.drone&&B.SIZE_ACC.drone<B.SIZE_ACC.krok,'small ai
 // 4. what we knew fades and is forgotten once it has moved out of sight
 {const G=setup();const L=G.relays[0],a=put(G,'aa',L.x,L.y);a.seen=true;a.lx=a.x;a.ly=a.y;B.startScoot(a);
   run(30);ok(a.stale!=null||!a.seen,'the old position becomes a fading mark when the AA has moved unseen');
-  run(45);ok(!a.seen,'and is forgotten after 40 s');}
+  run(45);ok(a.seen&&a.stale!=null&&G.time-a.stale>40,'and turns grey after 40 s instead of being dropped (issue 98)');}
 // 5. the MANPADS team fires its magazine, then moves while it reloads
 {const G=setup();const L=G.relays[0],r=put(G,'rb',L.x,L.y);const h=tame(B.makeUnit('drone',L.x+90,L.y));G.units.push(h);h.hp=h.maxhp=1e4;
   let shots=0,lastHp=h.hp;for(let i=0;i<8*20&&!r.sc;i++){B.step(.05);if(r.ammo<B.ENEMY.rb.mag-shots)shots=B.ENEMY.rb.mag-r.ammo;}

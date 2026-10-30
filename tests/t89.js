@@ -26,6 +26,13 @@ const clearAll=()=>{for(const e of G().enemies)e.dead=true;G().netAll=true;G().r
   if(!e)ok(false,'ö 2024 has an air defence');else{for(const x of G().enemies)if(x!==e)x.dead=true;e.seen=true;e.lx=e.x;e.ly=e.y;e.x+=150;e.hx=e.x;e.stale=G().time;
     const v=B.makeUnit('tank',e.lx+15,e.ly);G().units.push(v);B.step(.05);
     ok(!e.seen,'an air defence that drove off is forgotten when a VARG stands at its old place');}}
+// 4b. every enemy that moves goes grey after 40 s instead of being dropped, and is forgotten when an own unit looks at the empty place (issue 98)
+{B.newGame(2024,'fastning');G().running=true;const e=G().enemies.find(x=>x.kind==='tank'&&!x.dead)||G().enemies.find(x=>x.mobile&&x.kind!=='aa'&&x.kind!=='rb'&&!x.dead);
+  if(!e)ok(false,'ö 2024 has a mobile enemy that is not an air defence');else{for(const x of G().enemies)if(x!==e)x.dead=true;e.seen=true;e.lx=e.x;e.ly=e.y;e.x+=400;e.hx=e.x;e.hold=true;
+    for(const u of G().units)u.x=u.y=20;B.step(.05);const t0=G().time;ok(e.stale!=null&&e.seen,e.kind+' moved unseen: a fading mark');
+    for(let i=0;i<50*20&&G().time-t0<45;i++){e.x=e.lx+400;B.step(.05);}
+    ok(e.seen&&G().time-e.stale>40,e.kind+' still marked after 40 s (grey, not dropped)');
+    const v=B.makeUnit('tank',e.lx+15,e.ly);G().units.push(v);B.step(.05);ok(!e.seen,e.kind+' forgotten when a VARG stands at its old place');}}
 // 5. the harbour's menu sends Birka there from the beach once it is taken (ö 9001)
 {B.newGame(9001);clearAll();B.beachGo(true);until(()=>G().beach.st==='on',300);const hr=G().relays.find(r=>r.type==='hamn');
   if(!hr)ok(false,'ö 9001 has a harbour');else{ok(!B.harborItem({relay:hr}),'no harbour order before the harbour is taken');hr.captured=true;for(let i=0;i<60;i++)B.step(.05);

@@ -19,7 +19,7 @@ const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
 // 3. mines: buried, so a HÖK right above sees nothing; BÄVER's detector finds the field, the ground closes, the BÄVER clears it
 {B.newGame(8080);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;const m=G.mines[0];
  const h=G.units.find(u=>u.kind==='drone');h.x=m.x+20;h.y=m.y;h.alt=30;h.orders=[];h.orbit={x:h.x,y:h.y};run(G,1);ok(!m.found,'HÖK does not see buried mines');
- const e=G.units.find(u=>u.kind==='eng');e.x=m.x+40;e.y=m.y+5;run(G,1);
+ const e=G.units.find(u=>u.kind==='eng');e.x=m.x+20+m.r+8;e.y=m.y;run(G,1);ok(!m.found,'BÄVER does not find the field from 28 m outside its edge (detector 20 m, issue 98)');e.x=m.x+m.r+10;e.y=m.y;run(G,1);
  ok(m.found,'BÄVER detects minefield '+m.id);ok(m.walled.length>0,'found field closes '+m.walled.length+' cells');
  ok(G.log.some(l=>/Minfält upptäckt/.test(l.text)&&l.acts),'mine notice offers BÄVER');
  ok(B.callIn('eng',{mine:m}),'call-in BÄVER on minefield');for(let t=0;t<200&&!m.cleared;t++)run(G,1);
