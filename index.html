@@ -1917,7 +1917,7 @@ function newGame(seed,doc,when){
   const mis=MISSION[when&&when.uppdrag]?when.uppdrag:hasDOM?missionOf(seed):'frita';
   setDefense(WORLD,doc==='auto'?drawDoctrine(WORLD,MISSION[mis].docW):doc);
   if(WORLD.carrier0)Object.assign(CARRIER,WORLD.carrier0);/* Birka starts outside the beach again, even on the same island after a docking */
-  G={seed,doc:WORLD.plan.doctrine,mission:mis,failed:false,time:0,masts:[],res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,joy:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0,gadda:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
+  G={seed,doc:WORLD.plan.doctrine,mission:mis,failed:false,time:0,masts:[],res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,cam:null,mainMode:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0,gadda:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
     relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
@@ -4632,7 +4632,7 @@ function orderKrok(w){
    their rings on the chart until it ran again */
 function ping(x,y){(G.pings||(G.pings=[])).push({x,y,t0:performance.now()});}
 function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.override=false;u.waitT=0;}
-function dropCtrl(){stopFollowMe();G.ctrl=null;G.joy=null;G.firing=false;G.mlook=false;if(typeof document!=='undefined'&&document.pointerLockElement)document.exitPointerLock();}
+function dropCtrl(){stopFollowMe();G.ctrl=null;G.firing=false;G.mlook=false;if(typeof document!=='undefined'&&document.pointerLockElement)document.exitPointerLock();}
 function lastPost(u){return u.orders.length?u.orders[u.orders.length-1].post:u.post;}
 function defaultOrder(u,pk,post){
   if(u.kind==='gadda')return gaddaOrder(u,pk,post);
@@ -8004,7 +8004,6 @@ function drawHud(ctx,w,h){
     if(sw){nm(w/2,28);ctx.fillText('NED · '+u.name+' · '+Math.round(R3.pipAlt||0)+' M',w/2,54);}else nm(r.x+r.s/2,r.y+5);}
   if(G.mlook){const t=performance.now();if(t-(HOV.ct||0)>150){HOV.ct=t;HOV.cpk=hoverOf(pick('cam',w/2,h/2));}if(HOV.cpk)hoverTag(ctx,w/2+28,h/2+44,HOV.cpk,w,h,true);}
   else if(HOV.el===glC&&HOV.pk)hoverTag(ctx,HOV.x,HOV.y,HOV.pk,w,h);
-  if(G.joy){const j=G.joy,dx=clamp(j.x-j.x0,-55,55),dy=clamp(j.y-j.y0,-55,55);ctx.strokeStyle='rgba(240,196,90,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(j.x0,j.y0,55,0,TAU);ctx.stroke();ctx.fillStyle='rgba(240,196,90,.55)';ctx.beginPath();ctx.arc(j.x0+dx,j.y0+dy,18,0,TAU);ctx.fill();}
 }
 
 /* ---------- picking and input ---------- */
@@ -8087,7 +8086,6 @@ function onMove(e){
   if(rpan&&e.pointerId===rpan.id){const dx=e.offsetX-rpan.sx,dy=e.offsetY-rpan.sy;if(!rpan.moved&&Math.hypot(dx,dy)>5)rpan.moved=true;if(rpan.moved){mv.free=true;mv.cx=rpan.cx-dx/mapX.s;mv.cy=rpan.cy-dy/mapX.s;mapC.style.cursor='grabbing';}return;}
   if(pts.has(e.pointerId)){pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pinch&&pts.size>=2){const a=[...pts.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2,d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);const s0=fitS(size.map.w,size.map.h);mv.z=clamp(pinch.z0*d/pinch.d0,1,6);const ns=s0*mv.z;mv.cx=pinch.wm.x-(mx-size.map.w/2)/ns;mv.cy=pinch.wm.y-(my-size.map.h/2)/ns;return;}}
-  if(G.joy){G.joy.x=e.offsetX;G.joy.y=e.offsetY;return;}
   if(!ptr)return;const x=e.offsetX,y=e.offsetY;
   if(Math.hypot(x-ptr.x,y-ptr.y)>10&&!ptr.moved){ptr.moved=true;clearTimeout(ptr.lp);if(ptr.dragFrom)ptr.drag=true;}
   /* a drag in the camera view of a unit nobody controls turns the camera round it, sideways and up and down, as in the intro film
@@ -8102,7 +8100,6 @@ function onUp(e){
   if(rpan&&e.pointerId===rpan.id){const r=rpan;rpan=null;mapC.style.cursor='';if(!r.moved&&!G.mlook)openWheel(r.sx,r.sy,pick('map',r.sx,r.sy),mapC);return;}
   if(G.firing){G.firing=false;return;}
   if(pts.has(e.pointerId)){pts.delete(e.pointerId);if(pinch){if(pts.size<2)pinch=null;ptr=null;return;}}
-  if(G.joy){G.joy=null;return;}
   if(!ptr)return;clearTimeout(ptr.lp);const p=ptr;ptr=null;G.drag=null;G.box=null;
   if(p.orbit){G.camOrb=null;return;}
   if(p.lpFired)return;
@@ -8130,7 +8127,7 @@ function onUp(e){
 }
 for(const el of[mapC,glC]){
   el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);
-  el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;G.joy=null;pts.delete(e.pointerId);pinch=null;});
+  el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;pts.delete(e.pointerId);pinch=null;});
   el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on||performance.now()-mlookOffT<800)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
   el.addEventListener('pointermove',e=>{HOV.el=el;HOV.x=e.offsetX;HOV.y=e.offsetY;const t=performance.now();if(t-HOV.t>70){HOV.t=t;HOV.pk=G&&!TITLE.on?hoverOf(pick(viewKind(el),e.offsetX,e.offsetY)):null;}});
   el.addEventListener('pointerleave',()=>{if(HOV.el===el){HOV.el=null;HOV.pk=null;}});
@@ -8389,7 +8386,7 @@ function stopFollowMe(msg){if(!G.followMe)return;G.followMe=false;for(const v of
 function setCtrl(id){
   {const tu=id?unitById(id):null;if(tu&&!tu.kind.startsWith('krok')&&G.units.includes(tu)&&!heard(tu)){noContact([tu]);return;}}
   const prev=G.ctrl?unitById(G.ctrl):null;
-  if(!id){stopFollowMe(true);if(prev&&prev.kind==='krok'){krokHookStop(prev);prev.state=prev.carry?'back':'idle';}if(prev&&!prev.dead)say(prev,prev.kind==='mus'?prev.name+' står kvar och väntar.':'Tillbaka i autonomi.');G.ctrl=null;G.joy=null;G.firing=false;if(document.pointerLockElement)document.exitPointerLock();return;}
+  if(!id){stopFollowMe(true);if(prev&&prev.kind==='krok'){krokHookStop(prev);prev.state=prev.carry?'back':'idle';}if(prev&&!prev.dead)say(prev,prev.kind==='mus'?prev.name+' står kvar och väntar.':'Tillbaka i autonomi.');G.ctrl=null;G.firing=false;if(document.pointerLockElement)document.exitPointerLock();return;}
   const u=unitById(id);if(!u||u.dead)return;
   /* the wide layout's small picture is too small to drive in: the camera comes up into the active view */if(LAYOUT.on&&VW.small==='cam'){vwSwap(VW.act,'small');G.mainMode=VW.main;placePanes();}
   if(u.kind==='krok'){if(prev&&prev!==u)setCtrl(null);stopFollowMe(false);clearKrok(u);if(u.target){u.target.claimed=false;u.target=null;}u.retreat=false;if(u.state!=='back'||!u.carry)u.state='idle';
