@@ -8739,7 +8739,7 @@ function resultOf(){return{d:new Date().toISOString().slice(0,16),s:G.seed,m:G.m
 function resAllowed(){return hasDOM&&!G.testfall&&!(typeof FILM!=='undefined'&&FILM.on)&&!(typeof BENCH!=='undefined'&&BENCH.on);}
 function finishResult(){return resAllowed()?resSave(resultOf()):null;}
 function resDialog(open){$('resDlg').hidden=!open;if(!open)return;const list=resLoad(),B=$('rdBody');B.textContent='';
-  const mn=m=>(MISSION[m]||{name:m}).name,dn=o=>(DOCTRINE[o]||o||'').split(' ')[0];
+  const mn=m=>(MISSION[m]||{name:m}).name,dn=o=>({framskjutet:'Framskjutet',djup:'Djupförsvar',fastning:'Fästning',rorligt:'Rörligt'})[o]||o||'';
   const tbl=(h,rows)=>{const t=document.createElement('table'),hr=t.createTHead().insertRow();for(const x of h){const c=document.createElement('th');c.textContent=x;hr.appendChild(c);}
     const tb=t.createTBody();for(const [cells,cls] of rows){const tr=tb.insertRow();cells.forEach((x,i)=>{const c=tr.insertCell();c.textContent=x;if(cls&&cls[i])c.className=cls[i];});}return t;};
   const sec=(t,el)=>{const d=document.createElement('div'),h=document.createElement('h4');h.textContent=t;d.append(h,el);B.appendChild(d);};
