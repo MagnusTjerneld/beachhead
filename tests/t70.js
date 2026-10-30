@@ -54,7 +54,7 @@ const onPads=G=>Object.values(G.pads.ship||[]).filter(Boolean).length;
   const b=S(9,2);v.x=b.x;v.y=b.y;G.units.push(v);const q=S(60,0);B.giveOrder(v,{type:'move',x:q.x,y:q.y,post:'def'});let viaSide=false,wasIn=true;
   for(let i=0;i<20*40;i++){B.step(.05);const l=loc(v),inHull=Math.abs(l.lat)<16&&Math.abs(l.fwd)<45;if(wasIn&&!inHull){viaSide=l.lat>15&&l.fwd>-4&&l.fwd<8;break;}wasIn=inHull;}
   ok(viaSide,'a VARG in the build bay leaves by the side ramp');
-  if(G.harbor){G.harbor.secured=true;G.harbor.docked=false;run(5);ok(G.ramp.bow===0&&G.ramp.side===0,'under way both ramps are folded up');
+  if(G.harbor){G.harbor.secured=true;G.harbor.go=true;G.harbor.docked=false;run(5);ok(G.ramp.bow===0&&G.ramp.side===0,'under way both ramps are folded up');
     const w=B.makeUnit('tank',S(0,-80).x,S(0,-80).y);w.hp=50;G.units.push(w);B.sendToService(w,'ship');run(15);ok(!w.onPad&&/rampen/.test(w.state),'a VARG waits off the bow while the ramp is up ('+w.state+')');}
   else ok(true,'(no harbour on this island)');}
 // 8. at the quay berth Birka lies port side to the quay, bow to the pier; a BÄVER drives ashore by a ramp, and a VARG from land comes aboard by the bow

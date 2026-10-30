@@ -15,5 +15,5 @@ const until=(f,s)=>{for(let i=0;i<s*20;i++){if(f())return true;B.step(.05);}retu
 {B.testfall('strand');const G=B.G;G.paused=false;ok(B.beachGo(true)&&until(()=>G.beach.st==='on',300),'strand: she goes in onto the beach');}
 {B.testfall('strandhamn');const G=B.G;G.paused=false;ok(until(()=>G.harbor.wait,5),'strandhamn: the harbour waits for the captain');
   ok(B.beachGo(false)&&until(()=>G.harbor.docked,900),'strandhamn: she backs off the beach and docks in the harbour ('+(G.harbor.ph||G.beach.st)+')');}
-{B.testfall('kaj');const G=B.G;G.paused=false;ok(until(()=>G.harbor.docked,900),'kaj: from the anchorage she docks in the harbour ('+(G.harbor.ph||'-')+')');}
+{B.testfall('kaj');const G=B.G;G.paused=false;ok(!until(()=>G.harbor.docked||G.harbor.ph,30),'kaj: with the harbour taken she waits at the anchorage without an order');ok(B.harborGo()&&until(()=>G.harbor.docked,900),'kaj: on the order she docks in the harbour ('+(G.harbor.ph||'-')+')');}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

@@ -20,9 +20,10 @@ for(const[f,seed]of[['as',1000],['hastsko',1037],['udde',1111]]){
   for(const e of G.enemies)e.dead=true;/* the way in now runs along the coast to the quay: this test is about the docking, not the fight on the way */
   {const v2=B.makeUnit('eng',q.x+6,q.y);G.units.push(v2);v2.orders=[{type:'capture',relay:hr,post:'def'}];}/* the first one is usually shot by the guards */
   let t=0,sec=null,vmax=0,dvmax=0,lastV=0;
-  for(let i=0;i<20*900&&!G.harbor.docked;i++){B.step(.05);t+=.05;if(G.harbor.secured&&sec==null)sec=t;const hv=G.harbor.v;vmax=Math.max(vmax,hv);dvmax=Math.max(dvmax,(hv-lastV)/.05);lastV=hv;}
+  let ord=null;/* issue 93: the taken harbour waits for the captain's order, it never sends her by itself */
+  for(let i=0;i<20*900&&!G.harbor.docked;i++){B.step(.05);t+=.05;if(G.harbor.secured&&sec==null)sec=t;if(sec!=null&&ord==null&&t>sec+30){const moved=Math.hypot(B.CARRIER.x-c0.x,B.CARRIER.y-c0.y);ok(G.harbor.wait&&!G.harbor.ph&&moved<.01,f+': 30 s after the harbour was taken she still lies at the anchorage and waits ('+moved.toFixed(1)+' m)');ok(!!B.harborItem({relay:hr})&&B.harborGo(),f+': the harbour\'s menu offers the order and it starts her');ord=t;}const hv=G.harbor.v;vmax=Math.max(vmax,hv);dvmax=Math.max(dvmax,(hv-lastV)/.05);lastV=hv;}
   ok(hr.captured&&sec!=null&&sec<12,f+': BÄVER takes the harbour in '+(sec||0).toFixed(1)+' s once the guards are out, and that secures it');
-  ok(G.harbor.docked,f+': Birka docked after '+(t-(sec||0)).toFixed(0)+' s');
+  ok(G.harbor.docked&&ord!=null,f+': Birka docked after '+(t-(ord||0)).toFixed(0)+' s from the order');ok(!B.harborItem({relay:hr}),f+': no order is offered once she lies in the harbour');
   ok(vmax>B.BIRKA_MOVE.vmax*.88&&vmax<=B.BIRKA_MOVE.vmax*1.01,f+': top speed '+(vmax/0.5144).toFixed(1)+' knots');
   ok(dvmax<=B.BIRKA_MOVE.acc+1e-6,f+': acceleration capped ('+dvmax.toFixed(3)+' m/s2)');
   const d=W.harbor.dock;ok(Math.hypot(B.CARRIER.x-d.x,B.CARRIER.y-d.y)<.01&&Math.abs(B.CARRIER.a-d.a)<.01,f+': moored on the dock point and heading');
