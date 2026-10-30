@@ -84,7 +84,7 @@ function play(name,rep){
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
   /* cover: troops hidden from the air as in buildings; moved: they moved this far since they were seen, so the known place is stale;
      hide: defenders nobody has seen yet; need: the ones that must fall for a win (default all) */
-  if(S.cover)for(const e of G.enemies)if(e.kind==='at'||e.kind==='inf')e.cover=true;
+  if(S.cover)for(const e of G.enemies)if(e.kind==='at'||e.kind==='inf')e.inCover=true;
   if(S.moved)G.enemies.forEach((e,i)=>{if(e.kind!=='at'&&e.kind!=='inf')return;const a=Math.random()*6.283;e.lx=e.x+Math.cos(a)*S.moved;e.ly=e.y+Math.sin(a)*S.moved;});
   for(const k of S.hide||[])G.enemies[k].seen=false;
   G.units=[];const own=[],nt=S.own.tank||0,hk=(S.own.hok&&S.own.hok.length)?S.own.hok:HOK?['def']:[],back=-(S.dist||420);
