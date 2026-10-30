@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kamouflerade punkter</title>
+<style>
+:root{--bg:#1b222b;--ink:#e8eef0;--dim:#9aa6ae}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px system-ui,sans-serif}
+#c{display:block;width:100%;height:100%}
+#lab{position:fixed;left:12px;top:10px;max-width:calc(100vw - 24px);color:var(--dim)}
+#lab b{color:var(--ink)}
+</style></head><body>
+<canvas id="c"></canvas><div id="lab"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Testbänk för fältvarvet och ledningscentralen (issue 106, Magnus 30 okt): dagens modeller ur mkPointMesh i index.html bredvid
+   skisser som ligger så nära i terrängen som en verklig fältplats gör: ledningscentralen nedgrävd i en jordvall med grästak, nät över
+   fordonen och en låg mast; fältvarvet under kamouflagenät med tält och containrar i terrängfärger. Samma hjälpfunktioner och material
+   som spelet, och samma ram: gruppen ligger i punktens ram, 16 x 16 m, och punktens röda lampa (userData.top) finns kvar.
+   node proto/kamoflage.js [ut.jpg] renderar jämförelsen från marknivå och ovanifrån och räknar trianglarna. */
+const PI=Math.PI,MATS=new Map(),GEOS=new Map();
+function mat(c){const key=typeof c==='string'?c:'#'+c.toString(16).padStart(6,'0');if(!MATS.has(key))MATS.set(key,new THREE.MeshLambertMaterial({color:new THREE.Color(key)}));return MATS.get(key);}
+function box(w,h,d){const k='b'+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
+function cyl(a,b,h,n){const k='c'+a+','+b+','+h+','+n;if(!GEOS.has(k))GEOS.set(k,new THREE.CylinderGeometry(a,b,h,n));return GEOS.get(k);}
+function mesh(geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x||0,y||0,z||0);return o;}
+const winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a});/* spelets R3.winMat */
+/* a side profile [[x,y],...] extruded w wide across z, centred; taper pulls the sides in above y0 to k of the width at y1 (earth banks, tents) */
+function prof(pts,w,taper){const s=new THREE.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));
+  const g=new THREE.ExtrudeGeometry(s,{depth:w,bevelEnabled:false,steps:1});g.translate(0,0,-w/2);
+  if(taper){const[y0,y1,k]=taper,P=g.attributes.position;for(let i=0;i<P.count;i++){const y=P.getY(i);if(y>y0)P.setZ(i,P.getZ(i)*(1-(1-k)*Math.min(1,(y-y0)/(y1-y0))));}g.computeVertexNormals();}
+  return g;}
+const lamp=(g,x,y,z,s)=>{const top=new THREE.Mesh(new THREE.SphereGeometry(s,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(x,y,z);top.scale.setScalar(1.7);g.add(top);g.userData.top=top;return top;};
+
+/* ---------- dagens, kopierade ur mkPointMesh i index.html (30 okt) ---------- */
+function oldCentral(){const g=new THREE.Group(),C=0x8a8f8c,D=0x5d625f,ROOF=0x4a5058;
+  g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
+  g.add(mesh(box(11,5.5,8),mat(C),-2,3,0));g.add(mesh(box(11.4,.6,8.4),mat(ROOF),-2,6,0));g.add(mesh(box(4,3,4),mat(D),3,7.6,-1));
+  for(const z of[-2.2,0,2.2])g.add(mesh(box(.2,.9,1.1),winMat,3.55,3.6,z));
+  g.add(mesh(cyl(.25,.35,16,6),mat(0x9aa0a4),-5,14,2));g.add(mesh(box(3,.15,.15),mat(0x9aa0a4),-5,19,2));g.add(mesh(box(.15,.15,3),mat(0x9aa0a4),-5,17,2));
+  lamp(g,-5,22.5,2,.9);return g;}
+function oldVarv(){const g=new THREE.Group();
+  g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
+  for(const[x,z]of[[-6,-5],[6,-5],[-6,5],[6,5]])g.add(mesh(box(.6,8,.6),mat(0xd0a640),x,4.2,z));
+  g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,-5));g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,5));g.add(mesh(box(.6,.6,10.6),mat(0xd0a640),0,8.2,0));
+  g.add(mesh(box(4,1.4,3),mat(0x5d625f),-3,1.2,0));g.add(mesh(box(2.4,2,1.2),mat(0x8a8f8c),4,1.5,3));
+  lamp(g,0,9.4,0,.8);return g;}
+
+/* ---------- de nya, kopierade ur index.html (kamCentral, kamVarv med hjälpare) ---------- */
+const R3={winMat};
+/* the camouflaged command post and forward yard (issue 106, Magnus 30 okt): real field positions, dug in under turf and hung with
+   netting, in terrain colours and low against the sky. Shared by mkPointMesh's 'central' and 'varv'. Nothing red shows while the enemy
+   holds the point (the lamp gave its position away): a green lamp and a Swedish flag on a pole are hidden until it is taken
+   (userData.top, userData.flag, shown by the render loop), and the service plates get a sprayed white H then too (userData.pads) */
+let KAM=null;
+function kamMats(){if(KAM)return KAM;return KAM={EARTH:mat(0x5a4d38),EARTH2:mat(0x4c4130),GRASS:mat(0x5b6a3f),GRASS2:mat(0x4e5c36),TUFT:mat(0x66763f),NG:mat(0x3e4a2c),NB:mat(0x5a4a30),ND:mat(0x2f3a24),NT:mat(0x6a6a42),
+  OLV:mat(0x434b35),OLV2:mat(0x3a4230),BRN:mat(0x59492f),GRY:mat(0x575a52),DRK:mat(0x1f221d),CON:mat(0x666a60)};}
+/* a thin bar between two points */
+function kamBar(P,m,a,c,t){const d=new THREE.Vector3(c[0]-a[0],c[1]-a[1],c[2]-a[2]),L=d.length(),o=mesh(cyl(.5,.5,1,4),m,(a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2);o.scale.set(t,L,t);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());P.add(o);return o;}
+/* a sheet of netting w by d at (x,y,z), pitched by rx (about x) and rz (about z) */
+function kamNet(g,m,x,y,z,w,d,rx,rz){const o=mesh(box(w,.06,d),m,x,y,z);o.rotation.set(rx||0,0,rz||0);g.add(o);return o;}
+/* a net over an area, higher at z0 than at z1: a main sheet and five loose patches of the other colours a few cm above it, so that it reads as blotches */
+function kamRoof(g,x0,z0,x1,z1,yHi,yLo,seed){const M=kamMats(),w=x1-x0,d=z1-z0,cx=(x0+x1)/2,cz=(z0+z1)/2,ym=(yHi+yLo)/2,rx=Math.atan2(yHi-yLo,d),L=Math.hypot(d,yHi-yLo);
+  kamNet(g,M.NG,cx,ym,cz,w,L,rx,0);let s=seed;const R=()=>(s=(s*16807)%2147483647)/2147483647;
+  [M.NB,M.ND,M.NT,M.NB,M.ND].forEach((m,i)=>{const pw=w*(.25+R()*.25),pd=L*(.25+R()*.3),u=(R()-.5)*(w-pw),v=(R()-.5)*(L-pd);kamNet(g,m,cx+u,ym-v*Math.sin(rx)+.045*(i+1),cz+v*Math.cos(rx),pw,pd,rx,0);});}
+const kamPole=(g,x,z,h,m)=>g.add(mesh(cyl(.09,.11,h,5),m||kamMats().DRK,x,h/2,z));
+/* a tent along x: a ridge profile with sloping sides */
+function kamTent(g,x,z,len,w,h,m){g.add(mesh(prof([[-len/2,0],[len/2,0],[len/2-.15,h*.8],[len/2-.55,h],[-len/2+.55,h],[-len/2+.15,h*.8]],w,[0,h,.3]),m,x,0,z));}
+/* a lorry, nose towards +x: a cab, a canvas-covered body, six wheels */
+function kamTruck(g,x,z,ry){const M=kamMats(),T=new THREE.Group();
+  T.add(mesh(box(5.6,.5,2.2),M.DRK,0,.65,0));T.add(mesh(box(1.7,1.5,2.1),M.OLV2,2.1,1.55,0));T.add(mesh(box(.1,.6,1.7),R3.winMat,3.0,1.9,0));
+  T.add(mesh(prof([[-2.9,0],[1.2,0],[1.2,.7],[.9,1.55],[-2.6,1.55],[-2.9,.9]],2.2,[0,1.55,.7]),M.OLV,0,1.1,0));
+  for(const x2 of[-2,-.9,2.1])for(const s of[-1,1]){const w=mesh(cyl(.5,.5,.4,8),M.DRK,x2,.5,s*1.0);w.rotation.x=PI/2;T.add(w);}
+  T.position.set(x,0,z);T.rotation.y=ry||0;g.add(T);return T;}
+/* the Swedish flag on a pole, hidden until the point is taken: a blue cloth with a yellow cross offset to the hoist side, on a grey pole
+   of height h standing at (x,y0,z); the render loop turns the group a little about the pole so that it flutters (userData.flag) */
+function kamFlag(g,x,y0,z,h){const F=new THREE.Group(),B=mat(0x006aa7),Y=mat(0xfecc00);
+  F.add(mesh(cyl(.05,.08,h,5),mat(0x8a8f8c),0,h/2,0));F.add(mesh(box(2.0,1.25,.04),B,1.1,h-.75,0));
+  F.add(mesh(box(.28,1.25,.06),Y,.7,h-.75,0));F.add(mesh(box(2.0,.28,.06),Y,1.1,h-.75,0));
+  F.position.set(x,y0,z);F.visible=false;g.add(F);g.userData.flag=F;return F;}
+/* the command post: dug in under a turf-roofed bank, the cutting with the door on the +x side, vents and a low guyed mast, a lorry and
+   a tent under nets, and the green lamp on the mast (hidden until taken) with the flag on its own pole on the bank */
+function kamCentral(g){const M=kamMats();
+  g.add(mesh(box(16,.4,16),M.EARTH2,0,.2,0));
+  g.add(mesh(prof([[-7.2,0],[5.2,0],[4.2,1.4],[2.6,3.0],[-4.8,3.2],[-6.4,1.6]],8.4,[0,3.2,.5]),M.GRASS,-.6,0,-.4));
+  g.add(mesh(prof([[-7.8,0],[-5,0],[-5.6,1.0],[-7.4,1.5]],10.6,[0,1.5,.6]),M.GRASS2,-.2,0,-.4));
+  {const d=new THREE.SphereGeometry(1,8,4,0,2*PI,0,PI/2),m=mesh(d,M.GRASS2,-3.4,2.9,-.6);m.scale.set(2.8,.6,2.3);g.add(m);
+   const m2=mesh(d,M.EARTH,-.2,3.0,1.2);m2.scale.set(1.8,.45,1.5);g.add(m2);}
+  for(const[x,z,h]of[[-5.3,1.4,.5],[-4.2,-2.8,.4],[-1.3,-2.4,.55],[.9,.9,.45],[1.6,-1.8,.5],[-2.6,1.7,.35],[-6,-1.5,.4]])g.add(mesh(cyl(0,.22,h,4),M.TUFT,x,3.0+h/2-Math.max(0,x+2)*.3,z));
+  g.add(mesh(box(.5,2.6,2.6),M.CON,3.7,1.3,0));g.add(mesh(box(.12,2.0,1.4),M.DRK,3.98,1.1,0));g.add(mesh(box(.9,.3,2.8),M.CON,3.8,2.7,0));
+  for(const s of[-1,1]){const w=mesh(box(3.0,2.2,.4),M.CON,5.0,1.1,s*1.7);w.rotation.y=s*-.28;g.add(w);
+    g.add(mesh(prof([[0,0],[4.6,0],[2.2,1.8],[0,2.4]],3.0,[0,2.4,.4]),M.EARTH,2.9,0,s*3.7));}
+  g.add(mesh(box(.14,.5,.9),R3.winMat,3.64,2.1,-1.5));
+  for(const[x,z]of[[-2.6,.2],[-1.0,1.4]]){g.add(mesh(cyl(.28,.34,.7,6),M.GRY,x,3.35,z));g.add(mesh(cyl(.32,.32,.1,6),M.DRK,x,3.74,z));}
+  g.add(mesh(cyl(.07,.1,5.0,5),M.OLV2,-4.6,5.4,1.8));kamBar(g,M.DRK,[-4.6,7.9,1.8],[-4.6,9.4,1.8],.04);
+  for(const a of[0,PI*.66,-PI*.66])kamBar(g,M.DRK,[-4.6,7.2,1.8],[-4.6+Math.cos(a)*3.4,.3,1.8+Math.sin(a)*3.4],.03);
+  kamBar(g,M.OLV2,[-6.4,3.1,-2.4],[-1.6,3.3,-2.4],.09);
+  for(const[x,z,h]of[[-7,4.8,2.5],[-.8,4.8,2.5],[-7,8,1.3],[-.8,8,1.3]])kamPole(g,x,z,h);
+  kamRoof(g,-7.4,4.5,-.4,8.2,2.55,1.2,17);kamTruck(g,-4,6.3,0);
+  for(const[x,z,h]of[[-7.6,-5.4,2.2],[-2.6,-5.4,2.2],[-7.6,-7.8,1.2],[-2.6,-7.8,1.2]])kamPole(g,x,z,h);
+  kamRoof(g,-8,-8.2,-2.2,-5.0,1.25,2.2,29);kamTent(g,-5,-6.6,4.2,2.6,1.7,M.OLV);
+  g.add(mesh(box(1.4,.9,.8),M.OLV2,2.8,.65,4.4));for(const[x,z]of[[3.8,5.2],[4.5,5.4],[4.2,4.6]])g.add(mesh(cyl(.3,.3,.9,7),M.BRN,x,.85,z));
+  for(const[x,z]of[[1.8,3.4],[5.4,3.4]])kamPole(g,x,z,1.7);kamRoof(g,1.6,3.4,5.6,6.4,1.7,1.5,41);
+  kamFlag(g,.6,3.0,-.8,4.2);
+  const top=new THREE.Mesh(new THREE.SphereGeometry(.9,10,8),new THREE.MeshBasicMaterial({color:0x3fd06a}));top.position.set(-4.6,9.9,1.8);top.visible=false;g.add(top);g.userData.top=top;g.userData.hid=true;}
+/* the forward yard: one large net on poles over the work area, skirts on three sides and the lane side (-x) half open, containers, a tent,
+   a generator, crates and drums under it, a lorry under a small net, a low earth bank behind; the green lamp on a mast at the front pole
+   (hidden until taken) and the flag on a pole behind the bank */
+function kamVarv(g){const M=kamMats();
+  g.add(mesh(box(16,.4,16),M.EARTH2,0,.2,0));
+  g.add(mesh(prof([[-7,0],[7,0],[6,.6],[4,1.2],[-5,1.2],[-6.5,.6]],1.6,[0,1.2,.5]),M.EARTH,0,0,-7.2));
+  for(const[x,z,h]of[[-6.2,-4.8,4],[6.2,-4.8,4],[-6.2,4.8,2.3],[6.2,4.8,2.3],[0,-4.8,4.3]])kamPole(g,x,z,h,M.OLV2);
+  kamRoof(g,-7,-5.6,7,5.8,4.1,2.1,53);
+  kamNet(g,M.NG,0,2.4,-6.1,14,2.8,-.5,0);kamNet(g,M.NB,7.1,2.3,-.4,2.6,10.5,0,.6);kamNet(g,M.ND,-7.0,2.9,-3.0,2.2,5.2,0,-.6);kamNet(g,M.NG,0,1.0,6.3,14,1.6,.9,0);
+  g.add(mesh(box(5.8,2.4,2.4),M.OLV,-3.6,1.6,-2.6));g.add(mesh(box(.1,1.6,2.0),M.DRK,-.7,1.5,-2.6));
+  g.add(mesh(box(5.8,2.3,2.4),M.BRN,3.3,1.55,-2.9));g.add(mesh(box(5.0,1.6,.1),M.DRK,3.3,1.5,-1.7));
+  kamTent(g,-2,2.3,4.2,2.8,2.0,M.OLV2);
+  g.add(mesh(box(1.8,1.0,1.0),M.OLV2,4,.9,2.4));g.add(mesh(box(2.4,.18,1.1),M.DRK,4,1.45,2.4));
+  for(const[x,z]of[[1.6,.8],[2.3,1.1],[1.9,1.8]])g.add(mesh(box(.8,.6,.8),M.BRN,x,.7,z));
+  for(const[x,z]of[[-5.6,1.4],[-5.1,2.1],[-5.9,2.3]])g.add(mesh(cyl(.3,.3,.9,7),M.GRY,x,.85,z));
+  kamTruck(g,2.6,7.0,-.1);for(const x of[-.6,6.2])kamPole(g,x,8,2.0,M.OLV2);kamRoof(g,-.6,6.4,6.2,8.2,2.1,2.6,71);
+  g.add(mesh(cyl(.06,.08,3.4,5),M.DRK,-6.2,5.7,-4.8));
+  kamFlag(g,5.5,.6,-7.7,7);
+  const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0x3fd06a}));top.position.set(-6.2,7.7,-4.8);top.visible=false;g.add(top);g.userData.top=top;g.userData.hid=true;}
+
+/* ---------- scenen ---------- */
+const R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(1);
+const S=new THREE.Scene();S.background=new THREE.Color(0x8ea4b4);
+S.add(new THREE.HemisphereLight(0xdfe8f0,0x5a5040,.75));const sun=new THREE.DirectionalLight(0xfff2e0,.85);sun.position.set(30,50,25);S.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(1000,1000),mat(0x6a7250));ground.rotation.x=-PI/2;S.add(ground);
+/* the ground round the point: meadow patches, a dirt lane in from -x, and a stand of trees round the clearing (none within 28 m, as the
+   island keeps its points clear) */
+{let s=7;const Rn=()=>(s=(s*16807)%2147483647)/2147483647;
+  for(let i=0;i<46;i++){const a=Rn()*PI*2,d=10+Rn()*240,r=8+Rn()*30;S.add(mesh(cyl(r,r,.04,10),Rn()<.5?mat(0x5f6c45):mat(0x77794f),Math.cos(a)*d,.03+i*.0005,Math.sin(a)*d));}
+  S.add(mesh(box(80,.06,4),mat(0x73654a),-48,.05,0));
+  const TR=[mat(0x2f4a2a),mat(0x3a5530),mat(0x27401f)];
+  for(let i=0;i<760;i++){const a=Rn()*PI*2,d=30+Math.pow(Rn(),.7)*300;if(Math.cos(a)<0&&Math.abs(Math.sin(a))*d<10&&d<130)continue;const h=7+Rn()*8,t=new THREE.Group();
+    t.add(mesh(cyl(.18,.28,h*.3,5),mat(0x4a3a2a),0,h*.15,0));t.add(mesh(cyl(0,2.3+Rn()*1.2,h*.85,6),TR[i%3],0,h*.7,0));t.position.set(Math.cos(a)*d,0,Math.sin(a)*d);S.add(t);}}
+const tris=o=>{let n=0;o.traverse(c=>{if(!c.isMesh)return;const gg=c.geometry;n+=(gg.index?gg.index.count:gg.attributes.position.count)/3;});return Math.round(n);};
+const mk=f=>()=>{const g=new THREE.Group();f(g);g.userData.top.scale.setScalar(1.7);return g;};
+const MODELS={central:{old:oldCentral,new:mk(kamCentral)},varv:{old:oldVarv,new:mk(kamVarv)}};
+let cur=null,pads=[];
+/* a varv has four service plates (7.6 m) round its yard, two either side of the lane in from -x (servicePads, yard case); the new ones are
+   terrain green with a sprayed white H once taken, as mkPlateMesh draws them. taken: the point is ours: green lamp, flag, H */
+function plate(x,z,green,taken){const g=new THREE.Group(),S=7.6;g.position.set(x,0,z);
+  g.add(mesh(box(S,.5,S),mat(green?0x5f6c4a:0x8f918a),0,.25,0));
+  for(const[a,b,w,d]of[[0,S/2-.25,S,.4],[0,-S/2+.25,S,.4],[S/2-.25,0,.4,S],[-S/2+.25,0,.4,S]])g.add(mesh(box(w,.05,d),mat(green?0x56633f:0xe0b84a),a,.56,b));
+  if(!green){for(const z2 of[-1.1,1.1])g.add(mesh(box(2.6,.05,.42),mat(0xe6e1d2),0,.56,z2));g.add(mesh(box(.42,.05,2.2),mat(0xe6e1d2),0,.56,0));}
+  else if(taken){for(const z2 of[-1.1,1.1])g.add(mesh(box(2.6,.05,.42),mat(0xdedacb),0,.56,z2));g.add(mesh(box(.42,.05,2.2),mat(0xdedacb),0,.56,0));}
+  return g;}
+function show(kind,ver,taken){if(cur)S.remove(cur);for(const p of pads)S.remove(p);pads=[];cur=MODELS[kind][ver]();S.add(cur);
+  if(ver==='new'){cur.userData.top.visible=!!taken;cur.userData.flag.visible=!!taken;}
+  if(kind==='varv')for(const[x,z]of[[-20,-15],[-20,15],[-2,-15],[-2,15]]){const p=plate(x,z,ver==='new',taken);S.add(p);pads.push(p);}
+  return tris(cur);}
+/* a ground camera at bearing a (degrees), height h and distance d, or (aerial) a drone camera at height h looking down 70 degrees at
+   the point from the bearing a */
+const cam=new THREE.PerspectiveCamera(30,1,.1,2500);
+function shoot(a,h,d,w,hh,aerial){R.setSize(w,hh,false);cam.aspect=w/hh;cam.fov=aerial?40:30;cam.updateProjectionMatrix();const r=a*PI/180;
+  if(aerial){const k=h/Math.tan(70*PI/180);cam.position.set(Math.cos(r)*k,h,Math.sin(r)*k);cam.lookAt(0,2,0);}
+  else{cam.position.set(Math.cos(r)*d,h,Math.sin(r)*d);cam.lookAt(0,2.2,0);}
+  R.render(S,cam);return R.domElement.toDataURL('image/jpeg',.9);}
+window.BENCH={show,shoot,tris:()=>tris(cur)};
+if(!location.search.includes('bench')){const lab=document.getElementById('lab');let t0=performance.now(),i=0;const L=[['central','new',0],['central','new',1],['central','old',0],['varv','new',0],['varv','new',1],['varv','old',0]];
+  const go=()=>{const[k,v,t]=L[i%6];lab.innerHTML='<b>'+(v==='new'?'Ny':'Gammal')+' '+(k==='central'?'ledningscentral':'fältvarv')+(v==='new'?(t?', tagen':', otagen'):'')+'</b> · '+show(k,v,t)+' trianglar · klicka för att växla';};go();document.body.onclick=()=>{i++;go();};
+  const loop=()=>{const s=(performance.now()-t0)/1000;R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.fov=30;cam.updateProjectionMatrix();
+    cam.position.set(Math.cos(s*.25)*38,9,Math.sin(s*.25)*38);cam.lookAt(0,2.5,0);R.render(S,cam);requestAnimationFrame(loop);};loop();}
+</script></body></html>

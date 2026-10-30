@@ -5595,9 +5595,9 @@ function servicePads(r){if(r.pads)return r.pads;const b=pointBld(r),a0=b.a+PI,ou
   return r.pads=out;}
 /* a service plate: a level concrete slab with a yellow edge, a white H and a lamp at its outer corner */
 function mkPlateMesh(q){const g=new THREE.Group(),h=Math.max(.5,q.y3-q.lo+.6),S=PLATE;g.position.set(q.x,0,q.y);g.rotation.y=-q.a;
-  g.add(mesh(box(S,h,S),mat(0x8f918a),0,q.y3-h/2,0));
-  for(const[x,z,w,d]of[[0,S/2-.25,S,.4],[0,-S/2+.25,S,.4],[S/2-.25,0,.4,S],[-S/2+.25,0,.4,S]])g.add(mesh(box(w,.05,d),mat(0xe0b84a),x,q.y3+.06,z));
-  for(const z of[-1.1,1.1])g.add(mesh(box(2.6,.05,.42),mat(0xe6e1d2),0,q.y3+.06,z));g.add(mesh(box(.42,.05,2.2),mat(0xe6e1d2),0,q.y3+.06,0));/* 6 cm up, not 2: at a distance the marks fought the slab's top for the depth (issue 53) */
+  g.add(mesh(box(S,h,S),mat(0x5f6c4a),0,q.y3-h/2,0));/* painted in terrain green (issue 106) */
+  for(const[x,z,w,d]of[[0,S/2-.25,S,.4],[0,-S/2+.25,S,.4],[S/2-.25,0,.4,S],[-S/2+.25,0,.4,S]])g.add(mesh(box(w,.05,d),mat(0x56633f),x,q.y3+.06,z));
+  const hm=new THREE.Group();for(const z of[-1.1,1.1])hm.add(mesh(box(2.6,.05,.42),mat(0xdedacb),0,q.y3+.06,z));hm.add(mesh(box(.42,.05,2.2),mat(0xdedacb),0,q.y3+.06,0));hm.visible=false;g.add(hm);g.userData.hmark=hm;/* the sprayed white H, shown once the point is taken (issue 106); 6 cm up, not 2: at a distance the marks fought the slab's top for the depth (issue 53) */
   g.add(mesh(cyl(.08,.1,3.2,5),mat(0x737d84),S/2+.3,q.y3+1.6-.2,S/2+.3));g.add(mesh(box(.5,.3,.5),R3.lampMat,S/2+.3,q.y3+3.2,S/2+.3));
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
 /* the radar station (issue 105, second round, Magnus 30 okt: "hela modellen är för low poly", the model is the 154 m Väddö mast): a
@@ -5672,13 +5672,84 @@ function mkRadar(g,r){
   pts.forEach((p,i)=>{add(cyl(.06,.06,1.8,4),FENCE,p[0],Y0+.9,p[1]);const q=pts[(i+1)%pts.length],mxx=(p[0]+q[0])/2,mzz=(p[1]+q[1])/2;
     if(Math.cos(Math.atan2(mzz,mxx)-ga)>.87)return;for(const h of[.6,1.6])bm(g,FENCE,[p[0],Y0+h,p[1]],[q[0],Y0+h,q[1]],.05);});
 }
+/* the camouflaged command post and forward yard (issue 106, Magnus 30 okt): real field positions, dug in under turf and hung with
+   netting, in terrain colours and low against the sky. Shared by mkPointMesh's 'central' and 'varv'. Nothing red shows while the enemy
+   holds the point (the lamp gave its position away): a green lamp and a Swedish flag on a pole are hidden until it is taken
+   (userData.top, userData.flag, shown by the render loop), and the service plates get a sprayed white H then too (userData.pads) */
+let KAM=null;
+function kamMats(){if(KAM)return KAM;return KAM={EARTH:mat(0x5a4d38),EARTH2:mat(0x4c4130),GRASS:mat(0x5b6a3f),GRASS2:mat(0x4e5c36),TUFT:mat(0x66763f),NG:mat(0x3e4a2c),NB:mat(0x5a4a30),ND:mat(0x2f3a24),NT:mat(0x6a6a42),
+  OLV:mat(0x434b35),OLV2:mat(0x3a4230),BRN:mat(0x59492f),GRY:mat(0x575a52),DRK:mat(0x1f221d),CON:mat(0x666a60)};}
+/* a thin bar between two points */
+function kamBar(P,m,a,c,t){const d=new THREE.Vector3(c[0]-a[0],c[1]-a[1],c[2]-a[2]),L=d.length(),o=mesh(cyl(.5,.5,1,4),m,(a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2);o.scale.set(t,L,t);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());P.add(o);return o;}
+/* a sheet of netting w by d at (x,y,z), pitched by rx (about x) and rz (about z) */
+function kamNet(g,m,x,y,z,w,d,rx,rz){const o=mesh(box(w,.06,d),m,x,y,z);o.rotation.set(rx||0,0,rz||0);g.add(o);return o;}
+/* a net over an area, higher at z0 than at z1: a main sheet and five loose patches of the other colours a few cm above it, so that it reads as blotches */
+function kamRoof(g,x0,z0,x1,z1,yHi,yLo,seed){const M=kamMats(),w=x1-x0,d=z1-z0,cx=(x0+x1)/2,cz=(z0+z1)/2,ym=(yHi+yLo)/2,rx=Math.atan2(yHi-yLo,d),L=Math.hypot(d,yHi-yLo);
+  kamNet(g,M.NG,cx,ym,cz,w,L,rx,0);let s=seed;const R=()=>(s=(s*16807)%2147483647)/2147483647;
+  [M.NB,M.ND,M.NT,M.NB,M.ND].forEach((m,i)=>{const pw=w*(.25+R()*.25),pd=L*(.25+R()*.3),u=(R()-.5)*(w-pw),v=(R()-.5)*(L-pd);kamNet(g,m,cx+u,ym-v*Math.sin(rx)+.045*(i+1),cz+v*Math.cos(rx),pw,pd,rx,0);});}
+const kamPole=(g,x,z,h,m)=>g.add(mesh(cyl(.09,.11,h,5),m||kamMats().DRK,x,h/2,z));
+/* a tent along x: a ridge profile with sloping sides */
+function kamTent(g,x,z,len,w,h,m){g.add(mesh(prof([[-len/2,0],[len/2,0],[len/2-.15,h*.8],[len/2-.55,h],[-len/2+.55,h],[-len/2+.15,h*.8]],w,[0,h,.3]),m,x,0,z));}
+/* a lorry, nose towards +x: a cab, a canvas-covered body, six wheels */
+function kamTruck(g,x,z,ry){const M=kamMats(),T=new THREE.Group();
+  T.add(mesh(box(5.6,.5,2.2),M.DRK,0,.65,0));T.add(mesh(box(1.7,1.5,2.1),M.OLV2,2.1,1.55,0));T.add(mesh(box(.1,.6,1.7),R3.winMat,3.0,1.9,0));
+  T.add(mesh(prof([[-2.9,0],[1.2,0],[1.2,.7],[.9,1.55],[-2.6,1.55],[-2.9,.9]],2.2,[0,1.55,.7]),M.OLV,0,1.1,0));
+  for(const x2 of[-2,-.9,2.1])for(const s of[-1,1]){const w=mesh(cyl(.5,.5,.4,8),M.DRK,x2,.5,s*1.0);w.rotation.x=PI/2;T.add(w);}
+  T.position.set(x,0,z);T.rotation.y=ry||0;g.add(T);return T;}
+/* the Swedish flag on a pole, hidden until the point is taken: a blue cloth with a yellow cross offset to the hoist side, on a grey pole
+   of height h standing at (x,y0,z); the render loop turns the group a little about the pole so that it flutters (userData.flag) */
+function kamFlag(g,x,y0,z,h){const F=new THREE.Group(),B=mat(0x006aa7),Y=mat(0xfecc00);
+  F.add(mesh(cyl(.05,.08,h,5),mat(0x8a8f8c),0,h/2,0));F.add(mesh(box(2.0,1.25,.04),B,1.1,h-.75,0));
+  F.add(mesh(box(.28,1.25,.06),Y,.7,h-.75,0));F.add(mesh(box(2.0,.28,.06),Y,1.1,h-.75,0));
+  F.position.set(x,y0,z);F.visible=false;g.add(F);g.userData.flag=F;return F;}
+/* the command post: dug in under a turf-roofed bank, the cutting with the door on the +x side, vents and a low guyed mast, a lorry and
+   a tent under nets, and the green lamp on the mast (hidden until taken) with the flag on its own pole on the bank */
+function kamCentral(g){const M=kamMats();
+  g.add(mesh(box(16,.4,16),M.EARTH2,0,.2,0));
+  g.add(mesh(prof([[-7.2,0],[5.2,0],[4.2,1.4],[2.6,3.0],[-4.8,3.2],[-6.4,1.6]],8.4,[0,3.2,.5]),M.GRASS,-.6,0,-.4));
+  g.add(mesh(prof([[-7.8,0],[-5,0],[-5.6,1.0],[-7.4,1.5]],10.6,[0,1.5,.6]),M.GRASS2,-.2,0,-.4));
+  {const d=new THREE.SphereGeometry(1,8,4,0,2*PI,0,PI/2),m=mesh(d,M.GRASS2,-3.4,2.9,-.6);m.scale.set(2.8,.6,2.3);g.add(m);
+   const m2=mesh(d,M.EARTH,-.2,3.0,1.2);m2.scale.set(1.8,.45,1.5);g.add(m2);}
+  for(const[x,z,h]of[[-5.3,1.4,.5],[-4.2,-2.8,.4],[-1.3,-2.4,.55],[.9,.9,.45],[1.6,-1.8,.5],[-2.6,1.7,.35],[-6,-1.5,.4]])g.add(mesh(cyl(0,.22,h,4),M.TUFT,x,3.0+h/2-Math.max(0,x+2)*.3,z));
+  g.add(mesh(box(.5,2.6,2.6),M.CON,3.7,1.3,0));g.add(mesh(box(.12,2.0,1.4),M.DRK,3.98,1.1,0));g.add(mesh(box(.9,.3,2.8),M.CON,3.8,2.7,0));
+  for(const s of[-1,1]){const w=mesh(box(3.0,2.2,.4),M.CON,5.0,1.1,s*1.7);w.rotation.y=s*-.28;g.add(w);
+    g.add(mesh(prof([[0,0],[4.6,0],[2.2,1.8],[0,2.4]],3.0,[0,2.4,.4]),M.EARTH,2.9,0,s*3.7));}
+  g.add(mesh(box(.14,.5,.9),R3.winMat,3.64,2.1,-1.5));
+  for(const[x,z]of[[-2.6,.2],[-1.0,1.4]]){g.add(mesh(cyl(.28,.34,.7,6),M.GRY,x,3.35,z));g.add(mesh(cyl(.32,.32,.1,6),M.DRK,x,3.74,z));}
+  g.add(mesh(cyl(.07,.1,5.0,5),M.OLV2,-4.6,5.4,1.8));kamBar(g,M.DRK,[-4.6,7.9,1.8],[-4.6,9.4,1.8],.04);
+  for(const a of[0,PI*.66,-PI*.66])kamBar(g,M.DRK,[-4.6,7.2,1.8],[-4.6+Math.cos(a)*3.4,.3,1.8+Math.sin(a)*3.4],.03);
+  kamBar(g,M.OLV2,[-6.4,3.1,-2.4],[-1.6,3.3,-2.4],.09);
+  for(const[x,z,h]of[[-7,4.8,2.5],[-.8,4.8,2.5],[-7,8,1.3],[-.8,8,1.3]])kamPole(g,x,z,h);
+  kamRoof(g,-7.4,4.5,-.4,8.2,2.55,1.2,17);kamTruck(g,-4,6.3,0);
+  for(const[x,z,h]of[[-7.6,-5.4,2.2],[-2.6,-5.4,2.2],[-7.6,-7.8,1.2],[-2.6,-7.8,1.2]])kamPole(g,x,z,h);
+  kamRoof(g,-8,-8.2,-2.2,-5.0,1.25,2.2,29);kamTent(g,-5,-6.6,4.2,2.6,1.7,M.OLV);
+  g.add(mesh(box(1.4,.9,.8),M.OLV2,2.8,.65,4.4));for(const[x,z]of[[3.8,5.2],[4.5,5.4],[4.2,4.6]])g.add(mesh(cyl(.3,.3,.9,7),M.BRN,x,.85,z));
+  for(const[x,z]of[[1.8,3.4],[5.4,3.4]])kamPole(g,x,z,1.7);kamRoof(g,1.6,3.4,5.6,6.4,1.7,1.5,41);
+  kamFlag(g,.6,3.0,-.8,4.2);
+  const top=new THREE.Mesh(new THREE.SphereGeometry(.9,10,8),new THREE.MeshBasicMaterial({color:0x3fd06a}));top.position.set(-4.6,9.9,1.8);top.visible=false;g.add(top);g.userData.top=top;g.userData.hid=true;}
+/* the forward yard: one large net on poles over the work area, skirts on three sides and the lane side (-x) half open, containers, a tent,
+   a generator, crates and drums under it, a lorry under a small net, a low earth bank behind; the green lamp on a mast at the front pole
+   (hidden until taken) and the flag on a pole behind the bank */
+function kamVarv(g){const M=kamMats();
+  g.add(mesh(box(16,.4,16),M.EARTH2,0,.2,0));
+  g.add(mesh(prof([[-7,0],[7,0],[6,.6],[4,1.2],[-5,1.2],[-6.5,.6]],1.6,[0,1.2,.5]),M.EARTH,0,0,-7.2));
+  for(const[x,z,h]of[[-6.2,-4.8,4],[6.2,-4.8,4],[-6.2,4.8,2.3],[6.2,4.8,2.3],[0,-4.8,4.3]])kamPole(g,x,z,h,M.OLV2);
+  kamRoof(g,-7,-5.6,7,5.8,4.1,2.1,53);
+  kamNet(g,M.NG,0,2.4,-6.1,14,2.8,-.5,0);kamNet(g,M.NB,7.1,2.3,-.4,2.6,10.5,0,.6);kamNet(g,M.ND,-7.0,2.9,-3.0,2.2,5.2,0,-.6);kamNet(g,M.NG,0,1.0,6.3,14,1.6,.9,0);
+  g.add(mesh(box(5.8,2.4,2.4),M.OLV,-3.6,1.6,-2.6));g.add(mesh(box(.1,1.6,2.0),M.DRK,-.7,1.5,-2.6));
+  g.add(mesh(box(5.8,2.3,2.4),M.BRN,3.3,1.55,-2.9));g.add(mesh(box(5.0,1.6,.1),M.DRK,3.3,1.5,-1.7));
+  kamTent(g,-2,2.3,4.2,2.8,2.0,M.OLV2);
+  g.add(mesh(box(1.8,1.0,1.0),M.OLV2,4,.9,2.4));g.add(mesh(box(2.4,.18,1.1),M.DRK,4,1.45,2.4));
+  for(const[x,z]of[[1.6,.8],[2.3,1.1],[1.9,1.8]])g.add(mesh(box(.8,.6,.8),M.BRN,x,.7,z));
+  for(const[x,z]of[[-5.6,1.4],[-5.1,2.1],[-5.9,2.3]])g.add(mesh(cyl(.3,.3,.9,7),M.GRY,x,.85,z));
+  kamTruck(g,2.6,7.0,-.1);for(const x of[-.6,6.2])kamPole(g,x,8,2.0,M.OLV2);kamRoof(g,-.6,6.4,6.2,8.2,2.1,2.6,71);
+  g.add(mesh(cyl(.06,.08,3.4,5),M.DRK,-6.2,5.7,-4.8));
+  kamFlag(g,5.5,.6,-7.7,7);
+  const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0x3fd06a}));top.position.set(-6.2,7.7,-4.8);top.visible=false;g.add(top);g.userData.top=top;g.userData.hid=true;}
 function mkPointMesh(r){
   const g=new THREE.Group(),C=0x8a8f8c,D=0x5d625f,ROOF=0x4a5058;let topY=12;
-  if(r.type!=='hamn')g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
-  if(r.type==='central'){g.add(mesh(box(11,5.5,8),mat(C),-2,3,0));g.add(mesh(box(11.4,.6,8.4),mat(ROOF),-2,6,0));g.add(mesh(box(4,3,4),mat(D),3,7.6,-1));
-    for(const z of[-2.2,0,2.2])g.add(mesh(box(.2,.9,1.1),R3.winMat,3.55,3.6,z));
-    g.add(mesh(cyl(.25,.35,16,6),mat(0x9aa0a4),-5,14,2));g.add(mesh(box(3,.15,.15),mat(0x9aa0a4),-5,19,2));g.add(mesh(box(.15,.15,3),mat(0x9aa0a4),-5,17,2));topY=22.5;
-    const top=new THREE.Mesh(new THREE.SphereGeometry(.9,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(-5,topY,2);g.add(top);g.userData.top=top;}
+  if(r.type!=='hamn'&&r.type!=='central'&&r.type!=='varv')g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
+  if(r.type==='central')kamCentral(g);/* issue 106 */
   else if(r.type==='verkstad'){const hall=new THREE.Group();hall.add(mesh(box(12,6,9),mat(0x7c8173),0,3.5,0));hall.add(mesh(box(12.6,.6,9.6),mat(ROOF),0,6.8,0));hall.add(mesh(box(.2,4.6,6),mat(0x3b3f3c),6.05,2.8,0));hall.position.set(-1.5,0,0);g.add(hall);
     g.add(mesh(cyl(.22,.3,9,6),mat(0x9aa0a4),5.5,4.5,-5.5));g.add(mesh(box(2.4,.8,.4),mat(0x2f3a44),5.5,8.4,-5.5));g.add(mesh(box(2,.5,.1),R3.lampMat,5.5,8.4,-5.25));
     const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(5.5,9.6,-5.5);g.add(top);g.userData.top=top;}
@@ -5688,11 +5759,7 @@ function mkPointMesh(r){
        the point's light on top */
     g.add(mesh(cyl(.12,.16,6.5,6),mat(0x9aa0a4),0,3.25,0));g.add(mesh(box(1,.12,.12),mat(0x9aa0a4),.45,5.9,0));g.add(mesh(box(.42,.3,.42),R3.lampMat,.85,5.7,0));
     const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(0,7.1,0);g.add(top);g.userData.top=top;}
-  else{ // forward yard: open gantry over a slab with a crane
-    for(const[x,z]of[[-6,-5],[6,-5],[-6,5],[6,5]])g.add(mesh(box(.6,8,.6),mat(0xd0a640),x,4.2,z));
-    g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,-5));g.add(mesh(box(13,.6,.6),mat(0xd0a640),0,8.2,5));g.add(mesh(box(.6,.6,10.6),mat(0xd0a640),0,8.2,0));
-    g.add(mesh(box(4,1.4,3),mat(0x5d625f),-3,1.2,0));g.add(mesh(box(2.4,2,1.2),mat(0x8a8f8c),4,1.5,3));
-    const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(0,9.4,0);g.add(top);g.userData.top=top;}
+  else kamVarv(g);/* the forward yard (issue 106) */
   // the building sits beside the capture point, so vehicles taking it do not drive into the walls
   if(g.userData.top)g.userData.top.scale.setScalar(r.type==='hamn'?1.1:1.7);
   /* the harbour's post stands 3.5 m from the point towards where the office stood, on the ground under itself */
@@ -7236,7 +7303,7 @@ function buildStatic(){
        m/s, kept below real service speeds (ferry 6.5 is about 13 knots): seen from a HÖK at 17 m/s the meeting speed is what the eye
        reads, and at real speeds the ferries looked like 50 knots (12 okt) */
     const FR=fairwayRoute(W);[['ferry',6.5,0],['tanker',3.5,.2],['box',4.5,.45],['ferry',6.5,.55],['cargo',4,.78]].forEach(([k,sp,ph],i)=>{const sh=mkBigShip(k);mv2(sh,FR,sp,(ph+hs(10+i)*.08)%1,sh.userData.beam,sh.userData.len/2,1);});}if(W.islets)mkIslets(W.islets,st);
-  for(const r of G.relays){const g=mkPointMesh(r),gb=inYard(r)?pointBld(r):r;g.position.set(r.x,groundY(gb.x,gb.y),r.y);st.add(g);R3.relays.set(r.id,g);if(r.type==='verkstad'||r.type==='varv')for(const q of servicePads(r))st.add(mkPlateMesh(q));}
+  for(const r of G.relays){const g=mkPointMesh(r),gb=inYard(r)?pointBld(r):r;g.position.set(r.x,groundY(gb.x,gb.y),r.y);st.add(g);R3.relays.set(r.id,g);if(r.type==='verkstad'||r.type==='varv'){g.userData.pads=[];for(const q of servicePads(r)){const pm=mkPlateMesh(q);st.add(pm);g.userData.pads.push(pm.userData.hmark);}}}
   if(W.yard){const Y=W.yard,N=10,h=Y.half,ca=Math.cos(Y.a),sa=Math.sin(Y.a),P=new Float32Array((N+1)*(N+1)*3),ix=[];
     /* under the service plates the yard sinks inside the slab (19 okt, issue 53: on a sloping yard its surface, drawn with a polygon
        offset, could come up through a plate and hide its yellow edge and H at a distance) */
@@ -7724,7 +7791,7 @@ function updateSky(){
   const cand=[];
 
   if(d>.05){
-    for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
+    for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;if(g&&g.userData.hid&&!r.captured)continue;/* no red glow on a point the enemy holds (issue 106) */const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
     for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
     for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),d)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*d,36]);
     for(const[ci,c]of((WORLD.decor&&WORLD.decor.cabins)||[]).entries())if(!(G.ddead.c&&G.ddead.c[ci]!=null)&&winLevel(winBucket(c.x,c.y),d)>.3)cand.push([3,c.x,Math.max(0,c.h)+3,c.y,0xffb860,.8*d,28]);
@@ -7930,7 +7997,8 @@ function sync3D(dtr){
     if(sh.flood){sh.flood.coneM.opacity=.16*L;sh.flood.poolM.opacity=.75*L;}if(sh.nameLight)sh.nameLight.opacity=.7*L;
     if(sh.nav){if(!sh.navH){sh.navH=sh.nav.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(3.2);n.m.add(h);return h;});}sh.navH.forEach(h=>{h.visible=L>0;h.material.opacity=.85*L;});}}
   const now=performance.now()/1000;if(R3.bobs)for(const m of R3.bobs){const ph=m.userData.bob;m.position.y=m.userData.y0+Math.sin(now*1.1+ph)*.14;m.rotation.z=Math.sin(now*.9+ph*1.7)*.035;m.rotation.x=Math.sin(now*.8+ph)*.03;}
-  for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);if(g.userData.lamp)g.userData.lamp.material.color.setHex(now%1.2<.45?0xff2a2a:0x3a0c10);/* the radar mast's lamps blink, its top one the point's marker (issue 105) */const t=g.userData.top,on=!g.userData.blink||now%1.2<.45;t.material.color.setHex(r.captured?(on?0x3fd06a:0x0f3a1c):(on?0xe0283a:0x3a0c10));}}
+  for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);if(g.userData.lamp)g.userData.lamp.material.color.setHex(now%1.2<.45?0xff2a2a:0x3a0c10);/* the radar mast's lamps blink, its top one the point's marker (issue 105) */const t=g.userData.top,on=!g.userData.blink||now%1.2<.45;t.material.color.setHex(r.captured?(on?0x3fd06a:0x0f3a1c):(on?0xe0283a:0x3a0c10));
+    if(g.userData.hid||g.userData.pads){const c=!!r.captured;/* lamp, flag and the plates' H only once taken (issue 106) */if(g.userData.hid){t.visible=c;g.userData.flag.visible=c;if(c)g.userData.flag.rotation.y=Math.sin(now*2.3)*.14;}for(const q of g.userData.pads||[])q.visible=c;}}}
   // fx: tracer projectiles with muzzle flash, impacts, smoke; transient particles live in R3.parts
   const live=new Set(G.fx);
   for(const f of G.fx){
