@@ -4181,7 +4181,7 @@ function briefFacts(){const rl=t=>G.relays.find(r=>r.type===t),c=rl('central'),h
     central:c?{x:c.x,y:c.y,d:L?Math.hypot(c.x-L.x,c.y-L.y):0}:null,crew:G.misCrew?{x:G.misCrew.rx,y:G.misCrew.ry,r:MIS_CFG.crewR}:null,wreck:G.misW?{x:G.misW.x,y:G.misW.y}:null};}
 function misBrief(F){F=F||briefFacts();const pick=(k,a)=>a[Math.floor(hash2(F.seed,k,91)*a.length)%a.length],q=dayMD(F.doy),T=F.limit?Math.round(F.limit/60):0,at=p=>misWhere(p.x,p.y);
   const dtg=dtgOf(F.doy,F.tod),when=q.d+' '+MONTHS[q.m]+' '+YEAR+', klockan '+fmtHM(F.tod),m=F.mission;
-  const lage=[pick(1,['Främmande trupp har besatt','En främmande makt har tagit','Fientliga styrkor håller']),' ',F.name,' (ö ',F.seed,'). ',
+  const lage=[pick(1,['Fienden har besatt','Fienden har tagit','Fienden håller']/* always Fienden: the story names the enemy (Magnus 30 okt) */),' ',F.name,' (ö ',F.seed,'). ',
     pick(2,['HMS Birka ligger utanför ön med obemannade enheter.','Basfartyget HMS Birka står utanför ön med obemannade enheter.']),' ',
     'Landstigning är möjlig på stranden '+(F.landing?at(F.landing):'framför fartyget')+(F.harbour?', och hamnen ligger '+at(F.harbour):'')+'. ',
     pick(3,['Fiendens styrka och ställningar är i stort sett okända.','Om fiendens styrka och ställningar finns inga uppgifter.','Fiendens försvar är inte spanat.']),
