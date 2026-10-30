@@ -10529,6 +10529,7 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
     if(v.rel==='kust'){const e=G.enemies.find(q=>q.kind==='kust');if(e){e.seen=true;e.lx=e.x;e.ly=e.y;const a=e.face;return{x:e.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:e.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}}
     if(v.rel==='station'){const r=G.relays.find(q=>q.type==='verkstad'||q.type==='varv'),pd=servicePads(r),b=pointBld(r),m={x:pd.reduce((a,q)=>a+q.x,0)/pd.length,y:pd.reduce((a,q)=>a+q.y,0)/pd.length},a=Math.atan2(m.y-b.y,m.x-b.x);
       return{x:m.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:m.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}
+    if(v.rel==='central'){const r=G.relays.find(q=>q.type==='central'),b=pointBld(r);return{x:b.x+v.x,y:v.y,z:b.y+v.z};}/* the command post's building, world axes (issue 106) */
     /* rel:'radar' is the radar station's yard, rel:'radarmast' the mast's foot outside it, both with the world's axes (issue 105) */
     if(v.rel==='radar'||v.rel==='radarmast'){const r=G.relays.find(q=>q.type==='radar'),b=pointBld(r),m=v.rel==='radarmast'?radarMastAt(b):[0,0];return{x:b.x+m[0]+v.x,y:v.y,z:b.y+m[1]+v.z};}
     return{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z};},c=P(o.cam),t=P(o.look);
