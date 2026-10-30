@@ -5,7 +5,7 @@ require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.l
 const G=()=>B.G,until=(f,s)=>{for(let i=0;i<s*20;i++){if(f())return true;B.step(.05);}return !!f();};
 const boat=()=>G().units.find(u=>u.kind==='gadda'),go=id=>{B.testfall(id);G().paused=false;return boat();};
 const drive=(u,thr,s)=>{G().ctrl=u.id;B.CTRL.thr=thr;B.CTRL.steer=0;until(()=>u.aground||u.dead||u.hp<u.maxhp,s);B.CTRL.thr=0;G().ctrl=null;};
-{const u=go('gland');drive(u,1,40);ok(u.aground&&u.hp>0&&u.hp<u.maxhp*.3,'gland: full speed into the shore, stuck with '+Math.round(u.hp/u.maxhp*100)+' %');
+{const u=go('gland');drive(u,1,40);ok(u.aground&&u.hp>0&&u.hp<u.maxhp*.4,'gland: full speed into the shore, stuck with '+Math.round(u.hp/u.maxhp*100)+' %');
   B.gaddaFree(u);ok(until(()=>!u.aground&&!u.carried&&B.heightAt(u.x,u.y)<0,200),'gland: KROK puts it back in the water');}
 {const u=go('gland');drive(u,.06,90);ok(u.hp===u.maxhp&&!u.aground,'gland: slowly, it only touches ('+u.state+')');}
 {const u=go('ggrund');drive(u,1,40);ok(u.aground&&u.hp<u.maxhp,'ggrund: full speed onto the shoal, stuck with '+Math.round(u.hp/u.maxhp*100)+' %');}

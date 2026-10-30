@@ -70,4 +70,10 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
 // 9. robots hurt armor at half effect, the MG does not bother
 {B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(x=>x.kind==='turret');
  ok(B.canHit(h,t,true),'HÖK with robots can engage a bunker when told to');ok(!B.canHit(h,t),'but never picks armor on its own');h.ammo=0;ok(!B.canHit(h,t),'without robots it cannot');ok(Math.abs(B.dmgMult(h,t,'rocket')-.5)<1e-9,'robot vs armor at half effect');}
+// 10. HÖK's robot: hit chance from the type (0.9), and each air defence reaching the target shoots it down 5 % of the time (issue 95)
+{B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone'),aa=G.enemies.find(e=>e.kind==='aa');
+ ok(h.acc===.9&&B.HOK_AA===.05,'HÖK acc 0.9, air defence takes down 5 %');
+ for(const e of G.enemies)if(e!==aa)e.dead=true;let n=0;const N=4000;for(let i=0;i<N;i++){const f={x2:aa.x+20,y2:aa.y,down:null};B.hokAim(f);if(f.down)n++;}
+ ok(Math.abs(n/N-.05)<.02,'one air defence downs '+(n/N*100).toFixed(1)+' % of the robots');
+ aa.dead=true;let m=0;for(let i=0;i<500;i++){const f={x2:aa.x+20,y2:aa.y,down:null};B.hokAim(f);if(f.down)m++;}ok(m===0,'a dead air defence downs none');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
