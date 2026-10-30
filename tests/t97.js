@@ -1,7 +1,7 @@
 // Guard teams of air defence follow the same sight rules as other troops (issue 97, Magnus 30 okt): the 40 m from the air applies
 // only to infantry and anti-tank teams among buildings, not to a team that merely guards a site (its .cover is the site's id)
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 let n=0,bad=0,badR=0,hid=0;
 for(const s of [1234,7341,4242,9001,2718,5555]){B.newGame(s);const G=B.G;const h={vision:120};
   for(const e of G.enemies){if(e.kind!=='at'||!e.cover)continue;n++;e.lx=e.x;e.ly=e.y;
