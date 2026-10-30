@@ -1,7 +1,7 @@
 // island shapes: every shape builds a valid island whose points can be reached over land from the beach once the barriers are
 // open, with Birka in open water and the island inside the map
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const GW=220,DEEP=0,SHAL=1,BEACH=2,LAND=3,ROCK=4;
 const seeds=[1000,1037,1074,1111];
 for(const f of Object.keys(B.SHAPES)){

@@ -2,7 +2,7 @@
 // wing's target and is retargeted by every new order, a retreat is not turned back into the fight by wing support,
 // and in manual control the target the driver shoots at becomes the target of the group that follows him
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};
 const setup=()=>{B.newGame(7341);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;const L=G.relays[0];
   const [v1,v2]=G.units.filter(u=>u.kind==='tank'),[h1,h2]=G.units.filter(u=>u.kind==='drone');

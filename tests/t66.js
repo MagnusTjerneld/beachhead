@@ -2,7 +2,7 @@
 // in reach, several VARG on one target take firing positions clear of other known weapons (since 21 okt the best spots, kept 25 m
 // apart and gladly on the same safe side, no longer spread round an arc), and stand with their front to it while they fire
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.LOS.on=false;/* laid out before the line of sight (issue 38), which t76 tries */B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.LOS.on=false;/* laid out before the line of sight (issue 38), which t76 tries */B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 /* the scenarios were laid out round R1 as it stood before 19 okt (issue 57 moved it into its yard), so they keep that spot */
 const OLD_R1={x:1175,y:1405};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};

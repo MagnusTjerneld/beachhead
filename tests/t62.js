@@ -1,7 +1,7 @@
 // MUS: carried by every VARG, remote-controlled only, reach 200 m from its VARG, sees hidden troops, finds mines without
 // setting them off, its charge kills a tank, enemies see it only close, replaced at Birka
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.COAST.n=0;/* the defence before the coast's bunkers (26 okt), which this test's islands were picked on */B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.COAST.n=0;/* the defence before the coast's bunkers (26 okt), which this test's islands were picked on */B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the game's 500 material (issue 103), with a fixed force */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};
 const land=(W,x,y)=>{const t=W.grid[Math.floor(y/10)*220+Math.floor(x/10)];return t===2||t===3;};
 // open land around a point, for placing things

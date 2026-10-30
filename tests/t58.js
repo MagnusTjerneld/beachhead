@@ -1,6 +1,6 @@
 // BÄVER and call-in: locked sectors, supply rules behind barriers, mines, call-in from any view
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the game's 500 material (issue 103), with a fixed force */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=(G,s)=>{for(let i=0;i<s*20;i++)B.step(.05);};
 // 1. call in a BÄVER on a barrier: it is lifted ashore if needed, blows it, the sector behind opens
 {B.newGame(7341);const G=B.G;G.running=true;G.known.fill(1);G.knownV++;for(const e of G.enemies){e.dead=true;}

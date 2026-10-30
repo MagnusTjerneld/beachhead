@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the game's 500 material (issue 103), with a fixed force */
 const seeds=(process.argv[2]||'7341,1234,9001,31,77').split(',').map(Number);
 for(const seed of seeds){
   B.newGame(seed);const G=B.G;G.running=true;const k=G.kroks[0];

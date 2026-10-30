@@ -1,5 +1,5 @@
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */const C=B.CTRL;
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the game's 500 material (issue 103), with a fixed force */const C=B.CTRL;
 B.newGame(7341);const G=B.G;G.running=true;
 const ts=G.units.filter(u=>u.kind==='tank'),d=G.units.find(u=>u.kind==='drone'),e=G.units.find(u=>u.kind==='eng');
 B.setSel([ts[0].id,ts[1].id,d.id,e.id]);B.assignWing(1);

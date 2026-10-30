@@ -1,6 +1,6 @@
 global.performance={now:()=>0};
 require('./g2.js');
-const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let GWd=220;
+const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the game's 500 material (issue 103), with a fixed force */let GWd=220;
 for(const seed of [7341,7342,1234,1235,9001,4242,2718,5555,31,77]){
   const t0=Date.now();B.newGame(seed);const ms=Date.now()-t0;const G=B.G,W=B.W,V=W.V;
   const shipCell=(()=>{const u=G.units[1];return Math.floor(u.y/10)*GWd+Math.floor(u.x/10);})();

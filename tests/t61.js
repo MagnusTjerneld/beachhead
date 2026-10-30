@@ -1,6 +1,6 @@
 // missions and temporary orders: a call-in is done, then the unit goes back to its mission; Shift makes a new mission
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.START.res=300;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the old start, so results compare */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;/* the game's 500 material (issue 103), with a fixed force */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};
 const bigRadio=()=>{const o=[B.RADIO.r,B.RADIO.birka];B.RADIO.r=B.RADIO.birka=5000;return()=>{B.RADIO.r=o[0];B.RADIO.birka=o[1];};};
 const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;};
