@@ -1,5 +1,5 @@
 // A coordinated attack for every unit that got the order together (issue 104, Magnus 30 okt): VARG and HÖK given one attack order
-// share a stamp (grp) and go in together; the HÖK holds outside the target's reach, 20 s at the longest from when it got there; a
+// share a stamp (grp) and go in together; the HÖK holds outside the target's reach and waits for the VARG however long it takes (Magnus 30 okt; 20 s at the longest only without VARG); a
 // unit sent at the same target later is not in the group and is not waited for
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
@@ -32,17 +32,16 @@ function run(){Math.random=(s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>
     if(e.dead||goT!=null&&holdEnd!=null&&G.time-Math.max(goT,holdEnd)>5)break;}
   ok(hold0!=null,'the HÖK reached its holding point');
   const w=holdEnd!=null&&hold0!=null?holdEnd-hold0:null;
-  ok(w!=null&&w<=20.6,'the HÖK did not wait more than 20 s ('+(w!=null?w.toFixed(1):'-')+' s)');
   ok(goT!=null,'the VARG went in');
   const d=goT!=null&&holdEnd!=null?holdEnd-goT:null;
-  ok(d!=null&&(Math.abs(d)<=1.5||w>=19.5),'the HÖK went in with the VARG ('+(d!=null?d.toFixed(1):'-')+' s after), or at the 20 s limit');
+  ok(d!=null&&Math.abs(d)<=1.5,'the HÖK went in with the VARG ('+(d!=null?d.toFixed(1):'-')+' s after, waited '+(w!=null?w.toFixed(1):'-')+' s)');
   ok(minD>(e.range||0),'the HÖK stayed outside the target\'s reach while it waited ('+Math.round(minD)+' m)');}
 {const{G,own,e}=run();const[v1]=own;
   /* a VARG sent later at the same target is support, not waited for */
   const g=B.newGrp(),late=B.makeUnit('tank',v1.x,v1.y);G.units.push(late);B.giveOrder(late,{type:'attack',enemy:e,post:'off',grp:g},false);
   ok(B.groupAll(e,v1.orders[0].grp).indexOf(late)<0,'a unit sent later is not in the group');}
-{/* slow VARG: the HÖK does not wait for them past 20 s */
-  const{G,own,e}=run();const[v1,v2,h]=own;v1.speed=v2.speed=3;let hold0=null,hit=null,vgo=null;
-  for(let t=0;t<120&&hit==null;t+=.05){B.step(.05);const o=h.orders[0];if(o&&o.holdT0!=null&&hold0==null)hold0=G.time;if(vgo==null&&v1.orders[0]&&v1.orders[0].go)vgo=G.time;if(hold0!=null&&/^(Anfaller|Bekämpar)/.test(h.state))hit=G.time;}
-  ok(hit!=null&&hit-hold0<=22&&hit-hold0>=19&&(vgo==null||vgo>hit),'with slow VARG the HÖK goes in after 20 s of waiting ('+(hit!=null?(hit-hold0).toFixed(1):'-')+' s), before the VARG');}
+{/* slow VARG: the HÖK waits for them past 20 s and goes in with them */
+  const{G,own,e}=run();const[v1,v2,h]=own;v1.speed=v2.speed=6;let hold0=null,hit=null,vgo=null;
+  for(let t=0;t<300&&hit==null;t+=.05){B.step(.05);const o=h.orders[0];if(o&&o.holdT0!=null&&hold0==null)hold0=G.time;if(vgo==null&&v1.orders[0]&&v1.orders[0].go)vgo=G.time;if(hold0!=null&&/^(Anfaller|Bekämpar)/.test(h.state))hit=G.time;}
+  ok(hit!=null&&vgo!=null&&hit-hold0>22&&Math.abs(hit-vgo)<=1.5,'with slow VARG the HÖK waits past 20 s ('+(hit!=null?(hit-hold0).toFixed(1):'-')+' s) and goes in with them ('+(hit!=null&&vgo!=null?(hit-vgo).toFixed(1):'-')+' s after)');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
