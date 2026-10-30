@@ -4143,7 +4143,7 @@ function haltSel(){const sk=selKrok();if(sk){if(sk.orders.length){clearKrok(sk);
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
   const t=r.type;
-  say(u,t==='central'?'Ledningscentralen '+r.id+' tagen.'+(WIN.all&&G.mission==='frita'&&winLeft().length?' Kvar att ta: '+winLeft().map(pname).join(', ')+'.':''):t==='verkstad'?'Verkstad '+r.id+' tagen. Flygande enheter laddar och fordon repareras här.':t==='radar'?'Radarstation '+r.id+' tagen. Området runt den är spanat och kamouflerade mål syns.':t==='hamn'?'Hamnen tagen. HMS Birka lättar ankar och går in i hamnen.':'Fältvarv '+r.id+' taget. GETING, HÖK och VARG kan byggas här.');
+  say(u,t==='central'?'Ledningscentralen '+r.id+' tagen.'+(WIN.all&&G.mission==='frita'&&winLeft().length?' Kvar att ta: '+winLeft().map(pname).join(', ')+'.':''):t==='verkstad'?'Verkstad '+r.id+' tagen. Flygande enheter laddar och fordon repareras här.':t==='radar'?'Radarstation '+r.id+' tagen. Området runt den är spanat och kamouflerade mål syns.':t==='hamn'?'Hamnen tagen. HMS Birka väntar på din order att gå in i hamnen (issue 93).':'Fältvarv '+r.id+' taget. GETING, HÖK och VARG kan byggas här.');
   if(t==='varv'){G.buildAt=r.id;counterattack(r);}
   markKnown();checkWin();
 }
@@ -5553,8 +5553,10 @@ function mkPlateMesh(q){const g=new THREE.Group(),h=Math.max(.5,q.y3-q.lo+.6),S=
    little closer or further and to either side for a clear spot. Plain meshes on shared geometry and materials; the bake merges them
    per material. The stays are thin prisms, dark enough to read against the sky and wide enough not to drop out at a distance.
    Positions are pre-shift: the caller moves everything by the building's offset, so the world is pointBld(r) + local. */
+/* the radar mast stands a few metres outside the fence (Magnus 30 okt), away from the gate, off the roads and the water where it can */
+function radarMastAt(b){for(const k of[0,1,-1,2,-2,3,-3]){const a=b.a+k*PI/4,x=Math.cos(a)*13.5,z=Math.sin(a)*13.5,wx=b.x+x,wy=b.y+z;if(heightAt(wx,wy)>.5&&!WORLD.road[cellIdx(wx,wy)])return[x,z];}return[Math.cos(b.a)*13.5,Math.sin(b.a)*13.5];}
 function mkRadar(g,r){
-  const b=pointBld(r),y0=groundY(r.x,r.y),Rc=1.5,mx=6.2,mz=-6.2,wx=b.x+mx,wy=b.y+mz,gm=groundY(wx,wy),Y0=.5,T3=TAU/3;
+  const b=pointBld(r),y0=groundY(r.x,r.y),Rc=1.5,[mx,mz]=radarMastAt(b),wx=b.x+mx,wy=b.y+mz,gm=groundY(wx,wy),Y0=.5,T3=TAU/3;
   const U=new THREE.Vector3(0,1,0),M=new THREE.Group();
   if(!GEOS.has('prism3')){const pg=new THREE.CylinderGeometry(.5,.5,1,3,1,true);GEOS.set('prism3',pg);}
   const PR=GEOS.get('prism3'),RED=mat(0xc9291f),WHT=mat(0xe9e9e4),GRY=mat(0x80878c),DRK=mat(0x3f454a),CON=mat(0x9a9b94),STAY=mat(0x5b6268),
@@ -5576,9 +5578,11 @@ function mkRadar(g,r){
   add(cyl(2.7,3,.8,6),CON,0,0,0,M);for(let i=0;i<3;i++){const A=C(i);add(box(1.3,1.6,1.3),CON,A[0],-.2,A[1],M);}
   /* no platforms (Magnus 30 okt): the obstruction lamps sit on the legs, at the stay levels and halfway between */
   for(const h of[32,64,96,128])for(let i=0;i<3;i++){const A=C(i);add(box(.8,.8,.8),lampM,A[0]*1.2,h,A[1]*1.2,M);}
-  /* the top: a pole, two panel antennas and the topmost lamp (userData.lamp: the frame loop blinks its material, shared by all the lamps) */
-  bm(M,RED,[0,144,0],[0,154,0],.24);add(box(.5,2.2,.18),LT,1.0,141,0,M);add(box(.18,2.2,.5),LT,-.5,141,.9,M);bm(M,DRK,[0,154,0],[0,156,0],.05);
-  g.userData.lamp=add(box(1.3,1.3,1.3),lampM,0,155,0,M);g.add(M);
+  /* the top: a pole and two panel antennas; the leg lamps blink by userData.lamp, whose material they share */
+  bm(M,RED,[0,144,0],[0,154,0],.24);for(let i=0;i<3;i++){const A=C(i);bm(M,RED,[A[0],144,A[1]],[0,146,0],.15);}/* the pole stands on struts from the three legs */add(box(.5,2.2,.18),LT,.36,149,0,M);add(box(.18,2.2,.5),LT,0,149,-.36,M);bm(M,DRK,[0,154,0],[0,156,0],.05);
+  g.userData.lamp=M.children.find(o=>o.material===lampM);g.add(M);
+  /* the point's marker is the mast's top lamp, red and green once taken, blinking; none on the house (Magnus 30 okt) */
+  g.userData.top=add(box(1,1,1),new THREE.MeshBasicMaterial({color:0xe0283a}),mx,gm-y0+155,mz);g.userData.blink=true;
   /* stays: from each leg at each level out to a block on the ground, where the ground and the canopy allow */
   for(let i=0;i<3;i++)for(const h of LV){let ax=0,az=0,bst=1e9;
     for(const dr of[1,.9,1.1,.8,1.2])for(const da of[0,.12,-.12,.24,-.24]){const a=ph+i*T3+da,R=h*K*dr,c=cost(wx+Math.cos(a)*R,wy+Math.sin(a)*R)+Math.abs(da)*.5+Math.abs(dr-1)*.5;if(c<bst){bst=c;ax=Math.cos(a)*R;az=Math.sin(a)*R;}}
@@ -5587,33 +5591,31 @@ function mkRadar(g,r){
   const BX=-3.6,BZ=3.3;
   add(box(7.3,.35,5.3),mat(0x6f736f),BX,Y0+.17,BZ);add(box(7,3.4,5),WALL,BX,Y0+1.7,BZ);add(box(7.5,.3,5.5),ROOF,BX,Y0+3.55,BZ);
   add(box(7.5,.35,.2),ROOF,BX,Y0+3.82,BZ+2.65);add(box(7.5,.35,.2),ROOF,BX,Y0+3.82,BZ-2.65);add(box(.2,.35,5.5),ROOF,BX+3.65,Y0+3.82,BZ);add(box(.2,.35,5.5),ROOF,BX-3.65,Y0+3.82,BZ);
-  add(box(1.8,.9,1.3),LT,BX-1.6,Y0+4.25,BZ-.9);add(cyl(.5,.5,.1,8),DRK,BX-1.6,Y0+4.75,BZ-.9);add(box(.9,.35,.9),LT,BX+1.4,Y0+3.9,BZ+.4);
+  add(box(1.8,.9,1.3),LT,BX-1.6,Y0+4.15,BZ-.9);add(cyl(.5,.5,.1,8),DRK,BX-1.6,Y0+4.64,BZ-.9);add(box(.9,.35,.9),LT,BX+1.4,Y0+3.87,BZ+.4);
   add(cyl(.12,.12,1.4,5),GRY,BX+2.4,Y0+4.4,BZ-1.2);add(cyl(.12,.12,1.1,5),GRY,BX+2.9,Y0+4.25,BZ-.5);add(cyl(.03,.03,3.2,3),DRK,BX+.6,Y0+5.2,BZ-1.6);
   add(box(1.1,2.2,.14),DOOR,BX+2,Y0+1.2,BZ+2.57);add(box(1.9,.14,1.1),ROOF,BX+2,Y0+2.5,BZ+3.05);add(box(1.6,.2,.8),CON,BX+2,Y0+.1,BZ+3.2);
   for(const x of[-2.3,-.4,-4.8])add(box(1.1,.9,.12),R3.winMat,BX+x-.2,Y0+1.9,BZ+2.52);
   for(const z of[-1.2,1.2])add(box(.12,.9,1.1),R3.winMat,BX-3.52,Y0+1.9,BZ+z);
-  add(box(3,2.3,2.4),mat(0x7a7f7b),2.9,Y0+1.15,4.4);add(box(3.4,.25,2.8),ROOF,2.9,Y0+2.4,4.4);add(box(.1,1.8,1.6),DOOR,1.35,Y0+1,4.4);add(cyl(.18,.18,.9,5),GRY,3.6,Y0+3,4.6);
-  const tk=add(cyl(.9,.9,3.2,10),mat(0x6d7a63),5.2,Y0+1.35,-1.2);tk.rotation.x=PI/2;add(box(.3,.9,2.6),CON,5.2,Y0+.45,-2.2);add(box(.3,.9,2.6),CON,5.2,Y0+.45,-.2);
+  add(box(3,2.3,2.4),mat(0x7a7f7b),2.9,Y0+1.15,4.4);add(box(3.4,.25,2.8),ROOF,2.9,Y0+2.4,4.4);add(box(.1,1.8,1.6),DOOR,1.35,Y0+1,4.4);add(cyl(.18,.18,.9,5),GRY,3.6,Y0+2.95,4.6);
+  const tk=add(cyl(.9,.9,3.2,10),mat(0x6d7a63),5.2,Y0+1.35,-1.2);tk.rotation.x=PI/2;add(box(1.5,.9,.3),CON,5.2,Y0+.45,-2.2);add(box(1.5,.9,.3),CON,5.2,Y0+.45,-.2);
   add(box(1,1.6,.8),mat(0x7d8a93),-6.4,Y0+.8,-3.2);add(box(1,1.6,.8),mat(0x7d8a93),-5.1,Y0+.8,-3.2);
   add(cyl(.07,.1,5.2,5),GRY,-.2,Y0+2.6,6.5);add(box(.9,.3,.5),R3.lampMat,-.2,Y0+5.2,6.5);
   /* the antenna tower: a concrete foot, a steel shaft, a platform and the turntable; the air-search antenna is a curved reflector with a
      feed horn on two arms, a frame behind and an IFF bar on top (userData.dish turns it) */
   const TX=1.5,TZ=-1.5;
   add(cyl(1.7,2,3.4,12),CON,TX,Y0+1.7,TZ);add(box(.9,2,.12),DOOR,TX,Y0+1.2,TZ+1.85);add(cyl(1.05,1.25,5.4,10),mat(0xb9bdb9),TX,Y0+6.1,TZ);
-  add(cyl(1.9,1.9,.25,12),GRY,TX,Y0+8.9,TZ);add(cyl(1.25,1.25,.5,12),DRK,TX,Y0+9.3,TZ);
-  for(let i=0;i<4;i++){const a=i*PI/2;add(cyl(.04,.04,1,3),GRY,TX+1.8*Math.cos(a),Y0+9.5,TZ+1.8*Math.sin(a));}
+  add(cyl(1.9,1.9,.25,12),GRY,TX,Y0+8.9,TZ);add(cyl(1.25,1.25,.5,12),DRK,TX,Y0+9.27,TZ);/* no rail posts: the reflector sweeps over the platform's edge */
   const Dg=new THREE.Group(),RM=new THREE.MeshLambertMaterial({color:0xd8dcd6,side:THREE.DoubleSide});
   const rf=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,3.4,14,1,true,-PI/2-1,2),RM);rf.position.set(2.2,1.9,0);Dg.add(rf);
   Dg.add(mesh(box(1.4,.7,1.4),DRK,-.3,.2,0));bm(Dg,DRK,[0,.4,0],[-1.2,1.1,0],.3);
-  for(const z of[-2.2,0,2.2]){const xa=2.2-Math.sqrt(3.4*3.4-z*z);Dg.add(mesh(box(.16,3.4,.16),GRY,xa-.22,1.9,z));}
-  bm(Dg,GRY,[-1.4,1.9,-2.2],[-1.4,1.9,2.2],.1);Dg.add(mesh(box(.2,.3,4.6),DRK,-1.2,3.75,0));
+  for(const z of[-2.2,0,2.2]){const xa=2.2-Math.sqrt(3.4*3.4-z*z);Dg.add(mesh(box(.16,3.4,.16),GRY,xa-.07,1.9,z));}
+  {const xr=z=>2.2-Math.sqrt(3.4*3.4-z*z)-.15;bm(Dg,GRY,[xr(-2.2),1.9,-2.2],[xr(0),1.9,0],.1);bm(Dg,GRY,[xr(0),1.9,0],[xr(2.2),1.9,2.2],.1);}/* the cross bar runs along the ribs */{const xi=z=>2.2-Math.sqrt(3.4*3.4-z*z)-.05,Z=[-2.3,-1.15,0,1.15,2.3];for(let i=0;i<4;i++)bm(Dg,DRK,[xi(Z[i]),3.72,Z[i]],[xi(Z[i+1]),3.72,Z[i+1]],.26);}/* the IFF bar follows the reflector's top edge */
   bm(Dg,GRY,[-1.2,3.4,0],[1.2,2.0,0],.1);bm(Dg,GRY,[-1.2,.4,0],[1.2,1.7,0],.1);Dg.add(mesh(box(.5,.45,.8),DRK,1.4,1.9,0));
-  Dg.position.set(TX,Y0+9.55,TZ);g.add(Dg);g.userData.dish=Dg;
+  Dg.position.set(TX,Y0+9.52,TZ);g.add(Dg);g.userData.dish=Dg;
   /* the fence round the yard, open on the side the capture point is on */
   const ga=b.a+PI,S=7.6,pts=[];for(let i=0;i<4;i++)for(let j=0;j<4;j++){const t=-S+j*S*2/4;pts.push(i===0?[t,-S]:i===1?[S,t]:i===2?[-t,S]:[-S,-t]);}
   pts.forEach((p,i)=>{add(cyl(.06,.06,1.8,4),FENCE,p[0],Y0+.9,p[1]);const q=pts[(i+1)%pts.length],mxx=(p[0]+q[0])/2,mzz=(p[1]+q[1])/2;
     if(Math.cos(Math.atan2(mzz,mxx)-ga)>.87)return;for(const h of[.6,1.6])bm(g,FENCE,[p[0],Y0+h,p[1]],[q[0],Y0+h,q[1]],.05);});
-  const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(BX,Y0+5.9,BZ);g.add(top);g.userData.top=top;
 }
 function mkPointMesh(r){
   const g=new THREE.Group(),C=0x8a8f8c,D=0x5d625f,ROOF=0x4a5058;let topY=12;
@@ -7862,7 +7864,7 @@ function sync3D(dtr){
     if(sh.flood){sh.flood.coneM.opacity=.16*L;sh.flood.poolM.opacity=.75*L;}if(sh.nameLight)sh.nameLight.opacity=.7*L;
     if(sh.nav){if(!sh.navH){sh.navH=sh.nav.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(3.2);n.m.add(h);return h;});}sh.navH.forEach(h=>{h.visible=L>0;h.material.opacity=.85*L;});}}
   const now=performance.now()/1000;if(R3.bobs)for(const m of R3.bobs){const ph=m.userData.bob;m.position.y=m.userData.y0+Math.sin(now*1.1+ph)*.14;m.rotation.z=Math.sin(now*.9+ph*1.7)*.035;m.rotation.x=Math.sin(now*.8+ph)*.03;}
-  for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);if(g.userData.lamp)g.userData.lamp.material.color.setHex(now%1.2<.45?0xff2a2a:0x3a0c10);/* the radar mast's lamp blinks (issue 105) */const t=g.userData.top;t.material.color.setHex(r.captured?0x3fd06a:0xe0283a);}}
+  for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);if(g.userData.lamp)g.userData.lamp.material.color.setHex(now%1.2<.45?0xff2a2a:0x3a0c10);/* the radar mast's lamps blink, its top one the point's marker (issue 105) */const t=g.userData.top,on=!g.userData.blink||now%1.2<.45;t.material.color.setHex(r.captured?(on?0x3fd06a:0x0f3a1c):(on?0xe0283a:0x3a0c10));}}
   // fx: tracer projectiles with muzzle flash, impacts, smoke; transient particles live in R3.parts
   const live=new Set(G.fx);
   for(const f of G.fx){
@@ -10393,8 +10395,8 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
     if(v.rel==='kust'){const e=G.enemies.find(q=>q.kind==='kust');if(e){e.seen=true;e.lx=e.x;e.ly=e.y;const a=e.face;return{x:e.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:e.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}}
     if(v.rel==='station'){const r=G.relays.find(q=>q.type==='verkstad'||q.type==='varv'),pd=servicePads(r),b=pointBld(r),m={x:pd.reduce((a,q)=>a+q.x,0)/pd.length,y:pd.reduce((a,q)=>a+q.y,0)/pd.length},a=Math.atan2(m.y-b.y,m.x-b.x);
       return{x:m.x+Math.cos(a)*v.z-Math.sin(a)*v.x,y:v.y,z:m.y+Math.sin(a)*v.z+Math.cos(a)*v.x};}
-    /* rel:'radar' is the radar mast's foot, axes as the world's (issue 105) */
-    if(v.rel==='radar'){const r=G.relays.find(q=>q.type==='radar'),b=pointBld(r);return{x:b.x+6.2+v.x,y:v.y,z:b.y-6.2+v.z};}
+    /* rel:'radar' is the radar station's yard, rel:'radarmast' the mast's foot outside it, both with the world's axes (issue 105) */
+    if(v.rel==='radar'||v.rel==='radarmast'){const r=G.relays.find(q=>q.type==='radar'),b=pointBld(r),m=v.rel==='radarmast'?radarMastAt(b):[0,0];return{x:b.x+m[0]+v.x,y:v.y,z:b.y+m[1]+v.z};}
     return{x:(v.rel?L.x:0)+v.x,y:v.y,z:(v.rel?L.y:0)+v.z};},c=P(o.cam),t=P(o.look);
   const put=()=>{R3.cam.position.set(c.x,c.y==null?Math.max(0,groundY(c.x,c.z))+(o.camUp||20):c.y,c.z);R3.lookAt.set(t.x,t.y==null?Math.max(0,groundY(t.x,t.z))+(o.lookUp||3):t.y,t.z);R3.cam.lookAt(R3.lookAt);/* fov: a longer lens draws the backdrop islands nearer */if(o.fov&&R3.cam.fov!==o.fov){R3.cam.fov=o.fov;R3.cam.updateProjectionMatrix();}};
   put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);drawMain(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL(o.png?'image/png':'image/jpeg',o.q||.85);};

@@ -6,7 +6,7 @@
 //   node tests/stills.js serie.json [ut.jpg]      your own: {seed, cols, w, h, photo (no labels, far fog), title, rowLabels, colLabels, shots:[{label, datum:'12-21', klocka:'08:30',
 //                                                 moln, cam:{rel,x,y,z}, look:{rel,x,y,z}}]}; rel = relative to the landing beach,
 //                                                 a missing y = that high over the ground (camUp, lookUp); rel:'birka' is Birka's own frame
-//                                                 (x across, z forward), rel:'station' the field station's plates (z out through them); rel:'radar' the radar mast's foot with world axes;
+//                                                 (x across, z forward), rel:'station' the field station's plates (z out through them); rel:'radar' the radar station's yard and rel:'radarmast' its mast's foot, with world axes;
 //                                                 form (the island's shape, as ?form=); uppdrag (the mission, as ?uppdrag=; rel:'kust' is then the coast battery's frame, z out to sea); prep (in the series or a shot) is JavaScript run in the page first, with B = __BH and G = __BH.G
 // three.js r128 comes from tests/node_modules/three (npm install in tests) or the path in THREE_JS.
 const fs=require('fs'),path=require('path'),{execSync}=require('child_process');
