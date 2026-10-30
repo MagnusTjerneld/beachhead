@@ -50,8 +50,10 @@ function play(seed,limit){
     const alive=G.units.filter(u=>!u.dead);
     const cnt=k=>alive.filter(u=>u.kind===k).length+G.build.filter(b=>b.kind===k).length;
     const aaAlive=G.enemies.some(e=>!e.dead&&e.kind==='aa');
-    const want=V==='rush'?[['eng',1],['tank',6]]:V==='farm'?[['eng',3]]:[['eng',1],['tank',1],['eng',2],['drone',1],...(aaAlive?[['scout',1]]:[]),['tank',Math.min(7,4+Math.floor(G.res/350))]];
-    for(const[k,n]of want){if(cnt(k)<n&&G.res>=COST[k]&&alive.length+G.build.filter(b=>b.kind!=='krok').length<10){G.res-=COST[k];G.build.push({kind:k,t:{scout:8,drone:15,tank:25,eng:20}[k],total:1});}}
+    const want=V==='rush'?[['eng',1],['tank',6]]:V==='farm'?[['eng',3]]:[...(aaAlive?[['scout',1]]:[]),['tank',2],['drone',1],['tank',3],['eng',2],['tank',Math.min(7,4+Math.floor(G.res/350))]];
+    /* the plan in order, saving up for the next rather than skipping to something cheaper, as the captain bot does: with the game's start of 500
+       (issue 103) a list that bought whatever it could afford spent it on a BÄVER, HÖK and GETING and never reached a VARG (Magnus 30 okt) */
+    const unmet=want.find(([k,n])=>cnt(k)<n);if(unmet&&G.res>=COST[unmet[0]]&&alive.length+G.build.filter(b=>b.kind!=='krok').length<10){const k=unmet[0];G.res-=COST[k];G.build.push({kind:k,t:{scout:8,drone:15,tank:25,eng:20}[k],total:1});}
     if(V!=='nosalv'&&G.kroks.length+G.build.filter(b=>b.kind==='krok').length<(V==='farm'?4:3)&&G.res>=(V==='farm'?150:400)&&G.wrecks.filter(w=>!w.claimed).length>4){G.res-=150;G.build.push({kind:'krok',t:20,total:20});}
     if(V==='farm'){for(const e of alive.filter(u=>u.kind==='eng')){if(e.orders.length)continue;const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e)-d(b,e));const s=ss.find(s=>!G.units.some(o=>o!==e&&o.orders[0]&&o.orders[0].s===s));if(s){s.krok=true;B.giveOrder(e,{type:'demolish',s,post:'def'},false);}}continue;}
     const tanks=alive.filter(u=>u.kind==='tank');
