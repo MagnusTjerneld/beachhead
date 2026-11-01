@@ -8408,7 +8408,8 @@ function zoomAt(sx,sy,f){if(!mv.free&&mv.z<=1.001){const v=viewBox();mv.cx=v.cx;
 const pts=new Map();let pinch=null;
 let ptr=null,rpan=null;
 function onDown(e){
-  if(TITLE.on)return;
+  /* the opening flyover shows the game's own view; a click there only skips it (Magnus 1 nov: it gave BÄVER an order) */
+  if(TITLE.on||OP.on)return;
   const kind=viewKind(e.currentTarget);
   if(G.over)return;
   if(!$('wheel').hidden){closeWheel();ptr=null;return;}
@@ -8445,7 +8446,7 @@ function onMove(e){
   else if(ptr.box&&ptr.moved)G.box={x0:ptr.x,y0:ptr.y,x1:x,y1:y};
 }
 function onUp(e){
-  if(TITLE.on)return;
+  if(TITLE.on||OP.on)return;
   if(rpan&&e.pointerId===rpan.id){const r=rpan;rpan=null;mapC.style.cursor='';if(!r.moved&&!G.mlook)openWheel(r.sx,r.sy,pick('map',r.sx,r.sy),mapC);return;}
   if(G.firing){G.firing=false;return;}
   if(pts.has(e.pointerId)){pts.delete(e.pointerId);if(pinch){if(pts.size<2)pinch=null;ptr=null;return;}}
@@ -8477,7 +8478,7 @@ function onUp(e){
 for(const el of[mapC,glC]){
   el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);
   el.addEventListener('pointercancel',e=>{if(ptr)clearTimeout(ptr.lp);ptr=null;G.drag=null;G.box=null;pts.delete(e.pointerId);pinch=null;});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on||performance.now()-mlookOffT<800)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();if(G.mlook||TITLE.on||OP.on||performance.now()-mlookOffT<800)return;const kind=viewKind(el);if(kind==='map')return;if(ptr)clearTimeout(ptr.lp);ptr=null;openWheel(e.offsetX,e.offsetY,pick(kind,e.offsetX,e.offsetY),el);});
   el.addEventListener('pointermove',e=>{HOV.el=el;HOV.x=e.offsetX;HOV.y=e.offsetY;const t=performance.now();if(t-HOV.t>70){HOV.t=t;HOV.pk=G&&!TITLE.on?hoverOf(pick(viewKind(el),e.offsetX,e.offsetY)):null;}});
   el.addEventListener('pointerleave',()=>{if(HOV.el===el){HOV.el=null;HOV.pk=null;}});
 }
