@@ -5979,10 +5979,11 @@ function mkUnitMesh(u){
   /* the engine deck behind the turret, and the fans' base */
   g.add(mesh(box(1.7,.36,3.6),HULL2,-1.95,2.42,0));g.add(mesh(box(1.1,.5,4.4),GR,-3.3,2.45,0));
   for(const sz of[-1,1]){g.add(mesh(cyl(.035,.035,2.1,4),DK,-2.3,3.55,sz*1.25));g.add(mesh(box(.2,.12,.2),DK,-2.3,2.62,sz*1.25));}
-  /* two ducted fans on the base: ring, six pitched blades, hub with spinner, a post between them, two rudders behind each (no outboard pylons, Magnus 1 nov) */
+  /* two ducted fans on the base: ring, six pitched blades, hub with spinner, a post between them, two rudders behind each (no outboard pylons, Magnus 1 nov).
+     The blades turn, about one and a half turns a second, slow enough to be seen turning (Magnus 1 nov: the fans stood still) */
   const FY=3.25;
-  for(const sz of[-1,1]){const z=sz*1.4;g.add(mesh(VARG_GEO.duct,RING,-3.3,FY,z));
-    for(let i=0;i<6;i++){const a=i/6*2*PI,arm=new THREE.Group();arm.position.set(-3.3,FY,z);arm.rotation.x=a;const bl=mesh(box(.08,.82,.32),DK,0,.58,0);bl.rotation.y=.45;arm.add(bl);g.add(arm);}
+  for(const sz of[-1,1]){const z=sz*1.4;g.add(mesh(VARG_GEO.duct,RING,-3.3,FY,z));const fan=new THREE.Group();fan.position.set(-3.3,FY,z);fan.rotation.x=sz>0?0:.5;g.add(fan);(g.userData.spin||(g.userData.spin=[])).push([fan,'x',10]);
+    for(let i=0;i<6;i++){const a=i/6*2*PI,arm=new THREE.Group();arm.rotation.x=a;const bl=mesh(box(.08,.82,.32),DK,0,.58,0);bl.rotation.y=.45;arm.add(bl);fan.add(arm);}
     const hub=mesh(cyl(.24,.24,.5,8),GR,-3.3,FY,z);hub.rotation.z=PI/2;g.add(hub);const sp=mesh(cyl(.02,.24,.32,8),GR,-2.9,FY,z);sp.rotation.z=-PI/2;g.add(sp);
     for(const dz of[-.45,.45]){g.add(mesh(box(.6,1.7,.07),DK,-3.86,FY-.05,z+dz));}}
   for(const f of VARG_GEO.fair)g.add(new THREE.Mesh(f,HULL2));
@@ -6489,7 +6490,7 @@ function foamTex(){if(R3.foamTex)return R3.foamTex;const c=mkCanvas(64,64),x=c.g
   const im=x.getImageData(0,0,64,64);for(let j=0;j<64;j++)for(let i=0;i<64;i++){const r=Math.hypot(i-31.5,j-31.5)/32;im.data[(j*64+i)*4+3]*=clamp(1.6-r*1.6,0,1);}x.putImageData(im,0,0);return R3.foamTex=new THREE.CanvasTexture(c);}
 function wakeRingsDraw(){const L=[],LF=[];for(const u of G.units){if(u.wk)for(const q of u.wk)L.push(q);if(u.wf)for(const q of u.wf)LF.push(q);}
   /* the intro's VARG and GÄDDA (Magnus 1 nov: our own wake in the intro too), kept on the decoration clock and moved onto the game's here */
-  if(R3.titleWk){const dT=G.time-(R3.decoT||0);for(const u of R3.titleWk){for(const q of u.wk)L.push(Object.assign({},q,{t:q.t+dT}));for(const q of u.wf||[])LF.push(Object.assign({},q,{t:q.t+dT}));}}
+  if(R3.titleWk&&TITLE.on){const dT=G.time-(R3.decoT||0);for(const u of R3.titleWk){for(const q of u.wk)L.push(Object.assign({},q,{t:q.t+dT}));for(const q of u.wf||[])LF.push(Object.assign({},q,{t:q.t+dT}));}}
   if(LF.length||R3.foam){if(!R3.foam)R3.foam=[];if(!R3.ringGeo){R3.ringGeo=new THREE.PlaneGeometry(2,2);R3.ringGeo.rotateX(-PI/2);}
     while(R3.foam.length<Math.min(LF.length,WRING.foamPool)){const m=new THREE.Mesh(R3.ringGeo,new THREE.MeshBasicMaterial({map:foamTex(),color:0xffffff,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));m.renderOrder=2;R3.dyn.add(m);R3.foam.push(m);}
     const kf=1-.72*(R3.night||0);R3.foam.forEach((m,i)=>{const q=LF[i];if(!q){m.visible=false;return;}const t=G.time-q.t,k=clamp(t/WRING.foamTtl,0,1);m.visible=true;m.position.set(q.x,.07,q.y);m.rotation.y=q.r;m.scale.setScalar(q.g*(.8+.5*k));
@@ -8060,6 +8061,7 @@ function sync3D(dtr){
       if(m.leisure!=null){const on=FILM.on||m.leisure<(R3.season?R3.season.boats:1);m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
       const dd=m.dir*T*m.speed+RT.L*m.ph,p0=push(at(dd)),p1=push(at(dd+m.dir*20)),hd=Math.atan2(p1.z-p0.z,p1.x-p0.x);
       if(m.lat){const lx=-Math.sin(hd)*m.lat,lz=Math.cos(hd)*m.lat;p0.x+=lx;p0.z+=lz;}
+      if(m.g.userData.spin)for(const sp of m.g.userData.spin)sp[0].rotation[sp[1]]+=sp[2]*dtr;/* VARG's fans */
       const big=m.g.userData.big;m.g.position.set(p0.x,(m.varg?.12:m.gadda?.05:m.g===R3.steamer?.2:.15)+Math.sin(T*.9+m.ph*9)*(big?.03:m.gadda?.03:.08),p0.z);m.g.rotation.set(m.sail?.12+Math.sin(T*.7+m.ph)*.03:Math.sin(T*1.3+m.ph)*(big?.004:.02),-hd,0);
       /* GÄDDA heels into its turns and lifts its bow as in the trailer's turn, and throws spray from the jets */
       if(m.gadda){const dT=T-(m.hT??T);if(dT>0&&dT<.5){const w=angWrap(hd-m.hP)/dT;m.w=(m.w??w)+(w-(m.w??w))*Math.min(1,dT*2);gaddaSpray({x:p0.x,y:p0.z,heading:hd,speed:22},m.speed,dT);}

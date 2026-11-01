@@ -329,10 +329,11 @@ function mkUnitMesh(u){
   /* the engine deck behind the turret, and the fans' base */
   g.add(mesh(box(1.7,.36,3.6),HULL2,-1.95,2.42,0));g.add(mesh(box(1.1,.5,4.4),GR,-3.3,2.45,0));
   for(const sz of[-1,1]){g.add(mesh(cyl(.035,.035,2.1,4),DK,-2.3,3.55,sz*1.25));g.add(mesh(box(.2,.12,.2),DK,-2.3,2.62,sz*1.25));}
-  /* two ducted fans on the base: ring, six pitched blades, hub with spinner, a post between them, two rudders behind each (no outboard pylons, Magnus 1 nov) */
+  /* two ducted fans on the base: ring, six pitched blades, hub with spinner, a post between them, two rudders behind each (no outboard pylons, Magnus 1 nov).
+     The blades turn, about one and a half turns a second, slow enough to be seen turning (Magnus 1 nov: the fans stood still) */
   const FY=3.25;
-  for(const sz of[-1,1]){const z=sz*1.4;g.add(mesh(VARG_GEO.duct,RING,-3.3,FY,z));
-    for(let i=0;i<6;i++){const a=i/6*2*PI,arm=new THREE.Group();arm.position.set(-3.3,FY,z);arm.rotation.x=a;const bl=mesh(box(.08,.82,.32),DK,0,.58,0);bl.rotation.y=.45;arm.add(bl);g.add(arm);}
+  for(const sz of[-1,1]){const z=sz*1.4;g.add(mesh(VARG_GEO.duct,RING,-3.3,FY,z));const fan=new THREE.Group();fan.position.set(-3.3,FY,z);fan.rotation.x=sz>0?0:.5;g.add(fan);(g.userData.spin||(g.userData.spin=[])).push([fan,'x',10]);
+    for(let i=0;i<6;i++){const a=i/6*2*PI,arm=new THREE.Group();arm.rotation.x=a;const bl=mesh(box(.08,.82,.32),DK,0,.58,0);bl.rotation.y=.45;arm.add(bl);fan.add(arm);}
     const hub=mesh(cyl(.24,.24,.5,8),GR,-3.3,FY,z);hub.rotation.z=PI/2;g.add(hub);const sp=mesh(cyl(.02,.24,.32,8),GR,-2.9,FY,z);sp.rotation.z=-PI/2;g.add(sp);
     for(const dz of[-.45,.45]){g.add(mesh(box(.6,1.7,.07),DK,-3.86,FY-.05,z+dz));}}
   for(const f of VARG_GEO.fair)g.add(new THREE.Mesh(f,HULL2));
