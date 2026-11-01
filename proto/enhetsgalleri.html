@@ -278,10 +278,18 @@ function svOn(q,p,n,up){n=n.clone().normalize();const z=new THREE.Vector3(0,0,1)
   if(up){const yNow=new THREE.Vector3(0,1,0).applyQuaternion(q.quaternion),u=up.clone().addScaledVector(n,-up.dot(n)).normalize(),a=Math.atan2(new THREE.Vector3().crossVectors(yNow,u).dot(n),yNow.dot(u));
     q.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(n,a));}q.position.copy(p);return q;}
 const VARG_GEO={};
+/* designed lift points (Magnus 1 nov: two of the slings ended in the air beside BÄVER): four small dark lugs on the model's own surfaces, at
+   p (x, surface y, z in the model's frame), clear of the turret, the cab, the fans and the launcher; KROK's slings end at their tips
+   (userData.slingPts). Four triangles each, folded into the hull's call by bake(); bare (VARG, at its 1 800 triangles) puts no lugs and
+   the slings end on the surface itself */
+function slingLugs(g,P,bare){if(!GEOS.has('lug')){const t=[0,.07,0],c=[[.1,-.07,0],[0,-.07,.1],[-.1,-.07,0],[0,-.07,-.1]],P=[];for(let i=0;i<4;i++)P.push(...t,...c[(i+1)%4],...c[i]);
+    const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3));ge.computeVertexNormals();GEOS.set('lug',ge);}/* a low four-sided pyramid, its sides only */const m=mat(0x232629);
+  if(!bare)for(const p of P)g.add(mesh(GEOS.get('lug'),m,p[0],p[1]+.07,p[2]));g.userData.slingPts=P.map(p=>new THREE.Vector3(p[0],p[1]+(bare?.02:.13),p[2]));}
 function mkUnitMesh(u){
   const g=new THREE.Group(),SK=unitSkin();
-  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();root.add(sh(bake(m,true)));root.add(L);root.add(ram);
-    L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0});return root;}
+  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();
+    slingLugs(m,[[2.5,1.04,1],[2.5,1.04,-1],[-4.4,.99,1],[-4.4,.99,-1]]);/* on the deck, ahead of the ridge's slope and abaft the launcher */root.add(sh(bake(m,true)));root.add(L);root.add(ram);
+    L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0,slingPts:m.userData.slingPts});return root;}
   if(u.kind==='mus'){
     // MUS: a small remote-controlled rover. A body with sloped nose and tail, fenders over four fat wheels with hubs, a bumper and
     // lamp, a camera head on a short mast, a whip antenna, and the charge on the back with warning stripes
@@ -312,6 +320,7 @@ function mkUnitMesh(u){
     const Fr=[[1.9,2.05],[2.4,1.6],[2.78,2.9],[2.52,3.25],[2.2,2.95]],Ff=[[2.0,2.05],[2.4,1.65],[2.7,2.45],[2.5,2.7],[2.3,2.5]];
     VARG_GEO.fair=[1,-1].map(sz=>vLoft([[-3.75,Fr.map(([z,y])=>[sz*z,y])],[-3.15,Fr.map(([z,y])=>[sz*z,y])],[-2.7,Ff.map(([z,y])=>[sz*z,y])]]));
     const L=new THREE.LatheGeometry([[1.0,-.28],[1.2,-.28],[1.2,.28],[1.0,.28],[1.0,-.28]].map(([r,y])=>new THREE.Vector2(r,y)),14);L.rotateZ(PI/2);VARG_GEO.duct=L;}
+  slingLugs(g,[[2,2.25,1.7],[2,2.25,-1.7],[-2.65,2.6,1.62],[-2.65,2.6,-1.62]],true);/* on the upper chamfers ahead of the turret and on the engine deck */
   g.add(new THREE.Mesh(VARG_GEO.skirt,SKIRT));g.add(new THREE.Mesh(VARG_GEO.deck,mat(0x2a2c2f)));g.add(new THREE.Mesh(VARG_GEO.hull,HULL));
   /* lamps in dark housings low on the bow, turned with its edge */
   for(const sz of[-1,1]){const hs=mesh(box(.3,.3,.8),DK,4.2,1.24,sz*1.3),lp=mesh(box(.06,.13,.6),R3.lampMat,4.36,1.25,sz*1.3);g.add(hs);g.add(lp);}
@@ -373,7 +382,8 @@ function mkUnitMesh(u){
     for(const z of[-.5,0,.5])g.add(mesh(box(.12,.5,.36),OL2,-3.0,2.4,z));
     g.add(mesh(cyl(.3,.3,1.4,10),DK,-3.05,1.35,0).rotateX(PI/2));
     for(let i=0;i<6;i++)g.add(mesh(box(.06,.18,.45),i%2?BLK:YE,-3.04,1.8,-1.25+i*.5));
-    for(const z of[-1.3,1.3])g.add(mesh(box(.06,.2,.3),mat(0xb02a20),-3.04,1.25,z));}
+    for(const z of[-1.3,1.3])g.add(mesh(box(.06,.2,.3),mat(0xb02a20),-3.04,1.25,z));
+    slingLugs(g,[[1.55,3.9,-1.45],[1.75,2.97,1.55],[-2.65,2.97,-1.55],[-2.65,2.97,1.6]]);/* on the cab's roof, beside the arm and at the roof's aft corners */}
   else if(u.kind==='scout'){
     // SPARV: a small quadcopter with arms, rotor guards, a camera gimbal, a battery pack and four thin legs
     const D=mat(SK.b),M=mat(SK.c);g.userData.spin=[];/* the season's tone (issue 112) */
