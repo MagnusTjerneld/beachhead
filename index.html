@@ -8179,6 +8179,11 @@ function updateCam(dtr){
      while the camera shows the same unit, also when steering it, and starts over at 1 when the camera shows another */
   {if(!G.camZoom||G.camZoom.id!==u.id)G.camZoom={id:u.id,z:1};back*=G.camZoom.z;up*=G.camZoom.z;}
   if(orb){const r=Math.hypot(back,up),a=clamp(Math.atan2(up,back)+orb.pitch,.05,1.35);back=r*Math.cos(a);up=r*Math.sin(a);}
+  /* free look upward (issue 115, Magnus 1 nov): the camera sinks behind the unit as the view tips up, in the air down to the unit's own
+     height and on the ground or the water as low as it goes, and the view tips up to about 22 degrees, so the unit stays in the picture
+     against the sky */
+  const lift=glook&&G.pitch>0?Math.min(1,G.pitch/1.1):0;
+  if(lift){const r=Math.hypot(back,up),a=Math.max(air?0:.03,Math.atan2(up,back)-lift*1.1);back=r*Math.cos(a);up=r*Math.sin(a);}
   let px=u.x-fx*back,pz=u.y-fz*back;
   /* a ground unit's camera comes in front of a house, a building or a big block between it and the unit instead of sitting inside or
      behind it (18 okt, issue 42: VARG-1's view was a roof filling the screen) */
@@ -8186,7 +8191,7 @@ function updateCam(dtr){
   let py=Math.max(y+up,camFloor(px,pz)+.7);
   // keep the sight line from camera to unit above the terrain: raise the camera over a ridge or cliff between them
   for(let t=.15;t<1;t+=.1){const gx=lerp(px,u.x,t),gz=lerp(pz,u.y,t),need=heightAt(gx,gz)+1.2;const lineY=lerp(py,y+1,t);if(lineY<need)py+=(need-lineY)/(1-t);}
-  const ahd=small?Math.max(30,(y-groundY(u.x,u.y))*1.1):30,ax=orb?u.x:u.x+fx*ahd,az=orb?u.y:u.y+fz*ahd,ay=orb?y+1.5:daim?y+Math.tan(G.pitch-.45)*30:air?groundY(ax,az)+4+(glook?Math.tan(G.pitch)*35:0):aim?y+4.2+Math.tan(G.pitch)*30:glook?y+2.5+Math.tan(G.pitch)*30:y+2.5;
+  const ahd=small?Math.max(30,(y-groundY(u.x,u.y))*1.1):30,ax=orb?u.x:u.x+fx*ahd,az=orb?u.y:u.y+fz*ahd,ay=orb?y+1.5:lift?(()=>{const d=Math.hypot(ax-px,az-pz)||1,e0=Math.atan2((air?groundY(ax,az)+4:y+2.5)-py,d);return py+Math.tan(e0+(.38-e0)*lift)*d;})():daim?y+Math.tan(G.pitch-.45)*30:air?groundY(ax,az)+4+(glook?Math.tan(G.pitch)*35:0):aim?y+4.2+Math.tan(G.pitch)*30:glook?y+2.5+Math.tan(G.pitch)*30:y+2.5;
   if((aim||daim)&&G.mlook)R3.snap=true;
   const k=R3.snap?1:1-Math.exp(-5*dtr);
   /* the downward camera in the main view (G.camDown): the chase camera keeps moving in R3.chP and R3.chL for the corner picture */
