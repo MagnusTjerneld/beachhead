@@ -5930,16 +5930,17 @@ function svOn(q,p,n,up){n=n.clone().normalize();const z=new THREE.Vector3(0,0,1)
 const VARG_GEO={};
 /* designed lift points (Magnus 1 nov: two of the slings ended in the air beside BÄVER): four small dark lugs on the model's own surfaces, at
    p (x, surface y, z in the model's frame), clear of the turret, the cab, the fans and the launcher; KROK's slings end at their tips
-   (userData.slingPts). Four triangles each, folded into the hull's call by bake(); bare (VARG, at its 1 800 triangles) puts no lugs and
-   the slings end on the surface itself */
+   (userData.slingPts). Four triangles each; bare puts no lugs and the slings end on the surface itself */
 function slingLugs(g,P,bare){if(!GEOS.has('lug')){const t=[0,.07,0],c=[[.1,-.07,0],[0,-.07,.1],[-.1,-.07,0],[0,-.07,-.1]],P=[];for(let i=0;i<4;i++)P.push(...t,...c[(i+1)%4],...c[i]);
     const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3));ge.computeVertexNormals();GEOS.set('lug',ge);}/* a low four-sided pyramid, its sides only */const m=mat(0x232629);
-  if(!bare)for(const p of P)g.add(mesh(GEOS.get('lug'),m,p[0],p[1]+.07,p[2]));g.userData.slingPts=P.map(p=>new THREE.Vector3(p[0],p[1]+(bare?.02:.13),p[2]));}
+  /* the lugs are seen only while the unit hangs in the hook or is being hooked (Magnus 1 nov), so they are a group of their own
+     (userData.lugs, one draw call more), hidden otherwise */
+  if(!bare){const q=new THREE.Group();for(const p of P)q.add(mesh(GEOS.get('lug'),m,p[0],p[1]+.07,p[2]));q.visible=false;g.add(q);g.userData.lugs=q;}g.userData.slingPts=P.map(p=>new THREE.Vector3(p[0],p[1]+(bare?.02:.13),p[2]));}
 function mkUnitMesh(u){
   const g=new THREE.Group(),SK=unitSkin();
   if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();
     slingLugs(m,[[2.5,1.04,1],[2.5,1.04,-1],[-4.4,.99,1],[-4.4,.99,-1]]);/* on the deck, ahead of the ridge's slope and abaft the launcher */root.add(sh(bake(m,true)));root.add(L);root.add(ram);
-    L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0,slingPts:m.userData.slingPts});return root;}
+    L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0,slingPts:m.userData.slingPts,lugs:m.userData.lugs});return root;}
   if(u.kind==='mus'){
     // MUS: a small remote-controlled rover. A body with sloped nose and tail, fenders over four fat wheels with hubs, a bumper and
     // lamp, a camera head on a short mast, a whip antenna, and the charge on the back with warning stripes
@@ -5970,7 +5971,7 @@ function mkUnitMesh(u){
     const Fr=[[1.9,2.05],[2.4,1.6],[2.78,2.9],[2.52,3.25],[2.2,2.95]],Ff=[[2.0,2.05],[2.4,1.65],[2.7,2.45],[2.5,2.7],[2.3,2.5]];
     VARG_GEO.fair=[1,-1].map(sz=>vLoft([[-3.75,Fr.map(([z,y])=>[sz*z,y])],[-3.15,Fr.map(([z,y])=>[sz*z,y])],[-2.7,Ff.map(([z,y])=>[sz*z,y])]]));
     const L=new THREE.LatheGeometry([[1.0,-.28],[1.2,-.28],[1.2,.28],[1.0,.28],[1.0,-.28]].map(([r,y])=>new THREE.Vector2(r,y)),14);L.rotateZ(PI/2);VARG_GEO.duct=L;}
-  slingLugs(g,[[2,2.25,1.7],[2,2.25,-1.7],[-2.65,2.6,1.62],[-2.65,2.6,-1.62]],true);/* on the upper chamfers ahead of the turret and on the engine deck */
+  slingLugs(g,[[2,2.25,1.7],[2,2.25,-1.7],[-2.65,2.6,1.62],[-2.65,2.6,-1.62]]);/* on the upper chamfers ahead of the turret and on the engine deck */
   g.add(new THREE.Mesh(VARG_GEO.skirt,SKIRT));g.add(new THREE.Mesh(VARG_GEO.deck,mat(0x2a2c2f)));g.add(new THREE.Mesh(VARG_GEO.hull,HULL));
   /* lamps in dark housings low on the bow, turned with its edge */
   for(const sz of[-1,1]){const hs=mesh(box(.3,.3,.8),DK,4.2,1.24,sz*1.3),lp=mesh(box(.06,.13,.6),R3.lampMat,4.36,1.25,sz*1.3);g.add(hs);g.add(lp);}
@@ -8004,6 +8005,7 @@ function sync3D(dtr){
     if(u.dead)continue;seen.add(u.id);
     let m=R3.units.get(u.id);if(!m){m=mkUnitMesh(u);D.add(m);R3.units.set(u.id,m);}
     m.visible=!(u.kind==='mus'&&u.carried);if(!m.visible)continue;
+    if(m.userData.lugs)m.userData.lugs.visible=!!u.carried||G.kroks.some(k=>{const o=k.orders[0];return o&&o.type==='lift'&&o.unit===u&&o.t>0;});/* the lift lugs: in the hook, or while being hooked */
     if(u.carried){const kk=G.kroks.find(x=>x.id===u.carried);if(kk){m.position.set(kk.x,unitY(kk,0)-8,kk.y);m.rotation.y=-kk.heading;continue;}}
     /* set down: the swing under the hook goes */if(m.userData.hung){m.rotation.x=m.rotation.z=0;m.userData.hung=false;if(m.userData.blob)m.userData.blob.visible=true;}
     m.position.set(u.x,unitY(u,dtr),u.y);m.rotation.y=-u.heading;
@@ -8183,10 +8185,13 @@ function camBlock(x0,z0,x1,z1){const W=WORLD;if(camObsW!==W){camObsW=W;camObsG=n
   return best;}
 /* the units driven by hand whose camera the mouse turns, without a gun: GÄDDA (26 okt), KROK and BÄVER (issue 115, Magnus 1 nov) */
 const freeLook=u=>!!u&&(u.kind==='gadda'||u.kind==='krok'||u.kind==='eng');
+/* the model of a unit hanging in KROK's hook (a MUS carried is aboard its VARG, not hung) */
+const hungMesh=u=>u.carried&&u.kind!=='mus'&&R3?R3.units.get(u.id)||null:null;
 let tmpV=hasDOM&&typeof THREE!=='undefined'?new THREE.Vector3():null,tmpV2=hasDOM&&typeof THREE!=='undefined'?new THREE.Vector3():null;
 function updateCam(dtr){
   const u=unitById(G.cam);if(!u)return;
-  const air=u.air||u.kind==='krok';const y=u.alt!=null&&air?u.alt:unitY(u,0);const small=u.kind==='scout';const aim=G.ctrl===u.id&&u.kind==='tank',daim=G.ctrl===u.id&&u.kind==='drone'&&G.mlook,glook=G.ctrl===u.id&&freeLook(u)&&G.mlook;
+  /* a unit in KROK's hook: the camera goes up with it, to where its model hangs (Magnus 1 nov) */
+  const hung=hungMesh(u),air=u.air||u.kind==='krok';const y=hung?hung.position.y:u.alt!=null&&air?u.alt:unitY(u,0);const small=u.kind==='scout';const aim=G.ctrl===u.id&&u.kind==='tank',daim=G.ctrl===u.id&&u.kind==='drone'&&G.mlook,glook=G.ctrl===u.id&&freeLook(u)&&G.mlook;
   const orb=G.camOrb&&G.camOrb.id===u.id&&G.ctrl!==u.id?G.camOrb:null;if(G.camOrb&&!orb)G.camOrb=null;
   const mus=u.kind==='mus',ch=u.camH+(orb?orb.yaw:0);const fx=Math.cos(ch),fz=Math.sin(ch);let back=mus?4.5:small?9:air?22:aim?17:15,up=mus?1.8:small?3.5:air?9:aim?6.5:6;
   /* the wheel in the camera view moves the camera nearer or further (G.camZoom, 0.4 to 2.5 times; decided 24 okt, Magnus): it stays
@@ -8201,7 +8206,7 @@ function updateCam(dtr){
   let px=u.x-fx*back,pz=u.y-fz*back;
   /* a ground unit's camera comes in front of a house, a building or a big block between it and the unit instead of sitting inside or
      behind it (18 okt, issue 42: VARG-1's view was a roof filling the screen) */
-  if(!air){const t=camBlock(u.x,u.y,px,pz);if(t<1){const tt=Math.max(.2,t);px=lerp(u.x,px,tt);pz=lerp(u.y,pz,tt);}}
+  if(!air&&!hung){const t=camBlock(u.x,u.y,px,pz);if(t<1){const tt=Math.max(.2,t);px=lerp(u.x,px,tt);pz=lerp(u.y,pz,tt);}}
   let py=Math.max(y+up,camFloor(px,pz)+.7);
   // keep the sight line from camera to unit above the terrain: raise the camera over a ridge or cliff between them
   for(let t=.15;t<1;t+=.1){const gx=lerp(px,u.x,t),gz=lerp(pz,u.y,t),need=heightAt(gx,gz)+1.2;const lineY=lerp(py,y+1,t);if(lineY<need)py+=(need-lineY)/(1-t);}
@@ -9064,7 +9069,7 @@ function feedPick(){const L=FEED.list;if(!L.length)return;
   if(F1){if(F1.pin)busy.add(F1.uid);else{const a=[...selUnits(),...(G.selK?[unitById(G.selK)]:[])].find(u=>u&&feedOk(u.id)&&u.id!==G.cam);if(a)take(F1,a.id);else fallback(F1);}}
   if(F2){if(F2.pin)busy.add(F2.uid);else{const want=G.feed2==='bay'&&!G.build.length?null:G.feed2;
     if(want&&feedOk(want)&&!busy.has(want))take(F2,want);else if(F2.uid&&feedOk(F2.uid)&&!busy.has(F2.uid)&&(F2.uid!=='bay'||G.build.length))take(F2,F2.uid);else fallback(F2);}}}
-function feedCam(u,cam){const air=u.air||u.kind==='krok',y=u.alt!=null&&air?u.alt:unitY(u,0),h=u.camH!=null?u.camH:u.heading,fx=Math.cos(h),fz=Math.sin(h),back=air?22:15,up=air?9:6;
+function feedCam(u,cam){const hung=hungMesh(u),air=u.air||u.kind==='krok',y=hung?hung.position.y:u.alt!=null&&air?u.alt:unitY(u,0),h=u.camH!=null?u.camH:u.heading,fx=Math.cos(h),fz=Math.sin(h),back=air?22:15,up=air?9:6;
   const px=u.x-fx*back,pz=u.y-fz*back,py=Math.max(y+up,camFloor(px,pz)+.7);cam.position.set(px,py,pz);const ahd=u.kind==='scout'?Math.max(30,(y-groundY(u.x,u.y))*1.2):30,ax=u.x+fx*ahd,az=u.y+fz*ahd;cam.lookAt(ax,air?groundY(ax,az)+4:y+2.5,az);}
 function feedTick(now){const F1=FEED.list[0],big=!!F1&&F1.isBig;if((!FEED.on&&!big)||TITLE.on||!F1)return;
   if(now-FEED.pickT>500){FEED.pickT=now;feedPick();}feedQTick(now);

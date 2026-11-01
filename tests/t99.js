@@ -21,8 +21,9 @@ const body=(src.slice(0,i)+'\n'+src.slice(R0,k)+EXTRA.map(fn).join('')+st('HOVER
 const M=new Function('THREE',body)(THREE);
 M.setR3({lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0})});
 
-const measure=g=>{g.updateMatrixWorld(true);let tri=0,meshes=0,bad=0;const bb=new THREE.Box3(),mats=new Set();
-  g.traverse(o=>{if(!o.isMesh)return;meshes++;mats.add(o.material.uuid);const ge=o.geometry,p=ge.attributes.position;tri+=(ge.index?ge.index.count:p.count)/3;
+/* the lift lugs (userData.lugs) are counted out: they are drawn only while the unit hangs in KROK's hook (Magnus 1 nov) */
+const measure=g=>{g.updateMatrixWorld(true);let tri=0,meshes=0,bad=0;const lug=g.userData.lugs;const bb=new THREE.Box3(),mats=new Set();
+  g.traverse(o=>{if(!o.isMesh)return;if(lug&&o.parent===lug)return;meshes++;mats.add(o.material.uuid);const ge=o.geometry,p=ge.attributes.position;tri+=(ge.index?ge.index.count:p.count)/3;
     for(let n=0;n<p.array.length;n++)if(!isFinite(p.array[n])){bad++;break;}});
   bb.setFromObject(g);const s=bb.getSize(new THREE.Vector3());return{tri,meshes,mats:mats.size,bad,min:bb.min,max:bb.max,size:s};};
 const objs=(v,out=[])=>{if(!v)return out;if(Array.isArray(v)){for(const x of v)objs(x,out);}else if(v.isObject3D)out.push(v);return out;};
