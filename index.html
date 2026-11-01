@@ -567,12 +567,12 @@ const relayHid=t=>t==='varv'||t==='verkstad'||t==='central';
 const rKnown=r=>!r.hid||!!r.seen||!!r.captured;
 const VARV_KINDS=['scout','drone','tank'],VARV_SLOW=1.5,VARV_CONTEST=150,RADAR_SEE=220,RADAR_MAP=320;
 const ENEMY={
-  turret:{hp:120,range:140,airRange:130,vision:150,dmg:9,rate:1/1.2,acc:.8,value:100,label:'Bunker',cls:'armor',camo:true,canAir:true,canGround:true},
-  rb:{hp:30,range:140,airRange:120,vision:150,dmg:35,rate:.4,acc:.75,mag:2,reload:20,speed:3.5,value:0,label:'Robotskytt',cls:'inf',camo:true,canAir:true,canGround:true,tag:'RB'},
-  aa:{hp:90,range:200,kRange:275,vision:220,radar:110,dmg:10,rate:1.5,acc:.85,speed:8,value:90,label:'Luftvärn',cls:'light',camo:true,canAir:true,canGround:false},
-  inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,mobile:true,leash:220,tag:'I'},
+  turret:{hp:120,range:140,airRange:130,vision:150,dmg:9,rate:1/1.2,acc:.8,value:100,label:'Bunker',cls:'armor',camo:true,canAir:true,canGround:true,elev:20},
+  rb:{hp:30,range:140,airRange:120,vision:150,dmg:35,rate:.4,acc:.75,mag:2,reload:20,speed:3.5,value:0,label:'Robotskytt',cls:'inf',camo:true,canAir:true,canGround:true,elev:80,tag:'RB'},
+  aa:{hp:90,range:200,kRange:275,vision:220,radar:110,dmg:10,rate:1.5,acc:.85,speed:8,value:90,label:'Luftvärn',cls:'light',camo:true,canAir:true,canGround:false,elev:85},
+  inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,elev:60,mobile:true,leash:220,tag:'I'},
   at:{hp:35,range:170,vision:170,dmg:22,rate:.25,acc:.7,speed:4,value:0,label:'Pansarvärn',cls:'inf',camo:true,canAir:false,canGround:true,mobile:true,leash:220,tag:'PV'},
-  light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,mobile:true,leash:500,tag:'LP'},
+  light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,elev:45,mobile:true,leash:500,tag:'LP'},
   tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'},
   /* the coast battery of Kustbatteriet (issue 73, Magnus 29 okt): a fixed 12 cm turret built into the rock, after ERSTA (12 cm
      tornautomatpjäs m/70). It fires only at what is military on the sea (GÄDDA, a vehicle in the water, Birka), with its own fire
@@ -3359,6 +3359,10 @@ function birkaAirClear(){for(const e of G.enemies){
 const rVs=(e,t)=>t&&t.kind==='krok'&&e.kRange?e.kRange:t&&t.air&&!t.onPad?airR(e):e.range;
 /* how far e reaches u: against ground for a ground unit, against aircraft for an aircraft (KROK by the AA's longer reach on it, a
    GETING only within the reach where it is seen); 0 when e cannot fire on it */
+/* the barrel's elevation limits what an enemy can fire at in the air (Magnus 1 nov: the bunkers fired straight up; the angle of the
+   barrels is the limit in reality): elev, in degrees above level from the gun to the target, 20 for the bunker's embrasure, 45 light
+   armour's turret, 60 rifles, 80 the MANPADS, 85 air defence. What flies steeper over it, close above, is out of its reach */
+const elevOK=(e,t)=>!(t.air||t.kind==='krok')||e.elev==null||Math.atan2(hOf(t)-groundY(e.x,e.y)-2,Math.hypot(t.x-e.x,t.y-e.y))<=e.elev*PI/180;
 function reachVs(e,u){if(u.air){if(!e.canAir||highG(u)&&!e.radar)return 0;if(highG(u))return hiReach(e);return u.sig?Math.min(airR(e),e.radar||u.sig):rVs(e,u);}return e.canGround?e.range:0;}
 function airThreatR(u,e){return u.kind==='krok'?rVs(e,u)+25:highG(u)?(e.radar?hiReach(e)+20:0):u.sig?Math.min(airR(e)+25,(e.radar||u.sig)+20):airR(e)+25;}
 /* spotting for ground units: a point inside air vision of the target but outside every known air threat, on our side of it */
@@ -3741,8 +3745,8 @@ function updateEnemy(e,dt){
   if(e.mag&&e.ammo<=0&&e.cd<=0)e.ammo=e.mag;
   const SCo=SCOOT[e.kind],hold=u=>SCo&&!e.seen&&!e.firedHere&&u.kind==='scout'&&!u.dive&&dist(u,e)>(hides(e)?HIDE_AIR:u.vision)+5;/* a SPARV that has not seen it is not worth giving it away */
   let tgt=null,bd=1e9,bs=-1e9,keep=null,kd=0,ks=0;const look=e.mobile?e.vision:Math.max(e.range,e.airRange||0);
-  if(e.canAir)for(const k of G.kroks){if(k.dead)continue;const d=dist(k,e);if(d<=Math.max(look,rVs(e,k))){if(k===e.tgtU){keep=k;kd=d;}if(d<bd){bd=d;tgt=k;}}}
-  for(const u of G.units){if(u.dead||u.carried)continue;if(flying(u)?!e.canAir:!e.canGround)continue;if(hold(u))continue;if(u.kind==='scout'&&e.kind==='rb')continue;if(highG(u)&&!e.radar)continue;/* the MANPADS is for helicopters and larger drones, not a GETING (16 okt) */if(!sees(e,u))continue;const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):highG(u)?Math.min(look,hiReach(e)):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim){const sc=d<=rVs(e,u)?expHit(e,u)*(1+FOCUS.k*(1-u.hp/u.maxhp)):-d*1e-3;if(u===e.tgtU){keep=u;kd=d;ks=sc;}if(sc>bs){bs=sc;bd=d;tgt=u;}}}
+  if(e.canAir)for(const k of G.kroks){if(k.dead||!elevOK(e,k))continue;const d=dist(k,e);if(d<=Math.max(look,rVs(e,k))){if(k===e.tgtU){keep=k;kd=d;}if(d<bd){bd=d;tgt=k;}}}
+  for(const u of G.units){if(u.dead||u.carried)continue;if(flying(u)?!e.canAir||!elevOK(e,u):!e.canGround)continue;if(hold(u))continue;if(u.kind==='scout'&&e.kind==='rb')continue;if(highG(u)&&!e.radar)continue;/* the MANPADS is for helicopters and larger drones, not a GETING (16 okt) */if(!sees(e,u))continue;const d=dist(u,e),lim=u.kind==='mus'?Math.min(look,e.mobile?ROVER.seeMobile:ROVER.seeFixed):highG(u)?Math.min(look,hiReach(e)):u.sig?Math.min(look,e.radar||u.sig):look;if(d<=lim){const sc=d<=rVs(e,u)?expHit(e,u)*(1+FOCUS.k*(1-u.hp/u.maxhp)):-d*1e-3;if(u===e.tgtU){keep=u;kd=d;ks=sc;}if(sc>bs){bs=sc;bd=d;tgt=u;}}}
   /* (decided 19 okt, issue 44) the target it can expect to hurt most per shot, by its weapon, the range, the target's size, armour
      and speed across the line; it keeps its target until another is clearly better, a third more, since turning the gun costs time */
   if(keep&&kd<=rVs(e,keep)&&ks>=bs*.75){tgt=keep;bd=kd;}e.tgtU=tgt;
