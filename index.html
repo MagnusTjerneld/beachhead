@@ -5169,11 +5169,17 @@ const smallSlot=document.createElement('div');smallSlot.className='feed vsm';sma
 new ResizeObserver(fitPanes).observe(smallSlot);
 /* the small picture is only a picture: a click swaps it into the active view, and nothing reaches the chart or camera under it */
 for(const ev of['pointerdown','pointerup','pointermove','dblclick','contextmenu','wheel'])smallSlot.addEventListener(ev,e=>{e.stopPropagation();if(ev!=='pointermove')e.preventDefault();},{capture:true,passive:false});
-smallSlot.addEventListener('click',e=>{e.stopPropagation();if(!LAYOUT.on)return;vwSwap(VW.act,'small');G.mainMode=VW.main;placePanes();uiTick(true);},true);
+smallSlot.addEventListener('click',e=>{e.stopPropagation();if(!LAYOUT.on)return;vwSwap(VW.act,'small');actCam();G.mainMode=VW.main;placePanes();uiTick(true);},true);
+/* the active camera is the main camera (issue 116, Magnus 1 nov, ö 6531: after Q the active view was KAMERA 2, which takes no clicks, so
+   no order could be given there and a GETING put in the camera showed in the other view): when KAMERA 2 comes into the active view,
+   camera 1 changes places with it and takes over its unit, so that the active view is always the camera that takes orders, control and
+   the mouse; KAMERA 2 goes where camera 1 was. Not while a unit is driven by hand, whose camera stays on it */
+function actCam(){if(!LAYOUT.on||VW[VW.act]!=='cam2')return;const F=FEED.list[0],id=F&&F.uid,u=id&&unitById(id);
+  vwSwap(VW.act,vwWhere('cam'));G.mainMode=VW.main;if(u&&!u.dead&&!G.ctrl&&(G.units.includes(u)||G.kroks.includes(u)))setCam(id);}
 function setAct(k){VW.act=k;try{localStorage.setItem('bh.vact',k);}catch(_){}for(const b of document.querySelectorAll('.vact'))b.setAttribute('aria-pressed',String(b.dataset.slot===k));}
 for(const sl of[mainSlot,subSlot]){const b=document.createElement('button');b.type='button';b.className='vact';b.dataset.slot=sl===mainSlot?'main':'sub';
   b.title='Aktiv vy: Q, Byt vy och klick på den lilla bilden byter den här vyn mot den lilla bilden. Klicka för att göra den här vyn aktiv';b.setAttribute('aria-label','Gör vyn aktiv');
-  b.addEventListener('pointerdown',e=>e.stopPropagation());b.addEventListener('click',e=>{e.stopPropagation();setAct(b.dataset.slot);});sl.appendChild(b);}
+  b.addEventListener('pointerdown',e=>e.stopPropagation());b.addEventListener('click',e=>{e.stopPropagation();setAct(b.dataset.slot);actCam();placePanes();uiTick(true);});sl.appendChild(b);}
 setAct(VW.act);
 function placePanes(){
   const wide=!!LAYOUT.on,pid=paneCam.parentElement&&paneCam.parentElement.id,stage=pid==='titleStage'&&TITLE.on||pid==='opView'&&OP.on?paneCam.parentElement:null;
@@ -8894,7 +8900,7 @@ function doCall(kind,key,shift){const pk=pointedPick();if(!pk||!callTarget(pk)){
 /* the views keep their places: only Q (Byt vy) swaps them (decided 17 okt, Magnus; in the wide layout it swaps the active view with
    the small picture, 24 okt). Taking control is the one exception, and only in
    the standard layout, where the camera in the side panel is too small to drive in */
-function swapViews(){if(LAYOUT.on){vwSwap(VW.act,'small');G.mainMode=VW.main;}else G.mainMode=G.mainMode==='map'?'cam':'map';placePanes();uiTick(true);}
+function swapViews(){if(LAYOUT.on){vwSwap(VW.act,'small');actCam();G.mainMode=VW.main;}else G.mainMode=G.mainMode==='map'?'cam':'map';placePanes();uiTick(true);}
 function focusUnit(u){if(u&&!u.dead){userCam(u.id);uiTick(true);}}
 function focusPoint(x,y){ping(x,y);if(G.mainMode==='map'){mv.free=true;mv.z=Math.max(mv.z,2.2);mv.cx=x;mv.cy=y;}}
 const barrierGate=b=>!b.cleared&&b.sides.some(sd=>!lockedAt(sd.x,sd.y))&&b.sides.some(sd=>lockedAt(sd.x,sd.y));
@@ -8998,7 +9004,7 @@ function mkFeeds(){const box=$('feeds');box.innerHTML='';FEED.list=[];box.append
    active view as the small picture always does; large, a click makes its view the active one. It used to show its unit in camera 1 */
 function feedEvents(F,k){k.el.title=k===CAM2?'Klick: gör vyn aktiv':'Klick: visa i kameran';
   k.el.addEventListener('click',ev=>{if(ev.target===k.pinB)return;
-    if(LAYOUT.on&&F===FEED.list[0]){if(k===CAM2){setAct(VW.main==='cam2'?'main':'sub');return;}if(VW.small==='cam2'){vwSwap(VW.act,'small');G.mainMode=VW.main;placePanes();uiTick(true);return;}}
+    if(LAYOUT.on&&F===FEED.list[0]){if(k===CAM2){setAct(VW.main==='cam2'?'main':'sub');actCam();placePanes();uiTick(true);return;}if(VW.small==='cam2'){vwSwap(VW.act,'small');actCam();G.mainMode=VW.main;placePanes();uiTick(true);return;}}
     const u=unitById(F.uid);if(u&&!u.dead){userCam(u.id);uiTick(true);}});
   k.pinB.addEventListener('click',ev=>{ev.stopPropagation();F.pin=!F.pin;for(const q of Object.values(F.sk))q.pinB.setAttribute('aria-pressed',String(F.pin));});}
 /* the second camera of the wide layout: the first live picture drawn as a large view, by a renderer of its own with antialiasing and
