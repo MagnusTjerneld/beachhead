@@ -5838,7 +5838,10 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
     for(const sz of[-1,1]){const out=V(0,.6,sz).normalize(),lo=sz>0?4:0,sh=sz>0?3:1,v=q=>sz>0?q:1-q;
       g.add(patch(R,sh,1.75,2.6,v(.12),v(.88),T,V(.3,.8,sz*.6).normalize(),.25,2));/* the shoulders of the slope in the side's colour */
       g.add(patch(R,lo,.55,1.25,v(.25),v(.7),DK,V(0,.3,sz).normalize(),0,1));g.add(patch(R,lo,-.55,-.1,v(.3),v(.65),DK,V(0,.3,sz).normalize(),0,1));/* dark sensor panels, not one band */
-      g.add(patch(R,lo,1.3,1.42,v(.45),v(.6),sz<0?RED:GRN,V(0,.3,sz).normalize(),0,1));}
+      g.add(patch(R,lo,1.3,1.42,v(.45),v(.6),sz<0?RED:GRN,V(0,.3,sz).normalize(),0,1));
+      /* the Swedish flag (issue 111), the hoist forward: blue, then the yellow cross a little proud of it */
+      {const o=V(0,.3,sz).normalize(),x0=1.62,x1=2.02,w=x1-x0,BL=M(0x1f5c9e),YE=M(0xf0c020),up=q=>{q.position.addScaledVector(o,.008);return q;};g.add(patch(R,lo,x0,x1,v(.3),v(.72),BL,o,0,1));
+        g.add(up(patch(R,lo,x1-w*7/16,x1-w*5/16,v(.3),v(.72),YE,o,0,1)));g.add(up(patch(R,lo,x0,x1,v(.468),v(.552),YE,o,0,1)));}}
     g.add(patch(R,2,1.0,1.4,.2,.8,DK,V(0,1,0),0,1));g.add(mesh(box(.3,.1,.22),DK,-.35,1.72,-.15));}
   /* the sensor module at the top of the slope: a dark angular block with four lenses, two by two, and a white light beside them */
   {g.add(mesh(box(.5,.44,.6),DK,3.15,1.3,0));g.add(mesh(box(.32,.12,.48),DK,3.08,1.57,0));
@@ -5907,6 +5910,20 @@ function vSkirt(){const pl=vPlan(1.3),N=pl.length,pr=[[-.3,.06],[.26,0],[.48,.5]
 /* a thin part laid flat on the plane through three points (the hull's own corners), at x,z, its underside just touching */
 function onFace(o,A,B,C,x,z){const a=new THREE.Vector3(...A),n=new THREE.Vector3(...B).sub(a).cross(new THREE.Vector3(...C).sub(a)).normalize();if(n.y<0)n.negate();
   const y=a.y-(n.x*(x-a.x)+n.z*(z-a.z))/n.y,h=o.geometry.parameters.height/2;o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),n);o.position.set(x,y,z).addScaledVector(n,h-.005);return o;}
+/* Swedish markings (Magnus 1 nov, issue 111): for the tie to Sweden, not to tell friend from foe, and the enemy has none. svFlag is a small
+   flag of three planes in the xy plane, facing +z or (f -1) -z, with the hoist toward +x, the bow, on either side; svRoundel the air
+   force's three crowns on a blue roundel, facing +z with the crowns upright (+y). Plain colours, so bake() folds them into the hull's call */
+const SV={blue:0x1f5c9e,yellow:0xf0c020};
+function svFlag(w,f){f=f<0?-1:1;const h=w*.625,q=new THREE.Group(),Y=mat(SV.yellow),P=(a,b)=>new THREE.PlaneGeometry(a,b);q.add(mesh(P(w,h),mat(SV.blue)));
+  q.add(mesh(P(w*2/16,h),Y,f*(w/2-w*6/16),0,.006));q.add(mesh(P(w,h*.2),Y,0,0,.006));if(f<0)q.rotation.y=PI;return q;}
+function svRoundel(r){const k='crown';if(!GEOS.has(k)){const c=new THREE.Shape();[[-.5,-.4],[.5,-.4],[.56,.36],[.27,.06],[0,.46],[-.27,.06],[-.56,.36]].forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
+    const ge=new THREE.ExtrudeGeometry(c,{depth:1,bevelEnabled:false});ge.translate(0,0,-.5);GEOS.set(k,ge);}
+  const q=new THREE.Group(),t=Math.max(.012,r*.06),Y=mat(SV.yellow),d=mesh(cyl(r,r,t,16),mat(SV.blue));d.rotation.x=PI/2;q.add(d);
+  for(const[x,y]of[[-.42,.2],[.42,.2],[0,-.42]]){const c=mesh(GEOS.get(k),Y,x*r,y*r,0);c.scale.set(r*.42,r*.42,t*1.6);q.add(c);}return q;}
+/* laid on a flat face: the marking's +z turned to the face's outward normal n (crowns upright where they can be), its back on the face at p */
+function svOn(q,p,n,up){n=n.clone().normalize();const z=new THREE.Vector3(0,0,1);q.quaternion.setFromUnitVectors(z,n);
+  if(up){const yNow=new THREE.Vector3(0,1,0).applyQuaternion(q.quaternion),u=up.clone().addScaledVector(n,-up.dot(n)).normalize(),a=Math.atan2(new THREE.Vector3().crossVectors(yNow,u).dot(n),yNow.dot(u));
+    q.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(n,a));}q.position.copy(p);return q;}
 const VARG_GEO={};
 function mkUnitMesh(u){
   const g=new THREE.Group(),SK=unitSkin();
@@ -5920,6 +5937,7 @@ function mkUnitMesh(u){
     g.add(mesh(box(1.22,.08,.94),T,0,.86,0));g.add(mesh(box(.5,.06,.6),B2,.1,.92,0));
     for(const[x,z]of[[.52,.6],[-.52,.6],[.52,-.6],[-.52,-.6]]){const w=mesh(cyl(.3,.3,.24,12),DK,x,.3,z);w.rotation.x=PI/2;g.add(w);const h=mesh(cyl(.13,.13,.26,6),HUB,x,.3,z);h.rotation.x=PI/2;g.add(h);
       const fd=mesh(box(.62,.06,.3),B2,x,.66,z*1.02);g.add(fd);}
+    for(const z of[-.463,.463]){const fl=svFlag(.3,z);fl.position.set(0,.6,z);g.add(fl);}/* the Swedish flag (issue 111) */
     g.add(mesh(box(.08,.14,.9),DK,.92,.4,0));g.add(mesh(box(.06,.1,.36),R3.lampMat,.88,.62,0));
     g.add(mesh(cyl(.05,.05,.3,6),DK,.3,1.05,0));g.add(mesh(box(.26,.2,.32),mat(0x22282e),.32,1.25,0));g.add(mesh(new THREE.SphereGeometry(.09,8,6),mat(0x101418),.46,1.25,0));
     g.add(mesh(cyl(.02,.02,1.4,4),mat(0x2a2a2a),-.5,1.55,.32));g.add(mesh(new THREE.SphereGeometry(.04,6,4),mat(0xd03a2a),-.5,2.26,.32));
@@ -5947,7 +5965,8 @@ function mkUnitMesh(u){
   /* the unit's colour: two panels on the bow slope and one on each upper chamfer */
   for(const sz of[-1,1]){const p=onFace(mesh(box(1.25,.05,.85),T),[2.4,2.4,0],[2.4,2.25,sz*1.75],[4.3,1.72,0],3.3,sz*.95);g.add(p);
     g.add(onFace(mesh(box(1.7,.05,.5),T),[0,2.25,sz*1.75],[0,1.75,sz*2.35],[2,2.25,sz*1.75],1.1,sz*2.05));
-    g.add(mesh(box(1.1,.26,.06),DK,-.2,1.5,sz*2.37));g.add(mesh(box(.5,.18,.06),GR,1.2,1.45,sz*2.37));}
+    g.add(mesh(box(1.1,.26,.06),DK,-.2,1.5,sz*2.37));g.add(mesh(box(.5,.18,.06),GR,1.2,1.45,sz*2.37));
+    const fl=svFlag(.6,sz);fl.position.set(-1.55,1.46,sz*2.362);g.add(fl);/* the Swedish flag (issue 111) */}
   /* the stern (Magnus 1 nov: not one flat face): an access hatch with a handle, a vent grille with a slat each side, tail lamps
      at the corners, a dark rubbing strip along the foot with two towing eyes */
   {const X=-3.95,RED=mat(0xb8382a);g.add(mesh(box(.08,.62,1.1),HULL2,X-.03,1.62,0));g.add(mesh(box(.06,.06,.5),DK,X-.08,1.72,0));
@@ -5984,6 +6003,7 @@ function mkUnitMesh(u){
     g.add(mesh(box(6,1.0,3.0),OL2,0,1.15,0));
     g.add(mesh(box(4.8,1.3,3.6),OL,-.5,2.25,0));const gl=mesh(box(1.8,1.25,3.6),OL,2.35,2.0,0);gl.rotation.z=-.62;g.add(gl);
     for(const z of[-1.82,1.82])g.add(mesh(box(6.1,.5,.12),OL3,0,1.75,z));
+    for(const z of[-1.802,1.802]){const fl=svFlag(.8,z);fl.position.set(-1.7,2.42,z);g.add(fl);}/* the Swedish flag (issue 111) */
     g.add(mesh(box(4.86,.1,3.66),T,-.5,2.92,0));
     for(const z of[-1.35,1.35])g.add(mesh(box(.2,.3,.5),R3.lampMat,3.02,1.55,z));
     g.add(mesh(box(1.9,1.0,1.9),OL3,.8,3.4,-.75));g.add(mesh(box(.08,.22,1.4),GL,1.76,3.55,-.75));g.add(mesh(box(.9,.2,.06),GL,.9,3.55,-1.71));
@@ -6003,7 +6023,7 @@ function mkUnitMesh(u){
   else if(u.kind==='scout'){
     // SPARV: a small quadcopter with arms, rotor guards, a camera gimbal, a battery pack and four thin legs
     const D=mat(SK.b),M=mat(SK.c);g.userData.spin=[];/* the season's tone (issue 112) */
-    g.add(mesh(box(.9,.32,.6),D,0,0,0));g.add(mesh(box(.5,.08,.5),mat(u.color),0,.2,0));g.add(mesh(box(.5,.18,.4),mat(SK.a),-.25,.26,0));
+    g.add(mesh(box(.9,.32,.6),D,0,0,0));g.add(mesh(box(.5,.08,.5),mat(u.color),0,.2,0));g.add(mesh(box(.5,.18,.4),mat(SK.a),-.25,.26,0));g.add(svOn(svRoundel(.17),new THREE.Vector3(-.25,.35,0),new THREE.Vector3(0,1,0),new THREE.Vector3(1,0,0)));/* three crowns (issue 111) */
     for(const[ax,az]of[[.75,.75],[.75,-.75],[-.75,.75],[-.75,-.75]]){const arm=mesh(box(1.1,.08,.08),D,ax/2,0,az/2);arm.rotation.y=Math.atan2(-az,ax);g.add(arm);
       g.add(mesh(cyl(.08,.08,.16,6),D,ax,.04,az));const gd=mesh(new THREE.TorusGeometry(.46,.03,4,14),D,ax,.12,az);gd.rotation.x=PI/2;g.add(gd);
       const r=rotor(2,.4,.09);r.position.set(ax,.12,az);r.rotation.y=Math.random()*PI;g.add(r);g.userData.spin.push([r,'y',(ax*az>0?1:-1)*16]);
@@ -6036,7 +6056,7 @@ function mkUnitMesh(u){
       b.add(mesh(plan([[1,.3*sz],[-.05,1.25*sz],[-.42,1.86*sz],[-1,1.9*sz],[-1.05,1.3*sz],[-.85,.3*sz]],.1,.025),M,0,.09,0));
       b.add(mesh(box(.46,.1,.28),M,-.72,.05,sz*1.82));
       b.add(mesh(box(1.2,.025,.12),K,-.38,.1,sz*1));b.add(mesh(box(.74,.025,.11),K,-.65,.1,sz*1.58));
-      b.add(mesh(box(.28,.02,.2),PL,-.42,.098,sz*.72));b.add(mesh(box(.26,.02,.18),PL,-.82,.098,sz*1.3));
+      b.add(mesh(box(.28,.02,.2),PL,-.42,.098,sz*.72));b.add(svOn(svRoundel(.2),new THREE.Vector3(-.5,.092,sz*1.3),new THREE.Vector3(0,1,0),new THREE.Vector3(1,0,0)));/* three crowns (issue 111) */
       const st=mesh(box(.42,.025,.06),TC,.05,.104,sz*.62);st.rotation.y=sz*.65;b.add(st);
       // the duct: a slim faceted ring band, two struts to the motor, the fan under a light hub cap, and three lamps round its outside
       /* the duct turns about its axis across the wing, forward as she flies forward and back as she backs (decided 24 okt, Magnus: the
@@ -6094,6 +6114,7 @@ function mkUnitMesh(u){
     // a sensor box and the anti-collision light on the back, vent slots along the middle
     /* standing on the back (24 okt: its top was flush with the back's and flickered against it, and the light sat inside the body) */b.add(mesh(facet([[.2,2.1],[.2,2.45],[-.6,2.45],[-.6,2.1]],.6,.06),DK));b.add(mesh(new THREE.SphereGeometry(.16,6,4),new THREE.MeshBasicMaterial({color:0xff3020}),-1.6,2.3,0));
     for(const z of[-1.03,1.03])b.add(mesh(box(.9,.06,.03),BLK,-.4,1.35,z));
+    for(const sz of[-1,1])b.add(svOn(svRoundel(.48),V(-4.15,.98,sz*1.15),V(0,0,sz),V(0,1,0)));/* three crowns (issue 111) */
     /* four crane legs: a heavy strut from the body's corner out and down to a knee, a lighter brace from further in, twin wheels.
        They fold back along the belly in flight and come down before a pickup and at service (Magnus 21 okt): each leg is the
        upper strut turning at the hip (U), the knee with the lower strut and the wheels turning at the knee (K) and the brace (B),

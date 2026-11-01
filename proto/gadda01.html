@@ -11,13 +11,13 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px s
 <canvas id="c"></canvas><div id="lab"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* Testbänk för GÄDDA 01 (Magnus designförslag 1 nov): dagens mkGadda ur index.html bredvid den nya, mkGadda01, som har samma gränssnitt
+/* Testbänk för GÄDDA 01 (Magnus designförslag 1 nov): GÄDDA före 1 nov (ur commiten före 0e513b9) bredvid den nya, mkGadda01, som har samma gränssnitt
    (THREE, {color, skin, lift, robots}; userData.launcher, caps, ram, setLift, jets) och kan ersätta den rakt av. Framåt är +x.
    node proto/gadda01.js [ut-mapp] renderar jämförelsen och modellkartan och räknar trianglar och material.
    Klicka för att växla; L lyfter och sänker robotlådan. */
 const PI=Math.PI;
 
-/* ---------- dagens, kopierad ur index.html (1 nov) ---------- */
+/* ---------- GÄDDA före 01, ur index.html i commiten före 0e513b9 ---------- */
 function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=Math.PI*2,PI=Math.PI;
   const M=c=>new THREE.MeshLambertMaterial({color:c}),B=c=>new THREE.MeshBasicMaterial({color:c});
   const mesh=(ge,m,x,y,z)=>{const q=new THREE.Mesh(ge,m);q.position.set(x||0,y||0,z||0);return q;};
@@ -141,7 +141,10 @@ function mkGadda01(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU
     for(const sz of[-1,1]){const out=V(0,.6,sz).normalize(),lo=sz>0?4:0,sh=sz>0?3:1,v=q=>sz>0?q:1-q;
       g.add(patch(R,sh,1.75,2.6,v(.12),v(.88),T,V(.3,.8,sz*.6).normalize(),.25,2));/* the shoulders of the slope in the side's colour */
       g.add(patch(R,lo,.55,1.25,v(.25),v(.7),DK,V(0,.3,sz).normalize(),0,1));g.add(patch(R,lo,-.55,-.1,v(.3),v(.65),DK,V(0,.3,sz).normalize(),0,1));/* dark sensor panels, not one band */
-      g.add(patch(R,lo,1.3,1.42,v(.45),v(.6),sz<0?RED:GRN,V(0,.3,sz).normalize(),0,1));}
+      g.add(patch(R,lo,1.3,1.42,v(.45),v(.6),sz<0?RED:GRN,V(0,.3,sz).normalize(),0,1));
+      /* the Swedish flag (issue 111), the hoist forward: blue, then the yellow cross a little proud of it */
+      {const o=V(0,.3,sz).normalize(),x0=1.62,x1=2.02,w=x1-x0,BL=M(0x1f5c9e),YE=M(0xf0c020),up=q=>{q.position.addScaledVector(o,.008);return q;};g.add(patch(R,lo,x0,x1,v(.3),v(.72),BL,o,0,1));
+        g.add(up(patch(R,lo,x1-w*7/16,x1-w*5/16,v(.3),v(.72),YE,o,0,1)));g.add(up(patch(R,lo,x0,x1,v(.468),v(.552),YE,o,0,1)));}}
     g.add(patch(R,2,1.0,1.4,.2,.8,DK,V(0,1,0),0,1));g.add(mesh(box(.3,.1,.22),DK,-.35,1.72,-.15));}
   /* the sensor module at the top of the slope: a dark angular block with four lenses, two by two, and a white light beside them */
   {g.add(mesh(box(.5,.44,.6),DK,3.15,1.3,0));g.add(mesh(box(.32,.12,.48),DK,3.08,1.57,0));
