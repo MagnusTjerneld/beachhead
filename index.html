@@ -7242,6 +7242,9 @@ function mkHarbor(W,st){const H=W.harbor,u={x:-H.nx,y:-H.ny},g=new THREE.Group()
     place(m,li,lt,0,fs.lo);}}
   return{g,lamps,poolM,headM,boats};}
 function buildStatic(){
+  /* a new island: forget the last one's season, so that the intro's boats and wing built below take this island's hull tone (issue 112;
+     Magnus 1 nov: Ny ö in the intro kept the old colours), and the next frame applies the new season in full */
+  R3.season=null;R3.seasonDoy=null;
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
   for(const m of[R3.units,R3.enemies,R3.wrecks,R3.relays,R3.fx,R3.kroks,R3.structs])m.clear();R3.parts.length=0;
   while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);R3.rings=null;
@@ -7663,7 +7666,9 @@ function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(s
 /* the season's values into the uniforms and the water's ice, once per date */
 function seasonApply(doy){const S=seasonAt(doy);R3.season=S;R3.seasonDoy=doy;
   /* the units' hulls follow the season (issue 112): a new tone drops their models, and the next frame builds them anew */
-  {const k=unitSkin().key;if(R3.skinKey!=null&&R3.skinKey!==k)for(const M of[R3.units,R3.kroks])if(M){for(const m of M.values())if(m.parent)m.parent.remove(m);M.clear();}R3.skinKey=k;}
+  {const k=unitSkin().key;if(R3.skinKey!=null&&R3.skinKey!==k){for(const M of[R3.units,R3.kroks])if(M){for(const m of M.values())if(m.parent)m.parent.remove(m);M.clear();}
+    /* and the intro's HÖK, its wing and the GETING, which are built once and kept */
+    const X=TITLE.ext;for(const m of[TITLE.drone,...(X&&X.wing||[]),X&&X.get])if(m&&m.parent)m.parent.remove(m);TITLE.drone=null;if(X){X.wing=null;X.get=null;}}R3.skinKey=k;}
   SEASU.uSnow.value=S.snow;SEASU.uGrass.value=S.grass;SEASU.uBrown.value=S.brown;SEASU.uLeaf.value=S.leaf;SEASU.uYoung.value=S.young;SEASU.uAutumn.value=S.autumn;
   const WU=R3.water&&R3.water.material.userData.U;if(WU){WU.uIce.value=S.ice;WU.uFloe.value=S.floe;}}
 /* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;
