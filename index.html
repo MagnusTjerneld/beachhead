@@ -6488,6 +6488,8 @@ function foamTex(){if(R3.foamTex)return R3.foamTex;const c=mkCanvas(64,64),x=c.g
   for(let i=0;i<46;i++){const a=rn()*TAU,r=Math.sqrt(rn())*.62,px=32+Math.cos(a)*r*32,py=32+Math.sin(a)*r*32,rad=2+rn()*5,g=x.createRadialGradient(px,py,0,px,py,rad);g.addColorStop(0,'rgba(255,255,255,'+(.5+rn()*.4)+')');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(px-rad,py-rad,rad*2,rad*2);}
   const im=x.getImageData(0,0,64,64);for(let j=0;j<64;j++)for(let i=0;i<64;i++){const r=Math.hypot(i-31.5,j-31.5)/32;im.data[(j*64+i)*4+3]*=clamp(1.6-r*1.6,0,1);}x.putImageData(im,0,0);return R3.foamTex=new THREE.CanvasTexture(c);}
 function wakeRingsDraw(){const L=[],LF=[];for(const u of G.units){if(u.wk)for(const q of u.wk)L.push(q);if(u.wf)for(const q of u.wf)LF.push(q);}
+  /* the intro's VARG and GÄDDA (Magnus 1 nov: our own wake in the intro too), kept on the decoration clock and moved onto the game's here */
+  if(R3.titleWk){const dT=G.time-(R3.decoT||0);for(const u of R3.titleWk){for(const q of u.wk)L.push(Object.assign({},q,{t:q.t+dT}));for(const q of u.wf||[])LF.push(Object.assign({},q,{t:q.t+dT}));}}
   if(LF.length||R3.foam){if(!R3.foam)R3.foam=[];if(!R3.ringGeo){R3.ringGeo=new THREE.PlaneGeometry(2,2);R3.ringGeo.rotateX(-PI/2);}
     while(R3.foam.length<Math.min(LF.length,WRING.foamPool)){const m=new THREE.Mesh(R3.ringGeo,new THREE.MeshBasicMaterial({map:foamTex(),color:0xffffff,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));m.renderOrder=2;R3.dyn.add(m);R3.foam.push(m);}
     const kf=1-.72*(R3.night||0);R3.foam.forEach((m,i)=>{const q=LF[i];if(!q){m.visible=false;return;}const t=G.time-q.t,k=clamp(t/WRING.foamTtl,0,1);m.visible=true;m.position.set(q.x,.07,q.y);m.rotation.y=q.r;m.scale.setScalar(q.g*(.8+.5*k));
@@ -7392,20 +7394,20 @@ function buildStatic(){
       tg.traverse(o=>{if(o.isInstancedMesh)o.frustumCulled=false;});st.add(tg);R3.treeTiles.push({g:tg,x:cx,z:cz,y:groundY(cx,cz)+8,r:r+12});}}
   R3.bobs=[];if(W.decor)mkDecor(W.decor,st);
   {R3.movers=[];const mv2=(g,RT,speed,ph,beam,half,dir,sail)=>{g.rotation.order='YXZ';st.add(g);const wk=mkWake();st.add(wk.mesh);R3.movers.push({g,RT,speed,ph,beam,half,dir,sail:!!sail,wake:wk,trail:[],tt:-1});};
-    R3.steamRoute=titleRoute(320);R3.steamer=mkSteamer();mv2(R3.steamer,R3.steamRoute,4.5,.37,5.6,12.5,1);
+    R3.steamRoute=titleRoute(320,true);R3.steamer=mkSteamer();mv2(R3.steamer,R3.steamRoute,4.5,.37,5.6,12.5,1);
     const hs=k=>hash2(W.seed,k,61);
     const SAIL_L=[[NAV_R,3.6,1.05,-1.02,'p'],[NAV_G,3.6,1.05,1.02,'s'],[NAV_W,-4.05,1,0,'t']],MOT_L=[[NAV_R,2.6,1.15,-1.22,'p'],[NAV_G,2.6,1.15,1.22,'s'],[NAV_W,-.4,2.4,0,'m'],[NAV_W,-3.25,1.1,0,'t']];
     navLights(R3.steamer,[[NAV_R,5.5,6.4,-1.75,'p'],[NAV_G,5.5,6.4,1.75,'s'],[NAV_W,9.5,11.1,0,'m'],[NAV_W,-12.4,6.5,0,'m'],[NAV_W,-13.1,1.8,0,'t']]);
-    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210),2.4,hs(1),2.4,4,-1,true);R3.movers[R3.movers.length-1].leisure=.2;
-    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440),2.2,hs(2),2.4,4,1,true);R3.movers[R3.movers.length-1].leisure=.5;
-    mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260),4.5,hs(3),2.4,3.2,-1);R3.movers[R3.movers.length-1].leisure=.8;
+    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(210,true),2.4,hs(1),2.4,4,-1,true);R3.movers[R3.movers.length-1].leisure=.2;
+    mv2(navLights(mkBoat({kind:'sail',x:0,y:0,a:0},true),SAIL_L),titleRoute(440,true),2.2,hs(2),2.4,4,1,true);R3.movers[R3.movers.length-1].leisure=.5;
+    mv2(navLights(mkBoat({kind:'motor',x:0,y:0,a:0}),MOT_L),titleRoute(260,true),4.5,hs(3),2.4,3.2,-1);R3.movers[R3.movers.length-1].leisure=.8;
     // three VARG on patrol in a V, in the intro film only, meeting the HÖK head on (shown and hidden with the title)
-    {const VR=titleRoute(200),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;m.back=back;});}
+    {const VR=titleRoute(200,true),ph=hs(20);[[0,0],[-14,-22],[14,-22]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][0],ammo:1});mv2(g,VR,9,(ph+back/VR.L+1)%1,2.8,3.6,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.varg=i+1;m.back=back;});}
     /* two GÄDDA in a pair, in the intro only (decided 27 okt, Magnus: the intro lacked GÄDDA): further out than the HÖK, at full speed
        the other way round, heeling into the bends with spray from the jets. Going the same way they kept level with the HÖK for the
        whole loop (the band out there is longer), so they would never be met. 30 m outside the HÖK's band with a short wake (Magnus
        27 okt: only the foam was seen, the dark boats 65 m off under 140 m of white wake) */
-    {const VR=titleRoute(115);[[0,0],[-12,-20]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'gadda',color:PAL[(i+4)%PAL.length][0],ammo:2});mv2(g,VR,20,0,2.6,5,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.gadda=i+1;m.back=back;m.life=2.5;});}
+    {const VR=titleRoute(115,true);[[0,0],[-12,-20]].forEach(([lat,back],i)=>{const g=mkUnitMesh({kind:'gadda',color:PAL[(i+4)%PAL.length][0],ammo:2});mv2(g,VR,20,0,2.6,5,-1);const m=R3.movers[R3.movers.length-1];m.title=true;m.lat=lat;m.gadda=i+1;m.back=back;m.life=2.5;});}
     // a GETING on patrol round Birka, in the intro only (decided 27 okt, Magnus): flown in titleExtras, not a mover
     /* traffic in the outer fairway: two ferries, a tanker, a container ship and a small freighter, spread over the loop. Speeds in
        m/s, kept below real service speeds (ferry 6.5 is about 13 knots): seen from a HÖK at 17 m/s the meeting speed is what the eye
@@ -8051,7 +8053,7 @@ function sync3D(dtr){
   // fires: flames and a column of smoke
   for(const f of G.fires){const age=G.time-f.t0,life=1-age/f.dur,k3=Math.min(1,age/4)*Math.min(1,life*5);if(k3<=0)continue;if(Math.hypot(f.x-R3.cam.position.x,f.y-R3.cam.position.z)>650){f.acc=0;continue;}
     fireEmit(f,G.running&&!G.paused?dtr*G.speed:0,f.x,groundY(f.x,f.y)+f.h,f.y,f.size*k3);}
-  if(R3.movers){const T=R3.decoT||0;
+  if(R3.movers){const T=R3.decoT||0;R3.titleWk=null;
     for(const m of R3.movers){const RT=m.RT,at=d=>{d=((d%RT.L)+RT.L)%RT.L;let lo=0,hi=RT.N;while(hi-lo>1){const k=(lo+hi)>>1;if(RT.len[k]<=d)lo=k;else hi=k;}const f=(d-RT.len[lo])/(RT.len[lo+1]-RT.len[lo]||1),a2=RT.pts[lo],b2=RT.pts[(lo+1)%RT.N];return{x:lerp(a2.x,b2.x,f),z:lerp(a2.z,b2.z,f)};};
       const push=q=>{const dx=q.x-CARRIER.x,dz=q.z-CARRIER.y,d=Math.hypot(dx,dz)||1;if(d<170){q.x+=dx/d*(170-d);q.z+=dz/d*(170-d);}return q;};
       if(m.title){const on=!!TITLE.on&&(!FILM.on||!!m.varg);m.g.visible=on;m.wake.mesh.visible=on;if(!on)continue;}
@@ -8062,6 +8064,12 @@ function sync3D(dtr){
       /* GÄDDA heels into its turns and lifts its bow as in the trailer's turn, and throws spray from the jets */
       if(m.gadda){const dT=T-(m.hT??T);if(dT>0&&dT<.5){const w=angWrap(hd-m.hP)/dT;m.w=(m.w??w)+(w-(m.w??w))*Math.min(1,dT*2);gaddaSpray({x:p0.x,y:p0.z,heading:hd,speed:22},m.speed,dT);}
         m.hP=hd;m.hT=T;m.g.rotation.x=clamp((m.w||0)*m.speed*.022,-.3,.3)+Math.sin(T*1.3+m.ph)*.012;m.g.rotation.z=.045;}
+      /* in the intro VARG and GÄDDA leave the game's own wake, rings and a foam trail, and VARG its spray round the skirt, instead of the
+         white band (Magnus 1 nov); gaddaWake runs on the decoration clock, put in G.time for the call. The film keeps the band (17 okt) */
+      const own=(m.varg||m.gadda)&&TITLE.on&&!FILM.on;m.wake.mesh.visible=m.wake.mesh.visible&&!own;
+      if(own){const kd=m.varg?'tank':'gadda',u=m.pu||(m.pu={kind:kd,id:'tw'+R3.movers.indexOf(m),speed:TYPES[kd].speed,wk:[],wf:[]}),dT=T-(m.pT??T);m.pT=T;
+        if(u.x!=null&&dT>0&&dT<.5){u.v=Math.hypot(p0.x-u.x,p0.z-u.y)/dT;if(m.varg){const r=angWrap(hd-u.heading)/dT;vargSpray(p0.x,p0.z,u.v,dT,hd,r);}}
+        u.x=p0.x;u.y=p0.z;u.heading=hd;const gt=G.time;G.time=T;try{gaddaWake(u,dT>0&&dT<.5?dT:0);}finally{G.time=gt;}(R3.titleWk||(R3.titleWk=[])).push(u);}
       const sx=p0.x-Math.cos(hd)*m.half,sz=p0.z-Math.sin(hd)*m.half;
       if(m.trail.length&&Math.hypot(sx-m.trail[0].x,sz-m.trail[0].z)>Math.max(30,m.speed*2)){m.trail.length=0;m.tt=-1;}/* a mover that was placed anew (the film's VARG patrol) starts a fresh wake instead of drawing one from where it was */
       if(m.tt<0||T-m.tt>.25){m.tt=T;m.trail.unshift({x:sx,z:sz,t:T});if(m.trail.length>m.wake.N)m.trail.pop();}
@@ -9448,7 +9456,7 @@ function drawLogo(t){
     c.fillStyle=COL.ink;c.fillRect(pad,y-3,2,12);if(k>=1)c.fillRect(pad+LOGO.w*S-G1-2,y-3,2,12);}
   c.restore();
 }
-function titleRoute(extra){extra=extra||85;
+function titleRoute(extra,sea){extra=extra||85;
   /* the HÖK flies a rubber band round the island: the convex hull of the main island (skerries and islets do not count), pushed
      out by extra metres with round corners. It never cuts a headland, bridges bays and straits in straight lines and has no
      kinks at all (decided 12 okt: the old route followed the coast bearing by bearing and jerked on the new shapes). */
@@ -9465,7 +9473,16 @@ function titleRoute(extra){extra=extra||85;
     const w=H[(k+1)%n],e0={x:v.x+n1.x*extra,y:v.y+n1.y*extra},el=Math.hypot(w.x-v.x,w.y-v.y),ne=Math.max(1,Math.floor(el/step));
     for(let q=0;q<ne;q++){const t=q/ne;pts.push({x:e0.x+(w.x-v.x)*t,z:e0.y+(w.y-v.y)*t});}}
   // round the corners wider still: a moving average along the band (about 140 m) turns each 85 m arc into a long, gentle bend
-  {const M=pts.length;for(let pass=0;pass<3;pass++){const o=pts.map(p=>({x:p.x,z:p.z}));for(let i=0;i<M;i++){let sx=0,sz=0;for(let j=-9;j<=9;j++){const q=o[(i+j+M)%M];sx+=q.x;sz+=q.z;}pts[i].x=sx/19;pts[i].z=sz/19;}}}
+  const smooth=(passes,w)=>{const M=pts.length;for(let pass=0;pass<passes;pass++){const o=pts.map(p=>({x:p.x,z:p.z}));for(let i=0;i<M;i++){let sx=0,sz=0;for(let j=-w;j<=w;j++){const q=o[(i+j+M)%M];sx+=q.x;sz+=q.z;}pts[i].x=sx/(2*w+1);pts[i].z=sz/(2*w+1);}}};
+  smooth(3,9);
+  /* the boats' bands (sea): the hull leaves the islets and skerries out, so the band crossed them (Magnus 1 nov, island 1374: VARG and
+     GÄDDA ran straight through islets). Each point with land within 22 m is pushed straight out from the island's middle until the
+     water round it is clear, and the band is smoothed again; a few rounds, since smoothing pulls a bend back in a little */
+  if(sea){let mx=0,my=0;for(const q of P){mx+=q.x;my+=q.y;}mx/=P.length;my/=P.length;
+    const R=[[0,0]];for(let k=0;k<8;k++)R.push([Math.cos(k/8*TAU)*22,Math.sin(k/8*TAU)*22]);const IS=WORLD.islets||[],wet=(x,z)=>R.every(([dx,dz])=>heightAt(x+dx,z+dz)<-.5)&&IS.every(o=>Math.hypot(o.x-x,o.y-z)>o.r+22);/* skerries are meshes of their own, not in the height map */
+    for(let round=0;round<8;round++){let moved=0;for(const p of pts){if(wet(p.x,p.z))continue;const dx=p.x-mx,dz=p.z-my,l=Math.hypot(dx,dz)||1;
+        for(let d=6;d<=180;d+=6)if(wet(p.x+dx/l*d,p.z+dz/l*d)){p.x+=dx/l*(d+6);p.z+=dz/l*(d+6);moved++;break;}}
+      if(!moved)break;smooth(2,5);}}
   const N=pts.length,len=[0];for(let i=1;i<=N;i++){const a=pts[i-1],b=pts[i%N];len.push(len[i-1]+Math.hypot(b.x-a.x,b.z-a.z));}
   // start on the far side from the ship so the first seconds show the island, not the carrier
   let i0=0,bd=-1;for(let i=0;i<N;i++){const d=Math.hypot(pts[i].x-CARRIER.x,pts[i].z-CARRIER.y);if(d>bd){bd=d;i0=i;}}
