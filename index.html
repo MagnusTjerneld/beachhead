@@ -8397,16 +8397,12 @@ function drawHud(ctx,w,h){
   else ctx.fillText(G.ctrl===u.id?'MANUELL':POST[u.post||'def'].toUpperCase(),w-8,h-6);
   if(G.ctrl===u.id){ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#f0c45a';
     ctx.font=mono(11);ctx.fillText(u.kind==='mus'?'FJÄRRSTYRD · W A S D KÖR · F SPRÄNGER · E SLÄPPER · KÖR TILL VARG FÖR ATT KOMMA OMBORD':u.kind==='krok'?(G.mlook?'MUSEN TITTAR · HÖGERKLICK FRIGÖR MUSEN · W A S D FLYGER · F KROKEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SE DIG OM · W A S D FLYGER · F KROKEN · E SLÄPPER'):u.kind==='eng'?(G.mlook?'MUSEN TITTAR · HÖGERKLICK FRIGÖR MUSEN · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SE DIG OM · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER'):u.kind==='drone'?(G.mlook?'MUSEN STYR · KLICK KULSPRUTA · R ROBOT · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D FLYGER · E SLÄPPER'):u.kind==='gadda'?(G.mlook?'MUSEN TITTAR · HÖGERKLICK FRIGÖR MUSEN · W GAS · S BACK · A D RODER · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SE DIG OM · W GAS · S BACK · A D RODER · E SLÄPPER'):u.kind==='scout'?(G.mlook?'MUSEN TITTAR · KLICK DYKER MOT MÅLET I SIKTET · HÖGERKLICK FRIGÖR MUSEN · W A S D FLYGER · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SE DIG OM OCH SIKTA · W A S D FLYGER · E SLÄPPER'):u.kind!=='tank'?'MANUELL · W A S D KÖR · G GRUPPEN FÖLJER · E SLÄPPER':G.mlook?'MUSEN SIKTAR · KLICK SKJUTER · HÖGERKLICK FRIGÖR MUSEN · E SLÄPPER':'KLICKA I BILDEN FÖR ATT SIKTA SJÄLV · W A S D KÖR · E SLÄPPER',w/2,64);ctx.fillStyle='rgba(240,196,90,.75)';ctx.fillText('PEKA OCH TRYCK  B BÄVER · H LUFTSTÖD · V VARG · K KROK',w/2,80);ctx.fillStyle='#f0c45a';ctx.font=mono(12);
-    /* the sight says whether a dive is possible (Magnus 1 nov): green and full when it is, amber and broken with the distance left
-       when the target is too far, grey and crossed when the charge is not enough */
-    if(u.kind==='scout'&&G.mlook&&!u.dive){const cx2=w/2,cy2=h/2,t=u.target,d=t?Math.hypot(t.x-u.x,t.y-u.y):0,can=t&&getingCan(t),go=can&&d<=GETING.diveR;
-      const col=go?'#5ce08a':can?'#f0c45a':'rgba(240,244,240,.8)';ctx.shadowBlur=0;ctx.strokeStyle=col;ctx.lineWidth=go?3:1.5;
-      ctx.beginPath();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){ctx.moveTo(cx2+dx*7,cy2+dy*7);ctx.lineTo(cx2+dx*18,cy2+dy*18);}ctx.stroke();
-      if(t&&!go&&can)ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(cx2,cy2,24,0,TAU);ctx.stroke();ctx.setLineDash([]);
-      if(go){ctx.fillStyle='rgba(92,224,138,.18)';ctx.beginPath();ctx.arc(cx2,cy2,24,0,TAU);ctx.fill();}
-      if(t&&!can){ctx.beginPath();ctx.moveTo(cx2-17,cy2-17);ctx.lineTo(cx2+17,cy2+17);ctx.moveTo(cx2+17,cy2-17);ctx.lineTo(cx2-17,cy2+17);ctx.stroke();}
-      ctx.font=mono(go?12:11);ctx.textBaseline='top';ctx.fillStyle=go?'#9ff0bb':can?'#f6dc9a':'rgba(240,244,240,.75)';
-      ctx.fillText(t?ENEMY[t.kind].label.toUpperCase()+' '+t.id+' · '+(go?'DYK MÖJLIGT · KLICKA':can?'FÖR LÅNGT · '+Math.round(d)+' / '+GETING.diveR+' m':'LADDNINGEN RÄCKER INTE'):'INGET MÅL I SIKTET',cx2,cy2+32);}
+    /* the sight says whether a dive is possible (Magnus 1 nov, made quieter the same evening): grey with no target it can dive at in
+       the sight, red with one; the target's name and distance under it */
+    if(u.kind==='scout'&&G.mlook&&!u.dive){const cx2=w/2,cy2=h/2,t=u.target,go=!!t&&!getingWhy(u,t);
+      ctx.shadowBlur=0;ctx.strokeStyle=go?'#ff4a4a':'rgba(220,224,220,.7)';ctx.lineWidth=go?2:1.5;
+      ctx.beginPath();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){ctx.moveTo(cx2+dx*7,cy2+dy*7);ctx.lineTo(cx2+dx*18,cy2+dy*18);}ctx.stroke();ctx.beginPath();ctx.arc(cx2,cy2,24,0,TAU);ctx.stroke();
+      if(t){ctx.font=mono(11);ctx.textBaseline='top';ctx.fillStyle=go?'#ff9a9a':'rgba(220,224,220,.6)';ctx.fillText(ENEMY[t.kind].label.toUpperCase()+' '+t.id+' · '+Math.round(Math.hypot(t.x-u.x,t.y-u.y))+' m',cx2,cy2+32);}}
     if((u.kind==='tank'||u.kind==='drone')&&G.mlook){const cx2=w/2,cy2=h/2,t=u.target;ctx.shadowBlur=0;ctx.strokeStyle=t?'#ff7aa8':'rgba(240,244,240,.9)';ctx.lineWidth=1.5;
       ctx.beginPath();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){ctx.moveTo(cx2+dx*7,cy2+dy*7);ctx.lineTo(cx2+dx*18,cy2+dy*18);}ctx.stroke();
       const rl=clamp(1-u.cd*u.rate,0,1);ctx.strokeStyle=rl>=1?'rgba(240,196,90,.9)':'rgba(240,196,90,.45)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx2,cy2,24,-PI/2,-PI/2+TAU*rl);ctx.stroke();
