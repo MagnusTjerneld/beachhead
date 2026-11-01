@@ -456,7 +456,7 @@ function mkUnitMesh(u){
     /* the wire hangs from a swing point under the winch (decided 19 okt, issue 49): wire, hook and load swing together. The hook is
        a crane hook: a sheave block, a short shank and an open hook, KROK_HOOK_H long from the wire to the bite */
     /* the winch sits right over the swing point, so the wire leaves it with no gap (prov 19 okt) */const sw=new THREE.Group();sw.position.y=-.35;g.add(sw);g.userData.sw=sw;
-    const hook=new THREE.Group();hook.add(mesh(box(.55,.75,.36),Y,0,-.42,0));for(const z of[-.19,.19])hook.add(mesh(box(.42,.55,.04),DK,0,-.42,z));
+    const hook=new THREE.Group();hook.add(mesh(box(.55,.75,.36),mat(0xe8b224),0,-.42,0));/* the sheave block stays yellow, for contrast (Magnus 1 nov, issue 112) */for(const z of[-.19,.19])hook.add(mesh(box(.42,.55,.04),DK,0,-.42,z));
     hook.add(mesh(cyl(.06,.06,.4,6),MET,0,-.98,0));const bite=mesh(new THREE.TorusGeometry(.26,.07,5,12,PI*1.4),DK,0,-1.38,0);bite.rotation.z=PI/2;hook.add(bite);
     hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
