@@ -8186,7 +8186,7 @@ function updateCam(dtr){
   let py=Math.max(y+up,camFloor(px,pz)+.7);
   // keep the sight line from camera to unit above the terrain: raise the camera over a ridge or cliff between them
   for(let t=.15;t<1;t+=.1){const gx=lerp(px,u.x,t),gz=lerp(pz,u.y,t),need=heightAt(gx,gz)+1.2;const lineY=lerp(py,y+1,t);if(lineY<need)py+=(need-lineY)/(1-t);}
-  const ahd=small?Math.max(30,(y-groundY(u.x,u.y))*1.1):30,ax=orb?u.x:u.x+fx*ahd,az=orb?u.y:u.y+fz*ahd,ay=orb?y+1.5:daim?y+Math.tan(G.pitch-.45)*30:air?groundY(ax,az)+4+(glook?Math.tan(G.pitch)*30:0):aim?y+4.2+Math.tan(G.pitch)*30:glook?y+2.5+Math.tan(G.pitch)*30:y+2.5;
+  const ahd=small?Math.max(30,(y-groundY(u.x,u.y))*1.1):30,ax=orb?u.x:u.x+fx*ahd,az=orb?u.y:u.y+fz*ahd,ay=orb?y+1.5:daim?y+Math.tan(G.pitch-.45)*30:air?groundY(ax,az)+4+(glook?Math.tan(G.pitch)*35:0):aim?y+4.2+Math.tan(G.pitch)*30:glook?y+2.5+Math.tan(G.pitch)*30:y+2.5;
   if((aim||daim)&&G.mlook)R3.snap=true;
   const k=R3.snap?1:1-Math.exp(-5*dtr);
   /* the downward camera in the main view (G.camDown): the chase camera keeps moving in R3.chP and R3.chL for the corner picture */
@@ -8491,7 +8491,7 @@ let mlookOffT=-1e9;
 document.addEventListener('mousedown',e=>{if(G.mlook&&e.button===2){e.preventDefault();mlookOffT=performance.now();document.exitPointerLock();}},true);
 document.addEventListener('pointerlockchange',()=>{G.mlook=document.pointerLockElement===glC;if(!G.mlook){G.firing=false;G.gyaw=0;if(freeLook(unitById(G.ctrl)))G.pitch=0;}uiTick(true);});
 document.addEventListener('contextmenu',e=>{if(!TITLE.on&&e.target.closest&&e.target.closest('#paneMap,#paneCam,#paneCam2,#feeds,#roster,.wheel'))e.preventDefault();});
-document.addEventListener('mousemove',e=>{if(!G.mlook||!G.ctrl)return;const u=unitById(G.ctrl);if(freeLook(u)){G.gyaw=clamp((G.gyaw||0)+e.movementX*.0022,-PI*.95,PI*.95);G.pitch=clamp(G.pitch-e.movementY*.0018,-.5,.35);return;}if(u&&u.kind==='drone'){u.heading=angWrap(u.heading+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.6,.4);return;}if(!u||u.kind!=='tank')return;u.turret=angWrap(u.turret+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.3,.35);});
+document.addEventListener('mousemove',e=>{if(!G.mlook||!G.ctrl)return;const u=unitById(G.ctrl);if(freeLook(u)){G.gyaw=clamp((G.gyaw||0)+e.movementX*.0022,-PI*.95,PI*.95);G.pitch=clamp(G.pitch-e.movementY*.0018,-.5,1.1);return;}/* up to about 60 degrees, to see the sky (Magnus 1 nov; was .35) */if(u&&u.kind==='drone'){u.heading=angWrap(u.heading+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.6,.4);return;}if(!u||u.kind!=='tank')return;u.turret=angWrap(u.turret+e.movementX*.0022);G.pitch=clamp(G.pitch-e.movementY*.0018,-.3,.35);});
 window.addEventListener('mouseup',()=>{G.firing=false;});
 mapC.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0015));},{passive:false});
 glC.addEventListener('wheel',e=>{if(TITLE.on||FILM.on||!G.camZoom)return;e.preventDefault();G.camZoom.z=clamp(G.camZoom.z*Math.exp(e.deltaY*.0012),.4,2.5);},{passive:false});
