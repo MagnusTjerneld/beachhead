@@ -469,7 +469,7 @@ function mkUnitMesh(u){
     b.add(mesh(facet([[2.0,.45],[2.0,1.9],[-3.3,1.9],[-3.3,.45]],2.05,.36),Y));
     b.add(mesh(facet([[-2.8,.45],[-2.8,1.95],[-5.4,1.95],[-5.4,0],[-3.3,0]],2.3,.42),Y));b.add(mesh(facet([[-5.4,1.95],[-6.1,1.95],[-6.7,1.35],[-6.7,.55],[-6.2,0],[-5.4,0]],2.3,.42,tail),Y));
     // the sensor window across the front of the nose and round its sides (the bevel puts the nose's face at x 7.17), the dark tail
-    b.add(mesh(facet([[5.95,0],[7.24,.38],[7.24,1.12],[6.0,1.45]],1.6,.12),SEN));for(const z of[-.66,.66])b.add(mesh(box(.12,.1,.14),WH,7.3,.5,z));
+    b.add(mesh(facet([[5.95,0],[7.24,.38],[7.24,1.12],[6.0,1.45]],1.6,.12),SEN));/* the two lamps stand out of the window in dark housings (Magnus 1 nov: they lay in the same plane as the black visor) */for(const z of[-.66,.66]){b.add(mesh(box(.2,.2,.24),DK,7.32,.5,z));b.add(mesh(box(.08,.12,.16),WH,7.44,.5,z));}
     b.add(mesh(facet([[-6.45,.42],[-6.79,.6],[-6.79,1.32],[-6.45,1.58]],1.86,.1),SEN));for(const z of[-.8,.8])b.add(mesh(box(.1,.1,.12),RED,-6.8,1.25,z));
     // the pylons and the two rotors, turning opposite ways
     b.add(mesh(frust(.42,.72,.7,1.35),Y,4.25,2.3,0));b.add(mesh(cyl(.24,.3,.26,8),DK,4.25,2.78,0));b.add(mesh(box(.3,.05,.08),WH,3.55,2.5,0));

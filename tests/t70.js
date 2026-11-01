@@ -24,11 +24,11 @@ const onPads=G=>Object.values(G.pads.ship||[]).filter(Boolean).length;
   ok(Q.every(q=>q.parked&&q.onPad),'four with nothing more to do stay parked on the pads');
   const n=B.makeUnit('drone',C.x,C.y-60);n.ammo=0;G.units.push(n);B.sendToService(n,'ship');run(22);
   ok(n.ammo>=4&&Q.filter(q=>q.parked).length===3,'a fifth gets a pad from one parked and is rearmed');}
-// 3. a VARG boards Birka up the bow ramp, is mended on its pad, and drives off down the ramp
+// 3. a VARG boards Birka up the bow ramp, is mended on its pad, and drives off down the ramp (by itself once mended, Magnus 1 nov)
 {const G=setup(1490),C=B.CARRIER,v=B.makeUnit('tank',0,0);const s=B.CARRIER;const p0=(()=>{const f={x:Math.cos(C.a),y:Math.sin(C.a)};return{x:C.x+f.x*90-f.y*0,y:C.y+f.y*90+f.x*0};})();
   v.x=p0.x;v.y=p0.y;v.hp=50;G.units.push(v);B.sendToService(v,'ship');let bad=0,wasOut=true,maxIn=0;
-  for(let i=0;i<20*90&&!(v.onPad&&v.hp>=v.maxhp);i++){B.step(.05);const l=loc(v),inHull=Math.abs(l.lat)<16&&l.fwd>-45&&l.fwd<45;if(inHull&&wasOut&&l.fwd>-43)bad++;wasOut=!inHull;}
-  ok(!bad,'it reaches the deck only over the bow ramp');ok(v.onPad&&v.hp>=v.maxhp,'and is mended on its pad ('+Math.round(v.hp)+')');
+  let on=false;for(let i=0;i<20*90&&!(on&&v.hp>=v.maxhp);i++){B.step(.05);on=on||v.onPad;const l=loc(v),inHull=Math.abs(l.lat)<16&&l.fwd>-45&&l.fwd<45;if(inHull&&wasOut&&l.fwd>-43)bad++;wasOut=!inHull;}
+  ok(!bad,'it reaches the deck only over the bow ramp');ok(on&&v.hp>=v.maxhp,'and is mended on its pad ('+Math.round(v.hp)+')');
   B.giveOrder(v,{type:'move',x:C.x+200,y:C.y+150,post:'def'});let side=0;wasOut=false;
   for(let i=0;i<20*30;i++){B.step(.05);const l=loc(v),inHull=Math.abs(l.lat)<16&&l.fwd>-45&&l.fwd<45;if(!inHull&&!wasOut&&l.fwd>-43)side++;wasOut=!inHull;if(wasOut)break;}
   ok(!side,'it leaves the deck over the bow ramp');}
@@ -38,8 +38,9 @@ const onPads=G=>Object.values(G.pads.ship||[]).filter(Boolean).length;
   ok(P.every(q=>q.y3-q.lo<=2.5),'on land as flat as found (rise under a plate up to '+Math.max(...P.map(q=>q.y3-q.lo-.25)).toFixed(1)+' m)');
   const e=B.makeEnemy({id:'QZ',kind:'inf',x:R.x+120,y:R.y});e.dead=false;e.dmg=0;G.enemies.push(e);
   ok(!!B.homeAt({air:false},R.id),'an enemy 120 m away does not close the station');e.dead=true;
-  const v=B.makeUnit('tank',R.x+60,R.y+40);v.hp=60;G.units.push(v);B.sendToService(v,R.id);run(40);
-  ok(v.pad&&v.onPad&&v.hp>=v.maxhp,'a VARG drives onto a plate and is mended ('+Math.round(v.hp)+(v.pad?', plate '+v.pad.i:'')+')');}
+  const v=B.makeUnit('tank',R.x+60,R.y+40);v.hp=60;G.units.push(v);B.sendToService(v,R.id);let on=false,pi=null;for(let i=0;i<20*40;i++){B.step(.05);if(v.onPad){on=true;pi=v.pad.i;}}
+  ok(on&&v.hp>=v.maxhp,'a VARG drives onto a plate and is mended ('+Math.round(v.hp)+', plate '+pi+')');
+  ok(!v.pad&&P.every(q=>Math.hypot(v.x-q.x,v.y-q.y)>4),'and drives off the plate when done (Magnus 1 nov)');}
 // 5. KROK takes no pad: idle it circles over Birka, hurt it comes down low at its bow spot and is mended there
 {const G=setup(1490),C=B.CARRIER,k=G.kroks[0];k.orders=[];run(20);const d0=Math.hypot(k.x-C.x,k.y-C.y);
   ok(d0>25&&d0<60,'an idle KROK circles over Birka ('+d0.toFixed(0)+' m from its centre)');
@@ -65,6 +66,6 @@ const onPads=G=>Object.values(G.pads.ship||[]).filter(Boolean).length;
   const e=G.units.find(u=>u.kind==='eng');const q=W.harborQ;B.giveOrder(e,{type:'move',x:q.x,y:q.y,post:'def'});let lifted=false;for(let i=0;i<20*60&&Math.hypot(e.x-q.x,e.y-q.y)>15;i++){B.step(.05);if(e.carried)lifted=true;}
   ok(!lifted&&Math.hypot(e.x-q.x,e.y-q.y)<=15,'a BÄVER on deck drives ashore by a ramp, no KROK ('+Math.hypot(e.x-q.x,e.y-q.y).toFixed(0)+' m from the point)');
   G.units=G.units.filter(u=>u!==e);const v=B.makeUnit('tank',q.x,q.y);v.hp=60;G.units.push(v);B.sendToService(v,'ship');let bad=0,wasOut=true;
-  for(let i=0;i<20*90&&!(v.onPad&&v.hp>=v.maxhp);i++){B.step(.05);const l=loc(v),inHull=Math.abs(l.lat)<16&&l.fwd>-45&&l.fwd<45;if(inHull&&wasOut&&l.fwd>-43)bad++;wasOut=!inHull;}
-  ok(!bad&&v.onPad&&v.hp>=v.maxhp,'a VARG from land comes aboard by the bow ramp and is mended ('+Math.round(v.hp)+', '+v.state+')');}
+  let on=false;for(let i=0;i<20*90&&!(on&&v.hp>=v.maxhp);i++){B.step(.05);on=on||v.onPad;const l=loc(v),inHull=Math.abs(l.lat)<16&&l.fwd>-45&&l.fwd<45;if(inHull&&wasOut&&l.fwd>-43)bad++;wasOut=!inHull;}
+  ok(!bad&&on&&v.hp>=v.maxhp,'a VARG from land comes aboard by the bow ramp and is mended ('+Math.round(v.hp)+', '+v.state+')');}
 console.log(fail?fail+' failed':'all passed');process.exit(fail?1:0);
