@@ -7444,7 +7444,7 @@ function buildStatic(){
        m/s, kept below real service speeds (ferry 6.5 is about 13 knots): seen from a HÖK at 17 m/s the meeting speed is what the eye
        reads, and at real speeds the ferries looked like 50 knots (12 okt) */
     const FR=fairwayRoute(W);[['ferry',6.5,0],['tanker',3.5,.2],['box',4.5,.45],['ferry',6.5,.55],['cargo',4,.78]].forEach(([k,sp,ph],i)=>{const sh=mkBigShip(k);mv2(sh,FR,sp,(ph+hs(10+i)*.08)%1,sh.userData.beam,sh.userData.len/2,1);});}if(W.islets)mkIslets(W.islets,st);
-  for(const r of G.relays){const g=mkPointMesh(r),gb=inYard(r)?pointBld(r):r;g.position.set(r.x,groundY(gb.x,gb.y),r.y);st.add(g);R3.relays.set(r.id,g);if(r.type==='verkstad'||r.type==='varv'){g.userData.pads=[];for(const q of servicePads(r)){const pm=mkPlateMesh(q);st.add(pm);g.userData.pads.push(pm.userData.hmark);}}}
+  for(const r of G.relays){const g=mkPointMesh(r),gb=inYard(r)?pointBld(r):r;g.position.set(r.x,groundY(gb.x,gb.y),r.y);st.add(g);R3.relays.set(r.id,g);if(r.type==='verkstad'||r.type==='varv'){g.userData.pads=[];for(const q of servicePads(r)){const pm=mkPlateMesh(q);pm.userData.solo=true;st.add(pm);g.userData.pads.push(pm.userData.hmark);(g.userData.also||(g.userData.also=[])).push(pm);}}}
   if(W.yard){const Y=W.yard,N=10,h=Y.half,ca=Math.cos(Y.a),sa=Math.sin(Y.a),P=new Float32Array((N+1)*(N+1)*3),ix=[];
     /* under the service plates the yard sinks inside the slab (19 okt, issue 53: on a sloping yard its surface, drawn with a polygon
        offset, could come up through a plate and hide its yellow edge and H at a distance) */
@@ -7453,7 +7453,7 @@ function buildStatic(){
       for(const q of pads){const dx=x-q.x,dz=z-q.y,lx=dx*Math.cos(q.a)+dz*Math.sin(q.a),lz=-dx*Math.sin(q.a)+dz*Math.cos(q.a);if(Math.max(Math.abs(lx),Math.abs(lz))<PLATE/2+2.5)P[k+1]=Math.min(P[k+1],q.lo-.2);}}
     for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b=a+1,c=a+N+1,d=c+1;ix.push(a,c,b,b,c,d);}
     const yg=new THREE.BufferGeometry();yg.setAttribute('position',new THREE.BufferAttribute(P,3));yg.setIndex(ix);yg.computeVertexNormals();
-    const ym=new THREE.Mesh(yg,new THREE.MeshLambertMaterial({color:0x9b998f,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));ym.receiveShadow=true;st.add(ym);}
+    const ym=new THREE.Mesh(yg,new THREE.MeshLambertMaterial({color:0x9b998f,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));ym.receiveShadow=true;ym.userData.solo=true;st.add(ym);if(yr){const g=R3.relays.get(yr.id);(g.userData.also||(g.userData.also=[])).push(ym);}}
   R3.bars.clear();
   for(const b of W.barriers){const im=new THREE.InstancedMesh(new THREE.BoxGeometry(5,1.1,1.1),mat(0x4a3a2c),b.cells.length*2);let n=0;for(const c of b.cells){const q=cellCenter(c);for(const rot of[PI/4,-PI/4]){dummy.position.set(q.x,groundY(q.x,q.y)+.9,q.y);dummy.rotation.set(0,rot,.35);dummy.scale.set(1,1,1);dummy.updateMatrix();im.setMatrixAt(n++,dummy.matrix);}}st.add(im);R3.bars.set(b.id,im);}
   R3.ship.position.set(CARRIER.x,0,CARRIER.y);R3.ship.rotation.y=-(CARRIER.a+PI/2);
@@ -8152,6 +8152,8 @@ function sync3D(dtr){
     if(sh.nav){if(!sh.navH){sh.navH=sh.nav.map(n=>{const h=haloSprite(n.c);h.scale.setScalar(3.2);n.m.add(h);return h;});}sh.navH.forEach(h=>{h.visible=L>0;h.material.opacity=.85*L;});}}
   const now=performance.now()/1000;if(R3.bobs)for(const m of R3.bobs){const ph=m.userData.bob;m.position.y=m.userData.y0+Math.sin(now*1.1+ph)*.14;m.rotation.z=Math.sin(now*.9+ph*1.7)*.035;m.rotation.x=Math.sin(now*.8+ph)*.03;}
   for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);if(g.userData.lamp)g.userData.lamp.material.color.setHex(now%1.2<.45?0xff2a2a:0x3a0c10);/* the radar mast's lamps blink, its top one the point's marker (issue 105) */const t=g.userData.top,on=!g.userData.blink||now%1.2<.45;t.material.color.setHex(r.captured?(on?0x3fd06a:0x0f3a1c):(on?0xe0283a:0x3a0c10));
+    /* a camouflaged point not yet known, its yard and plates with it, is not seen in the intro or the fly-over (Magnus 1 nov) */
+    {const v=!((TITLE.on&&!FILM.on||OP.on)&&!rKnown(r));g.visible=v;for(const o of g.userData.also||[])o.visible=v;}
     if(g.userData.hid||g.userData.pads){const c=!!r.captured;/* lamp, flag and the plates' H only once taken (issue 106) */if(g.userData.hid){t.visible=c;g.userData.flag.visible=c;if(c)g.userData.flag.rotation.y=Math.sin(now*2.3)*.14;}for(const q of g.userData.pads||[])q.visible=c;}}}
   // fx: tracer projectiles with muzzle flash, impacts, smoke; transient particles live in R3.parts
   const live=new Set(G.fx);
@@ -8465,9 +8467,9 @@ function onDown(e){
     if(x>=r.x&&x<=r.x+r.s&&y>=r.y&&y<=r.y+r.s){G.camDown=!G.camDown;R3.snap=true;return;}}
   /* in the wide layout the camera is as big as the main view: a click in it aims and fires there too (18 okt, test round 9949) */
   /* GÄDDA driven by hand: a click in the camera takes the mouse to look about, as VARG's sight does, and a right click lets it go
-     (test round 26 okt, Magnus); the boat has no gun to fire. KROK and BÄVER the same (issue 115), but in the wide layout a click in
-     the camera while flying KROK still gives orders (test round 6718) */
-  if(G.ctrl&&kind==='cam'&&freeLook(unitById(G.ctrl))&&(unitById(G.ctrl).kind==='gadda'||!LAYOUT.on)){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}return;}
+     (test round 26 okt, Magnus); the boat has no gun to fire. KROK and BÄVER the same (issue 115), in the wide layout too (Magnus 1 nov:
+     the mouse look was gone there; it gave orders instead, test round 6718, and an order now hands KROK back anyway) */
+  if(G.ctrl&&kind==='cam'&&freeLook(unitById(G.ctrl))){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}return;}
   if(G.ctrl&&kind==='cam'){const cu=unitById(G.ctrl),gun=!!cu&&(cu.kind==='tank'||cu.kind==='drone');/* flying KROK in the wide layout, a click in the camera still gives orders (test round 6718) */
     if(isMain('cam')||LAYOUT.on&&gun){if(gun){if(document.pointerLockElement!==glC){try{const r=glC.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}else G.firing=true;}return;}}
   const x=e.offsetX,y=e.offsetY,pk=pick(kind,x,y),su=selUnit();
