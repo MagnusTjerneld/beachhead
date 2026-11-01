@@ -189,9 +189,9 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
       g.add(patch(R,sh,1.75,2.6,v(.12),v(.88),T,V(.3,.8,sz*.6).normalize(),.25,2));/* the shoulders of the slope in the side's colour */
       g.add(patch(R,lo,.55,1.25,v(.25),v(.7),DK,V(0,.3,sz).normalize(),0,1));g.add(patch(R,lo,-.55,-.1,v(.3),v(.65),DK,V(0,.3,sz).normalize(),0,1));/* dark sensor panels, not one band */
       g.add(patch(R,lo,1.3,1.42,v(.45),v(.6),sz<0?RED:GRN,V(0,.3,sz).normalize(),0,1));
-      /* the Swedish flag (issue 111), the hoist forward: blue, then the yellow cross a little proud of it */
-      {const o=V(0,.3,sz).normalize(),x0=1.62,x1=2.02,w=x1-x0,BL=M(0x1f5c9e),YE=M(0xf0c020),up=q=>{q.position.addScaledVector(o,.008);return q;};g.add(patch(R,lo,x0,x1,v(.3),v(.72),BL,o,0,1));
-        g.add(up(patch(R,lo,x1-w*7/16,x1-w*5/16,v(.3),v(.72),YE,o,0,1)));g.add(up(patch(R,lo,x0,x1,v(.468),v(.552),YE,o,0,1)));}}
+      /* the Swedish flag (issue 111), the hoist on the viewer's left on both sides, never mirrored: aft on +z, forward on -z; blue, then the yellow cross a little proud of it */
+      {const o=V(0,.3,sz).normalize(),x0=1.62,x1=2.02,w=x1-x0,BL=M(0x1f5c9e),YE=M(0xf0c020),up=q=>{q.position.addScaledVector(o,.008);return q;},cx=sz>0?x0+w*6/16:x1-w*6/16;g.add(patch(R,lo,x0,x1,v(.3),v(.72),BL,o,0,1));
+        g.add(up(patch(R,lo,cx-w/16,cx+w/16,v(.3),v(.72),YE,o,0,1)));g.add(up(patch(R,lo,x0,x1,v(.468),v(.552),YE,o,0,1)));}}
     g.add(patch(R,2,1.0,1.4,.2,.8,DK,V(0,1,0),0,1));g.add(mesh(box(.3,.1,.22),DK,-.35,1.72,-.15));}
   /* the sensor module at the top of the slope: a dark angular block with four lenses, two by two, and a white light beside them */
   {g.add(mesh(box(.5,.44,.6),DK,3.15,1.3,0));g.add(mesh(box(.32,.12,.48),DK,3.08,1.57,0));
@@ -261,15 +261,18 @@ function vSkirt(){const pl=vPlan(1.3),N=pl.length,pr=[[-.3,.06],[.26,0],[.48,.5]
 function onFace(o,A,B,C,x,z){const a=new THREE.Vector3(...A),n=new THREE.Vector3(...B).sub(a).cross(new THREE.Vector3(...C).sub(a)).normalize();if(n.y<0)n.negate();
   const y=a.y-(n.x*(x-a.x)+n.z*(z-a.z))/n.y,h=o.geometry.parameters.height/2;o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),n);o.position.set(x,y,z).addScaledVector(n,h-.005);return o;}
 /* Swedish markings (Magnus 1 nov, issue 111): for the tie to Sweden, not to tell friend from foe, and the enemy has none. svFlag is a small
-   flag of three planes in the xy plane, facing +z or (f -1) -z, with the hoist toward +x, the bow, on either side; svRoundel the air
-   force's three crowns on a blue roundel, facing +z with the crowns upright (+y). Plain colours, so bake() folds them into the hull's call */
+   flag of three planes in the xy plane, facing +z or (f -1) -z, the hoist on the viewer's left on either side, so it is never mirrored
+   (Magnus 1 nov); svRoundel the air force's three crowns in one colour, crowns and a broad ring with no field, as on the JAS
+   (Magnus 1 nov: monochrome, after a photo of a Gripen): light grey on a dark hull, a dark blue grey on winter's light one (as on a light grey Gripen) so that it
+   still shows; facing +z with the crowns upright (+y). Plain colours, so bake() folds them into the hull's call */
 const SV={blue:0x1f5c9e,yellow:0xf0c020};
-function svFlag(w,f){f=f<0?-1:1;const h=w*.625,q=new THREE.Group(),Y=mat(SV.yellow),P=(a,b)=>new THREE.PlaneGeometry(a,b);q.add(mesh(P(w,h),mat(SV.blue)));
-  q.add(mesh(P(w*2/16,h),Y,f*(w/2-w*6/16),0,.006));q.add(mesh(P(w,h*.2),Y,0,0,.006));if(f<0)q.rotation.y=PI;return q;}
-function svRoundel(r){const k='crown';if(!GEOS.has(k)){const c=new THREE.Shape();[[-.5,-.4],[.5,-.4],[.56,.36],[.27,.06],[0,.46],[-.27,.06],[-.56,.36]].forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
+const svTone=()=>{const a=new THREE.Color(unitSkin().a),l=a.getHSL({}).l;return a.lerp(new THREE.Color(l<.5?0xd6dadc:0x26304a),l<.5?.62:.7).getHex();};
+function svFlag(w,f){const h=w*.625,q=new THREE.Group(),Y=mat(SV.yellow),P=(a,b)=>new THREE.PlaneGeometry(a,b);q.add(mesh(P(w,h),mat(SV.blue)));
+  q.add(mesh(P(w*2/16,h),Y,-(w/2-w*6/16),0,.006));q.add(mesh(P(w,h*.2),Y,0,0,.006));if(f<0)q.rotation.y=PI;return q;}
+function svRoundel(r){const k='crown';if(!GEOS.has(k)){const c=new THREE.Shape();[[-.46,-.36],[.46,-.36],[.62,.42],[.3,.1],[0,.5],[-.3,.1],[-.62,.42]].forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
     const ge=new THREE.ExtrudeGeometry(c,{depth:1,bevelEnabled:false});ge.translate(0,0,-.5);GEOS.set(k,ge);}
-  const q=new THREE.Group(),t=Math.max(.012,r*.06),Y=mat(SV.yellow),d=mesh(cyl(r,r,t,16),mat(SV.blue));d.rotation.x=PI/2;q.add(d);
-  for(const[x,y]of[[-.42,.2],[.42,.2],[0,-.42]]){const c=mesh(GEOS.get(k),Y,x*r,y*r,0);c.scale.set(r*.42,r*.42,t*1.6);q.add(c);}return q;}
+  const q=new THREE.Group(),t=Math.max(.012,r*.06),C=mat(svTone());q.add(mesh(new THREE.RingGeometry(r*.8,r,20),C,0,0,.004));
+  for(const[x,y]of[[-.33,.17],[.33,.17],[0,-.33]]){const c=mesh(GEOS.get(k),C,x*r,y*r,0);c.scale.set(r*.44,r*.44,t*1.6);q.add(c);}return q;}
 /* laid on a flat face: the marking's +z turned to the face's outward normal n (crowns upright where they can be), its back on the face at p */
 function svOn(q,p,n,up){n=n.clone().normalize();const z=new THREE.Vector3(0,0,1);q.quaternion.setFromUnitVectors(z,n);
   if(up){const yNow=new THREE.Vector3(0,1,0).applyQuaternion(q.quaternion),u=up.clone().addScaledVector(n,-up.dot(n)).normalize(),a=Math.atan2(new THREE.Vector3().crossVectors(yNow,u).dot(n),yNow.dot(u));
