@@ -5791,8 +5791,8 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
   const M=c=>new THREE.MeshLambertMaterial({color:c}),B=c=>new THREE.MeshBasicMaterial({color:c});
   const mesh=(ge,m,x,y,z)=>{const q=new THREE.Mesh(ge,m);q.position.set(x||0,y||0,z||0);return q;};
   const box=(a,b,c)=>new THREE.BoxGeometry(a,b,c),cyl=(a,b,h,n)=>new THREE.CylinderGeometry(a,b,h,n||8);
-  const HULL=M(0x4c5864),HULL2=M(0x56626e),BOT=M(0x22272b),DECK=M(0x5e6973),DK=M(0x2a2e33),BLK=M(0x15181c),MET=M(0x7d7a72),
-    LCH=M(0x606b75),CAP=M(0xd8dde0),T=M(col),WH=B(0xf4f6f8),RED=B(0xd8261c),GRN=B(0x1fbf4a);
+  const sk=o.skin,HULL=M(sk?sk.b:0x4c5864),HULL2=M(sk?sk.a:0x56626e),BOT=M(0x22272b),DECK=M(sk?sk.c:0x5e6973),/* o.skin: the season's tone (issue 112) */DK=M(0x2a2e33),BLK=M(0x15181c),MET=M(0x7d7a72),
+    LCH=M(sk?sk.c:0x606b75),CAP=M(0xd8dde0),T=M(col),WH=B(0xf4f6f8),RED=B(0xd8261c),GRN=B(0x1fbf4a);
   const g=new THREE.Group();
   /* a side profile (x,y) extruded across the boat, narrowed towards the bow (bowT) and towards the keel (vee), so the hull reads as a V
      with flat facets; the same shape cut at the waterline gives the dark bottom */
@@ -5860,14 +5860,51 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
   g.add(mesh(cyl(.05,.05,.3,6),MET,4.52,.95,0).rotateZ(PI/2));
   g.traverse(q=>{if(q.isMesh){q.castShadow=true;q.receiveShadow=true;}});
   return g;}
+/* the hull's tone follows the season on every own unit (Magnus 1 nov, issue 112): they are printed on Birka in the season's colour,
+   so that they blend in as they would have been designed to. Grey green on bare summer ground, a browner grey when the leaves are off,
+   today's light grey under snow; the snow and the bare ground come from the island's season (seasonAt), in steps of a quarter so that
+   the materials stay few. a is the main tone, b a darker and c a lighter one; the unit's colour on its panels is left as it is */
+const SKIN_TONES={sommar:[0x5f6a5c,0x4f584d,0x737e6f],bar:[0x6b6a60,0x5a594f,0x7f7d72],vinter:[0xaab4b8,0x96a0a5,0xb8c1c5]};
+function unitSkin(){const S=R3&&R3.season||(typeof seasonAt==='function'&&typeof G!=='undefined'&&G&&G.doy!=null?seasonAt(G.doy):null),q=v=>Math.round(clamp(v||0,0,1)*4)/4,
+  br=S?q(S.brown):0,sn=S?q(S.snow):0,mix=(x,y,t)=>{const c=new THREE.Color(x).lerp(new THREE.Color(y),t);return c.getHex();},T=SKIN_TONES;
+  const o=[0,1,2].map(i=>mix(mix(T.sommar[i],T.bar[i],br),T.vinter[i],sn));return{a:o[0],b:o[1],c:o[2],key:br+':'+sn};}
+/* VARG 01B (Magnus design 1 nov, issue 110; the bench proto/varg.html shows it beside the VARG before it) */
+/* a faceted body: closed profiles [[z,y,dx],...] at stations along x (dx moves a point off its station, for a pointed bow), joined face to face and capped, flat shaded; every face is
+   turned to point away from the body's middle, so the profiles need no particular winding (the bodies are convex) */
+function vLoft(secs){const P=[],add=(a,b,c)=>P.push(a,b,c),V=(x,q)=>new THREE.Vector3(x+(q[2]||0),q[1],q[0]);
+  for(let s=0;s<secs.length-1;s++){const[xa,A]=secs[s],[xb,B]=secs[s+1];for(let k=0;k<A.length;k++){const k1=(k+1)%A.length;add(V(xa,A[k]),V(xb,B[k]),V(xb,B[k1]));add(V(xa,A[k]),V(xb,B[k1]),V(xa,A[k1]));}}
+  for(const[x,A]of[secs[0],secs[secs.length-1]]){const m=A.reduce((c,q)=>c.add(V(x,q)),new THREE.Vector3()).divideScalar(A.length);for(let k=0;k<A.length;k++)add(m,V(x,A[k]),V(x,A[(k+1)%A.length]));}
+  return vFaces(P,()=>{const c=new THREE.Vector3();for(const[x,A]of secs)for(const q of A)c.add(V(x,q));return c.divideScalar(secs.reduce((n,s)=>n+s[1].length,0));});}
+/* triangles to a flat-shaded geometry, each turned away from the point out(i) (a function of the triangle's first corner) */
+function vFaces(P,ctr){const c0=typeof ctr==='function'&&ctr.length===0?ctr():null,pos=[],e1=new THREE.Vector3(),e2=new THREE.Vector3(),n=new THREE.Vector3(),m=new THREE.Vector3();
+  for(let i=0;i<P.length;i+=3){let[a,b,c]=[P[i],P[i+1],P[i+2]];e1.subVectors(b,a);e2.subVectors(c,a);n.crossVectors(e1,e2);m.copy(a).add(b).add(c).divideScalar(3).sub(c0||ctr(i/3));if(n.dot(m)<0)[b,c]=[c,b];pos.push(a.x,a.y,a.z,b.x,b.y,b.z,c.x,c.y,c.z);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g;}
+/* the skirt's centre line seen from above: a blunt bow with cut corners, straight sides, rounded stern; points about every step m */
+function vPlan(step){const half=[[4.4,0],[4.4,1.55],[3.3,3.15]],r=.85,pts=[];
+  for(let a=0;a<=4;a++){const t=a/4*PI/2;half.push([-3.6-Math.sin(t)*r,3.15-r+Math.cos(t)*r]);}
+  half.push([-4.45,0]);const full=half.concat(half.slice(1,-1).reverse().map(([x,z])=>[x,-z]),[half[0]]);
+  for(let i=0;i<full.length-1;i++){const[x0,z0]=full[i],[x1,z1]=full[i+1],L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.round(L/step));for(let j=0;j<n;j++)pts.push([x0+(x1-x0)*j/n,z0+(z1-z0)*j/n]);}
+  return pts;}
+/* the skirt: a tube swept along the plan, pinched at every joint so that it reads as inflated segments (the inside is never seen) */
+function vSkirt(){const pl=vPlan(1.3),N=pl.length,pr=[[-.3,.06],[.26,0],[.48,.5],[.2,1.06],[-.4,1.12]],P=[],mid=[];
+  const at=(i,half)=>{const a=pl[i%N],b=pl[(i+1)%N],p=half?[(a[0]+b[0])/2,(a[1]+b[1])/2]:a,pa=pl[(i-1+N)%N],t=half?[b[0]-a[0],b[1]-a[1]]:[b[0]-pa[0],b[1]-pa[1]],l=Math.hypot(t[0],t[1]);
+    let nx=t[1]/l,nz=-t[0]/l;if(nx*p[0]+nz*p[1]<0){nx=-nx;nz=-nz;}const k=half?1:.76;
+    return{c:new THREE.Vector3(p[0],.56,p[1]),q:pr.map(([o,y])=>{const oo=o>0?o*k:o;return new THREE.Vector3(p[0]+nx*oo,y,p[1]+nz*oo);})};};
+  const ring=[];for(let i=0;i<N;i++){ring.push(at(i,false),at(i,true));}
+  for(let s=0;s<ring.length;s++){const A=ring[s],B=ring[(s+1)%ring.length];for(let k=0;k<pr.length-1;k++){P.push(A.q[k],B.q[k],B.q[k+1],A.q[k],B.q[k+1],A.q[k+1]);mid.push(A.c,A.c);}}
+  return{geo:vFaces(P,i=>mid[i]),plan:pl};}
+/* a thin part laid flat on the plane through three points (the hull's own corners), at x,z, its underside just touching */
+function onFace(o,A,B,C,x,z){const a=new THREE.Vector3(...A),n=new THREE.Vector3(...B).sub(a).cross(new THREE.Vector3(...C).sub(a)).normalize();if(n.y<0)n.negate();
+  const y=a.y-(n.x*(x-a.x)+n.z*(z-a.z))/n.y,h=o.geometry.parameters.height/2;o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),n);o.position.set(x,y,z).addScaledVector(n,h-.005);return o;}
+const VARG_GEO={};
 function mkUnitMesh(u){
-  const g=new THREE.Group();
-  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();root.add(sh(bake(m,true)));root.add(L);root.add(ram);
+  const g=new THREE.Group(),SK=unitSkin();
+  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();root.add(sh(bake(m,true)));root.add(L);root.add(ram);
     L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0});return root;}
   if(u.kind==='mus'){
     // MUS: a small remote-controlled rover. A body with sloped nose and tail, fenders over four fat wheels with hubs, a bumper and
     // lamp, a camera head on a short mast, a whip antenna, and the charge on the back with warning stripes
-    const B=mat(0x5a6150),B2=mat(0x4a5042),DK=mat(0x1b1c1e),HUB=mat(0x8a8f86),T=mat(u.color);
+    const B=mat(SK.a),B2=mat(SK.b),/* the season's tone (issue 112) */DK=mat(0x1b1c1e),HUB=mat(0x8a8f86),T=mat(u.color);
     g.add(mesh(box(1.2,.42,.92),B,0,.62,0));const fn=mesh(box(.4,.36,.9),B,.68,.58,0);fn.rotation.z=-.5;g.add(fn);const tl=mesh(box(.32,.34,.9),B,-.68,.6,0);tl.rotation.z=.45;g.add(tl);
     g.add(mesh(box(1.22,.08,.94),T,0,.86,0));g.add(mesh(box(.5,.06,.6),B2,.1,.92,0));
     for(const[x,z]of[[.52,.6],[-.52,.6],[.52,-.6],[-.52,-.6]]){const w=mesh(cyl(.3,.3,.24,12),DK,x,.3,z);w.rotation.x=PI/2;g.add(w);const h=mesh(cyl(.13,.13,.26,6),HUB,x,.3,z);h.rotation.x=PI/2;g.add(h);
@@ -5878,33 +5915,60 @@ function mkUnitMesh(u){
     g.add(mesh(box(.36,.22,.5),mat(0x3a3a30),-.35,1.0,-.05));for(const dz of[-.15,0,.15])g.add(mesh(box(.37,.06,.06),mat(0xe0b02e),-.35,1.06,-.05+dz));
     return sh(bake(g,true));}
   if(u.kind==='tank'){
-    // VARG: a hovercraft. Skirt with a rubbing strip, a deck with rails and hatches, two ducted lift fans with rudders aft, lamps in a
-    // sloped bow plate, and a light turret with mantlet, muzzle brake, sight and hatch (kept a step plainer, to sit in the lo-fi look)
-    if(!R3.skirtGeo){const sh=new THREE.Shape(),w=4.1,h=2.75,r=1.6;sh.moveTo(-w+r,-h);sh.lineTo(w-r,-h);sh.quadraticCurveTo(w,-h,w,-h+r);sh.lineTo(w,h-r);sh.quadraticCurveTo(w,h,w-r,h);sh.lineTo(-w+r,h);sh.quadraticCurveTo(-w,h,-w,h-r);sh.lineTo(-w,-h+r);sh.quadraticCurveTo(-w,-h,-w+r,-h);
-      R3.skirtGeo=new THREE.ExtrudeGeometry(sh,{depth:.5,bevelEnabled:true,bevelThickness:.35,bevelSize:.4,bevelSegments:3,curveSegments:6});R3.skirtGeo.rotateX(-PI/2);R3.skirtGeo.translate(0,.35,0);}
-    const HULL=mat(0xaab4b8),HULL2=mat(0x96a0a5),DK=mat(0x1b1c1e),GR=mat(0x3a3f44),T=mat(u.color),TUR=mat(0x8f999e),GUN=mat(0x4a5256);
-    g.add(new THREE.Mesh(R3.skirtGeo,DK));g.add(mesh(box(8.7,.16,5.9),mat(0x2a2c2f),0,1.02,0));
-    g.add(mesh(box(7,1.5,4.4),HULL,0,1.65,0));g.add(mesh(box(7.06,.42,4.46),T,0,2.2,0));
-    const bow=mesh(box(1.2,.16,4.3),HULL2,3.62,2.1,0);bow.rotation.z=-.55;g.add(bow);
-    for(const z of[-1.5,1.5]){g.add(mesh(box(.2,.36,.6),R3.lampMat,3.56,1.65,z));g.add(mesh(box(.12,.5,.8),DK,3.53,1.65,z));}
-    for(const z of[-2.05,2.05])g.add(mesh(box(5.2,.08,.08),GR,-.1,2.62,z));
-    g.add(mesh(box(.9,.1,.9),HULL2,1.8,2.46,1.2));g.add(mesh(box(.9,.1,.9),HULL2,1.8,2.46,-1.2));
-    for(const z of[-1.3,1.3]){
-      const f=mesh(cyl(1.05,1.05,.7,14),GR,-3.1,2.9,z);f.rotation.z=PI/2;g.add(f);const hub=mesh(cyl(.3,.3,.72,8),DK,-3.1,2.9,z);hub.rotation.z=PI/2;g.add(hub);
-      const ring=mesh(new THREE.TorusGeometry(1.1,.14,6,18),HULL2,-3.1,2.9,z);ring.rotation.y=PI/2;g.add(ring);
-      for(const dz of[-.45,.45])g.add(mesh(box(.6,1.4,.08),GR,-3.85,2.75,z+dz));}
-    g.add(mesh(cyl(.03,.03,2.4,4),DK,-1.9,3.6,-1.7));g.add(mesh(box(1.2,.5,.6),GR,-1.5,2.65,1.75));
-    const tur=new THREE.Group();tur.position.set(.2,3.05,0);
-    tur.add(mesh(box(3.2,1.3,2.8),TUR));tur.add(mesh(box(.7,1.1,2.2),TUR,-1.85,-.05,0));const ch=mesh(box(.9,.9,2.6),TUR,1.7,-.1,0);ch.rotation.z=-.35;tur.add(ch);
-    tur.add(mesh(box(1,.3,1),T,-.8,.8,.6));tur.add(mesh(cyl(.38,.42,.3,10),HULL2,-.6,.78,-.65));tur.add(mesh(box(.5,.35,.45),DK,.6,.82,-.75));
-    tur.add(mesh(box(.6,.7,.9),GUN,1.75,.1,0));const b=mesh(cyl(.2,.22,4.4,8),GUN,3.6,.1,0);b.rotation.z=PI/2;tur.add(b);tur.add(mesh(box(.5,.34,.42),GUN,5.75,.1,0));
-    tur.add(mesh(cyl(.025,.025,1.8,4),DK,-1.3,1.5,.9));g.add(tur);g.userData.tur=tur;}
+    // VARG 01B (Magnus design 1 nov, issue 110): a faceted hull with a low spine and a wedge bow, a segmented skirt, a bigger faceted
+    // turret with a long gun and a slotted muzzle brake, two ducted fans on grey mounts with rudders behind, a stern with a hatch, grilles,
+    // tail lamps and towing eyes; the unit's colour on the panels on the bow, the chamfers and the turret roof; the hull in the season's tone
+    const HULL=mat(SK.a),HULL2=mat(SK.b),RING=mat(SK.c),DK=mat(0x232629),GR=mat(0x3b4046),SKIRT=mat(0x1b1c1e),T=mat(u.color),GUN=mat(0x4e565d);
+  if(!VARG_GEO.skirt){const s=vSkirt();VARG_GEO.skirt=s.geo;const sh=new THREE.Shape(s.plan.map(([x,z])=>new THREE.Vector2(x,z)));VARG_GEO.deck=new THREE.ExtrudeGeometry(sh,{depth:.12,bevelEnabled:false});VARG_GEO.deck.rotateX(PI/2);VARG_GEO.deck.translate(0,1.08,0);
+    /* the hull: sides, chamfered top edges and a low spine, running down into a wedge bow whose lower corners are cut back (its top stays flat, so the panels lie on it) */
+    const M=[[-2.35,1.05],[-2.35,1.75],[-1.75,2.25],[0,2.4],[1.75,2.25],[2.35,1.75],[2.35,1.05]],Nb=[[-2.05,1.05,-.45],[-2.05,1.3,-.45],[-1.55,1.5],[0,1.72],[1.55,1.5],[2.05,1.3,-.45],[2.05,1.05,-.45]];
+    VARG_GEO.hull=vLoft([[-3.95,M],[2.4,M],[4.3,Nb]]);
+    /* the turret: wider at the hips than at the roof, a wedge face forward; built around the gun's height (y=0) */
+    const Tr=[[-1.15,-.42],[-1.35,.05],[-.95,.5],[.95,.5],[1.35,.05],[1.15,-.42]],Tf=[[-.75,-.38],[-.85,0],[-.5,.28],[.5,.28],[.85,0],[.75,-.38]];
+    VARG_GEO.tur=vLoft([[-2.0,Tr],[.75,Tr],[1.75,Tf]]);
+    /* the fans' mounts: grey, faceted, from the hull side up along the outside of each ring, the front edge raked */
+    const Fr=[[1.9,2.05],[2.4,1.6],[2.78,2.9],[2.52,3.25],[2.2,2.95]],Ff=[[2.0,2.05],[2.4,1.65],[2.7,2.45],[2.5,2.7],[2.3,2.5]];
+    VARG_GEO.fair=[1,-1].map(sz=>vLoft([[-3.75,Fr.map(([z,y])=>[sz*z,y])],[-3.15,Fr.map(([z,y])=>[sz*z,y])],[-2.7,Ff.map(([z,y])=>[sz*z,y])]]));
+    const L=new THREE.LatheGeometry([[1.0,-.28],[1.2,-.28],[1.2,.28],[1.0,.28],[1.0,-.28]].map(([r,y])=>new THREE.Vector2(r,y)),14);L.rotateZ(PI/2);VARG_GEO.duct=L;}
+  g.add(new THREE.Mesh(VARG_GEO.skirt,SKIRT));g.add(new THREE.Mesh(VARG_GEO.deck,mat(0x2a2c2f)));g.add(new THREE.Mesh(VARG_GEO.hull,HULL));
+  /* lamps in dark housings low on the bow, turned with its edge */
+  for(const sz of[-1,1]){const hs=mesh(box(.3,.3,.8),DK,4.2,1.24,sz*1.3),lp=mesh(box(.06,.13,.6),R3.lampMat,4.36,1.25,sz*1.3);g.add(hs);g.add(lp);}
+  /* the unit's colour: two panels on the bow slope and one on each upper chamfer */
+  for(const sz of[-1,1]){const p=onFace(mesh(box(1.25,.05,.85),T),[2.4,2.4,0],[2.4,2.25,sz*1.75],[4.3,1.72,0],3.3,sz*.95);g.add(p);
+    g.add(onFace(mesh(box(1.7,.05,.5),T),[0,2.25,sz*1.75],[0,1.75,sz*2.35],[2,2.25,sz*1.75],1.1,sz*2.05));
+    g.add(mesh(box(1.1,.26,.06),DK,-.2,1.5,sz*2.37));g.add(mesh(box(.5,.18,.06),GR,1.2,1.45,sz*2.37));}
+  /* the stern (Magnus 1 nov: not one flat face): an access hatch with a handle, a vent grille with a slat each side, tail lamps
+     at the corners, a dark rubbing strip along the foot with two towing eyes */
+  {const X=-3.95,RED=mat(0xb8382a);g.add(mesh(box(.08,.62,1.1),HULL2,X-.03,1.62,0));g.add(mesh(box(.06,.06,.5),DK,X-.08,1.72,0));
+    for(const sz of[-1,1]){g.add(mesh(box(.06,.36,1.05),DK,X-.02,1.5,sz*1.4));g.add(mesh(box(.04,.07,.95),GR,X-.05,1.5,sz*1.4));
+      g.add(mesh(box(.06,.14,.34),RED,X-.02,1.62,sz*2.1));g.add(mesh(box(.14,.12,.16),DK,X-.24,1.12,sz*.75));}
+    g.add(mesh(box(.22,.16,4.5),DK,X-.08,1.13,0));}
+  /* the engine deck behind the turret, and the fans' base */
+  g.add(mesh(box(1.7,.36,3.6),HULL2,-1.95,2.42,0));g.add(mesh(box(1.1,.5,4.4),GR,-3.3,2.45,0));
+  for(const sz of[-1,1]){g.add(mesh(cyl(.035,.035,2.1,4),DK,-2.3,3.55,sz*1.25));g.add(mesh(box(.2,.12,.2),DK,-2.3,2.62,sz*1.25));}
+  /* two ducted fans on the base: ring, six pitched blades, hub with spinner, a post between them, two rudders behind each (no outboard pylons, Magnus 1 nov) */
+  const FY=3.25;
+  for(const sz of[-1,1]){const z=sz*1.4;g.add(mesh(VARG_GEO.duct,RING,-3.3,FY,z));
+    for(let i=0;i<6;i++){const a=i/6*2*PI,arm=new THREE.Group();arm.position.set(-3.3,FY,z);arm.rotation.x=a;const bl=mesh(box(.08,.82,.32),DK,0,.58,0);bl.rotation.y=.45;arm.add(bl);g.add(arm);}
+    const hub=mesh(cyl(.24,.24,.5,8),GR,-3.3,FY,z);hub.rotation.z=PI/2;g.add(hub);const sp=mesh(cyl(.02,.24,.32,8),GR,-2.9,FY,z);sp.rotation.z=-PI/2;g.add(sp);
+    for(const dz of[-.45,.45]){g.add(mesh(box(.6,1.7,.07),DK,-3.86,FY-.05,z+dz));}}
+  for(const f of VARG_GEO.fair)g.add(new THREE.Mesh(f,HULL2));
+  g.add(mesh(box(.6,1.5,.32),GR,-3.3,3.1,0));
+  /* the turret on its ring: sensor block, roof panel, commander's sight, mantlet, long gun with a slotted muzzle brake, aerial */
+  const tur=new THREE.Group();tur.position.set(.15,2.82,0);
+  tur.add(mesh(cyl(1.0,1.05,.2,10),GR,-.2,-.42,0));tur.add(new THREE.Mesh(VARG_GEO.tur,HULL));
+  tur.add(mesh(box(.8,.62,.55),DK,-1.45,.12,1.35));tur.add(mesh(box(1.1,.06,.9),T,-.6,.53,.3));
+  tur.add(mesh(cyl(.3,.32,.32,10),DK,-.85,.65,-.55));tur.add(mesh(box(.08,.1,.3),R3.lampMat,-.57,.71,-.55));
+  tur.add(mesh(box(.7,.58,.95),DK,1.9,.02,0));const bar=mesh(cyl(.16,.19,3.9,8),GUN,4.1,0,0);bar.rotation.z=PI/2;tur.add(bar);
+  tur.add(mesh(box(.6,.36,.44),DK,6.1,0,0));for(const dx of[-.14,.14])tur.add(mesh(box(.08,.38,.46),GR,6.1+dx,0,0));
+  tur.add(mesh(cyl(.025,.025,1.7,4),DK,-1.6,1.35,-.85));
+  g.add(tur);g.userData.tur=tur;}
   else if(u.kind==='eng'){
-    /* BÄVER: an engineer vehicle in field olive (decided 21 okt, Magnus, issue 68: more of an engineer unit, and not bright yellow,
+    /* BÄVER: an engineer vehicle in the season's tone, field olive before 1 nov (decided 21 okt, Magnus, issue 68: more of an engineer unit, and not bright yellow,
        which shows too much in the field). An armoured six-wheeler with a sloped glacis, a dozer blade with a yellow and black warning
        edge, an excavator arm lying along the roof with its yellow bucket down at the front, a low armoured cab on the left with narrow
        vision blocks, stowage boxes, a rear winch, an amber beacon, an antenna and a band in its own colour; yellow only as a warning */
-    const OL=mat(0x4f5b38),OL2=mat(0x434d30),OL3=mat(0x5b6842),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),GL=mat(0x5d7a86),YE=mat(0xe0b02e),T=mat(u.color);
+    const OL=mat(SK.a),OL2=mat(SK.b),OL3=mat(SK.c),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),GL=mat(0x5d7a86),YE=mat(0xe0b02e),T=mat(u.color);
     for(const x of[-2.1,0,2.1])for(const z of[-1.75,1.75]){const w=mesh(cyl(.78,.78,.55,12),BLK,x,.78,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.3,.3,.58,8),MET,x,.78,z);hb.rotation.x=PI/2;g.add(hb);}
     g.add(mesh(box(6,1.0,3.0),OL2,0,1.15,0));
     g.add(mesh(box(4.8,1.3,3.6),OL,-.5,2.25,0));const gl=mesh(box(1.8,1.25,3.6),OL,2.35,2.0,0);gl.rotation.z=-.62;g.add(gl);
@@ -5927,8 +5991,8 @@ function mkUnitMesh(u){
     for(const z of[-1.3,1.3])g.add(mesh(box(.06,.2,.3),mat(0xb02a20),-3.04,1.25,z));}
   else if(u.kind==='scout'){
     // SPARV: a small quadcopter with arms, rotor guards, a camera gimbal, a battery pack and four thin legs
-    const D=mat(0x30363c),M=mat(0x6a737a);g.userData.spin=[];
-    g.add(mesh(box(.9,.32,.6),D,0,0,0));g.add(mesh(box(.5,.08,.5),mat(u.color),0,.2,0));g.add(mesh(box(.5,.18,.4),mat(0x454d55),-.25,.26,0));
+    const D=mat(SK.b),M=mat(SK.c);g.userData.spin=[];/* the season's tone (issue 112) */
+    g.add(mesh(box(.9,.32,.6),D,0,0,0));g.add(mesh(box(.5,.08,.5),mat(u.color),0,.2,0));g.add(mesh(box(.5,.18,.4),mat(SK.a),-.25,.26,0));
     for(const[ax,az]of[[.75,.75],[.75,-.75],[-.75,.75],[-.75,-.75]]){const arm=mesh(box(1.1,.08,.08),D,ax/2,0,az/2);arm.rotation.y=Math.atan2(-az,ax);g.add(arm);
       g.add(mesh(cyl(.08,.08,.16,6),D,ax,.04,az));const gd=mesh(new THREE.TorusGeometry(.46,.03,4,14),D,ax,.12,az);gd.rotation.x=PI/2;g.add(gd);
       const r=rotor(2,.4,.09);r.position.set(ax,.12,az);r.rotation.y=Math.random()*PI;g.add(r);g.userData.spin.push([r,'y',(ax*az>0?1:-1)*16]);
@@ -5941,7 +6005,7 @@ function mkUnitMesh(u){
     // under the nose. Four short legs fold into the belly in flight and come out when she stands (userData.legs). White lamps on the
     // nose and the ducts, the strips along the back and on the wings in the side's colour. Each robot is a group of four painted
     // pieces that bake() merges by the corners' colours into one draw call, so the four can still go one by one
-    const body=0x4d5f72,M=mat(body),M2=mat(0x5d7083),K=mat(0x1c2026),PL=mat(0x8d969e),
+    const body=SK.a,M=mat(body),M2=mat(SK.c),/* the season's tone (issue 112) */K=mat(0x1c2026),PL=mat(0x8d969e),
       WH=new THREE.MeshBasicMaterial({color:0xf4f6f8}),TC=new THREE.MeshBasicMaterial({color:u.color}),b=new THREE.Group();b.scale.setScalar(1.3);g.add(b);
     g.userData.spin=[];g.userData.rockets=[];g.userData.legs=[];g.userData.ducts=[];
     // a side profile extruded to its width with flat chamfers; taper narrows it towards one end (as KROK's)
@@ -5995,7 +6059,7 @@ function mkUnitMesh(u){
        sections, nose and tail tapering, the belly raised between them where the wire leaves; a short pylon forward and a tall one aft
        so the two four-blade rotors pass over each other; four long crane legs splayed out to twin wheels; a dark sensor window across
        the nose, a dark tail with red lights. Built in its own frame (b) with the swing point under the belly at the origin */
-    const yel=0xe8b224,Y=mat(yel),DK=mat(0x2a2c30),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),SEN=mat(0x15181c),WH=new THREE.MeshBasicMaterial({color:0xf4f6f8}),
+    const yel=SK.a,Y=mat(yel),/* the season's tone, yellow before 1 nov (issue 112) */DK=mat(0x2a2c30),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),SEN=mat(0x15181c),WH=new THREE.MeshBasicMaterial({color:0xf4f6f8}),
       RED=new THREE.MeshBasicMaterial({color:0xd8261c}),V=(x,y,z)=>new THREE.Vector3(x,y,z),b=new THREE.Group();b.position.set(.6,-.44,0);g.add(b);g.userData.spin=[];
     // a side profile extruded to its width with flat chamfers; taper narrows it towards one end (kept linear so the faces stay flat)
     const facet=(pts,depth,bev,taper)=>{const s=new THREE.Shape();s.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)s.lineTo(pts[i][0],pts[i][1]);
@@ -7587,6 +7651,8 @@ function seasonShader(sh,kind){Object.assign(sh.uniforms,SEASU);
 function seasonMat(m,kind,tag){const prev=m.onBeforeCompile;m.onBeforeCompile=(sh,r)=>{if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev(sh,r);seasonShader(sh,kind);};m.customProgramCacheKey=()=>'season-'+kind+(tag||'');return m;}
 /* the season's values into the uniforms and the water's ice, once per date */
 function seasonApply(doy){const S=seasonAt(doy);R3.season=S;R3.seasonDoy=doy;
+  /* the units' hulls follow the season (issue 112): a new tone drops their models, and the next frame builds them anew */
+  {const k=unitSkin().key;if(R3.skinKey!=null&&R3.skinKey!==k)for(const M of[R3.units,R3.kroks])if(M){for(const m of M.values())if(m.parent)m.parent.remove(m);M.clear();}R3.skinKey=k;}
   SEASU.uSnow.value=S.snow;SEASU.uGrass.value=S.grass;SEASU.uBrown.value=S.brown;SEASU.uLeaf.value=S.leaf;SEASU.uYoung.value=S.young;SEASU.uAutumn.value=S.autumn;
   const WU=R3.water&&R3.water.material.userData.U;if(WU){WU.uIce.value=S.ice;WU.uFloe.value=S.floe;}}
 /* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VARG 01B</title>
+<style>
+:root{--bg:#dcdee0;--ink:#1f2326;--dim:#5a6268}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px system-ui,sans-serif}
+#c{display:block;width:100%;height:100%}
+#lab{position:fixed;left:12px;top:10px;max-width:calc(100vw - 24px);color:var(--dim)}
+#lab b{color:var(--ink)}
+</style></head><body>
+<canvas id="c"></canvas><div id="lab"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Testbänk för VARG 01B (Magnus designförslag 1 nov): dagens modell ur index.html bredvid den nya, med samma hjälpfunktioner
+   och material som spelet, så att den nya kan flyttas in i mkUnitMesh som den är. Framåt är +x, som i spelet; tornet är en
+   egen grupp (userData.tur) med eldröret i sin höjd y=.1, så att mynningsflammans punkt (6,.1,0) stämmer.
+   node proto/varg.js [ut-mapp] renderar jämförelsen och modellkartan och räknar trianglar och material. */
+const PI=Math.PI,MATS=new Map(),GEOS=new Map();
+function mat(c){const key=typeof c==='string'?c:'#'+c.toString(16).padStart(6,'0');if(!MATS.has(key))MATS.set(key,new THREE.MeshLambertMaterial({color:new THREE.Color(key)}));return MATS.get(key);}
+function box(w,h,d){const k='b'+w+','+h+','+d;if(!GEOS.has(k))GEOS.set(k,new THREE.BoxGeometry(w,h,d));return GEOS.get(k);}
+function cyl(a,b,h,n){const k='c'+a+','+b+','+h+','+n;if(!GEOS.has(k))GEOS.set(k,new THREE.CylinderGeometry(a,b,h,n));return GEOS.get(k);}
+function mesh(geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x||0,y||0,z||0);return o;}
+const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x8a887a})};
+
+/* ---------- dagens, kopierad ur index.html (1 nov) ---------- */
+function oldVarg(u){const g=new THREE.Group();
+    if(!R3.skirtGeo){const sh=new THREE.Shape(),w=4.1,h=2.75,r=1.6;sh.moveTo(-w+r,-h);sh.lineTo(w-r,-h);sh.quadraticCurveTo(w,-h,w,-h+r);sh.lineTo(w,h-r);sh.quadraticCurveTo(w,h,w-r,h);sh.lineTo(-w+r,h);sh.quadraticCurveTo(-w,h,-w,h-r);sh.lineTo(-w,-h+r);sh.quadraticCurveTo(-w,-h,-w+r,-h);
+      R3.skirtGeo=new THREE.ExtrudeGeometry(sh,{depth:.5,bevelEnabled:true,bevelThickness:.35,bevelSize:.4,bevelSegments:3,curveSegments:6});R3.skirtGeo.rotateX(-PI/2);R3.skirtGeo.translate(0,.35,0);}
+    const HULL=mat(0xaab4b8),HULL2=mat(0x96a0a5),DK=mat(0x1b1c1e),GR=mat(0x3a3f44),T=mat(u.color),TUR=mat(0x8f999e),GUN=mat(0x4a5256);
+    g.add(new THREE.Mesh(R3.skirtGeo,DK));g.add(mesh(box(8.7,.16,5.9),mat(0x2a2c2f),0,1.02,0));
+    g.add(mesh(box(7,1.5,4.4),HULL,0,1.65,0));g.add(mesh(box(7.06,.42,4.46),T,0,2.2,0));
+    const bow=mesh(box(1.2,.16,4.3),HULL2,3.62,2.1,0);bow.rotation.z=-.55;g.add(bow);
+    for(const z of[-1.5,1.5]){g.add(mesh(box(.2,.36,.6),R3.lampMat,3.56,1.65,z));g.add(mesh(box(.12,.5,.8),DK,3.53,1.65,z));}
+    for(const z of[-2.05,2.05])g.add(mesh(box(5.2,.08,.08),GR,-.1,2.62,z));
+    g.add(mesh(box(.9,.1,.9),HULL2,1.8,2.46,1.2));g.add(mesh(box(.9,.1,.9),HULL2,1.8,2.46,-1.2));
+    for(const z of[-1.3,1.3]){
+      const f=mesh(cyl(1.05,1.05,.7,14),GR,-3.1,2.9,z);f.rotation.z=PI/2;g.add(f);const hub=mesh(cyl(.3,.3,.72,8),DK,-3.1,2.9,z);hub.rotation.z=PI/2;g.add(hub);
+      const ring=mesh(new THREE.TorusGeometry(1.1,.14,6,18),HULL2,-3.1,2.9,z);ring.rotation.y=PI/2;g.add(ring);
+      for(const dz of[-.45,.45])g.add(mesh(box(.6,1.4,.08),GR,-3.85,2.75,z+dz));}
+    g.add(mesh(cyl(.03,.03,2.4,4),DK,-1.9,3.6,-1.7));g.add(mesh(box(1.2,.5,.6),GR,-1.5,2.65,1.75));
+    const tur=new THREE.Group();tur.position.set(.2,3.05,0);
+    tur.add(mesh(box(3.2,1.3,2.8),TUR));tur.add(mesh(box(.7,1.1,2.2),TUR,-1.85,-.05,0));const ch=mesh(box(.9,.9,2.6),TUR,1.7,-.1,0);ch.rotation.z=-.35;tur.add(ch);
+    tur.add(mesh(box(1,.3,1),T,-.8,.8,.6));tur.add(mesh(cyl(.38,.42,.3,10),HULL2,-.6,.78,-.65));tur.add(mesh(box(.5,.35,.45),DK,.6,.82,-.75));
+    tur.add(mesh(box(.6,.7,.9),GUN,1.75,.1,0));const b=mesh(cyl(.2,.22,4.4,8),GUN,3.6,.1,0);b.rotation.z=PI/2;tur.add(b);tur.add(mesh(box(.5,.34,.42),GUN,5.75,.1,0));
+    tur.add(mesh(cyl(.025,.025,1.8,4),DK,-1.3,1.5,.9));g.add(tur);g.userData.tur=tur;return g;}
+
+/* ---------- VARG 01B ---------- */
+/* a faceted body: closed profiles [[z,y,dx],...] at stations along x (dx moves a point off its station, for a pointed bow), joined face to face and capped, flat shaded; every face is
+   turned to point away from the body's middle, so the profiles need no particular winding (the bodies are convex) */
+function vLoft(secs){const P=[],add=(a,b,c)=>P.push(a,b,c),V=(x,q)=>new THREE.Vector3(x+(q[2]||0),q[1],q[0]);
+  for(let s=0;s<secs.length-1;s++){const[xa,A]=secs[s],[xb,B]=secs[s+1];for(let k=0;k<A.length;k++){const k1=(k+1)%A.length;add(V(xa,A[k]),V(xb,B[k]),V(xb,B[k1]));add(V(xa,A[k]),V(xb,B[k1]),V(xa,A[k1]));}}
+  for(const[x,A]of[secs[0],secs[secs.length-1]]){const m=A.reduce((c,q)=>c.add(V(x,q)),new THREE.Vector3()).divideScalar(A.length);for(let k=0;k<A.length;k++)add(m,V(x,A[k]),V(x,A[(k+1)%A.length]));}
+  return vFaces(P,()=>{const c=new THREE.Vector3();for(const[x,A]of secs)for(const q of A)c.add(V(x,q));return c.divideScalar(secs.reduce((n,s)=>n+s[1].length,0));});}
+/* triangles to a flat-shaded geometry, each turned away from the point out(i) (a function of the triangle's first corner) */
+function vFaces(P,ctr){const c0=typeof ctr==='function'&&ctr.length===0?ctr():null,pos=[],e1=new THREE.Vector3(),e2=new THREE.Vector3(),n=new THREE.Vector3(),m=new THREE.Vector3();
+  for(let i=0;i<P.length;i+=3){let[a,b,c]=[P[i],P[i+1],P[i+2]];e1.subVectors(b,a);e2.subVectors(c,a);n.crossVectors(e1,e2);m.copy(a).add(b).add(c).divideScalar(3).sub(c0||ctr(i/3));if(n.dot(m)<0)[b,c]=[c,b];pos.push(a.x,a.y,a.z,b.x,b.y,b.z,c.x,c.y,c.z);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g;}
+/* the skirt's centre line seen from above: a blunt bow with cut corners, straight sides, rounded stern; points about every step m */
+function vPlan(step){const half=[[4.4,0],[4.4,1.55],[3.3,3.15]],r=.85,pts=[];
+  for(let a=0;a<=4;a++){const t=a/4*PI/2;half.push([-3.6-Math.sin(t)*r,3.15-r+Math.cos(t)*r]);}
+  half.push([-4.45,0]);const full=half.concat(half.slice(1,-1).reverse().map(([x,z])=>[x,-z]),[half[0]]);
+  for(let i=0;i<full.length-1;i++){const[x0,z0]=full[i],[x1,z1]=full[i+1],L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.round(L/step));for(let j=0;j<n;j++)pts.push([x0+(x1-x0)*j/n,z0+(z1-z0)*j/n]);}
+  return pts;}
+/* the skirt: a tube swept along the plan, pinched at every joint so that it reads as inflated segments (the inside is never seen) */
+function vSkirt(){const pl=vPlan(1.3),N=pl.length,pr=[[-.3,.06],[.26,0],[.48,.5],[.2,1.06],[-.4,1.12]],P=[],mid=[];
+  const at=(i,half)=>{const a=pl[i%N],b=pl[(i+1)%N],p=half?[(a[0]+b[0])/2,(a[1]+b[1])/2]:a,pa=pl[(i-1+N)%N],t=half?[b[0]-a[0],b[1]-a[1]]:[b[0]-pa[0],b[1]-pa[1]],l=Math.hypot(t[0],t[1]);
+    let nx=t[1]/l,nz=-t[0]/l;if(nx*p[0]+nz*p[1]<0){nx=-nx;nz=-nz;}const k=half?1:.76;
+    return{c:new THREE.Vector3(p[0],.56,p[1]),q:pr.map(([o,y])=>{const oo=o>0?o*k:o;return new THREE.Vector3(p[0]+nx*oo,y,p[1]+nz*oo);})};};
+  const ring=[];for(let i=0;i<N;i++){ring.push(at(i,false),at(i,true));}
+  for(let s=0;s<ring.length;s++){const A=ring[s],B=ring[(s+1)%ring.length];for(let k=0;k<pr.length-1;k++){P.push(A.q[k],B.q[k],B.q[k+1],A.q[k],B.q[k+1],A.q[k+1]);mid.push(A.c,A.c);}}
+  return{geo:vFaces(P,i=>mid[i]),plan:pl};}
+/* a thin part laid flat on the plane through three points (the hull's own corners), at x,z, its underside just touching */
+function onFace(o,A,B,C,x,z){const a=new THREE.Vector3(...A),n=new THREE.Vector3(...B).sub(a).cross(new THREE.Vector3(...C).sub(a)).normalize();if(n.y<0)n.negate();
+  const y=a.y-(n.x*(x-a.x)+n.z*(z-a.z))/n.y,h=o.geometry.parameters.height/2;o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),n);o.position.set(x,y,z).addScaledVector(n,h-.005);return o;}
+const VG={};
+function newVarg(u){const g=new THREE.Group();
+  const HULL=mat(0x7b8793),HULL2=mat(0x67737f),RING=mat(0x8d98a2),DK=mat(0x232629),GR=mat(0x3b4046),SK=mat(0x1b1c1e),T=mat(u.color),GUN=mat(0x4e565d);
+  if(!VG.skirt){const s=vSkirt();VG.skirt=s.geo;const sh=new THREE.Shape(s.plan.map(([x,z])=>new THREE.Vector2(x,z)));VG.deck=new THREE.ExtrudeGeometry(sh,{depth:.12,bevelEnabled:false});VG.deck.rotateX(PI/2);VG.deck.translate(0,1.08,0);
+    /* the hull: sides, chamfered top edges and a low spine, running down into a wedge bow whose lower corners are cut back (its top stays flat, so the panels lie on it) */
+    const M=[[-2.35,1.05],[-2.35,1.75],[-1.75,2.25],[0,2.4],[1.75,2.25],[2.35,1.75],[2.35,1.05]],Nb=[[-2.05,1.05,-.45],[-2.05,1.3,-.45],[-1.55,1.5],[0,1.72],[1.55,1.5],[2.05,1.3,-.45],[2.05,1.05,-.45]];
+    VG.hull=vLoft([[-3.95,M],[2.4,M],[4.3,Nb]]);
+    /* the turret: wider at the hips than at the roof, a wedge face forward; built around the gun's height (y=0) */
+    const Tr=[[-1.15,-.42],[-1.35,.05],[-.95,.5],[.95,.5],[1.35,.05],[1.15,-.42]],Tf=[[-.75,-.38],[-.85,0],[-.5,.28],[.5,.28],[.85,0],[.75,-.38]];
+    VG.tur=vLoft([[-2.0,Tr],[.75,Tr],[1.75,Tf]]);CONVEX.add(VG.hull);CONVEX.add(VG.tur);
+    /* the fans' mounts: grey, faceted, from the hull side up along the outside of each ring, the front edge raked */
+    const Fr=[[1.9,2.05],[2.4,1.6],[2.78,2.9],[2.52,3.25],[2.2,2.95]],Ff=[[2.0,2.05],[2.4,1.65],[2.7,2.45],[2.5,2.7],[2.3,2.5]];
+    VG.fair=[1,-1].map(sz=>vLoft([[-3.75,Fr.map(([z,y])=>[sz*z,y])],[-3.15,Fr.map(([z,y])=>[sz*z,y])],[-2.7,Ff.map(([z,y])=>[sz*z,y])]]));
+    const L=new THREE.LatheGeometry([[1.0,-.28],[1.2,-.28],[1.2,.28],[1.0,.28],[1.0,-.28]].map(([r,y])=>new THREE.Vector2(r,y)),14);L.rotateZ(PI/2);VG.duct=L;}
+  g.add(new THREE.Mesh(VG.skirt,SK));g.add(new THREE.Mesh(VG.deck,mat(0x2a2c2f)));g.add(new THREE.Mesh(VG.hull,HULL));
+  /* lamps in dark housings low on the bow, turned with its edge */
+  for(const sz of[-1,1]){const hs=mesh(box(.3,.3,.8),DK,4.2,1.24,sz*1.3),lp=mesh(box(.06,.13,.6),R3.lampMat,4.36,1.25,sz*1.3);g.add(hs);g.add(lp);}
+  /* the unit's colour: two panels on the bow slope and one on each upper chamfer */
+  for(const sz of[-1,1]){const p=onFace(mesh(box(1.25,.05,.85),T),[2.4,2.4,0],[2.4,2.25,sz*1.75],[4.3,1.72,0],3.3,sz*.95);g.add(p);
+    g.add(onFace(mesh(box(1.7,.05,.5),T),[0,2.25,sz*1.75],[0,1.75,sz*2.35],[2,2.25,sz*1.75],1.1,sz*2.05));
+    g.add(mesh(box(1.1,.26,.06),DK,-.2,1.5,sz*2.37));g.add(mesh(box(.5,.18,.06),GR,1.2,1.45,sz*2.37));}
+  /* the stern (Magnus 1 nov: not one flat face): an access hatch with a handle, a vent grille with a slat each side, tail lamps
+     at the corners, a dark rubbing strip along the foot with two towing eyes */
+  {const X=-3.95,RED=mat(0xb8382a);g.add(mesh(box(.08,.62,1.1),HULL2,X-.03,1.62,0));g.add(mesh(box(.06,.06,.5),DK,X-.08,1.72,0));
+    for(const sz of[-1,1]){g.add(mesh(box(.06,.36,1.05),DK,X-.02,1.5,sz*1.4));g.add(mesh(box(.04,.07,.95),GR,X-.05,1.5,sz*1.4));
+      g.add(mesh(box(.06,.14,.34),RED,X-.02,1.62,sz*2.1));g.add(mesh(box(.14,.12,.16),DK,X-.24,1.12,sz*.75));}
+    g.add(mesh(box(.22,.16,4.5),DK,X-.08,1.13,0));}
+  /* the engine deck behind the turret, and the fans' base */
+  g.add(mesh(box(1.7,.36,3.6),HULL2,-1.95,2.42,0));g.add(mesh(box(1.1,.5,4.4),GR,-3.3,2.45,0));
+  for(const sz of[-1,1]){g.add(mesh(cyl(.035,.035,2.1,4),DK,-2.3,3.55,sz*1.25));g.add(mesh(box(.2,.12,.2),DK,-2.3,2.62,sz*1.25));}
+  /* two ducted fans on the base: ring, six pitched blades, hub with spinner, a post between them, two rudders behind each (no outboard pylons, Magnus 1 nov) */
+  const FY=3.25;
+  for(const sz of[-1,1]){const z=sz*1.4;g.add(mesh(VG.duct,RING,-3.3,FY,z));
+    for(let i=0;i<6;i++){const a=i/6*2*PI,arm=new THREE.Group();arm.position.set(-3.3,FY,z);arm.rotation.x=a;const bl=mesh(box(.08,.82,.32),DK,0,.58,0);bl.rotation.y=.45;arm.add(bl);g.add(arm);}
+    const hub=mesh(cyl(.24,.24,.5,8),GR,-3.3,FY,z);hub.rotation.z=PI/2;g.add(hub);const sp=mesh(cyl(.02,.24,.32,8),GR,-2.9,FY,z);sp.rotation.z=-PI/2;g.add(sp);
+    for(const dz of[-.45,.45]){g.add(mesh(box(.6,1.7,.07),DK,-3.86,FY-.05,z+dz));}}
+  for(const f of VG.fair){CONVEX.add(f);}for(const f of VG.fair)g.add(new THREE.Mesh(f,HULL2));
+  g.add(mesh(box(.6,1.5,.32),GR,-3.3,3.1,0));
+  /* the turret on its ring: sensor block, roof panel, commander's sight, mantlet, long gun with a slotted muzzle brake, aerial */
+  const tur=new THREE.Group();tur.position.set(.15,2.82,0);
+  tur.add(mesh(cyl(1.0,1.05,.2,10),GR,-.2,-.42,0));tur.add(new THREE.Mesh(VG.tur,HULL));
+  tur.add(mesh(box(.8,.62,.55),DK,-1.45,.12,1.35));tur.add(mesh(box(1.1,.06,.9),T,-.6,.53,.3));
+  tur.add(mesh(cyl(.3,.32,.32,10),DK,-.85,.65,-.55));tur.add(mesh(box(.08,.1,.3),R3.lampMat,-.57,.71,-.55));
+  tur.add(mesh(box(.7,.58,.95),DK,1.9,.02,0));const bar=mesh(cyl(.16,.19,3.9,8),GUN,4.1,0,0);bar.rotation.z=PI/2;tur.add(bar);
+  tur.add(mesh(box(.6,.36,.44),DK,6.1,0,0));for(const dx of[-.14,.14])tur.add(mesh(box(.08,.38,.46),GR,6.1+dx,0,0));
+  tur.add(mesh(cyl(.025,.025,1.7,4),DK,-1.6,1.35,-.85));
+  g.add(tur);g.userData.tur=tur;return g;}
+
+/* ---------- scenen: neutral bakgrund, som en modellkarta ---------- */
+const R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(1);R.shadowMap.enabled=true;R.setClearColor(0xdcdee0);
+const S=new THREE.Scene();S.add(new THREE.HemisphereLight(0xffffff,0x9a9a90,.75));const sun=new THREE.DirectionalLight(0xffffff,.75);sun.position.set(30,50,22);sun.castShadow=true;
+Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12});sun.shadow.mapSize.set(2048,2048);S.add(sun);
+const fl=new THREE.Mesh(new THREE.CircleGeometry(60,48),new THREE.ShadowMaterial({opacity:.22}));fl.rotation.x=-PI/2;fl.receiveShadow=true;S.add(fl);
+const tris=o=>{let n=0;o.traverse(c=>{if(!c.isMesh)return;const gg=c.geometry;n+=(gg.index?gg.index.count:gg.attributes.position.count)/3;});return Math.round(n);};
+/* materials = draw calls once the game bakes the model (one mesh per material) */
+const mats=o=>{const s=new Set();o.traverse(c=>{if(c.isMesh)s.add(c.material.uuid);});return s.size;};
+const MODELS={old:oldVarg,new:newVarg};let cur=null,col='#3aa0c8';
+function show(ver,c){if(c)col=c;if(cur)S.remove(cur);cur=MODELS[ver]({color:col});cur.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});S.add(cur);
+  const b=new THREE.Box3().setFromObject(cur),s=b.getSize(new THREE.Vector3());return{tri:tris(cur),mats:mats(cur),len:+s.x.toFixed(2),wid:+s.z.toFixed(2),h:+s.y.toFixed(2),foot:+b.min.y.toFixed(2)};}
+/* a camera at bearing az (degrees from the front, round to the left) and elevation el, framing a 10 m model */
+const cam=new THREE.PerspectiveCamera(22,1,.1,500);
+function shoot(az,el,w,hh,d){R.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();const a=az*PI/180,e=el*PI/180;d=d||30;
+  cam.position.set(Math.cos(a)*Math.cos(e)*d,1.9+Math.sin(e)*d,Math.sin(a)*Math.cos(e)*d);cam.up.set(el>80?-1:0,el>80?0:1,0);cam.lookAt(0,1.9,0);R.render(S,cam);return R.domElement.toDataURL('image/jpeg',.9);}
+/* parts that touch no other part: boxes, grown 2 cm, must meet, and where the other part is one of the convex lofts (hull, turret,
+   mounts) one of this part's corners must lie within 3 cm of the loft's inside; the skirt and the rings are judged by their boxes */
+const CONVEX=new Set();
+function inside(o,p,eps){const P=o.geometry.attributes.position,a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3();
+  for(let i=0;i<P.count;i+=3){a.fromBufferAttribute(P,i).applyMatrix4(o.matrixWorld);b.fromBufferAttribute(P,i+1).applyMatrix4(o.matrixWorld);c.fromBufferAttribute(P,i+2).applyMatrix4(o.matrixWorld);
+    n.crossVectors(b.clone().sub(a),c.clone().sub(a));if(n.lengthSq()<1e-12)continue;n.normalize();if(n.dot(p.clone().sub(a))>eps)return false;}return true;}
+function touch(a,o){if(!a.b.clone().expandByScalar(.02).intersectsBox(o.b))return false;if(!CONVEX.has(o.c.geometry))return true;
+  const P=a.c.geometry.attributes.position,v=new THREE.Vector3();for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(a.c.matrixWorld);if(inside(o.c,v,.03))return true;}
+  if(CONVEX.has(a.c.geometry)){const Q=o.c.geometry.attributes.position;for(let i=0;i<Q.count;i++){v.fromBufferAttribute(Q,i).applyMatrix4(o.c.matrixWorld);if(inside(a.c,v,.03))return true;}}return false;}
+function loose(){cur.updateMatrixWorld(true);const L=[];cur.traverse(c=>{if(c.isMesh)L.push({c,b:new THREE.Box3().setFromObject(c)});});
+  return L.filter(a=>!L.some(o=>o!==a&&(touch(a,o)||touch(o,a)))).map(a=>{const p=a.b.getCenter(new THREE.Vector3());return a.c.geometry.type.replace('Geometry','')+' vid '+[p.x,p.y,p.z].map(v=>v.toFixed(2)).join(',');});}
+window.BENCH={show,shoot,loose,get cur(){return cur;}};
+/* interactive: the model turning; a click switches between today's and 01B */
+if(!location.search.includes('bench')){const lab=document.getElementById('lab');let t0=performance.now(),v='new';
+  const put=()=>{const r=show(v);lab.innerHTML='<b>'+(v==='new'?'VARG 01B':'VARG i dag')+'</b> · '+r.tri+' trianglar, '+r.mats+' material · '+r.len+' × '+r.wid+' × '+r.h+' m · klicka för att växla';};put();
+  document.body.onclick=()=>{v=v==='new'?'old':'new';put();};
+  const loop=()=>{const s=(performance.now()-t0)/1000;R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();
+    cam.position.set(Math.cos(s*.3)*22,8,Math.sin(s*.3)*22);cam.up.set(0,1,0);cam.lookAt(0,1.9,0);R.render(S,cam);requestAnimationFrame(loop);};loop();}
+</script></body></html>
