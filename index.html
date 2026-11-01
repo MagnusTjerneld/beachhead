@@ -4322,6 +4322,8 @@ function markKnown(){
   if(ch)G.knownV++;
 }
 const isKnown=(x,y)=>!!G.known[cellIdx(x,y)];
+/* an installation not drawn in 3D: in the intro and the fly-over, where the chart does not show it (the film keeps its own) */
+const structHid=st=>(TITLE.on&&!FILM.on||OP.on)&&!isKnown(st.x,st.y);
 /* scouted by something that sees the teams on foot too: not only from a high GETING */
 const knownLo=i=>!!G.known[i]&&!(G.knownHi&&G.knownHi[i]);
 function knownSafe(k,x,y,sec,air=true,need=null){ // nearest known cell outside known air threats (air); sec: the cargo wants secured land (secureMask); need: ground the cargo can stand on
@@ -7935,7 +7937,7 @@ function updateSky(){
 
   if(d>.05){
     for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;if(g&&g.userData.hid&&!r.captured)continue;/* no red glow on a point the enemy holds (issue 106) */const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
-    for(const st of G.structs)if(!st.dead&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
+    for(const st of G.structs)if(!st.dead&&!structHid(st)&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
     for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),d)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*d,36]);
     for(const[ci,c]of((WORLD.decor&&WORLD.decor.cabins)||[]).entries())if(!(G.ddead.c&&G.ddead.c[ci]!=null)&&winLevel(winBucket(c.x,c.y),d)>.3)cand.push([3,c.x,Math.max(0,c.h)+3,c.y,0xffb860,.8*d,28]);
   }
@@ -8052,7 +8054,8 @@ function sync3D(dtr){
     if(!(TITLE.on&&TITLE.land&&TITLE.land.k===ke)){const ud=km.userData,w=krokLegsWant(ke);ud.legT=ud.legT==null?w:clamp(ud.legT+Math.sign(w-ud.legT)*dtr/KROK_LEGS_T,0,1);krokLegs(ud,ud.legT);}}
   if(TITLE.on&&TITLE.land)titleLandingApply(dtr);
   seen.clear();
-  for(const st of G.structs){if(st.dead)continue;seen.add(st.id);if(!R3.structs.has(st.id)){const m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}}
+  /* the secret installations, all that the chart hides at the start, are not seen in the intro or the fly-over either (Magnus 1 nov) */
+  for(const st of G.structs){if(st.dead)continue;seen.add(st.id);let m=R3.structs.get(st.id);if(!m){m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}m.visible=!structHid(st);}
   for(const[id,m]of R3.structs)if(!seen.has(id)){D.remove(m);R3.structs.delete(id);}
   seen.clear();
   for(const e of G.enemies){
@@ -8277,8 +8280,8 @@ function renderMain(){const m=downSwapped()?downMesh(downUnit()):null;if(m)m.vis
    buffert med flyttal (med kantutjämning där WebGL2 finns), så att ljus över vitt finns kvar, och ett sista steg lägger på bloom,
    tonkurva och färgton på hela bilden, också på våra egna shaders (vatten, himmel, mark). knee låter allt under 0,75 vara som förut och
    rundar av det ljusare, aces är filmkurvan. Utan parametern ritas allt som förut. */
-const EFTER=(()=>{const P={tm:0,bloom:false,grade:false,exp:1,th:3,str:.4,lamp:4,cut:false,get bl(){return P.bloom&&!P.cut;},set(q){const f=String(q||'').split(',');P.tm=f.includes('aces')?2:f.includes('knee')?1:0;P.bloom=f.includes('bloom');P.grade=f.includes('grade');},get on(){return!!(P.tm||P.bloom||P.grade);}};
-  /* the strength was 0.6 until issue 88 (Magnus 30 okt: a third lower). The setting (Inställningar, Efterbehandling) is knee and bloom; ?efter= overrides it for the comparisons */
+const EFTER=(()=>{const P={tm:0,bloom:false,grade:false,exp:1,th:3,str:.2,lamp:4,cut:false,get bl(){return P.bloom&&!P.cut;},set(q){const f=String(q||'').split(',');P.tm=f.includes('aces')?2:f.includes('knee')?1:0;P.bloom=f.includes('bloom');P.grade=f.includes('grade');},get on(){return!!(P.tm||P.bloom||P.grade);}};
+  /* the strength was 0.6 until issue 88 (Magnus 30 okt: a third lower), then 0.4 until 1 nov (Magnus: half that). The setting (Inställningar, Efterbehandling) is knee and bloom; ?efter= overrides it for the comparisons */
   try{const q=new URLSearchParams(location.search).get('efter');P.set(q!=null?q:localStorage.getItem('bh.efter')==='1'?'knee,bloom':'');}catch(_){}return P;})();
 /* the night's lights (lamps, windows, lanterns, sector lights and daymarks) shine brighter than white while bloom is on, so they glow
    past the threshold; drawn straight to the screen they would only be clipped, so without bloom they stay as they were */
@@ -9682,7 +9685,7 @@ function titleLandingApply(dtr){const L=TITLE.land;if(!L)return;const tau=TITLE.
   if(tau<L.hook)return;
   /* the contact shadow stays on the ground: hidden while BÄVER hangs under the hook, as in the game (24 okt, Magnus: it followed her up) */
   if(bm.userData.blob)bm.userData.blob.visible=!carrying;
-  if(carrying){bm.position.set(x,y-8,z);bm.rotation.y=-L.hd;return;}
+  if(carrying){bm.position.set(x,y-8,z);bm.rotation.y=-L.hd;fHang(km,bm);return;}
   // set down on the beach, then a short drive inland
   const d=sm((tau-L.drop-1)/6)*15,bx=L.B.x+L.inl.x*d,bz=L.B.y+L.inl.y*d;bm.position.set(bx,groundY(bx,bz)+.4,bz);/* and turns up the beach gently, not in one frame */if(L.bh==null)L.bh=L.hd;L.bh+=angWrap(Math.atan2(L.inl.y,L.inl.x)-L.bh)*(1-Math.exp(-1.2*Math.min(dtr||0,.1)));bm.rotation.y=-L.bh;}
 function titleCam(dtr){
@@ -10065,10 +10068,14 @@ const fVarg=i=>fA('v'+i,()=>mkUnitMesh({kind:'tank',color:PAL[(i+2)%PAL.length][
 const fUnit=(key,kind,col)=>fA(key,()=>mkUnitMesh({kind,color:col||PAL[0][0],ammo:4}));
 const fEnemy=(key,kind)=>fA(key,()=>mkEnemyMesh({kind,id:key}));
 function fGround(x,z){return Math.max(0,groundY(x,z));}
-/* a load hung on KROK in the film as the game hangs it (krokLoad3D): the wire paid out so that the hook sits above the load and four
-   slings take it at half its height (director's pass 26 okt, Magnus: the BÄVER hung free under a hook on a wire of the default length) */
+/* a load hung on KROK in the film and the intro as the game hangs it (krokLoad3D): the wire paid out so that the hook sits above the load
+   and four slings take it at half its height (director's pass 26 okt, Magnus: the BÄVER hung free under a hook on a wire of the default
+   length), to its own lift points, with the load turned with KROK under the hook (Magnus 1 nov: the intro's KROK did not use BÄVER's slings).
+   The load's height is kept; it is moved so the middle of its box is under the hook */
 function fHang(km,bm){const ud=km.userData;if(!ud.sw)return;const b=krokBox(bm),sl=Math.max(KROK_SLING,b.h*.5+1),yt=bm.position.y+b.c.y-km.position.y,yh=yt+sl,L=Math.max(.3,-yh-KROK_HOOK_H);
-  ud.sw.rotation.set(0,0,0);ud.cable.visible=ud.hook.visible=true;ud.cable.scale.y=L/5;ud.cable.position.y=-L/2;ud.hook.position.y=-L;krokSlings(ud,true,-L-KROK_HOOK_H,-L-KROK_HOOK_H-sl,b.hx,b.hz);}
+  ud.sw.rotation.set(0,0,0);ud.cable.visible=ud.hook.visible=true;ud.cable.scale.y=L/5;ud.cable.position.y=-L/2;ud.hook.position.y=-L;
+  const y0=-L-KROK_HOOK_H-sl;krokSlings(ud,{o:bm,b,s:1},-L-KROK_HOOK_H,y0);
+  km.updateMatrixWorld(true);ud.sw.localToWorld(_kv.set(-b.c.x,y0-b.c.y,-b.c.z));const pr=bm.parent;if(pr){pr.updateMatrixWorld(true);pr.worldToLocal(_kv);}bm.position.copy(_kv);ud.sw.getWorldQuaternion(bm.quaternion);if(pr)bm.quaternion.premultiply(pr.getWorldQuaternion(_kq2).invert());if(bm.userData.lugs)bm.userData.lugs.visible=true;}
 /* on the ground (or afloat), pitched and rolled with the slope; the model's nose is +x */
 function fPlace(m,x,z,hd,lift){const c=Math.cos(hd),s=Math.sin(hd),L=3,g=(a,b)=>fGround(a,b);
   const pitch=Math.atan2(g(x+c*L,z+s*L)-g(x-c*L,z-s*L),2*L),roll=Math.atan2(g(x+s*2,z-c*2)-g(x-s*2,z+c*2),4);
