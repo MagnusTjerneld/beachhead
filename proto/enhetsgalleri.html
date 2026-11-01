@@ -707,12 +707,12 @@ const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x3a382
 const HOVER_Y=.05;
 
 const ENEMY={
-  turret:{hp:120,range:140,airRange:130,vision:150,dmg:9,rate:1/1.2,acc:.8,value:100,label:'Bunker',cls:'armor',camo:true,canAir:true,canGround:true},
-  rb:{hp:30,range:140,airRange:120,vision:150,dmg:35,rate:.4,acc:.75,mag:2,reload:20,speed:3.5,value:0,label:'Robotskytt',cls:'inf',camo:true,canAir:true,canGround:true,tag:'RB'},
-  aa:{hp:90,range:200,kRange:275,vision:220,radar:110,dmg:10,rate:1.5,acc:.85,speed:8,value:90,label:'Luftvärn',cls:'light',camo:true,canAir:true,canGround:false},
-  inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,mobile:true,leash:220,tag:'I'},
+  turret:{hp:120,range:140,airRange:130,vision:150,dmg:9,rate:1/1.2,acc:.8,value:100,label:'Bunker',cls:'armor',camo:true,canAir:true,canGround:true,elev:20},
+  rb:{hp:30,range:140,airRange:120,vision:150,dmg:35,rate:.4,acc:.75,mag:2,reload:20,speed:3.5,value:0,label:'Robotskytt',cls:'inf',camo:true,canAir:true,canGround:true,elev:80,tag:'RB'},
+  aa:{hp:90,range:200,kRange:275,vision:220,radar:110,dmg:10,rate:1.5,acc:.85,speed:8,value:90,label:'Luftvärn',cls:'light',camo:true,canAir:true,canGround:false,elev:85},
+  inf:{hp:40,range:150,airRange:90,vision:220,dmg:18,rate:1/6,acc:.7,airAcc:.25,speed:4,value:0,label:'Infanteri',cls:'inf',camo:true,canAir:true,canGround:true,elev:60,mobile:true,leash:220,tag:'I'},
   at:{hp:35,range:170,vision:170,dmg:22,rate:.25,acc:.7,speed:4,value:0,label:'Pansarvärn',cls:'inf',camo:true,canAir:false,canGround:true,mobile:true,leash:220,tag:'PV'},
-  light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,mobile:true,leash:500,tag:'LP'},
+  light:{hp:70,range:140,vision:130,dmg:6,rate:1.2,acc:.75,speed:9,value:60,label:'Lätt pansar',cls:'light',camo:false,canAir:true,canGround:true,elev:45,mobile:true,leash:500,tag:'LP'},
   tank:{hp:160,range:140,vision:140,dmg:14,rate:.7,acc:.8,speed:6,value:120,label:'Stridsvagn',cls:'armor',camo:false,canAir:false,canGround:true,mobile:true,leash:260,tag:'SV'},
   /* the coast battery of Kustbatteriet (issue 73, Magnus 29 okt): a fixed 12 cm turret built into the rock, after ERSTA (12 cm
      tornautomatpjäs m/70). It fires only at what is military on the sea (GÄDDA, a vehicle in the water, Birka), with its own fire
