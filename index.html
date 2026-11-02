@@ -1079,7 +1079,16 @@ function buildWorldTry(seed,tryK,type,move){
   const cc=coastal.filter(i=>!Z[i].water&&i!==land&&i!==hz&&safe.has(i)&&coastPt.has(i)&&(isRound?angDiff(coastPt.get(i).a,coastPt.get(land).a)>60:Math.hypot(coastPt.get(i).x-V.beach.x,coastPt.get(i).y-V.beach.y)>450));if(cc.length&&R()<.5){const ci=cc[Math.floor(R()*cc.length)];V.cove=isRound?{...cpt(ci,5),a:Z[ci].a}:cptClear(ci,55,170,false)||cpt(ci,55);if(!isRound)V.cove.z=ci;}
   let sp=null;
   if(isRound){const ba=V.beach.a*PI/180;for(let f=1;f<2.2&&!sp;f+=.01){const x=CX+Math.cos(ba)*f*V.RX,y=CY+Math.sin(ba)*f*V.RY;if(clear(x,y))sp={x:x+Math.cos(ba)*20,y:y+Math.sin(ba)*20};}if(!sp)sp=polar(V.beach.a,1.4);}
-  else sp=shipSpot(V.beach)||{x:V.beach.x+V.beach.nx*400,y:V.beach.y+V.beach.ny*400};
+  else{sp=shipSpot(V.beach)||{x:V.beach.x+V.beach.nx*400,y:V.beach.y+V.beach.ny*400};
+    /* the anchorage as near the beach as the water allows (Magnus 1 nov, issue 118: on 3019 she lay 600 m off, since the one ray out along the
+       coast's normal ran past a narrow inlet to open water far away). The ray's spot stays when it is near; otherwise the nearest spot in any
+       direction with the same clear water round her and a clear line over water in to the beach, searched in rings of 20 m. There is no other
+       rule: the enemy's reach does not enter, the defence is planned round her afterwards (inBirka) and the radio net is 850 m */
+    const b=V.beach,d0=Math.hypot(sp.x-b.x,sp.y-b.y);let bd=d0-30,pick=null;
+    const lineOK=(x,y)=>{const d=Math.hypot(x-b.x,y-b.y);for(let f=60;f<d-20;f+=15){if(islandD(b.x+(x-b.x)*f/d,b.y+(y-b.y)*f/d,V).d<=1)return false;}return true;};
+    for(let gy=-d0;gy<=d0;gy+=20)for(let gx=-d0;gx<=d0;gx+=20){const d=Math.hypot(gx,gy);if(d>=bd||d<150)continue;const x=b.x+gx,y=b.y+gy;
+      if(x<150||y<150||x>WW-150||y>WH-150||!clear(x,y)||!lineOK(x,y))continue;bd=d;pick={x,y};}
+    if(pick)sp=pick;}
   CARRIER.x=clamp(sp.x,140,WW-140);CARRIER.y=clamp(sp.y,140,WH-140);/* the model's +z end (pads, ramp) is her bow (decided 18 okt, issue 34: roll-on roll-off goes over the bow): CARRIER.a, the model's
      own frame, points the crane end at the island, so she lies with her bow, ramp first, towards it */
   CARRIER.a=(isRound?Math.atan2(CY-CARRIER.y,CX-CARRIER.x):Math.atan2(V.beach.y-CARRIER.y,V.beach.x-CARRIER.x))+PI;
@@ -10393,7 +10402,7 @@ const FILM_SHOTS=[
   const drive=(m,lat,fw0,t0,lift)=>{const t=Math.max(0,tau-t0),run=t<7/3?1.5*t*t:7*t-49/6,fw=fw0-run,q=shipPos(lat,fw),x=q[0],z=q[1],on=RAMP.bow-fw;
     if(on<reach+W){m.position.set(x,DECK_Y-(DECK_Y-tipH)*gR(on)/reach+lift,z);m.rotation.set(0,-hd,-Math.atan(Math.tan(slope)*dR(on)));}
     else{fPlace(m,x,z,hd,lift);if(t>0&&Math.random()<dtr*26)fxDust(x-Math.cos(hd)*3,fGround(x,z),z-Math.sin(hd)*3,1.3);}};
-  drive(fVarg(0),-5.5,-41,1.45,HOVER_Y);drive(fVarg(1),6,-33,1.95,HOVER_Y);drive(fUnit('bav','eng'),0,-24,2.6,0);
+  drive(fVarg(0),-5.5,-41,1.2,HOVER_Y);drive(fVarg(1),6,-35,1.45,HOVER_Y);drive(fUnit('bav','eng'),0,-26,2.1,0);/* earlier (issue 83, Magnus 2 nov: the second VARG barely got off Birka before the cut) */
   const cx=B.tip.x-f.x*27+p.x*10,cz=B.tip.y-f.z*27+p.z*10;fCam(cx,fGround(cx,cz)+1.4,cz,B.tip.x+f.x*8,3.4,B.tip.y+f.z*8,.02);FILM.fov=46;}},
 /* 6. the chart: the same moment as the game shows it, the landing party fanning out from the beach over the island */
 {k:11,id:'sjokort',birka:true,f(tau,dur,dtr,S){if(S.first){filmMapShow(true);FILM.mapUnits=[];
@@ -10427,11 +10436,13 @@ const FILM_SHOTS=[
   const ca=a-.38,cr=R+12;fCam(C.x+Math.cos(ca)*cr,1.5,C.z+Math.sin(ca)*cr,x+Math.cos(hd)*3,1.2,z+Math.sin(hd)*3,.03);FILM.fov=40;}},
 /* 11. round the AA truck as it opens up on the HÖK overhead: tracers into the darkening sky */
 {k:20,id:'lv',f(tau,dur,dtr,S){const m=fEnemy('aa1','aa'),x=1340,z=690,hd=2.2;fPlace(m,x,z,hd,0);const H=m.userData.head;
-  const tgt={x:x+80-tau*20,y:75,z:z-60};if(H){H.rotation.y=hd-Math.atan2(tgt.z-z,tgt.x-x)+PI;}
+  /* the HÖK is placed beyond the truck as the camera sees it, and lower, so that it is in the picture (issue 83, Magnus 2 nov: it was 75 m up and out of frame) */
+  const ca0=2.4+tau*.36,ccx=x+Math.cos(ca0)*17,ccz=z+Math.sin(ca0)*17,dx0=(x-ccx)/17,dz0=(z-ccz)/17,sd=22-tau*9;
+  const tgt={x:x+dx0*42-dz0*sd,y:30+tau*1.5,z:z+dz0*42+dx0*sd};if(H){H.rotation.y=hd-Math.atan2(tgt.z-z,tgt.x-x)+PI;}
   {const h=fUnit('hok2','drone',PAL[3][0]);h.position.set(tgt.x,tgt.y,tgt.z);h.rotation.set(0,PI,-.12);}/* what it fires at (director's pass 26 okt: tracers into an empty sky) */
   S.cd=(S.cd||0)-dtr;if(tau>.4&&S.cd<=0){S.cd=.11;const mp=new THREE.Vector3(-.22,2.41,(S.n=(S.n||0)+1)%2?.45:-.45);if(H){H.updateMatrixWorld();H.localToWorld(mp);}
     fxFlash(mp.x,mp.y,mp.z,1.6,0xffe0a0);fxTracer(mp,{x:tgt.x+fr()*9,y:tgt.y+fr()*6,z:tgt.z+fr()*9,hit:false},330,0xffe08a,.3);}
-  const a=2.4+tau*.36,r=17;fCam(x+Math.cos(a)*r,fGround(x,z)+2.2,z+Math.sin(a)*r,x,fGround(x,z)+3.4,z,.05);FILM.fov=44;}},
+  const a=2.4+tau*.36,r=17;fCam(x+Math.cos(a)*r,fGround(x,z)+2.2,z+Math.sin(a)*r,lerp(x,tgt.x,.25),fGround(x,z)+9,lerp(z,tgt.z,.25),.05);FILM.fov=46;}},
 /* 12. a VARG fires: over its shoulder from behind, flash, the tracer streaking off, the dust ring at the muzzle; the enemy light armour it fires
    at is there in the meadow, takes the first round and goes up on the second (director's pass 26 okt: it fired at nothing) */
 {k:22,id:'eld',lanes:()=>[[1330,760,1352,748,12]],f(tau,dur,dtr,S){const m=fVarg(0),x=1446,z=738,tx=1341,tz=754,hd=Math.atan2(tz-z,tx-x);fPlace(m,x,z,hd,HOVER_Y);const T=m.userData.tur;
@@ -10490,12 +10501,12 @@ const FILM_SHOTS=[
   if(S.T&&tau>=S.T&&!S.w){S.w=1;bk.updateMatrixWorld(true);fxWreck(bk);const y=fGround(bx,bz);fxBoom(bx,y+1,bz,1.8);fxFire(bx,y+2,bz,1.3);}
   const c=Math.cos(hd),s=Math.sin(hd),cx=x-c*14+s*30,cz=z-s*14-c*30;fCam(cx,3,cz,lerp(x,bx,.5),10,lerp(z,bz,.5),S.w?Math.max(.03,.5-(tau-S.T)*.6):.02);FILM.fov=52;}},
 /* 19. three VARG fire in turn on the beat, silhouetted against the last of the light, and at the forest edge the enemy tank goes up */
-{k:29,id:'salva',lanes:()=>[[1262,742,1284,742,14]],f(tau,dur,dtr,S){const tx=1272,tz=742,beat=FILM_BAR/4;
+{k:29,id:'salva',lanes:()=>[[1262,742,1284,742,14]],f(tau,dur,dtr,S){const tx=1340,tz=742,beat=FILM_BAR/4;
   {const e=fEnemy('et4','tank');if(!S.b)fPlace(e,tx,tz,0,0);else e.visible=false;}/* what they fire at, there at the forest edge (director's pass 26 okt) */
   [[1452,736],[1440,752],[1455,768]].forEach(([x,z],n)=>{const hd=Math.atan2(tz-z,tx-x),m=fVarg(n);fPlace(m,x,z,hd,HOVER_Y);
     const tf=beat*(1+n),T=m.userData.tur;if(tau>tf&&!S['f'+n]){S['f'+n]=1;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4.5);fxTracer(mp,{x:tx+fr()*20,y:fGround(tx,tz)+2,z:tz+fr()*20,hit:false},600,0xffe0a0,.2);}});
   if(tau>FILM_BAR&&!S.b){S.b=1;const e=fEnemy('et4','tank');e.updateMatrixWorld(true);fxWreck(e);e.visible=false;fxBoom(tx,fGround(tx,tz)+1,tz,3);fxFire(tx,fGround(tx,tz)+2,tz,2);}
-  const cx=1482,cz=748;fCam(cx-tau*.6,fGround(cx,cz)+2,cz,tx,fGround(tx,tz)+9,tz+8,.02);FILM.fov=38;}},
+  const cx=1482,cz=748;fCam(cx-tau*.6,fGround(cx,cz)+2,cz,tx,fGround(tx,tz)+3.5,tz+3,.02);FILM.fov=20;/* a long lens: the tank at the forest edge fills more of the picture (issue 83, Magnus 2 nov) */}},
 /* 20. after: the music drops away; the wreck burns into the dusk and a VARG goes slowly by in front of it */
 {k:31,id:'efter',f(tau,dur,dtr,S){const wx=1332,wz=734;const w=fEnemy('et1','tank');headOf(w).visible=false;/* its turret went up in the hit */fPlace(w,wx,wz,.4,-.4);w.rotation.x=.12;if(S.first){fxFire(wx,fGround(wx,wz)+2,wz,1.5);}
   const m=fVarg(1),q=fPath([[wx+28,wz-34],[wx-30,wz-20]],tau*4.5);fPlace(m,q.x,q.z,q.hd,HOVER_Y);
