@@ -164,7 +164,9 @@ return function tick(G){
      left to the HÖK (ö 1490: bunker T6 behind barrier S2 held all four VARG still for 25 minutes) */
   const g=B.W.grid;let p=null,blk=null;
   for(const o of objs.slice(0,4)){const path=B.astar(vc.x,vc.y,o.x,o.y,i=>g[i]!==4&&g[i]!==5,()=>1);if(!path||!path.length)continue;
-    let L=0,q=vc,pp=path[path.length-1];for(const s of path){L+=d(q,s);q=s;if(L>=BOUND){pp=s;break;}}
+    /* exactly BOUND m along the way: the game's way is smoothed to a few long legs, and the first corner over BOUND m could be 600 m off,
+       in under a seen weapon's range (issue 109, ö 3019 and 2718: the 'step' was at P1 and the wing stood still all game) */
+    let L=0,q=vc,pp=path[path.length-1];for(const s of path){const l=d(q,s);if(L+l>=BOUND){const f=(BOUND-L)/l;pp={x:q.x+(s.x-q.x)*f,y:q.y+(s.y-q.y)*f};break;}L+=l;q=s;}
     const x=groundThreat(G,pp,25);if(!x){p=pp;break;}if(!blk)blk=x;}
   K.blocker=p?null:blk;
   if(!p){K.why=blk?'hot vid steget '+blk.id+(bad[blk.id]!=null?' (släppt)':''):'ingen väg';
