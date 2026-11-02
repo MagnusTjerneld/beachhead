@@ -6064,21 +6064,28 @@ function svRoundel(r){const k='crown';if(!GEOS.has(k)){const c=new THREE.Shape()
 function svOn(q,p,n,up){n=n.clone().normalize();const z=new THREE.Vector3(0,0,1);q.quaternion.setFromUnitVectors(z,n);
   if(up){const yNow=new THREE.Vector3(0,1,0).applyQuaternion(q.quaternion),u=up.clone().addScaledVector(n,-up.dot(n)).normalize(),a=Math.atan2(new THREE.Vector3().crossVectors(yNow,u).dot(n),yNow.dot(u));
     q.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(n,a));}q.position.copy(p);return q;}
-/* The call number on the model (Magnus 2 nov, issue 114): letters and digits in a low-resolution pixel font, 3 by 5 (the M 5 by 5), each as flat
-   rectangles (the pixels are joined into as few as they can), in the crowns' colour (svTone) and a plain lit material, so bake() folds them into the
-   hull's call: no extra draw call, about ten triangles for a letter. svNum(text,p) faces +z, centred, p the pixel's size; svCall(u) is the unit's
-   call number as the model shows it, empty for a model built without one (the wrecks, which have lost their markings) */
-const SV_FONT={'0':['111','101','101','101','111'],'1':['010','110','010','010','111'],'2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],
-  '5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],'8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
-  V:['101','101','101','101','010'],H:['101','101','111','101','101'],X:['101','101','010','101','101'],G:['111','100','101','101','111'],B:['1110','1001','1110','1001','1110'],
-  M:['10001','11011','10101','10001','10001'],K:['1001','1010','1100','1010','1001']};
+/* The call number on the model (Magnus 2 nov, issue 114): letters and digits in a pixel font, each glyph as flat rectangles (the pixels are joined
+   into as few as they can), in the crowns' colour (svTone) and a plain lit material, so bake() folds them into the hull's call: no extra draw call.
+   The font is 5 by 7 and the text a fifth lower than the first 3 by 5 (Magnus 2 nov, morning: smaller and less blocky): the callers still give
+   the old pixel size p, and svNum draws the 7 rows in SV_H times the 5 old ones. svNum(text,p) faces +z, centred; svCall(u) is the unit's call
+   number as the model shows it, empty for a model built without one (the wrecks, which have lost their markings) */
+const SV_H=.8,SV_FONT={'0':['01110','10001','10001','10001','10001','10001','01110'],'1':['00100','01100','00100','00100','00100','00100','01110'],
+  '2':['01110','10001','00001','00010','00100','01000','11111'],'3':['11110','00001','00001','01110','00001','00001','11110'],
+  '4':['00010','00110','01010','10010','11111','00010','00010'],'5':['11111','10000','11110','00001','00001','10001','01110'],
+  '6':['00110','01000','10000','11110','10001','10001','01110'],'7':['11111','00001','00010','00100','01000','01000','01000'],
+  '8':['01110','10001','10001','01110','10001','10001','01110'],'9':['01110','10001','10001','01111','00001','00010','01100'],
+  V:['10001','10001','10001','10001','10001','01010','00100'],H:['10001','10001','10001','11111','10001','10001','10001'],
+  X:['10001','10001','01010','00100','01010','10001','10001'],G:['01110','10001','10000','10111','10001','10001','01111'],
+  B:['11110','10001','10001','11110','10001','10001','11110'],M:['10001','11011','10101','10101','10001','10001','10001'],
+  K:['10001','10010','10100','11000','10100','10010','10001']};
 const svCall=u=>u&&u.num&&CALLSIGN[u.kind]?callTag(u.kind,u.num):'';
-function svNum(t,p,own){const k='num:'+t+':'+p;if(!GEOS.has(k)){const P=[],gl=[...t].map(c=>SV_FONT[c]||SV_FONT['0']),W=gl.reduce((a,r)=>a+r[0].length+1,-1)*p;let x0=-W/2;
+function svNum(t,p,own){const k='num:'+t+':'+p;if(!GEOS.has(k)){const n=SV_FONT['0'].length,P=[],gl=[...t].map(c=>SV_FONT[c]||SV_FONT['0']);p=p*5*SV_H/n;
+    const W=gl.reduce((a,r)=>a+r[0].length+1,-1)*p;let x0=-W/2;
     for(const r of gl){const w=r[0].length,used=r.map(()=>Array(w).fill(false));
-      for(let i=0;i<5;i++)for(let j=0;j<w;j++){if(r[i][j]!=='1'||used[i][j])continue;let j2=j,i2=i;while(j2+1<w&&r[i][j2+1]==='1'&&!used[i][j2+1])j2++;
-        while(i2+1<5&&[...Array(j2-j+1).keys()].every(d=>r[i2+1][j+d]==='1'&&!used[i2+1][j+d]))i2++;
+      for(let i=0;i<n;i++)for(let j=0;j<w;j++){if(r[i][j]!=='1'||used[i][j])continue;let j2=j,i2=i;while(j2+1<w&&r[i][j2+1]==='1'&&!used[i][j2+1])j2++;
+        while(i2+1<n&&[...Array(j2-j+1).keys()].every(d=>r[i2+1][j+d]==='1'&&!used[i2+1][j+d]))i2++;
         for(let a=i;a<=i2;a++)for(let b=j;b<=j2;b++)used[a][b]=true;
-        const xa=x0+j*p,xb=x0+(j2+1)*p,ya=(2.5-i)*p,yb=(2.5-i2-1)*p,z=.008;P.push(xa,yb,z,xb,yb,z,xb,ya,z,xa,yb,z,xb,ya,z,xa,ya,z);}
+        const xa=x0+j*p,xb=x0+(j2+1)*p,ya=(n/2-i)*p,yb=(n/2-i2-1)*p,z=.008;P.push(xa,yb,z,xb,yb,z,xb,ya,z,xa,yb,z,xb,ya,z,xa,ya,z);}
       x0+=(w+1)*p;}
     const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3));ge.setAttribute('normal',new THREE.Float32BufferAttribute(P.map((_,i)=>i%3===2?1:0),3));GEOS.set(k,ge);}
   const q=new THREE.Group();q.add(mesh(own?GEOS.get(k).clone():GEOS.get(k),mat(svTone())));return q;}/* own: a model that scales its geometries in place (GÄDDA) takes a copy */

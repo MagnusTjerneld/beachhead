@@ -57,8 +57,8 @@ const meas=g=>{g.updateMatrixWorld(true);let tri=0,meshes=0,h=0;const lug=g.user
   for(let n=0;n<p.array.length;n++)h=(h*31+Math.round(p.array[n]*1000))|0;});return{tri,meshes,h};};
 const kinds=['tank','drone','scout','eng','mus','gadda','krok'];
 /* the font: every glyph a rectangle of rows of equal length, and the digits and the seven letters are all there */
-ok('0123456789VHXGBMK'.split('').every(c=>{const g=M.SV_FONT[c];return g&&g.length===5&&g.every(r=>r.length===g[0].length&&/^[01]+$/.test(r));}),'the pixel font has 0 to 9 and V H X G B M K, five rows each');
-{const a=M.svNum('V01',.1),t=a.children[0].geometry.attributes.position.count/3;ok(t>=8&&t<=40,'"V01" is a handful of flat triangles ('+t+')');
+ok('0123456789VHXGBMK'.split('').every(c=>{const g=M.SV_FONT[c];return g&&g.length===7&&g.every(r=>r.length===g[0].length&&/^[01]+$/.test(r));}),'the pixel font has 0 to 9 and V H X G B M K, seven rows each');
+{const a=M.svNum('V01',.1),t=a.children[0].geometry.attributes.position.count/3;ok(t>=8&&t<=60,'"V01" is a handful of flat triangles ('+t+')');
   ok(M.svNum('V01',.1).children[0].geometry===a.children[0].geometry,'the shared geometry is built once per text and size');ok(M.svNum('V01',.1,true).children[0].geometry!==a.children[0].geometry,'a copy for the models that scale their geometry in place');}
 for(const kind of kinds){
   M.setR3({lampMat:lamp,season:{brown:0,snow:0}});
