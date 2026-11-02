@@ -5928,6 +5928,12 @@ function kamVarv(g){const M=kamMats();
   g.add(mesh(cyl(.06,.08,3.4,5),M.DRK,-6.2,5.7,-4.8));
   kamFlag(g,5.5,.6,-7.7,7);
   const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0x3fd06a}));top.position.set(-6.2,7.7,-4.8);top.visible=false;g.add(top);g.userData.top=top;g.userData.hid=true;}
+/* a camouflaged point's windows and lamps, and its plates' lamps, are dark until an own unit has found it (issue 122, Magnus 2 nov: the
+   glow at night gave it away), the same as the salvage vehicle; then they light with the rest of the island. The lit parts are found
+   once, after the baking, and swapped to a dark material */
+function pointLit(g,on){let L=g.userData.lit;if(!L){L=g.userData.lit=[];L.on=null;const look=o=>{if(o.isMesh&&(o.material===R3.lampMat||o.material===R3.winMat))L.push([o,o.material]);};g.traverse(look);for(const a of g.userData.also||[])a.traverse(look);}
+  if(L.on===on)return;L.on=on;const off=R3.litOff||(R3.litOff=new THREE.MeshLambertMaterial({color:0x34383a}));for(const[o,m]of L)o.material=on?m:off;
+  if(!g.userData.hid&&g.userData.top)g.userData.top.visible=on;}
 function mkPointMesh(r){
   const g=new THREE.Group(),C=0x8a8f8c,D=0x5d625f,ROOF=0x4a5058;let topY=12;
   if(r.type!=='hamn'&&r.type!=='central'&&r.type!=='varv')g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
@@ -8152,7 +8158,7 @@ function updateSky(){
   const cand=[];
 
   if(d>.05){
-    for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;if(g&&g.userData.hid&&!r.captured)continue;/* no red glow on a point the enemy holds (issue 106) */const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
+    for(const r of G.relays){const g=R3.relays.get(r.id),t=g&&g.userData.top;if(g&&(g.userData.hid&&!r.captured||!rKnown(r)))continue;/* no red glow on a point the enemy holds (issue 106), nor any light from a camouflaged point not yet found (issue 122) */const bx=t?g.position.x+t.position.x:r.x,by=t?g.position.y+t.position.y:groundY(r.x,r.y)+15,bz=t?g.position.z+t.position.z:r.y;cand.push([2,bx,by,bz,r.captured?0x3fd06a:0xff2a3a,1.3*n,45]);}
     for(const st of G.structs)if(!st.dead&&!structHid(st)&&(st.kind==='house'||st.kind==='depot')&&winLevel(winBucket(st.x,st.y),d)>.3)cand.push([3,st.x,groundY(st.x,st.y)+4,st.y,0xffb860,1*d,34]);
     for(const v of (WORLD.decor&&WORLD.decor.villas)||[])if(winLevel(winBucket(v.x,v.y),d)>.3)cand.push([3,v.x,Math.max(0,v.h)+4,v.y,0xffb860,1.1*d,36]);
     for(const[ci,c]of((WORLD.decor&&WORLD.decor.cabins)||[]).entries())if(!(G.ddead.c&&G.ddead.c[ci]!=null)&&winLevel(winBucket(c.x,c.y),d)>.3)cand.push([3,c.x,Math.max(0,c.h)+3,c.y,0xffb860,.8*d,28]);
@@ -8371,7 +8377,8 @@ function sync3D(dtr){
   for(const r of G.relays){const g=R3.relays.get(r.id);if(g){if(g.userData.dish)g.userData.dish.rotation.y=now*(r.captured?.9:.35);if(g.userData.lamp)g.userData.lamp.material.color.setHex(now%1.2<.45?(r.captured?0x3fd06a:0xff2a2a):(r.captured?0x0f3a1c:0x3a0c10));/* green once taken (Magnus 1 nov) *//* the radar mast's lamps blink, its top one the point's marker (issue 105) */const t=g.userData.top,on=!g.userData.blink||now%1.2<.45;t.material.color.setHex(r.captured?(on?0x3fd06a:0x0f3a1c):(on?0xe0283a:0x3a0c10));
     /* a camouflaged point not yet known, its yard and plates with it, is not seen in the intro or the fly-over (Magnus 1 nov) */
     {const v=!((TITLE.on&&!FILM.on||OP.on)&&!rKnown(r));g.visible=v;for(const o of g.userData.also||[])o.visible=v;}
-    if(g.userData.hid||g.userData.pads){const c=!!r.captured;/* lamp, flag and the plates' H only once taken (issue 106) */if(g.userData.hid){t.visible=c;g.userData.flag.visible=c;if(c)g.userData.flag.rotation.y=Math.sin(now*2.3)*.14;}for(const q of g.userData.pads||[])q.visible=c;}}}
+    if(g.userData.hid||g.userData.pads){const c=!!r.captured;/* lamp, flag and the plates' H only once taken (issue 106) */if(g.userData.hid){t.visible=c;g.userData.flag.visible=c;if(c)g.userData.flag.rotation.y=Math.sin(now*2.3)*.14;}for(const q of g.userData.pads||[])q.visible=c;}
+    if(r.hid)pointLit(g,rKnown(r));}}
   // fx: tracer projectiles with muzzle flash, impacts, smoke; transient particles live in R3.parts
   const live=new Set(G.fx);
   for(const f of G.fx){
