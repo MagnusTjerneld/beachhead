@@ -30,7 +30,7 @@ const from=(az,d,h,pitch,fov,yo)=>{const a=az*PI/180;return shoot(L.x+Math.cos(a
 const varg=(K,n,sx,f,rel)=>{const q=K.gnd(sx,f),hd=K.yaw+rel,m=fVarg(n),gy=groundY(q.x,q.z);if(m.userData.tur)m.userData.tur.rotation.y=0;
   if(gy<.3){m.position.set(q.x,0,q.z);m.rotation.set(0,-hd,0);fVargWater(m,dtr,FILM.t,n,170);}else{fPlace(m,q.x,q.z,hd,HOVER_Y);if(gy<1.5)vargSpray(q.x,q.z,14,dtr*2.2);else if(Math.random()<dtr*30)fxDust(q.x-Math.cos(hd)*3,gy,q.z-Math.sin(hd)*3,1.4);}return m;};
 const air=(K,key,kind,sx,sy,d,rel,pitch,roll,col)=>{const q=K.ray(sx,sy,d),m=fUnit(key,kind,col);m.position.set(q.x,q.y,q.z);m.rotation.set(roll||0,-(K.yaw+rel),pitch||0);return m;};
-const krok=(K,sx,sy,d,rel,legs)=>{const q=K.ray(sx,sy,d),hd=K.yaw+rel,km=fA('krok',()=>mkUnitMesh({kind:'krok'})),bm=fUnit('bav','eng');km.position.set(q.x,q.y,q.z);km.rotation.set(.02,-hd,-.06);
+const krok=(K,sx,sy,d,rel,legs)=>{const q=K.ray(sx,sy,d),hd=K.yaw+rel,km=fA('krok',()=>mkUnitMesh({kind:'krok',num:1})),bm=fUnit('bav','eng');km.position.set(q.x,q.y,q.z);km.rotation.set(.02,-hd,-.06);
   km.userData.cable.visible=true;km.userData.hook.visible=true;krokLegs(km.userData,legs||0);bm.position.set(q.x,q.y-8,q.z);bm.rotation.set(0,-hd-.15,.03);return km;};
 // a GÄDDA on the water f m ahead at sx, at v m/s: it is placed where it will be at tau t0 and runs there, so its spray and foam trail behind
 const gadda=(K,key,sx,f,rel,v,t0)=>{const q0=K.gnd(sx,f),hd=K.yaw+rel,c=Math.cos(hd),s=Math.sin(hd),b=(tau-t0)*v,x=q0.x+c*b,z=q0.z+s*b,m=fUnit(key,'gadda');

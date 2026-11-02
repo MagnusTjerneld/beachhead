@@ -136,13 +136,13 @@ function bjorn(){const g=new THREE.Group();
 
 const C='#5fb6cc';
 const US=[
-  {id:'tank',name:'VARG',mk:()=>mkUnitMesh({kind:'tank',color:C}),move:'Svävare',note:'Stridsfordonet. En svävare som tar sig över vatten och land, når 140 m och skjuter på allt som någon ser.'},
-  {id:'drone',name:'HÖK',mk:()=>mkUnitMesh({kind:'drone',color:C,ammo:4}),move:'Flyger',lift:2.5,note:'Attackdrönare med fyra robotar och en kulspruta. Spanar åt VARG och slår mot trupp; pansar bara på order.'},
-  {id:'scout',name:'GETING',mk:()=>mkUnitMesh({kind:'scout',color:C}),move:'Flyger',lift:1.2,note:'Spaningsdrönare med inbyggd sprängladdning (ersatte SPARV 16 okt). Flyger lågt och ser långt; på order, eller själv på Offensiv, dyker den in i ett pansarvärn, en robotskytt, infanteri, lätt pansar eller ett luftvärn och förbrukas. Laddningen gör 100 i skada inom 3 m och avtar till noll vid 12 m, för lite för bunker och stridsvagn.'},
-  {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
-  {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
-  {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
-  {id:'gadda',name:'GÄDDA',mk:()=>mkUnitMesh({kind:'gadda',color:C}),move:'Vattenjet',note:'Obemannad robotbåt på batteri (26 okt). Ser nästan inget på land själv, men skjuter fyra stora robotar på det någon annan ser, eller mot en punkt på kartan, från utom fiendens räckvidd. Omladdning vid Birka när du godkänner den.'},
+  {id:'tank',name:'VARG',mk:()=>mkUnitMesh({kind:'tank',color:C,num:1}),move:'Svävare',note:'Stridsfordonet. En svävare som tar sig över vatten och land, når 140 m och skjuter på allt som någon ser.'},
+  {id:'drone',name:'HÖK',mk:()=>mkUnitMesh({kind:'drone',color:C,ammo:4,num:1}),move:'Flyger',lift:2.5,note:'Attackdrönare med fyra robotar och en kulspruta. Spanar åt VARG och slår mot trupp; pansar bara på order.'},
+  {id:'scout',name:'GETING',mk:()=>mkUnitMesh({kind:'scout',color:C,num:1}),move:'Flyger',lift:1.2,note:'Spaningsdrönare med inbyggd sprängladdning (ersatte SPARV 16 okt). Flyger lågt och ser långt; på order, eller själv på Offensiv, dyker den in i ett pansarvärn, en robotskytt, infanteri, lätt pansar eller ett luftvärn och förbrukas. Laddningen gör 100 i skada inom 3 m och avtar till noll vid 12 m, för lite för bunker och stridsvagn.'},
+  {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C,num:1}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
+  {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C,num:1}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
+  {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C,num:1}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
+  {id:'gadda',name:'GÄDDA',mk:()=>mkUnitMesh({kind:'gadda',color:C,num:1}),move:'Vattenjet',note:'Obemannad robotbåt på batteri (26 okt). Ser nästan inget på land själv, men skjuter fyra stora robotar på det någon annan ser, eller mot en punkt på kartan, från utom fiendens räckvidd. Omladdning vid Birka när du godkänner den.'},
   {id:'bjorn',name:'BJÖRN',mk:bjorn,move:'Band',plan:true,note:'Tung stridsvagn på band, beslutad form. Kommer i land med kranen när Birka har dockat. Värdena är inte bestämda.'}
 ];
 const THEM=[
