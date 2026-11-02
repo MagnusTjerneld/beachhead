@@ -7,7 +7,7 @@ const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const said=(G,re)=>G.log.find
 // 1. KROK and BÄVER on ö 3019
 {B.newGame(3019);const G=B.G;G.running=true;G.netAll=true;const k=G.kroks[0],u=G.units.find(v=>v.kind==='eng');
   B.krokOrder(k,{type:'lift',unit:u,cap:true},false);run(25);ok(!!k.cargo,'KROK lifts BÄVER');const p0={x:k.x,y:k.y};run(10);
-  ok(Math.hypot(k.x-p0.x,k.y-p0.y)<8&&/Väntar med BÄVER i kroken i ruta/.test(k.status),'with nowhere to set it down it waits where it lifted ('+k.status+')');
+  ok(Math.hypot(k.x-p0.x,k.y-p0.y)<8&&/Väntar med BÄVER B[0-9]+ i kroken i ruta/.test(k.status),'with nowhere to set it down it waits where it lifted ('+k.status+')');
   k.post='off';B.krokOrder(k,{type:'drop',x:1262,y:1891,cap:true},false);run(30);
   ok(!!k.cargo&&u.carried,'a point on the water with no land near is refused and BÄVER stays on the hook');ok(!!said(G,/kör bara på land/),'and KROK says BÄVER drives only on land');
   const L=B.W.landing;B.krokOrder(k,{type:'drop',x:L.x,y:L.y,cap:true},false);run(2);

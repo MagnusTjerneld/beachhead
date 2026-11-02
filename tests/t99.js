@@ -37,7 +37,7 @@ const CONTRACT={
   unit:{
     scout:{parts:['spin'],tri:1300,calls:8,h:[.4,2],len:[1.5,4],foot:[-.8,.1]},
     drone:{parts:['spin','rockets','legs','ducts'],tri:3000,calls:24,h:[.8,3],len:[5,12],foot:[-.8,.1]},
-    tank:{parts:['tur'],tri:1800,calls:6,h:[2,6.5],len:[6,13],foot:[-.15,.1]},
+    tank:{parts:['tur'],tri:1850,calls:6,h:[2,6.5],len:[6,13],foot:[-.15,.1]},
     eng:{parts:[],tri:1450,calls:5,h:[2.5,7],len:[4.5,9],foot:[-.15,.1]},
     mus:{parts:[],tri:800,calls:3,h:[1.2,3.5],len:[1.2,3],foot:[-.15,.1]},
     gadda:{parts:['launcher','caps','fn:setLift'],tri:1850,calls:28,h:[3,7],len:[6,13],foot:[-.8,.1]},
@@ -81,7 +81,7 @@ const check=(grp,kind,make)=>{const C=CONTRACT[grp][kind],tag=grp+' '+kind;let g
   rule('no stray part (every mesh hangs under the model)',(()=>{let n=0;g.traverse(o=>{if(o.isMesh&&!inTree(g,o))n++;});return n===0;})(),'loose mesh');
   return g;};
 
-for(const kind in CONTRACT.unit)check('unit',kind,()=>M.mkUnitMesh({kind,color:'#3aa0c8',ammo:4}));
+for(const kind in CONTRACT.unit)check('unit',kind,()=>M.mkUnitMesh({kind,color:'#3aa0c8',ammo:4,num:88}));
 for(const kind in CONTRACT.enemy)check('enemy',kind,()=>M.mkEnemyMesh({kind,id:'e1'}));
 // the contract names every kind the game has
 ok(Object.keys(M.TYPES).sort().join()===Object.keys(CONTRACT.unit).filter(k=>k!=='krok').sort().join(),'the contract names every unit kind in TYPES (and KROK): '+Object.keys(M.TYPES).join(','));
