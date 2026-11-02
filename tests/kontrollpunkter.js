@@ -11,7 +11,7 @@ const K=(R.events||[]).filter(e=>e.type==='kontrollpunkt');
 console.log((R.island||'?')+' (ö '+R.seed+'), '+K.length+' kontrollpunkter, skärm '+(R.screen||'?'));
 if(K.length)fs.mkdirSync(out,{recursive:true});
 K.forEach((e,i)=>{const n=String(i+1).padStart(2,'0'),base=path.join(out,'kp'+n+'-'+mmss(e.t)),v=e.view||{};
-  console.log('\n'+n+'  T+'+mmss(e.t).replace('-',':')+'  huvudvy '+(v.main||'?')+', kamera '+(v.cam||'-')+(v.layout?', layout '+v.layout:''));
+  console.log('\n'+n+'  T+'+mmss(e.t).replace('-',':')+'  aktiv vy '+(v.main||'?')+', kamera '+(v.cam||'-')+(v.layout?', layout '+v.layout:''));
   console.log('    '+(e.note||'(ingen kommentar)'));
   if(e.shot){const a=save(e.shot.img,base+'.jpg'),b=e.shot.marks?save(e.shot.marks,base+'-markering.png'):null;console.log('    bild: '+a+(b?'\n    markering: '+b:' (inget ritat)'));}
   else console.log('    (ingen skärmbild)');});
