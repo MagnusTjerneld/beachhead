@@ -10584,6 +10584,7 @@ const FILM_SHOTS=[
 /* 19. three VARG fire in turn on the beat, silhouetted against the last of the light, and at the forest edge the enemy tank goes up */
 {k:29,id:'salva',lanes:()=>[[1330,742,1350,742,14]],f(tau,dur,dtr,S){const tx=1340,tz=742,beat=FILM_BAR/4;
   {const e=fEnemy('et4','tank');if(!S.b)fPlace(e,tx,tz,0,0);else e.visible=false;}/* what they fire at, there at the forest edge (director's pass 26 okt) */
+  if(!S.b)fLight(tx+9,fGround(tx,tz)+6,tz+2,0xffd8b0,2.4,32,.08);/* its own light from the camera's side, so it does not sink into the dusk under the trees (issue 83, Magnus 2 nov) */
   [[1452,736],[1440,752],[1455,768]].forEach(([x,z],n)=>{const hd=Math.atan2(tz-z,tx-x),m=fVarg(n);fPlace(m,x,z,hd,HOVER_Y);
     const tf=beat*(1+n),T=m.userData.tur;if(tau>tf&&!S['f'+n]){S['f'+n]=1;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4.5);fxTracer(mp,{x:tx+fr()*20,y:fGround(tx,tz)+2,z:tz+fr()*20,hit:false},600,0xffe0a0,.2);}});
   if(tau>FILM_BAR&&!S.b){S.b=1;const e=fEnemy('et4','tank');e.updateMatrixWorld(true);fxWreck(e);e.visible=false;fxBoom(tx,fGround(tx,tz)+1,tz,3);fxFire(tx,fGround(tx,tz)+2,tz,2);}
