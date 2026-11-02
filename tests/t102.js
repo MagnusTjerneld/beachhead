@@ -26,6 +26,7 @@ const F={isBig:true,r:{},uid:'u1'};
 {const{G,swapViews}=run({});swapViews();ok(G.activeView==='map','Q in the standard layout: camera to chart (G.activeView)');swapViews();ok(G.activeView==='cam','... and back');}
 {const{G,swapViews,VW}=run({wide:true});swapViews();ok(VW.sub==='cam2'&&VW.small==='map'&&G.activeView==='cam','Q in the wide layout swaps the active view with the small picture');
   swapViews();ok(VW.sub==='map'&&VW.small==='cam2','... and back');}
-ok(!/mainMode/.test(src),'G.mainMode is gone');
+ok(!/mainMode/.test(src.split("G.activeView=G.mainMode||'map';delete G.mainMode;").join('')),'G.mainMode is gone (but for reading an old save)');
 ok(!/huvudkamera|huvudvy|huvudbild/i.test(fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8')+fs.readFileSync(path.join(__dirname,'..','README.md'),'utf8')),'no huvudkamera/huvudvy/huvudbild in the game text or README');
+{const src=fs.readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');ok(/G=graphDec(sv.g);if(G.activeView==null){G.activeView=G.mainMode||'map'/.test(src),'a save from before 2 nov gets its view mode as G.activeView');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

@@ -1083,12 +1083,13 @@ function buildWorldTry(seed,tryK,type,move){
   else{sp=shipSpot(V.beach)||{x:V.beach.x+V.beach.nx*400,y:V.beach.y+V.beach.ny*400};
     /* the anchorage as near the beach as the water allows (Magnus 1 nov, issue 118: on 3019 she lay 600 m off, since the one ray out along the
        coast's normal ran past a narrow inlet to open water far away). The ray's spot stays when it is near; otherwise the nearest spot in any
-       direction with the same clear water round her and a clear line over water in to the beach, searched in rings of 20 m. There is no other
+       direction with the same clear water round her and a clear line over water in to the beach, searched on a 20 m grid, nearest first. There is no other
        rule: the enemy's reach does not enter, the defence is planned round her afterwards (inBirka) and the radio net is 850 m */
-    const b=V.beach,d0=Math.hypot(sp.x-b.x,sp.y-b.y);let bd=d0-30,pick=null;
+    const b=V.beach,d0=Math.hypot(sp.x-b.x,sp.y-b.y);const bd=d0-30;let pick=null;
     const lineOK=(x,y)=>{const d=Math.hypot(x-b.x,y-b.y);for(let f=60;f<d-20;f+=15){if(islandD(b.x+(x-b.x)*f/d,b.y+(y-b.y)*f/d,V).d<=1)return false;}return true;};
-    for(let gy=-d0;gy<=d0;gy+=20)for(let gx=-d0;gx<=d0;gx+=20){const d=Math.hypot(gx,gy);if(d>=bd||d<150)continue;const x=b.x+gx,y=b.y+gy;
-      if(x<150||y<150||x>WW-150||y>WH-150||!clear(x,y)||!lineOK(x,y))continue;bd=d;pick={x,y};}
+    const cand=[];for(let gy=-d0;gy<=d0;gy+=20)for(let gx=-d0;gx<=d0;gx+=20){const d=Math.hypot(gx,gy);if(d<bd&&d>=150)cand.push([d,b.x+gx,b.y+gy]);}
+    cand.sort((p,q)=>p[0]-q[0]);/* stable: among equal distances the grid's order, as before */
+    for(const[,x,y]of cand){if(x<150||y<150||x>WW-150||y>WH-150||!clear(x,y)||!lineOK(x,y))continue;pick={x,y};break;}
     if(pick)sp=pick;}
   CARRIER.x=clamp(sp.x,140,WW-140);CARRIER.y=clamp(sp.y,140,WH-140);/* the model's +z end (pads, ramp) is her bow (decided 18 okt, issue 34: roll-on roll-off goes over the bow): CARRIER.a, the model's
      own frame, points the crane end at the island, so she lies with her bow, ramp first, towards it */
@@ -3882,7 +3883,7 @@ function dmgMult(a,t,w){
   if(t.isStruct)return w==='mg'?.25:w==='rocket'||w==='gadda'?1.5:1;
   if(w==='gadda'&&t.cls)return{inf:1,light:1.3,armor:1}[t.cls];/* GÄDDA's robots carry a warhead made for bunkers */
   if(t.cls){if(w==='mg')return{inf:2,light:.6,armor:.15}[t.cls];if(w==='rocket')return{inf:1,light:1.3,armor:.5}[t.cls];return{inf:.5,light:1,armor:1}[t.cls];}
-  const air=!!t.air;if(a.kind==='inf')return 1;if(a.kind==='rb')return air?1:.5;if(a.kind==='light')return air?1:.6;return 1;
+  const air=aloft(t);if(a.kind==='inf')return 1;if(a.kind==='rb')return air?1:.5;if(a.kind==='light')return air?1:.6;return 1;
 }
 /* shots are projectiles: visible flight from muzzle to target, damage lands on arrival */
 const WSPEC={cannon:{v:520,len:9,r:.55,col:0xffe6a8},mg:{v:430,len:5,r:.26,col:0xfff2b8},rocket:{v:115,len:2.2,r:.36,col:0xf4f4f0,trail:true},gadda:{v:150,len:3,r:.45,col:0xf4f4f0,trail:true},
@@ -3941,7 +3942,7 @@ const FOCUS={k:1};
 /* what an enemy can expect to do to a unit with one shot, as it fires: weapon, aim against aircraft, the target's size and speed
    across the line, the range and the target's armour (issue 44) */
 function expHit(e,u){if(u.kind==='mus'&&(e.kind==='inf'||e.kind==='at'))return ROVER.rifle.dmg*ROVER.rifle.acc;if(highG(u))return e.dmg*hiHit(e,u)*dmgMult(e,u);
-  const a0=u.air&&e.kind==='turret'?e.acc*.55:u.air&&e.airAcc?e.airAcc:e.acc;return e.dmg*Math.min(.98,a0*(SIZE_ACC[u.kind]||1)*moveDef(e,u)*rangeF(e,u,'e'))*dmgMult(e,u);}
+  const a0=aloft(u)&&e.kind==='turret'?e.acc*.55:aloft(u)&&e.airAcc?e.airAcc:e.acc;return e.dmg*Math.min(.98,a0*(SIZE_ACC[u.kind]||1)*moveDef(e,u)*rangeF(e,u,'e'))*dmgMult(e,u);}
 function rangeF(a,t,side,w){if(!RANGE_F.on||!t)return 1;let R=0;
   if(side==='f'){if(w==='cannon')R=a.range;else if(w==='mg')R=MG.range;else return 1;}else{if(!MOVE_DEF.ball.has(a.kind)||aloft(t)&&!RANGE_F.air||t.kind==='mus'&&w!=='e_rifle')return 1;R=rVs(a,t);}/* a heavy gun rarely hits a MUS however close it is */
   if(!(R>0))return 1;return 1+RANGE_F.max*clamp((R-dist(a,t))/(R*2/3),0,1);}
@@ -5067,7 +5068,7 @@ globalThis.__BWLOG=c=>{const l=buildWorld.log||[];if(c)buildWorld.log=[];return 
    object), the island's grid as it stands and Birka's place. A save in another save format is not loaded: the game says so instead.
    SAVE.ver is raised by hand whenever what a save holds, or the island built from a number, changes (decided 19 okt, Magnus), so
    most saves outlive a new version of the game */
-const SAVE={ver:8,/* 2: 19 okt, Birkas väg in till kajen och öar där hon inte kan lägga till görs om; 3: 20 okt, den sneda angöringen; 4: 21 okt, masterna där nätet når dem; 5: 22 okt, ledningscentralen räknas inte som nätets källa för masterna; 6: 22 okt, GETING lågt eller högt och mark spanad bara från hög höjd; 7: 23 okt, strandlandningen; 8: 23 okt, navigatorn tar Birka till hamnen */pre:'bh.save.',auto:['a0','a1','a2'],man:'m',every:60,lastT:-1,wasPaused:false};
+const SAVE={ver:9,/* 2: 19 okt, Birkas väg in till kajen och öar där hon inte kan lägga till görs om; 3: 20 okt, den sneda angöringen; 4: 21 okt, masterna där nätet når dem; 5: 22 okt, ledningscentralen räknas inte som nätets källa för masterna; 6: 22 okt, GETING lågt eller högt och mark spanad bara från hög höjd; 7: 23 okt, strandlandningen; 8: 23 okt, navigatorn tar Birka till hamnen; 9: 2 nov, ankarplatsen närmare stranden (issue 118) och G.mainMode heter G.activeView (issue 116) */pre:'bh.save.',auto:['a0','a1','a2'],man:'m',every:60,lastT:-1,wasPaused:false};
 const GAME_VER='s'+SAVE.ver;
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return typeof btoa!=='undefined'?btoa(s):Buffer.from(s,'binary').toString('base64');};
 const unb64=t=>{const s=typeof atob!=='undefined'?atob(t):Buffer.from(t,'base64').toString('binary'),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
@@ -5086,7 +5087,7 @@ function graphDec(tab){const out=tab.map(e=>{if(!e.$ta)return e.$a?[]:{};const u
 function saveState(){const enc=graphEnc(G);return{fmt:'uppdrag-arkipelag-sparning 1',ver:GAME_VER,saved:new Date().toISOString(),seed:G.seed,doc:G.doc,island:islandName(G.seed),t:Math.round(G.time),
   when:G.start,carrier:{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a},grid:b64(WORLD.grid),g:enc.tab};}
 /* the state of a save put back over a freshly built island of the same number (the caller has built it) */
-function applySave(sv){G=graphDec(sv.g);/* a save from before 24 okt may hold Dold or Observera: both read as Defensiv */
+function applySave(sv){G=graphDec(sv.g);if(G.activeView==null){G.activeView=G.mainMode||'map';delete G.mainMode;}/* a checkpoint's save from before 2 nov (issue 116) *//* a save from before 24 okt may hold Dold or Observera: both read as Defensiv */
   for(const u of G.units||[])for(const o of[u,u.mission,...(u.orders||[]),...(u.saved||[])])if(o&&o.post&&!POST[o.post])o.post='def';
   numberUnits();/* a save from before 2 nov has no call numbers (issue 114) */
   WORLD.grid.set(unb64(sv.grid));Object.assign(CARRIER,sv.carrier);G.running=true;G.paused=true;}
@@ -7463,7 +7464,7 @@ function buildStatic(){
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
   for(const m of[R3.units,R3.enemies,R3.wrecks,R3.relays,R3.fx,R3.kroks,R3.structs])m.clear();R3.parts.length=0;
   while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);R3.rings=null;
-  R3.route=null;R3.tags=new Map();R3.marks=new Map();R3.looseM=[];
+  R3.route=null;if(R3.tags)for(const o of R3.tags.values()){o.sp.material.map.dispose();o.sp.material.dispose();if(o.dc){o.dc.geometry.dispose();o.dc.material.map.dispose();o.dc.material.dispose();}}R3.tags=new Map();R3.marks=new Map();R3.looseM=[];
   const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1,ny=SY+1,st=new THREE.Group();
   const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),idx=new (nx*ny>65535?Uint32Array:Uint16Array)(SX*SY*6);// the grid has more than 65535 vertices: 16-bit indices would wrap and scramble the southern triangles
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
@@ -10566,7 +10567,7 @@ const FILM_SHOTS=[
   if(S.T&&tau>=S.T&&!S.w){S.w=1;bk.updateMatrixWorld(true);fxWreck(bk);const y=fGround(bx,bz);fxBoom(bx,y+1,bz,1.8);fxFire(bx,y+2,bz,1.3);}
   const c=Math.cos(hd),s=Math.sin(hd),cx=x-c*14+s*30,cz=z-s*14-c*30;fCam(cx,3,cz,lerp(x,bx,.5),10,lerp(z,bz,.5),S.w?Math.max(.03,.5-(tau-S.T)*.6):.02);FILM.fov=52;}},
 /* 19. three VARG fire in turn on the beat, silhouetted against the last of the light, and at the forest edge the enemy tank goes up */
-{k:29,id:'salva',lanes:()=>[[1262,742,1284,742,14]],f(tau,dur,dtr,S){const tx=1340,tz=742,beat=FILM_BAR/4;
+{k:29,id:'salva',lanes:()=>[[1330,742,1350,742,14]],f(tau,dur,dtr,S){const tx=1340,tz=742,beat=FILM_BAR/4;
   {const e=fEnemy('et4','tank');if(!S.b)fPlace(e,tx,tz,0,0);else e.visible=false;}/* what they fire at, there at the forest edge (director's pass 26 okt) */
   [[1452,736],[1440,752],[1455,768]].forEach(([x,z],n)=>{const hd=Math.atan2(tz-z,tx-x),m=fVarg(n);fPlace(m,x,z,hd,HOVER_Y);
     const tf=beat*(1+n),T=m.userData.tur;if(tau>tf&&!S['f'+n]){S['f'+n]=1;T.updateMatrixWorld();const mp=new THREE.Vector3(6,.1,0);T.localToWorld(mp);fxFlash(mp.x,mp.y,mp.z,4.5);fxTracer(mp,{x:tx+fr()*20,y:fGround(tx,tz)+2,z:tz+fr()*20,hit:false},600,0xffe0a0,.2);}});
