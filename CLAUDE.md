@@ -52,3 +52,20 @@ GitHub-issues (MagnusTjerneld/beachhead) är hela projektets lista över vad som
 - `tests/trailerkoll.js` är kontrollen av trailern: den stegar varje bild utan att rendera och flaggar aktörer på marken som kör genom träd, block, murar, hus, vrak eller ut i vattnet, en kamera inne i en trädkrona och skymd sikt till motivet (`node tests/trailerkoll.js`, några sekunder, `--karta ut.png` ritar slagfältet ovanifrån med hinder, banor och kameror). Kör den efter ändringar i ö-generatorn eller i `FILM_SHOTS`; den hör inte till run.js. Lokalt på Windows använder trailerverktygen grafikkortet, eftersom swiftshader tappar WebGL-kontexten där.
 - Trailern ligger i index.html (filmläget, `?trailer`, manuset i `FILM_SHOTS`) och spelas på GitHub Pages under `/beachhead/trailer/`. Den följer spelets modeller automatiskt; ändringar i själva filmen granskas med stillbilder per bild eller en lågupplöst rendering, som tar flera minuter och därför kräver ja först.
 - Håll README.md och spelets hjälptext ("Hur man spelar") i takt med ändringarna.
+
+## Fällor
+
+En rad per fälla som har bitit oss (issue 77). Fyll på när en bugg visar sig bero på något icke uppenbart.
+
+- Två ytor i samma plan flimrar (z-fighting) på avstånd och i rörelse: lägg en del några centimeter innanför den andra, aldrig kant i kant (stridsvagnens skrov 2 nov, 270741b).
+- Allt som ska ligga på marken (vägar, dekaler, cirklar) måste draperas på terrängen i korta bitar; en rak bit mellan två punkter svävar eller går in i backen (issue 54, 117).
+- Hashfunktioner med sinus i shaders ger rutor och lökringar på mobilens GPU med låg precision: använd sHash utan sinus (issue 69).
+- Markfordonen är skalade till 0,8: lyftpunkter, lastens hängning och fästen räknas i modellens egna mått och skalas sedan (fHang, krokSlings, 1768b5b).
+- Lägen som knyts till en enhet (kontroll, kamera, order) måste släppas när kameran byter enhet, annars styr man fel enhet (issue 26).
+- Meddelanden vid en gräns (radiolänken, räckvidden) behöver hysteres, annars skickas de varje bildruta (issue 36).
+- En grupporder får inte skriva över en enskild enhets reträtt (issue 25).
+- Hemliga installationer måste döljas också i introt och överflygningen (structHid), inte bara på sjökortet.
+- Hjälptexten, README och kodens kommentarer driver isär från koden om de inte ändras i samma commit (issue 95).
+- `tests/t70.js` har CRLF-radslut: ersättningar med exakt text måste ta hänsyn till `\r`.
+- Swiftshader tappar WebGL-kontexten lokalt på Windows: kör renderande verktyg på grafikkortet där.
+- En artefakt som redan finns kan inte skrivas över utan att den publicerade versionen läses först; `force` bara när Magnus sagt det.
