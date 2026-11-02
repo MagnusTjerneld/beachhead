@@ -652,7 +652,7 @@ function mkEnemyMesh(e){
       g.add(cz(.46,TW*.85,8,MET,-L/2+.45,.95,z));g.add(cz(.4,TW*.85,8,MET,L/2-.45,.95,z));
       g.add(mesh(box(6.6,.5,.06),LOW,-.1,1.42,sz*(TZ+TW/2+.03)));}
     /* the hull: narrow between the tracks, and its top plate wide over them, the glacis running through both */
-    const H=[[-3.75,.55],[2.9,.55],[3.95,1.15],[4.05,1.35],[2.35,2.12],[-2.9,2.12],[-3.75,1.95]];
+    const H=[[-3.72,.55],[2.9,.55],[3.95,1.15],[4.05,1.35],[2.35,2.06],[-2.9,2.06],[-3.72,1.92]];/* inside the top plate (Magnus 2 nov: the two shared the glacis, the top and the rear and flickered grey and red) */
     g.add(mesh(prof(H,2.7),LOW));
     g.add(mesh(prof([[-3.75,1.5],[3.72,1.5],[2.35,2.12],[-2.9,2.12],[-3.75,1.95]],4.46),RUST));
     {const sb=mesh(box(.1,.24,2.7),RUST2,3.15,1.86,0);sb.rotation.z=-.42;g.add(sb);}
