@@ -3969,7 +3969,8 @@ const GRP_HOLD=20;
    everyone goes at once */
 function grpHold(u,o){const e=o.enemy,g=o.grp;if(g==null||o.holdDone)return false;const all=groupAll(e,g);if(all.length<2)return false;
   const A=asmtOf(e,g);if(A.goAt!=null&&G.time>=A.goAt){o.holdDone=1;return false;}
-  if(u.hitBy[e.id]&&G.time-u.hitBy[e.id]<4||all.some(v=>v!==u&&inFire(v))){armGo(A,e,g,1);o.holdDone=1;return false;}
+  /* only the target firing on it releases it for good; a group mate in a passing fight with something else (infantry behind the line, ö 7341 sandbox lv) releases it only while the fight lasts, as hokHold does (issue 108) */
+  if(u.hitBy[e.id]&&G.time-u.hitBy[e.id]<4){armGo(A,e,g,1);o.holdDone=1;return false;}
   let cx=0,cy=0;for(const v of all){cx+=v.x;cy+=v.y;}cx/=all.length;cy/=all.length;const a=Math.atan2(u.y-e.ly,u.x-e.lx),r=Math.max(e.range||0,airR(e)||0)+40;
   let p={x:clamp(e.lx+Math.cos(a)*r,20,WW-20),y:clamp(e.ly+Math.sin(a)*r,20,WH-20)};if(airDanger(u,p.x,p.y)){const sp=safePoint(u,p.x,p.y);if(sp)p=sp;}
   if(dist(u,p)<30){if(o.holdT0==null)o.holdT0=G.time;o.rdy=true;}
