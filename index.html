@@ -432,7 +432,7 @@ button:disabled{opacity:.45;cursor:default}
       <li><span class="em">Kamouflerade punkter:</span> fältvarvet, verkstaden och ledningscentralen är kamouflerade och okända på sjökortet tills de spanats: en markenhet inom 60 m eller en GETING som flyger lågt inom sin synvidd ser dem, men en hög GETING ser bara mark och spanar dem aldrig. Radarstationen och hamnen syns från luften och är kända från start. Fältvarvet och ledningscentralen har inga lampor; när de är tagna hissas en svensk flagga, och plattorna får ett vitt H. I Halshuggning anger en ring på sjökortet området där ledningscentralen ligger (ringens mitt är inte dess plats). I 3D syns de alltid; det är modellerna som kamouflerar dem.</li>
       <li><span class="em">Eskortera:</span> högerklicka på en egen enhet med HÖK valda. Eskorten ligger över gruppen och spanar framför den (en wing räknas som grupp). På Offensiv söker den egna mål nära gruppen, på övriga hållningar ger den sig på det som skjuter på gruppen. Mål som skyddas av bunker eller luftvärn den inte kan slå ut lämnas. Faller den eskorterade byter eskorten till någon annan i gruppen. Under halva skrovet drar den sig tillbaka för reparation och återvänder sedan.</li>
       <li><span class="em">Orderkö:</span> Skift+klick lägger till order, också på ett val i hjulet; kön syns under enhetens namn och varje order kan tas bort. Enhetskorten visar hållningen enheten har i sin order just nu: triangel för Offensiv, fyrkant för Defensiv.</li>
-      <li><span class="em">HÖK landar (issue 72):</span> med HÖK vald finns Landa i orderhjulet på en punkt. Den går bara på säkrad, öppen och någorlunda plan mark (spanad hela vägen runt, ingen skog, ingen byggnad eller luftvärn i närheten); annars är valet grått med skälet. HÖK flyger dit, sätter sig på benen och står med rotorerna på tomgång. Batteriet räknas ned tio gånger långsammare än i luften, så den kan vakta en punkt länge, men den syns och kan beskjutas som en markenhet, och luftvärnet når den inte. Den lyfter av sig själv när en fiende kommer inom synhåll eller när den träffas, och vid varje ny order (också Skift+klick, Stopp och när du tar kontroll).</li>
+      <li><span class="em">HÖK landar (issue 72):</span> med HÖK vald finns Landa i orderhjulet på en punkt. Den går bara på säkrad, öppen och någorlunda plan mark (spanad hela vägen runt, ingen tät skog, inget träd närmare än 4 m och högst två inom 7 m, ingen byggnad eller luftvärn i närheten); annars är valet grått med skälet. HÖK flyger dit, sätter sig på benen och står med rotorerna på tomgång. Batteriet räknas ned tio gånger långsammare än i luften, så den kan vakta en punkt länge, men den syns och kan beskjutas som en markenhet, och luftvärnet når den inte. Den lyfter av sig själv när en fiende kommer inom synhåll eller när den träffas, och då lyfter wingens andra landade HÖK med den och återansluter till wingen; den lyfter också vid varje ny order (också Skift+klick, Stopp och när du tar kontroll).</li>
       <li><span class="em">Dygn:</span> varje ö har ett eget datum under året 2032 och en egen starttid, oftast dagsljus, ibland gryning, skymning eller natt, och klockan går (en timme på fyra minuter). Solen står som i skärgården den dagen: låg och kort på vintern, högt och länge på sommaren, och midsommarnatten blir aldrig riktigt mörk. Månen står där den står den natten 2032, med rätt fas: skära, halvmåne eller fullmåne, och syns blek också på dagen; vid nymåne, och när månen är nere, är natten något mörkare. Havet följer öns väder: krusigt och mörkare i stråk när det blåser och är mulet, nästan blankt en klar kväll, och vindfläckarna driver med molnen. Årstiden syns i landskapet: snö och is på vintern, fjolårsgräs och isflak på våren, vass i de skyddade vikarna som är grön på sommaren och halmgul resten av året, ljusgröna björkar i maj, höstfärger i oktober, och fritidsbåtarna är ute bara under säsongen. När en runda börjar skrivs uppdraget ut över kameran (ön, position, datum-tid-grupp och nästa soluppgång eller solnedgång), efter titelskärmen och Ny ö med en inflygning mot Birka; spelet står pausat under tiden, och klick eller tangent hoppar över. Natten är mörkblå med strålkastare, upplysta fönster och brinnande vrak. Molnen driver sakta från väster. Knappen +3 h spolar fram.</li>
       <li>Kameran är för upplevelsen. Klicka på den lilla vyn för att byta plats.</li>
       <li><span class="em">Resultat:</span> nettoförlust i material först, tid vid lika.</li>
@@ -2569,15 +2569,18 @@ function netStuck(u){const o=u.orders[0];
    Down it stands on its legs with the rotors idling, the battery runs down at HOKLAND.drain of the flying rate (3600 s instead of 360), it
    stays in sight and can be shot at as a ground target, and it lifts by itself when an enemy comes within its sight or it is hit.
    drain: the share of the flying rate; slope: the most the ground may differ over slopeR m; clear: from buildings and the like; idle and
-   hush: the rotors' turn and the sound's level while down */
-const HOKLAND={drain:.1,slope:1.5,slopeR:4,clear:7,idle:.2,hush:.5};
+   hush: the rotors' turn and the sound's level while down; trees (Magnus 2 nov, to try): none within treeIn m of the point and at most
+   treeMax within clear m, so a lone tree on a field does not stop a landing but a wood does */
+const HOKLAND={drain:.1,slope:1.5,slopeR:4,clear:7,idle:.2,hush:.5,treeIn:4,treeMax:2};
 /* why HÖK u cannot set down at x,y, or null: open, firm and fairly level ground inside the secured area, clear of buildings and of the reach of known air defence */
 function landWhy(u,x,y){
   if(x<12||y<12||x>WW-12||y>WH-12)return 'utanför kartan';
   const i=cellIdx(x,y),g=WORLD.grid[i];
   if(g!==LAND&&g!==BEACH)return 'inte fast mark';
   if(!isSecured(x,y))return 'ej säkrad mark';
-  if(WORLD.skog&&WORLD.skog[i])return 'skog';
+  if(WORLD.skog&&WORLD.skog[i]===2)return 'tät skog';/* the trees stand about one to a cell there, so the count alone let a HÖK into one in six of its cells */
+  let nt=0;for(const t of WORLD.trees||[]){const dx=t.x-x,dy=t.y-y;if(dx>HOKLAND.clear||dx<-HOKLAND.clear||dy>HOKLAND.clear||dy<-HOKLAND.clear)continue;
+    const d=Math.hypot(dx,dy);if(d<HOKLAND.treeIn)return 'träd i vägen';if(d<HOKLAND.clear&&++nt>HOKLAND.treeMax)return 'för många träd';}
   const r=HOKLAND.slopeR,h=[groundY(x,y),groundY(x+r,y),groundY(x-r,y),groundY(x,y+r),groundY(x,y-r)];
   if(Math.max(...h)-Math.min(...h)>HOKLAND.slope)return 'sluttar för mycket';
   if(G.structs.some(st=>!st.dead&&Math.hypot(st.x-x,st.y-y)<HOKLAND.clear))return 'byggnad i vägen';
@@ -2591,8 +2594,13 @@ function landTick(u){
   if(!u.landed){if(isL&&u.orders.length>1){u.orders.shift();u.path=null;}return;}
   if(!isL||u.orders.length>1||G.ctrl===u.id){liftOff(u);return;}
   const e=G.enemies.find(v=>!v.dead&&v.kind!=='kust'&&v.visibleNow&&Math.hypot(v.x-u.x,v.y-u.y)<=u.vision&&sees(u,v));
-  if(e){liftOff(u,'Lyfter: '+ename(e)+' i sikt.');return;}
-  if(G.time-(u.lastHit==null?-99:u.lastHit)<1.5)liftOff(u,'Lyfter: under beskjutning.');}
+  if(e){liftWing(u,'Lyfter: '+ename(e)+' i sikt.');return;}
+  if(G.time-(u.lastHit==null?-99:u.lastHit)<1.5)liftWing(u,'Lyfter: under beskjutning.');}
+/* a HÖK that lifts for an enemy lifts every landed HÖK in its wing too, and each rejoins the wing (Magnus 2 nov, issue 72); a HÖK
+   without a wing, or one with nothing to join, holds over the spot */
+function liftWing(u,msg){const k=wingOf(u.id),hs=k?G.wings[k].map(unitById).filter(v=>v&&v!==u&&!v.dead&&v.landed):[];
+  liftOff(u,msg);for(const v of hs)liftOff(v,'Lyfter med '+u.name+'.');
+  for(const v of[u,...hs])if(!v.orders.length)rejoinWing(v);}
 function updateUnit(u,dt){
   if(u.kind==='mus'){if(!u.dead)roverTick(u,dt);return;}
   if(u.kind==='gadda'){if(!u.dead){gaddaTick(u,dt);gaddaWake(u,dt);}return;}

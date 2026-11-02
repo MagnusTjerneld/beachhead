@@ -59,6 +59,20 @@ fresh();{const h=put('drone',P.x,P.y);h.landed=true;h.orders=[{type:'land',x:P.x
 // a point that turns out not to be landable on arrival is refused with the reason
 fresh();{const h=put('drone',P.x-50,P.y);B.giveOrder(h,{type:'land',x:P.x,y:P.y,post:'def'},false);G.known.fill(0);G.knownV++;G.time+=1;run(300);
   ok(!h.landed&&!h.orders.some(o=>o.type==='land'),'ground that is not secured on arrival is not landed on');}
+// trees (Magnus 2 nov): a lone tree a little off does not stop a landing, one within HOKLAND.treeIn does, and so do more than treeMax within clear
+fresh();{const T=B.W.trees,n0=T.length,add=(dx,dy)=>T.push({x:P.x+dx,y:P.y+dy,s:1,ci:B.cellIdx(P.x+dx,P.y+dy),k:'oak'});
+  add(5.5,0);ok(B.landWhy(h0,P.x,P.y)===null,'one tree 5.5 m off does not stop it');
+  add(0,-6);ok(B.landWhy(h0,P.x,P.y)===null,'two trees within 7 m do not either');
+  add(-6,0);ok(B.landWhy(h0,P.x,P.y)==='för många träd','a third within 7 m does');T.length=n0;
+  add(2.5,1);ok(B.landWhy(h0,P.x,P.y)==='träd i vägen','a tree within 4 m does');T.length=n0;
+  ok(B.landWhy(h0,P.x,P.y)===null,'the point is open again');}
+// the wing (Magnus 2 nov): one HÖK lifting for an enemy lifts the wing's other landed HÖK, and each rejoins the wing
+fresh();{const h1=put('drone',P.x,P.y),h2=put('drone',P.x+12,P.y),v=put('tank',P.x-60,P.y);
+  for(const h of[h1,h2]){h.landed=true;h.orders=[{type:'land',x:h.x,y:h.y,post:'def'}];}
+  B.setSel([h1.id,h2.id,v.id]);B.assignWing('1');run(10);ok(h1.landed&&h2.landed,'two HÖK down in wing 1');
+  const e=B.makeEnemy({id:'XW',kind:'turret',x:P.x-h1.vision*.6,y:P.y+60});e.visibleNow=true;e.seen=true;G.enemies.push(e);run(4);
+  ok(!h1.landed&&!h2.landed,'both lift when one sees an enemy');
+  ok([h1,h2].every(h=>h.orders[0]&&h.orders[0].type==='follow'&&h.orders[0].unit===v),'and both rejoin the wing by its VARG ('+[h1,h2].map(h=>h.orders[0]&&h.orders[0].type).join(', ')+')');}
 // the kaptenbot and the test bot never give it: no order type of theirs is Landa
 {const fs=require('fs'),path=require('path');let n=0;for(const f of['kapten.js','t45.js'])n+=(fs.readFileSync(path.join(__dirname,f),'utf8').match(/type:'land'/g)||[]).length;ok(n===0,'the bots do not use Landa');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
