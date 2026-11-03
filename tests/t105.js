@@ -72,12 +72,13 @@ fresh();{const h=put('drone',P.x,P.y);h.landed=true;h.orders=[{type:'land',x:P.x
 fresh();{const h=put('drone',P.x-50,P.y);B.giveOrder(h,{type:'land',x:P.x,y:P.y,post:'def'},false);run(5);
   const e=B.makeEnemy({id:'XQ',kind:'aa',x:P.x+120,y:P.y});e.seen=true;e.lx=e.x;e.ly=e.y;e.dead=false;G.enemies.push(e);run(300);
   ok(!h.landed&&!h.orders.some(o=>o.type==='land'),'ground within a known enemy reach on arrival is not landed on');}
-// trees (Magnus 2 nov): a lone tree a little off does not stop a landing, one within HOKLAND.treeIn does, and so do more than treeMax within clear
+// trees (Magnus 2 nov, issue 135 3 nov): a lone tree off the rotor and its crown does not stop a landing, one whose crown reaches over the
+// rotor does, and so do more than treeMax within treeR
 fresh();{const T=B.W.trees,n0=T.length,add=(dx,dy)=>T.push({x:P.x+dx,y:P.y+dy,s:1,ci:B.cellIdx(P.x+dx,P.y+dy),k:'oak'});
-  add(5.5,0);ok(B.landWhy(h0,P.x,P.y)===null,'one tree 5.5 m off does not stop it');
-  add(0,-6);ok(B.landWhy(h0,P.x,P.y)===null,'two trees within 7 m do not either');
-  add(-6,0);ok(B.landWhy(h0,P.x,P.y)==='för många träd','a third within 7 m does');T.length=n0;
-  add(2.5,1);ok(B.landWhy(h0,P.x,P.y)==='träd i vägen','a tree within 4 m does');T.length=n0;
+  const nat=T.filter(t=>Math.hypot(t.x-P.x,t.y-P.y)<B.HOKLAND.treeR).length,ring=[[8,0],[0,-9],[-9,0],[0,9]];let k=0;
+  for(;nat+k<B.HOKLAND.treeMax;k++)add(...ring[k]);ok(B.landWhy(h0,P.x,P.y)===null,B.HOKLAND.treeMax+' trees 8 to 9 m off do not stop it ('+nat+' there already)');
+  add(...ring[k]);ok(B.landWhy(h0,P.x,P.y)==='för många träd','one more within 10 m does');T.length=n0;
+  add(6,1);ok(B.landWhy(h0,P.x,P.y)==='träd i vägen','a tree 6 m off, its crown over the rotor, does');T.length=n0;
   ok(B.landWhy(h0,P.x,P.y)===null,'the point is open again');}
 // an area (ö 4741 kp03): the nearest good place within HOKLAND.near of a bad point, HOKLAND.gap apart from those taken
 fresh();{const T=B.W.trees,n0=T.length;T.push({x:P.x+1,y:P.y,s:1,ci:B.cellIdx(P.x+1,P.y),k:'oak'});
