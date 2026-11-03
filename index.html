@@ -573,7 +573,7 @@ function astar(sx,sy,tx,ty,pass,cost,maxLen){
 /* ---------- world ---------- */
 /* strategic points: the command centre is the objective, the rest change what you can do once taken */
 const R1_HARB=300;/* m from the harbour along the ground to the workshop or field yard (issue 57) */
-const PTYPE={central:{label:'Ledningscentral',code:'LC'},verkstad:{label:'Verkstad',code:'V'},radar:{label:'Radarstation',code:'RD'},varv:{label:'Fältvarv',code:'F'},hamn:{label:'Hamn',code:'H'}};
+const PTYPE={central:{label:'Ledningscentral',code:'LC'},verkstad:{label:'Verkstad',code:'V'},radar:{label:'Radarstation',code:'RD'},varv:{label:'Fältvarv',code:'F'},hamn:{label:'Hamn',code:'H'},kraft:{label:'Reservkraftverk',code:'KV'},olja:{label:'Oljehamn',code:'OH'}};
 const pname=r=>PTYPE[r.type].label+' '+r.id;
 /* the field yard, the workshop and the command centre are camouflaged and unknown on the chart until spotted by the camouflage rules; the radar and the harbour show from the air and are known from the start (issue 106, Magnus 30 okt). They are always drawn in 3D: the models camouflage them */
 const relayHid=t=>t==='varv'||t==='verkstad'||t==='central';
@@ -600,7 +600,10 @@ const STRUCT={
   house:{hp:70,value:70,demo:7,label:'Gård'},
   depot:{hp:110,value:110,demo:10,label:'Förråd'},
   fuel:{hp:30,value:60,demo:6,label:'Bränsledepå',boom:true},
-  mast:{hp:40,value:55,demo:5,label:'Radiomast'}
+  mast:{hp:40,value:55,demo:5,label:'Radiomast'},
+  /* the scenario's buildings (issue 129, Magnus 3 nov): not to be pulled down by BÄVER (workStruct), shot apart they burn */
+  cistern:{hp:120,value:0,demo:9999,label:'Cistern',scen:true},
+  pumphus:{hp:60,value:0,demo:9999,label:'Pumphus',scen:true}
 };
 const DEBRIS={crate:'Materiel',hulk:'Gammalt vrak',rubble:'Rasmassor',crew:'Besättningen',proto:'Havererat fordon'};
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
@@ -1947,12 +1950,15 @@ function deckDrive(u,dt){if(u.orders.length||u.carried||G.ctrl===u.id||!onDeck(u
   if(d<.6){u.deckTo=null;u.deckPath=null;u.heading=CARRIER.a;u.state='Väntar på lyft i uppställningsrutan';return true;}
   const a=Math.atan2(t.y-u.y,t.x-u.x),st=Math.min(d,u.speed*.6*dt);u.x+=Math.cos(a)*st;u.y+=Math.sin(a)*st;u.heading=a;u.state='Kör till uppställningsrutan';return true;}
 function newGame(seed,doc,when){
+  /* a scenario fixes the island, the doctrine, the date and hour and the enemy's budget (issue 129) */
+  const SC=when&&(SCEN[when.scen]||(when.uppdrag==='scen'?SCEN.stroemmen:null)),bud0=ENEMY_CFG.budget;
+  if(SC){seed=SC.seed;doc=SC.doc;when=Object.assign({},when,{doy:SC.when.doy,tod:SC.when.tod,uppdrag:'scen'});ENEMY_CFG.budget=SC.budget;}
   const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine+'|'+COAST.n;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed,doc==='auto'?null:doc);WORLD.cfgKey=cfgKey;}
   /* headless (tests, testbot, kaptenboten) plays Frita ön unless asked, so their results compare with the ones before missions */
-  const mis=MISSION[when&&when.uppdrag]?when.uppdrag:hasDOM?missionOf(seed):'frita';
+  const mis=SC?'scen':MISSION[when&&when.uppdrag]?when.uppdrag:hasDOM?missionOf(seed):'frita';
   setDefense(WORLD,doc==='auto'?drawDoctrine(WORLD,MISSION[mis].docW):doc);
   if(WORLD.carrier0)Object.assign(CARRIER,WORLD.carrier0);/* Birka starts outside the beach again, even on the same island after a docking */
-  G={seed,doc:WORLD.plan.doctrine,mission:mis,failed:false,time:0,masts:[],res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,cam:null,activeView:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0,gadda:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
+  G={seed,doc:WORLD.plan.doctrine,mission:mis,scen:SC?scenInit(SC):null,failed:false,time:0,masts:[],res:START.res,lostValue:0,salvaged:0,salvagedOwn:0,unitsLost:0,overrides:0,running:false,paused:false,over:false,speed:1,sel:null,selIds:[],wings:{},box:null,ctrl:null,cam:null,activeView:'map',log:[],fx:[],wrecks:[],build:[],count:{scout:0,drone:0,tank:0,eng:0,mus:0,gadda:0},colorIdx:0,nextId:1,nextW:1,camDeadT:-1,drag:null,
     relays:WORLD.relays.map((r,i)=>({id:'R'+(i+1),type:r.type,hid:relayHid(r.type),seen:false,x:r.x,y:r.y,prog:0,captured:false,lockMsg:null,guards:(WORLD.enemies.some(e=>e.guard!=null)?WORLD.enemies.filter(e=>e.guard===i):WORLD.enemies.filter(e=>(e.kind==='turret'||e.kind==='aa')&&Math.hypot(e.x-r.x,e.y-r.y)<230&&WORLD.zid[cellIdx(e.x,e.y)]===WORLD.zid[cellIdx(r.x,r.y)])).map(e=>e.id)})),
     barriers:WORLD.barriers.map(b=>({id:b.id,x:b.x,y:b.y,cells:b.cells,sides:b.sides,far:b.far,cleared:false,prog:0})),
     enemies:WORLD.enemies.map(makeEnemy),units:[],
@@ -1964,7 +1970,7 @@ function newGame(seed,doc,when){
   WORLD.grid.set(WORLD.baseGrid);for(const b of G.barriers)for(const c of b.cells)WORLD.grid[c]=WALL;
   for(const s of G.structs)WORLD.grid[s.cell]=WALL;
   for(const d of WORLD.debris)addWreck(d.x,d.y,d.value,false,d.kind);
-  WORLD.navOut=null;if(G.mission!=='frita'&&G.mission!=='halshugg')misSetup();
+  WORLD.navOut=null;if(G.mission!=='frita'&&G.mission!=='halshugg')misSetup();ENEMY_CFG.budget=bud0;
   /* Halshuggning: the command centre is camouflaged and unknown until spotted, so the chart gives a ring it lies within; the ring's centre is off the centre itself (issue 106, Magnus 30 okt) */
   if(G.mission==='halshugg'){const c=G.relays.find(r=>r.type==='central');if(c){const a=hash2(5,6,G.seed*7+11)*TAU,o=hash2(7,8,G.seed*7+12)*MIS_CFG.cenR*.6;G.misRing={x:c.x+Math.cos(a)*o,y:c.y+Math.sin(a)*o,r:MIS_CFG.cenR};}}
   for(const e of G.enemies){if(e.kind!=='inf'||coverAt(e.x,e.y))continue;let best=null,bd=41;const gx0=Math.floor(e.x/CELL),gy0=Math.floor(e.y/CELL);
@@ -3999,6 +4005,7 @@ function updateEnemy(e,dt){
     if(e.mobile&&bd>rVs(e,tgt)*.85&&home<e.leash)enemyStep(e,tgt.x,tgt.y,dt);
     return;
   }
+  if(G.scen&&scenFire(e,dt))return;/* the coast bunkers on the tanker, a group sent for the cisterns (issue 129) */
   const tp=SH?shareHint(e):null;if(tp&&Math.hypot(tp.x-e.x,tp.y-e.y)<=look*1.2)e.aim=turnTo(e.aim,Math.atan2(tp.y-e.y,tp.x-e.x),trav(e)*dt);/* shared sight: the gun turns to the point (issue 80) */
   if(!e.mobile)return;
   if(e.march){marchStep(e,dt);return;}
@@ -4124,7 +4131,7 @@ function resolveShot(f){
   G.fx.push({k:'spark',x:f.x2,y:f.y2,h:f.h2,t:0,ttl:.18,ws:f.ws,armor:t.cls==='armor'||(!t.cls&&!t.isStruct&&t.kind==='tank')});
   t.hp-=f.dmg*dmgMult(f.a,t,f.w);
   if(f.side==='e'){t.lastHit=G.time;t.joltT=G.time;t.jolt=JOLT[f.ws]??.5;}
-  if(t.hp<=0){if(t.isStruct)killStruct(t,f.a,'shot');else if(f.side==='f')killEnemy(t,f.a);else if(t.kind==='krok')killKrok(t);else killUnit(t,null);}
+  if(t.hp<=0){if(t.isShip)killShip(t);else if(t.isStruct)killStruct(t,f.a,'shot');else if(f.side==='f')killEnemy(t,f.a);else if(t.kind==='krok')killKrok(t);else killUnit(t,null);}
 }
 /* boats and jetties can be blown apart for realism only: an explosive impact or blast nearby sinks or wrecks them */
 function segDist(px,py,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,l2=vx*vx+vy*vy||1,t=clamp(((px-ax)*vx+(py-ay)*vy)/l2,0,1);return Math.hypot(px-ax-vx*t,py-ay-vy*t);}
@@ -4149,6 +4156,7 @@ function killStruct(st,by,how){
   const v=shot?Math.round(st.value*(T.boom?.3:.6)/5)*5:st.value;
   G.fx.push({k:'boom',x:st.x,y:st.y,t:0,ttl:boom?1.8:1.1,big:boom});
   const w=addWreck(st.x,st.y,v,false,'rubble');w.big=st.value>=90;
+  if(T.scen)startFire(st.x,st.y,160+Math.random()*60,1.6,0);/* a cistern or pump house shot apart burns (issue 129) */
   if(shot&&(st.kind==='house'||st.kind==='shed'))startFire(st.x,st.y,100+Math.random()*60,st.kind==='house'?1.2:.85,0);
   if(st.krok&&!G.krokQ.includes(w.id))G.krokQ.push(w.id);
   say(by&&!by.isStruct?by:null,T.label+' '+st.id+(shot?' i bitar':' riven')+'. Rasmassor värda '+v+'.'+(st.krok?' KROK beställd.':''));
@@ -4163,6 +4171,7 @@ function blast(st,by){
 }
 function workStruct(st,u,dt){
   if(st.dead){u.orders.shift();return;}
+  if(STRUCT[st.kind].scen){u.orders.shift();u.path=null;say(u,'Cisternerna och pumphuset får inte rivas.');return;}/* issue 129 */
   st.prog=Math.min(1,st.prog+dt/STRUCT[st.kind].demo);u.state='River '+slabel(st)+' '+Math.round(st.prog*100)+' %';
   if(st.prog>=1){if(u.orders[0]&&u.orders[0].s===st)u.orders.shift();u.path=null;killStruct(st,u,'demo');}
 }
@@ -4450,7 +4459,7 @@ function haltSel(){const sk=selKrok();if(sk){if(sk.orders.length){clearKrok(sk);
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
   const t=r.type;
-  say(u,t==='central'?'Ledningscentralen '+r.id+' tagen.'+(WIN.all&&G.mission==='frita'&&winLeft().length?' Kvar att ta: '+winLeft().filter(rKnown).map(pname).join(', ')+'.':''):t==='verkstad'?'Verkstad '+r.id+' tagen. Flygande enheter laddar och fordon repareras här.':t==='radar'?'Radarstation '+r.id+' tagen. Området runt den är spanat och kamouflerade mål syns.':t==='hamn'?'Hamnen tagen. HMS Birka väntar på din order att gå in i hamnen (issue 93).':'Fältvarv '+r.id+' taget. GETING, HÖK och VARG kan byggas här.');
+  say(u,t==='central'?'Ledningscentralen '+r.id+' tagen.'+(WIN.all&&G.mission==='frita'&&winLeft().length?' Kvar att ta: '+winLeft().filter(rKnown).map(pname).join(', ')+'.':''):t==='verkstad'?'Verkstad '+r.id+' tagen. Flygande enheter laddar och fordon repareras här.':t==='radar'?'Radarstation '+r.id+' tagen. Området runt den är spanat och kamouflerade mål syns.':t==='hamn'?'Hamnen tagen. HMS Birka väntar på din order att gå in i hamnen (issue 93).':t==='kraft'?'Reservkraftverket '+r.id+' taget.':t==='olja'?'Oljehamnen '+r.id+' tagen.':'Fältvarv '+r.id+' taget. GETING, HÖK och VARG kan byggas här.');
   if(t==='varv'){G.buildAt=r.id;counterattack(r);}
   /* a taken harbour draws the same counterattack as a yard, but cannot be lost (issue 94, Magnus 30 okt) */
   if(t==='hamn')counterattack(r);
@@ -4481,7 +4490,9 @@ const MISSION={
      island in every mission, between the beach and the harbour (issue 90). ?uppdrag=kust still sets it up, for t92 */
   kust:{name:'Kustbatteriet',goal:'Kustartilleriet i berget stänger farleden. Det skjuter mot allt militärt på sjön men inte mot land, och bara BÄVER kan spränga det, vid porten på landsidan. Öppna farleden inom {T}.',op:'KUSTBATTERIET. SPRÄNG KUSTARTILLERIET OCH ÖPPNA FARLEDEN INOM {T}',w:0,limit:1800,done:()=>G.misBat.every(id=>{const e=G.enemies.find(q=>q.id===id);return!e||e.dead;})},
   crew:{name:'Nedskjuten besättning',goal:'En nedskjuten besättning gömmer sig inom ringen på sjökortet. Hitta den och hämta den till Birka med KROK innan fienden når den.',op:'NEDSKJUTEN BESÄTTNING. HITTA DEN OCH HÄMTA HEM DEN MED KROK',w:.12,docW:{fastning:0},done:()=>G.misGot},
-  barg:{name:'Bärgningen',goal:'Fiendens havererade fordon står där krysset på sjökortet visar. Bärga det till Birka med KROK inom {T}.',op:'BÄRGNINGEN. LYFT FIENDENS HAVERERADE FORDON TILL BIRKA INOM {T}',w:.11,limit:1800,docW:{fastning:0},done:()=>G.misGot}};
+  barg:{name:'Bärgningen',goal:'Fiendens havererade fordon står där krysset på sjökortet visar. Bärga det till Birka med KROK inom {T}.',op:'BÄRGNINGEN. LYFT FIENDENS HAVERERADE FORDON TILL BIRKA INOM {T}',w:.11,limit:1800,docW:{fastning:0},done:()=>G.misGot},
+  /* the campaign's scenarios (issue 129, Magnus 3 nov): never drawn (w 0), only started with ?scen= ; the text is the scenario's own */
+  scen:{get name(){return G&&G.scen?G.scen.def.name:'Kampanj';},get goal(){return G&&G.scen?G.scen.def.brief.uppgift:'';},op:'KAMPANJ',w:0,limit:3600,docW:{},done:()=>!!(G.scen&&G.scen.done)}};
 /* the times and counts of the missions; first guesses, to be tried in a test game */
 const MIS_CFG={cenR:170,crewR:150,crewFind:45,crewPatrol:480,crewTaken:15};
 /* Bärgningen (issue 121, Magnus 2 nov after ö 4741, where the vehicle stood two squares from the beach and was home in 12.5 of 30 min):
@@ -4522,6 +4533,7 @@ function misBrief(F){F=F||briefFacts();const pick=(k,a)=>a[Math.floor(hash2(F.se
     pick(3,['Fiendens styrka och ställningar är i stort sett okända.','Om fiendens styrka och ställningar finns inga uppgifter.','Fiendens försvar är inte spanat.']),
     ' Lägesdag '+dtg+', '+when+'.'].join('');
   let up,beg=[];
+  if(m==='scen'){const b=(G&&G.scen?G.scen.def:SCEN.stroemmen).brief;return{title:(G&&G.scen?G.scen.def:SCEN.stroemmen).name,rows:[['Läge',b.lage+' Lägesdag '+dtg+', '+when+'.'],['Uppgift',b.uppgift],['Begränsningar',b.begr]]};}
   if(m==='halshugg'){up=pick(4,['Ta ledningscentralen','Slå ut ön genom att ta ledningscentralen'])+(F.central?', som ligger inom ringen '+at(F.central)+' (radie '+F.central.r+' m, cirka '+Math.round(F.central.d/10)*10+' m från stranden; ringens mitt är inte dess plats). Den är kamouflerad och okänd tills den är spanad':'')+', inom '+T+' minuter. Resten av ön behöver inte tas.';
     beg.push('Tiden ute: uppdraget misslyckas.');}
   else if(m==='crew'){up='Hitta den nedskjutna besättningen och hämta den till Birka med KROK innan fienden når den. Den gömmer sig inom ringen '+(F.crew?at(F.crew)+' (radie '+F.crew.r+' m; ringens mitt är inte besättningens plats)':'på sjökortet')+'.';
@@ -4546,6 +4558,7 @@ const misOpen=(gx,gy,r)=>{if(misTreeW!==WORLD){misTreeW=WORLD;misTreeS=new Set((
 /* the enemy's side of each mission, set up when the game starts: the defence answers the mission (Magnus 28 okt: already in the first version) */
 function misSetup(){const L=WORLD.landing,far=(x,y,d)=>Math.hypot(x-L.x,y-L.y)>d&&G.relays.every(r=>Math.hypot(x-r.x,y-r.y)>110),h=(gx,gy,k)=>hash2(gx,gy,G.seed*7+k);
   const addE=(id,kind,p,ex)=>{const e=makeEnemy(Object.assign({id,kind,x:p.x,y:p.y},ex||{}));G.enemies.push(e);return e;};
+  if(G.mission==='scen'){if(!scenSetup()){G.mission='frita';G.scen=null;}return;}
   if(G.mission==='kust'){/* the coast artillery on the granite of the coast, high over the water (Magnus 29 okt: built into the rock), out of reach
        of Birka and the landing beach, so that the beach is a way in outside its sector, and with a way on land from the beach to its
        portal; bare rock round it counts most, then height, then nearness to the fairway. The island's air defence a little inland */
@@ -4623,7 +4636,7 @@ function misSeen(){const w=G.misW;if(!w||w.seen||G.time-(w.lookT??-9)<.5)return;
 /* the nearest n mobile enemies not already marching go for the point p by land (as the crew's patrol and a counterattack) */
 function misSend(p,n,leash){let k=0;for(const e of G.enemies.filter(e=>!e.dead&&e.mobile&&!e.march).sort((a,b)=>dist(a,p)-dist(b,p))){if(k>=n)break;
     const pth=astar(e.x,e.y,p.x,p.y,passLand,()=>1);if(!pth||!pth.length)continue;e.march=pth;e.mi=0;e.route=null;e.hx=p.x;e.hy=p.y;e.leash=Math.max(e.leash||0,leash);k++;}return k;}
-function misTick(dt){const m=misOf(),C=MIS_CFG;if(G.over)return;misSeen();
+function misTick(dt){const m=misOf(),C=MIS_CFG;if(G.over)return;misSeen();scenTick(dt);if(G.over)return;
   if(G.mission==='barg'&&G.misW&&!G.misGot){const w=G.misW,B=BARG;/* the enemy answers (issue 121, 3 nov) */
     if(w.seen&&!w.react1){w.react1=true;if(misSend(w,B.react[0],B.leash))say(null,'Fienden har sett oss vid sitt fordon och skickar förband mot det.');}
     if(!w.react2&&(w.tow||G.kroks.some(k=>k.carry===w))){w.react2=true;if(misSend(w,B.react[1],B.leash))say(null,'Fienden ser att fordonet förs bort och sätter in fler förband.');}}
@@ -4641,6 +4654,230 @@ function misGot(w){if(w&&w.mis){G.misGot=true;say(null,(G.mission==='crew'?'Bes�
 function checkWin(){if(G.over)return;const md=misOf().done;if(md?md():G.relays.length&&!winLeft().length){if(G.cont){if(!G.contDone){G.contDone=true;say(null,'Målet är nått, men uppdraget är redan misslyckat och räknas inte.');}return;}G.over=true;G.running=false;if(hasDOM)showEnd();return;}
   if(misLimit()&&G.time>misLimit())misFail('Tiden är ute.');}
 
+/* ---------- scenarios (issue 129, Magnus 3 nov): the campaign's first scenario, a prototype behind ?scen=stroemmen ----------
+   A scenario is data: steps with a goal and actions on start and on done (SCEN), run by scenTick from misTick beside the generated
+   missions, which it leaves alone. G.mission is 'scen' and MISSION.scen.done reads G.scen.done, so the end screen, the results and misFail
+   work as they do. A step opens when the steps it needs are done and is checked every tick; a goal already met when the step opens
+   counts at once, so nobody can get stuck on a fixed order. Without the flag nothing here runs. The numbers are first guesses. */
+const SCEN={stroemmen:{
+  id:'stroemmen',name:'Strömmen och cisternerna',seed:3100,doc:'fastning',when:{doy:319,tod:22},budget:110,limit:3600,
+  cist:{n:4,hp:120,lose:3},tf:{hp:500,v:6,from:1800,gap:150,name:'TF Gotland Olja'},
+  brief:{
+    lage:'Fienden har släckt ön för att dölja sina förflyttningar på natten och håller reservkraftverket. Ön har varit utan ström i tre dygn. Vid hamnen ligger en oljehamn med fyra cisterner, som tankfartyget Gotland Olja ska hämta. Utan ström fungerar ingen sändare, och utan radiomasten kan Birka inte tala med fartyget.',
+    uppgift:'Ta reservkraftverket så att nätet får ström, ta sedan radiomasten och oljehamnen, håll cisternerna mot fiendens motanfall och förtöj Birka i hamnen. När hamnen är säkrad går tankfartyget in. Uppdraget är klart när det har angjort.',
+    begr:'Skjut inte på cisternerna: är tre av fyra förstörda har uppdraget misslyckats. Tankfartyget får inte sänkas. Total tid 60 minuter, 35 till 45 väntas.'},
+  /* the enemy's own, laid out after the island's defence (the fortress doctrine round the command centre stays, but it is not a goal) */
+  extra:[
+    {at:'kraft',kind:'turret',n:2,r:[55,85],g:'kraft'},{at:'kraft',kind:'aa',n:1,r:[70,95],g:'kraft'},
+    {at:'kraft',kind:'inf',n:3,r:[85,120]},{at:'kraft',kind:'rb',n:3,r:[85,120]},{at:'kraft',kind:'light',n:1,r:[70,110]},
+    {at:'olja',kind:'turret',n:3,r:[70,100],to:'landing',spread:1.6,g:'olja'},{at:'olja',kind:'aa',n:1,r:[70,100],g:'olja'},
+    {at:'olja',kind:'at',n:2,r:[60,100],to:'landing',spread:1.8},{at:'olja',kind:'inf',n:8,r:[50,110],to:'landing',spread:2.2}],
+  steps:[
+    {id:'land',name:'Landstigning',needs:[],goal:{type:'any',of:[{type:'seen'},{type:'time',t:60}]},
+      hint:'Orientera dig. Reservkraftverket ligger inåt land, i ringen på sjökortet.',
+      onStart:[{do:'say',text:'Ön har varit utan ström i tre dygn. Reservkraftverket håller. Utan ström fungerar ingen sändare. Ringen på sjökortet visar var kraftverket ligger.'},{do:'mark',id:'kraft',at:'kraft',r:250,label:'RESERVKRAFTVERKET'}]},
+    {id:'strom',name:'Strömmen',goal:{type:'take',ref:'kraft'},hint:'Ta reservkraftverket. Bunkrar och luftvärn skyddar det och måste slås ut först.',
+      onDone:[{do:'unmark',id:'kraft'},{do:'power',on:true},{do:'give',res:150},{do:'say',text:'Ström i nätet. Belysningen på ön tänds. Sjöradion svarar om masten kopplas in.'},
+        {do:'send',to:'kraft',n:2,leash:160},{do:'alarm',at:'kraft',r:600}]},
+    {id:'mast',name:'Radiomasten',needs:['strom'],goal:{type:'take',ref:'radar'},hint:'Ta radiomasten (radarstationen) så att Birka kan tala med fartyget.',
+      onStart:[{do:'say',text:'Masten kan kopplas in nu när det finns ström. Ta radarstationen.'}],
+      onDone:[{do:'say',who:'TF Gotland Olja',text:'Vi ligger 40 distansminuter ut, redo på er signal. Säg till när hamnen är säkrad.'}]},
+    {id:'cist',name:'Cisternerna',needs:['mast'],goal:{type:'take',ref:'olja'},hint:'Ta oljehamnen. Skjut inte på cisternerna: tre förstörda och uppdraget är förlorat.',
+      onStart:[{do:'say',text:'Oljehamnen ligger vid hamnen. Skjut inte på cisternerna.'},{do:'mark',id:'olja',at:'olja',r:200,label:'OLJEHAMNEN'}],
+      onDone:[{do:'unmark',id:'olja'},{do:'say',text:'Cisternerna är våra. Tankfartygets kapten vill ha hamnen säkrad och Birka förtöjd innan han går in. Räkna med ett motanfall.'},{do:'give',res:100}]},
+    {id:'motanfall',name:'Motanfallet',needs:['cist'],goal:{type:'any',of:[{type:'time',t:405},{type:'wavesDead'}]},hint:'Håll cisternerna. Fienden landar vid en annan strand och går på dem.',
+      onStart:[{do:'say',text:'Rörelser vid kusten. Fienden förbereder ett motanfall mot cisternerna.'},{do:'mark',id:'strand',at:'strand2',r:150,label:'MOTANFALL'},
+        {do:'spawn',after:45,group:'w1',units:{inf:6,at:2,light:1},at:'strand2',target:'cistern'},
+        {do:'spawn',after:195,group:'w2',units:{inf:3,light:1},at:'strand3',target:'cistern',ifAlive:{group:'w1',min:4}}],
+      onDone:[{do:'unmark',id:'strand'},{do:'say',text:'Motanfallet är slaget.'},{do:'give',res:100}]},
+    {id:'hamn',name:'Hamnen',needs:['mast'],goal:{type:'all',of:[{type:'take',ref:'hamn'},{type:'docked'}]},hint:'Ta hamnen och förtöj Birka vid kajen. Tankfartyget går in när hon ligger där.',
+      onDone:[{do:'say',text:'Hamnen är säkrad och Birka ligger vid kaj.'}]},
+    {id:'tanker',name:'Tankfartyget',needs:['motanfall','hamn'],goal:{type:'dock',ref:'tf'},hint:'Håll farleden fri. Kustbunkrarna skjuter på fartyget, och det får inte sänkas.',
+      onStart:[{do:'say',who:'TF Gotland Olja',text:'Går in. Håll farleden fri.'},{do:'ship',id:'tf'}],
+      onDone:[{do:'say',who:'TF Gotland Olja',text:'Förtöjda. Tack för hjälpen, Birka.'},{do:'end'}]}]
+}};
+/* the power station's least distance from the shore: A2 asked 350 m but the islands are 2200 m wide and reach 330 m at most (searched 12 seeds), so 220 */
+const KRAFT_MIN=220;
+const SCEN_CFG={wave:.2,lampSpeed:90,lampAll:8};
+/* a scenario's state, made when the game starts */
+function scenInit(def){const S={def,id:def.id,st:{},q:[],marks:[],done:false,ships:[],powerT:-99,groups:{},fired:0};for(const s of def.steps)S.st[s.id]={open:false,done:false,t0:0};return S;}
+/* the island's places for the scenario, from the world alone (so a search over seeds can ask it): the oil depot 250 to 420 m from the
+   harbour on level, open ground; the power station 350 to 700 m from the shore, far from the depot; a second and a third beach for the
+   counterattack. null when the island has no room for it */
+/* the distance in metres from the nearest water or beach, over land (the navigator's field is the distance to land, over water) */
+function scenShore(W){if(W._shoreD)return W._shoreD;const g=W.baseGrid||W.grid,N=GW*GH,D=new Float32Array(N),d1=CELL,d2=CELL*Math.SQRT2;
+  for(let i=0;i<N;i++)D[i]=g[i]===LAND||g[i]===ROCK?1e9:0;
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const i=y*GW+x;let v=D[i];if(!v)continue;if(x>0)v=Math.min(v,D[i-1]+d1);if(y>0){v=Math.min(v,D[i-GW]+d1);if(x>0)v=Math.min(v,D[i-GW-1]+d2);if(x<GW-1)v=Math.min(v,D[i-GW+1]+d2);}D[i]=v;}
+  for(let y=GH-1;y>=0;y--)for(let x=GW-1;x>=0;x--){const i=y*GW+x;let v=D[i];if(!v)continue;if(x<GW-1)v=Math.min(v,D[i+1]+d1);if(y<GH-1){v=Math.min(v,D[i+GW]+d1);if(x<GW-1)v=Math.min(v,D[i+GW+1]+d2);if(x>0)v=Math.min(v,D[i+GW-1]+d2);}D[i]=v;}
+  return W._shoreD=D;}
+function scenSites(){const W=WORLD;if(W._sites!==undefined)return W._sites;
+  const hq=W.harborQ,L=W.landing;if(!W.harbor||!W.birkaPath||!hq||!L){W._sitesWhy='harbour/landing';return W._sites=null;}
+  const open=(gx,gy,r)=>!misNear(gx,gy,r,v=>v!==LAND),D=scenShore(W),zl=W.zones&&W.zones.land,inZ=(x,y)=>!W.zid||zl==null||W.zid[cellIdx(x,y)]===zl;
+  const flat=(x,y,h)=>{let lo=1e9,hi=-1e9;for(const[dx,dy]of[[0,0],[-h,-h],[h,-h],[-h,h],[h,h]]){const v=heightAt(x+dx,y+dy);lo=Math.min(lo,v);hi=Math.max(hi,v);}return hi-lo;};
+  const rel=(x,y,d)=>W.relays.every(r=>Math.hypot(x-r.x,y-r.y)>d);
+  let cist=null;for(const r of[6,5,4]){cist=misCell((x,y,gx,gy)=>{const d=Math.hypot(x-hq.x,y-hq.y);return d>=250&&d<=420&&open(gx,gy,r)&&rel(x,y,60)&&flat(x,y,45)<4;},
+      (x,y,gx,gy)=>-Math.abs(Math.hypot(x-hq.x,y-hq.y)-330)*.1-flat(x,y,45)*4+hash2(gx,gy,129)*3);if(cist)break;}
+  if(!cist){W._sitesWhy='oljehamn';return W._sites=null;}
+  const kraft=misCell((x,y,gx,gy)=>{const e=D[cellIdx(x,y)];return e>=KRAFT_MIN&&e<=700&&open(gx,gy,2)&&rel(x,y,110)&&Math.hypot(x-cist.x,y-cist.y)>=250&&Math.hypot(x-L.x,y-L.y)>250;},
+    (x,y,gx,gy)=>Math.hypot(x-cist.x,y-cist.y)*.1+hash2(gx,gy,130)*5);
+  if(!kraft){W._sitesWhy='kraftverk';return W._sites=null;}
+  const beach=(minD,avoid)=>misCell((x,y,gx,gy)=>{const dc=Math.hypot(x-cist.x,y-cist.y);return dc>=minD&&dc<=1100&&Math.hypot(x-L.x,y-L.y)>350&&misNear(gx,gy,3,v=>v===BEACH||v===SHAL||v===DEEP)&&open(gx,gy,1)&&rel(x,y,60)&&(!avoid||Math.hypot(x-avoid.x,y-avoid.y)>350);},
+    (x,y,gx,gy)=>-Math.abs(Math.hypot(x-cist.x,y-cist.y)-750)*.05+hash2(gx,gy,131)*2);
+  const s2=beach(600)||beach(450);if(!s2){W._sitesWhy='strand';return W._sites=null;}const s3=beach(450,s2)||s2;
+  const pump=[[0,-52],[0,52],[-52,0],[52,0]].map(([dx,dy])=>({x:cist.x+dx,y:cist.y+dy})).find(p=>passLand(cellIdx(p.x,p.y)))||{x:cist.x+52,y:cist.y};
+  for(const p of[cist,kraft,s2,s3]){const a=astar(L.x,L.y,p.x,p.y,i=>W.baseGrid[i]===LAND||W.baseGrid[i]===BEACH,()=>1);if(!a||!a.length){W._sitesWhy='väg över land';return W._sites=null;}}/* the walk from the beach: on the base grid: barriers are for BÄVER to blow */
+  return W._sites={cist,kraft,s2,s3,pump};}
+/* where the tanker comes from and its way in: open water about SCEN.tf.from m from the harbour (the nearest to that the navigator
+   finds a way from), and the navigator's route to the berth off the quay; the tanker's hull is longer than Birka's, but the route is
+   hers (a first version) */
+function scenTankerPlan(){const W=WORLD;if(W._tf!==undefined)return W._tf;
+  const P=W.birkaPath;if(!P)return W._tf=null;const s0=P.pts[0],d=W.harbor.dock,want=SCEN.stroemmen.tf.from,cand=[];
+  for(let r=want-300;r<=want+300;r+=100)for(let a=0;a<36;a++){const x=s0.x+Math.cos(a*TAU/36)*r,y=s0.y+Math.sin(a*TAU/36)*r;if(x<80||y<80||x>WW-80||y>WH-80)continue;
+    if(W.baseGrid[cellIdx(x,y)]!==DEEP)continue;cand.push({x,y,k:Math.abs(r-want)});}
+  cand.sort((a,b)=>a.k-b.k);const mN=NAV.maxN;NAV.maxN=120000;let plan=null;
+  for(const c of cand.slice(0,10)){const th=Math.atan2(s0.y-c.y,s0.x-c.x);if(!navFree(W,c.x,c.y,th))continue;
+    const R=birkaNav(W,{x:c.x,y:c.y,th},{x:s0.x,y:s0.y,th:d.a+PI});if(R){/* the quay off Birka's berth is 20 m long, so the tanker stops in the approach 150 m from it (A2 asked 130 m between the ships' berths) */
+      let k=R.length-1;while(k>0&&Math.hypot(R[k].x-d.x,R[k].y-d.y)<SCEN.stroemmen.tf.gap)k--;R.length=k+1;R[k].v=0;plan={from:c,route:R};break;}}
+  NAV.maxN=mN;return W._tf=plan;}
+/* a free land cell round c (r0 to r1 m, towards the angle a0 within spread), not too near what stands there already */
+function scenPlace(c,r0,r1,a0,spread,k,taken){for(let t=0;t<60;t++){const a=a0==null?hash2(k,t,132)*TAU:a0+(hash2(k,t,133)-.5)*spread*(1+t/30),r=r0+hash2(k,t,134)*(r1-r0)*(1+t/40),x=c.x+Math.cos(a)*r,y=c.y+Math.sin(a)*r;
+    if(x<30||y<30||x>WW-30||y>WH-30)continue;const i=cellIdx(x,y);if(WORLD.grid[i]!==LAND)continue;
+    if(taken.some(q=>Math.hypot(q.x-x,q.y-y)<14))continue;return{x,y};}return null;}
+/* the island's side of the scenario, called from misSetup: the power station and the oil depot as points, the cisterns and the pump house
+   as buildings, the enemy's own round them. false when the island cannot hold it */
+function scenSetup(){const S=G.scen,def=S.def,W=WORLD,sit=scenSites(),L=W.landing;if(!sit)return false;
+  const mk=(id,type,p,guards)=>{const r={id,type,hid:false,seen:true,x:p.x,y:p.y,prog:0,captured:false,lockMsg:null,guards,bld:{x:p.x,y:p.y,a:0}};G.relays.push(r);return r;};
+  const taken=G.enemies.map(e=>({x:e.x,y:e.y})).concat(G.relays.map(r=>({x:r.x,y:r.y})),[sit.cist,sit.kraft,sit.pump]);
+  const where={kraft:sit.kraft,olja:sit.cist},guard={kraft:[],olja:[]};let n=0;
+  for(const x of def.extra){const c=where[x.at],a0=x.to==='landing'?Math.atan2(L.y-c.y,L.x-c.x):null;
+    for(let i=0;i<x.n;i++){const p=scenPlace(c,x.r[0],x.r[1],a0,x.spread||TAU,++n,taken);if(!p)continue;taken.push(p);
+      const e=makeEnemy({id:'S'+(x.at==='kraft'?'K':'O')+n,kind:x.kind,x:p.x,y:p.y});G.enemies.push(e);if(x.g)guard[x.g].push(e.id);}}
+  mk('KV','kraft',sit.kraft,guard.kraft);mk('OH','olja',sit.cist,guard.olja);
+  const cs=[[-27,-27],[27,-27],[-27,27],[27,27]].slice(0,def.cist.n);
+  cs.forEach(([dx,dy],i)=>scenStruct('cistern','CI'+(i+1),sit.cist.x+dx,sit.cist.y+dy));scenStruct('pumphus','PH1',sit.pump.x,sit.pump.y);
+  /* the trees come off the depot's ground and the power station's yard (the depot's site is open land, not clear of trees) */
+  WORLD.trees=(WORLD.trees||[]).filter(t=>Math.hypot(t.x-sit.cist.x,t.y-sit.cist.y)>95&&Math.hypot(t.x-sit.kraft.x,t.y-sit.kraft.y)>40);misTreeW=null;
+  S.sites=sit;G.power=false;return true;}
+/* a building of the scenario among the island's, with a hull like the others (STRUCT) */
+function scenStruct(kind,id,x,y){const T=STRUCT[kind],s={id,kind,x,y,a:0,cell:cellIdx(x,y),isStruct:true,hp:T.hp,maxhp:T.hp,value:T.value,dead:false,prog:0,krok:false,hitBy:{},scen:true};
+  G.structs.push(s);WORLD.grid[s.cell]=WALL;return s;}
+/* a thing of the scenario by name */
+function scenRef(n){if(n==='kraft')return G.relays.find(r=>r.type==='kraft');if(n==='olja')return G.relays.find(r=>r.type==='olja');if(n==='radar')return G.relays.find(r=>r.type==='radar');
+  if(n==='hamn')return G.relays.find(r=>r.type==='hamn');if(n==='cistern')return G.structs.filter(s=>s.kind==='cistern');if(n==='tf')return G.scen&&G.scen.ships.find(s=>s.id==='tf');return null;}
+const scenPt=n=>{const S=G.scen;if(typeof n==='object')return n;if(n==='strand2')return S.sites.s2;if(n==='strand3')return S.sites.s3;const r=scenRef(n);return Array.isArray(r)?r[0]:r;};
+/* the goals: true when met */
+function scenGoal(g,st,s){const S=G.scen;switch(g.type){
+  case'take':{const r=scenRef(g.ref);return!!r&&!!r.captured;}
+  case'time':return G.time-s.t0>=g.t;
+  case'seen':return G.enemies.some(e=>!e.dead&&e.seen);
+  case'docked':return!!(G.harbor&&G.harbor.docked);
+  case'dock':{const sh=scenRef(g.ref);return!!sh&&sh.docked;}
+  case'wavesDead':{const sp=st.onStart.filter(a=>a.do==='spawn').length;return s.fired>=sp&&G.enemies.filter(e=>e.scenG&&!e.dead).length===0;}
+  case'all':return g.of.every(q=>scenGoal(q,st,s));
+  case'any':return g.of.some(q=>scenGoal(q,st,s));}return false;}
+/* the actions: small and combinable */
+function scenDo(a,st,s){const S=G.scen;switch(a.do){
+  case'say':say(null,(a.who?a.who+': ':'')+a.text);break;
+  case'mark':{const p=scenPt(a.at);if(p)S.marks.push({id:a.id,x:p.x,y:p.y,r:a.r,label:a.label});break;}
+  case'unmark':S.marks=S.marks.filter(m=>m.id!==a.id);break;
+  case'power':G.power=!!a.on;S.powerT=G.time;break;
+  case'give':G.res+=a.res;break;
+  case'send':{const p=scenPt(a.to);if(p)misSend(p,a.n,a.leash);break;}
+  case'alarm':{const p=scenPt(a.at);if(p)for(const e of G.enemies)if(!e.dead&&e.mobile&&Math.hypot(e.x-p.x,e.y-p.y)<a.r)e.alert={x:p.x,y:p.y,t:G.time};break;}
+  case'target':for(const e of G.enemies)if(!e.dead&&e.scenG===a.group)e.tgtThing=a.ref;break;
+  case'ship':scenShipStart(a.id);break;
+  case'end':S.done=true;break;
+  case'spawn':{if(a.after&&!a.now){S.q.push({t:G.time+a.after,a:Object.assign({},a,{now:true}),st,s});break;}
+    s.fired++;if(a.ifAlive&&G.enemies.filter(e=>e.scenG===a.ifAlive.group&&!e.dead).length<a.ifAlive.min)break;
+    const p=scenPt(a.at),tg=a.target&&scenRef(a.target),tp=Array.isArray(tg)?tg.find(t=>!t.dead):tg;let k=0;const taken=[];
+    for(const kind in a.units)for(let i=0;i<a.units[kind];i++){const q=scenPlace(p,5,45,null,TAU,++S.fired*50+k++,taken)||{x:p.x,y:p.y};taken.push(q);
+      const e=makeEnemy({id:'SA'+a.group+(k),kind,x:q.x,y:q.y});e.scenG=a.group;e.leash=1200;if(a.target)e.tgtThing=a.target;e.seen=false;
+      if(tp){const pth=astar(e.x,e.y,tp.x,tp.y,passLand,()=>1);if(pth&&pth.length){e.march=pth;e.mi=0;e.route=null;e.hx=tp.x;e.hy=tp.y;}}G.enemies.push(e);}
+    if(a.group==='w1')say(null,'Fienden går i land vid '+misWhere(p.x,p.y)+' och går mot cisternerna.');else say(null,'Förstärkning går i land vid '+misWhere(p.x,p.y)+'.');break;}
+  }}
+const scenRun=(L,st,s)=>{for(const a of L||[])scenDo(a,st,s);};
+/* the scenario's clock, called from misTick */
+function scenTick(dt){const S=G.scen;if(!S||G.over)return;
+  for(const q of S.q.slice())if(G.time>=q.t){S.q.splice(S.q.indexOf(q),1);scenDo(q.a,q.st,q.s);}
+  S.def.steps.forEach((st,i)=>{const s=S.st[st.id];if(s.done)return;
+    if(!s.open){const nd=st.needs||(i?[S.def.steps[i-1].id]:[]);if(!nd.every(id=>S.st[id].done))return;s.open=true;s.t0=G.time;s.fired=0;scenRun(st.onStart,st,s);}
+    if(!scenGoal(st.goal,st,s))return;s.done=true;s.t1=G.time;scenRun(st.onDone,st,s);});
+  scenShipTick(dt);
+  const lost=G.structs.filter(s=>s.kind==='cistern'&&s.dead).length;
+  if(S.st.cist.open&&lost>=S.def.cist.lose){misFail('Cisternerna är förlorade.');return;}
+  const tf=S.ships.find(s=>s.id==='tf');if(tf&&tf.dead){misFail('Tankfartyget är sänkt.');return;}}
+const scenStepNow=()=>{const S=G.scen;return S?S.def.steps.filter(st=>S.st[st.id].open&&!S.st[st.id].done):[];};
+/* the tanker: made at its step, on the route the navigator plans (as Birka's harbour route), 6 m/s, a hull of its own that the coast
+   bunkers can shoot (scenFire); it has docked when the route is done */
+function scenShipStart(id){const S=G.scen,pl=scenTankerPlan();if(!pl){misFail('Tankfartyget hittar ingen väg in.');return;}
+  const R=pl.route.map(q=>({...q})),sh={id,label:S.def.tf.name,x:R[0].x,y:R[0].y,a:R[0].a,hp:S.def.tf.hp,maxhp:S.def.tf.hp,v:0,i:0,u:0,route:R,arr:routeArr(R),docked:false,dead:false,hitBy:{},isShip:true,cd:0};
+  S.ships.push(sh);S.tfRoute=R;}
+function scenShipTick(dt){const S=G.scen;for(const sh of S.ships){if(sh.dead||sh.docked)continue;
+  if(scenShipStep(sh,dt)){sh.docked=true;sh.v=0;say(null,sh.label+' har lagt till vid kajen.');}}}
+/* routeStep for a ship of its own: the same walk along the poses, at the ship's speed and a gentler acceleration */
+function scenShipStep(S,dt){const R=S.route,M=BIRKA_MOVE,vm=SCEN.stroemmen.tf.v,ac=M.acc*.6,dc=M.dec*.6;let first=true;
+  const mv=(x,y,a)=>{S.x=x;S.y=y;S.a=a;};
+  while(S.i<R.length-1){const p=R[S.i],q=R[S.i+1],l=Math.hypot(q.x-p.x,q.y-p.y);
+    if(l<.01){S.v=0;if(!first)return false;first=false;const err=angWrap(q.a-S.a),st=M.spin*PI/180*dt;if(Math.abs(err)>st){mv(p.x,p.y,S.a+Math.sign(err)*st);return false;}mv(p.x,p.y,q.a);S.i++;S.u=0;return S.i>=R.length-1;}
+    if(first){first=false;const vt=Math.max(.15,Math.min(p.v||vm,vm,Math.sqrt(S.arr[S.i+1]*S.arr[S.i+1]+2*dc*Math.max(0,l-S.u))));S.v=S.v<vt?Math.min(vt,S.v+ac*dt):Math.max(vt,S.v-dc*2*dt);S.u+=S.v*dt;}
+    if(S.u<l){const f=S.u/l;mv(lerp(p.x,q.x,f),lerp(p.y,q.y,f),p.a+angWrap(q.a-p.a)*f);return false;}
+    S.u-=l;S.i++;if(S.i>=R.length-1||Math.hypot(R[S.i+1].x-q.x,R[S.i+1].y-q.y)<.01)S.u=0;}
+  const e=R[R.length-1];mv(e.x,e.y,e.a);S.v=0;return true;}
+function killShip(sh){if(sh.dead)return;sh.dead=true;sh.hp=0;G.fx.push({k:'boom',x:sh.x,y:sh.y,t:0,ttl:1.8,big:true});startFire(sh.x,sh.y,200,2,2);say(null,sh.label+' är träffat och sjunker.');}
+/* what the enemy of the scenario shoots beyond units: the coast bunkers a tanker in reach, and a group sent for a thing (e.tgtThing) the
+   buildings of that kind; true when it took the enemy's turn */
+function scenFire(e,dt){const S=G.scen;if(!S)return false;
+  const fire=(t,acc)=>{const a=Math.atan2(t.y-e.y,t.x-e.x);e.aim=turnTo(e.aim,a,trav(e)*dt);
+    if(e.cd<=0&&Math.abs(angWrap(a-e.aim))<AIM_TOL){e.cd=1/e.rate;shoot(e,t,e.dmg,acc,'e');e.reveal=1.6;e.firedHere=true;e.lastFire=G.time;e.firedT=G.time;e.fireX=e.x;e.fireY=e.y;}};
+  if(e.coast&&e.kind==='turret'){for(const sh of S.ships){if(sh.dead||sh.docked)continue;const d=Math.hypot(sh.x-e.x,sh.y-e.y);if(d-30<=e.range){fire(sh,.75);return true;}}}
+  if(e.tgtThing){const L=scenRef(e.tgtThing);if(!L)return false;let best=null,bd=1e9;for(const t of Array.isArray(L)?L:[L]){if(t.dead)continue;const d=dist(e,t);if(d<bd){bd=d;best=t;}}
+    if(!best)return false;if(bd<=e.range){fire(best,.85);return true;}
+    if(e.march){marchStep(e,dt);return true;}
+    if(e.mobile){enemyStep(e,best.x,best.y,dt);return true;}}
+  return false;}
+/* the lights: the island's lamps and windows are dark without power (not Birka's, not the units'), and come on in a wave out from the power
+   station once it is taken */
+function scenLights(){const S=G.scen;if(!S||!R3||!R3.stat)return;
+  const k=S.sites&&S.sites.kraft||{x:0,y:0};
+  if(!S.lamps||S.lampsFor!==R3.stat){S.lampsFor=R3.stat;S.lamps=[];R3.stat.updateMatrixWorld(true);const p=new THREE.Vector3();
+    R3.stat.traverse(o=>{if(o.isMesh&&(o.material===R3.lampMat||o.material===R3.winMat)){p.setFromMatrixPosition(o.matrixWorld);S.lamps.push({o,m:o.material,d:Math.hypot(p.x-k.x,p.z-k.y),on:null});}});}
+  const off=R3.litOff||(R3.litOff=new THREE.MeshLambertMaterial({color:0x34383a})),pw=G.power!==false,el=G.time-S.powerT;
+  if(pw&&el>SCEN_CFG.lampAll+5&&S.lampsDone)return;S.lampsDone=pw&&el>SCEN_CFG.lampAll+5;
+  for(const L of S.lamps){const on=pw&&(el*SCEN_CFG.lampSpeed>=L.d||el>SCEN_CFG.lampAll);if(L.on===on)continue;L.on=on;L.o.material=on?L.m:off;}}
+/* the share of the window light the island has: none without power, then up over four seconds */
+const scenWin=()=>{const S=G.scen;if(!S)return 1;if(G.power===false)return 0;return clamp((G.time-S.powerT)/4,0,1);};
+/* the tanker and the broken cisterns in 3D */
+function mkTankerMesh(){if(typeof mkTanker==='function')return mkTanker();
+  const g=new THREE.Group(),HU=mat(0x7a2a22),WH=mat(0xe6e6de),DK=mat(0x3a3d40);
+  g.add(mesh(box(150,12,24),HU,0,2,0));g.add(mesh(box(148,.6,23),DK,0,8.3,0));g.add(mesh(box(22,16,20),WH,-52,16,0));g.add(mesh(box(18,3,21),WH,-52,25.5,0));
+  g.add(mesh(cyl(2,2.4,8,8),mat(0xb83a2a),-58,28,0));g.add(mesh(box(.3,1.4,18),R3.winMat,-41,18,0));g.add(mesh(box(.3,1.4,18),R3.winMat,-41,22,0));
+  for(let x=-25;x<=55;x+=8)g.add(mesh(box(1,1,16),mat(0x8a8d8f),x,9.4,0));g.add(mesh(cyl(.3,.3,14,6),mat(0x8a8d8f),60,15,0));g.add(mesh(box(.5,.5,.5),R3.lampMat,60,22.5,0));
+  return g;}
+function scenView(){if(!R3||!R3.dyn)return;const S=G.scen;
+  if(R3.scenOwn&&R3.scenOwn!==S){for(const o of R3.scenObjs||[])R3.dyn.remove(o);R3.scenObjs=[];R3.scenOwn=null;}/* the last game's tanker and ruins */
+  if(!S)return;R3.scenOwn=S;const add=o=>{R3.dyn.add(o);(R3.scenObjs||(R3.scenObjs=[])).push(o);};scenLights();
+  for(const sh of S.ships){let m=sh.mesh;if(sh.dead){if(m){R3.dyn.remove(m);sh.mesh=null;}continue;}
+    if(!m){m=sh.mesh=mkTankerMesh();add(m);}
+    m.position.set(sh.x,0,sh.y);m.rotation.y=-(sh.a+PI);}
+  for(const st of G.structs)if(st.dead&&st.kind==='cistern'&&!st.stub){st.stub=true;const g=typeof mkCistern==='function'?mkCistern(true):new THREE.Group();
+    if(!g.children.length)g.add(mesh(cyl(11,11,3,14),mat(0x2a2a2a),0,1.5,0));g.position.set(st.x,groundY(st.x,st.y),st.y);add(g);}}
+/* the chart: the marks, the tanker's way and the tanker */
+function scenChart(ctx,k){const S=G.scen;if(!S)return;ctx.save();
+  for(const m of S.marks){ctx.setLineDash([6*k,4*k]);ctx.strokeStyle=MAG;ctx.lineWidth=2*k;ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,TAU);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=MAG;ctx.font=`700 ${10*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(m.label,m.x,m.y-m.r-3*k);}
+  const R=S.tfRoute;if(R&&R.length>1){ctx.setLineDash([5*k,4*k]);ctx.strokeStyle='rgba(31,46,74,.85)';ctx.lineWidth=1.4*k;ctx.beginPath();ctx.moveTo(R[0].x,R[0].y);for(const q of R)ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([]);}
+  for(const sh of S.ships){if(sh.dead)continue;ctx.save();ctx.translate(sh.x,sh.y);ctx.rotate(sh.a+PI);ctx.fillStyle=NAVY;ctx.strokeStyle=PAPER;ctx.lineWidth=1.2*k;
+    ctx.beginPath();ctx.moveTo(75,0);ctx.lineTo(60,-12);ctx.lineTo(-75,-12);ctx.lineTo(-75,12);ctx.lineTo(60,12);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    ctx.fillStyle=NAVY;ctx.font=`700 ${10*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('TF '+Math.round(sh.hp/sh.maxhp*100)+' %',sh.x,sh.y-18*k);}
+  ctx.restore();}
+/* the power station and the oil depot as points: the models if they exist (mkKraftverk), else a hall and a chimney; a post with the point's light */
+function scenPointMesh(g,r){
+  if(r.type==='kraft'){if(typeof mkKraftverk==='function')g.add(mkKraftverk());
+    else{g.add(mesh(box(36,9,18),mat(0x8a8f8c),0,4.5,0));g.add(mesh(box(36.6,.8,18.6),mat(0x4a5058),0,9.4,0));g.add(mesh(cyl(1.2,1.5,18,8),mat(0x9aa0a4),-12,9,-12));g.add(mesh(cyl(1,1.3,14,8),mat(0x9aa0a4),-7,7,-12));
+      for(const x of[-6,0,6])g.add(mesh(box(2.4,2.4,2.4),mat(0x5d625f),x+30,1.2,0));g.add(mesh(box(30,1.4,.3),R3.winMat,0,5.4,9.1));g.add(mesh(box(.8,.5,.5),R3.lampMat,18.2,5,0));}}
+  else{g.add(mesh(box(6,3.5,5),mat(0x7c8173),0,1.75,0));g.add(mesh(box(6.6,.5,5.6),mat(0x4a5058),0,3.7,0));g.add(mesh(box(.8,.5,.5),R3.lampMat,3.1,3,0));}
+  g.add(mesh(cyl(.12,.16,r.type==='kraft'?22:9,6),mat(0x9aa0a4),r.type==='kraft'?24:5,r.type==='kraft'?11:4.5,r.type==='kraft'?10:4));
+  const top=new THREE.Mesh(new THREE.SphereGeometry(.9,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(r.type==='kraft'?24:5,r.type==='kraft'?22.5:9.2,r.type==='kraft'?10:4);g.add(top);g.userData.top=top;}
 /* fog of war: an area is known once something that can spot camouflage has looked at it
    (aircraft over their whole vision, ground vehicles within 60 m, captured relays 110 m); open sea is always known; KROK never explores */
 function markKnown(){
@@ -5509,7 +5746,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,get WORLD(){return WORLD},navHmap,birkaNav,harborGo,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,get WORLD(){return WORLD},navHmap,birkaNav,harborGo,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -5775,6 +6012,7 @@ function drawMap(ctx,w,h,small){
        (Magnus 21 okt, provspel ö 3019 kp09: the full orange ring left from coupling it in read as an unclear sign) */
     else if(st.kind==='mast'){if(st.relay){ctx.strokeStyle=ctx.fillStyle='#2b7550';ctx.lineWidth=1.5*k;}ctx.beginPath();ctx.moveTo(0,-6*f);ctx.lineTo(4*f,4*f);ctx.lineTo(-4*f,4*f);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(0,-6*f,1.6*f,0,TAU);ctx.fill();
       if(st.relay)for(const r of[4,7])for(const sg of[1,-1]){ctx.beginPath();ctx.arc(0,-6*f,r*f,sg>0?-.6:PI-.6,sg>0?.6:PI+.6);ctx.stroke();}}
+    else if(st.kind==='cistern'){ctx.fillStyle='#8f9294';ctx.beginPath();ctx.arc(0,0,11*f,0,TAU);ctx.fill();ctx.stroke();}
     else{ctx.rotate(st.a);const[bw,bh]=st.kind==='depot'?[15,9]:st.kind==='house'?[10,8]:[8,5.5];ctx.fillRect(-bw*f/2,-bh*f/2,bw*f,bh*f);if(st.kind==='depot'){ctx.strokeStyle=PAPER;ctx.lineWidth=.9*k;ctx.strokeRect(-bw*f/2+2*f,-bh*f/2+2*f,bw*f-4*f,bh*f-4*f);}else if(st.kind==='house'){ctx.strokeStyle=PAPER;ctx.lineWidth=.9*k;ctx.beginPath();ctx.moveTo(-bw*f/2,0);ctx.lineTo(bw*f/2,0);ctx.stroke();}}
     ctx.restore();
     if(st.prog>0&&!st.relay){ctx.strokeStyle='#e0a21f';ctx.lineWidth=2.6*k;ctx.beginPath();ctx.arc(st.x,st.y,11*f,-PI/2,-PI/2+TAU*st.prog);ctx.stroke();}
@@ -5782,6 +6020,7 @@ function drawMap(ctx,w,h,small){
     if(zoomed){ctx.fillStyle='rgba(74,58,42,.9)';ctx.font=`600 ${8.5*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(String(st.value),st.x,st.y+7*f);}
   }
   // the mission's marks (issue 73)
+  scenChart(ctx,k);
   if(G.mission==='halshugg'&&G.misRing){const q=G.misRing,c=G.relays.find(r=>r.type==='central');if(c&&!rKnown(c)){ctx.save();ctx.setLineDash([6*k,4*k]);ctx.strokeStyle=MAG;ctx.lineWidth=2*k;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,TAU);ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle=MAG;ctx.font=`700 ${10*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('LEDNINGSCENTRALEN',q.x,q.y-q.r-3*k);ctx.restore();}}
   if(G.mission==='crew'&&G.misCrew&&!G.misCrew.found){const q=G.misCrew;ctx.save();ctx.setLineDash([6*k,4*k]);ctx.strokeStyle='#d2561a';ctx.lineWidth=2*k;ctx.beginPath();ctx.arc(q.rx,q.ry,MIS_CFG.crewR,0,TAU);ctx.stroke();ctx.setLineDash([]);
@@ -6176,6 +6415,7 @@ function mkPointMesh(r){
        the point's light on top */
     g.add(mesh(cyl(.12,.16,6.5,6),mat(0x9aa0a4),0,3.25,0));g.add(mesh(box(1,.12,.12),mat(0x9aa0a4),.45,5.9,0));g.add(mesh(box(.42,.3,.42),R3.lampMat,.85,5.7,0));
     const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(0,7.1,0);g.add(top);g.userData.top=top;}
+  else if(r.type==='kraft'||r.type==='olja')scenPointMesh(g,r);/* issue 129 */
   else kamVarv(g);/* the forward yard (issue 106) */
   // the building sits beside the capture point, so vehicles taking it do not drive into the walls
   if(g.userData.top)g.userData.top.scale.setScalar(r.type==='hamn'?1.1:g.userData.hid?.6:1.7);/* the camouflaged points' green lamp is small: the flag is the sign (issue 106) */
@@ -7034,7 +7274,7 @@ const winBucket=(x,y)=>Math.floor(hash2(Math.round(x),Math.round(y),17)*WIN_OFF.
 const winMatFor=(x,y)=>{if(!R3.winMats)R3.winMats=WIN_OFF.map(()=>R3.winMat.clone());return R3.winMats[winBucket(x,y)];};
 /* house windows: lit when it is dark enough (the light value, R3.dark) and people are up, which is the clock: four groups go to bed
    between 22.30 and 00.45, and half of them are up from 05.30 and switch on if it is still dark (decided 16 okt) */
-function winLevel(b,d){const t=G.tod,off=WIN_OFF[b];let on=t>=12?t<off:t<off-24;if(t>=5.5&&t<12&&b%2===0)on=true;return on?clamp((d-.15)/.35,0,1):0;}
+function winLevel(b,d){const t=G.tod,off=WIN_OFF[b];let on=t>=12?t<off:t<off-24;if(t>=5.5&&t<12&&b%2===0)on=true;return on?clamp((d-.15)/.35,0,1)*scenWin():0;}
 function mkVilla(v){const g=new THREE.Group(),TR=mat(TRIM),GL=winMatFor(v.x,v.y),WD=mat(0x9a7a56),DK=mat(0x2f2f34);
   const win=(x,y,z,w,h,face)=>{if(face==='x'){g.add(mesh(box(.14,h+.3,w+.3),TR,x,y,z));g.add(mesh(box(.18,h,w),GL,x+.03*Math.sign(x||1),y,z));}else{g.add(mesh(box(w+.3,h+.3,.14),TR,x,y,z));g.add(mesh(box(w,h,.18),GL,x,y,z+.03*Math.sign(z||1)));}};
   if(v.style==='klassisk'||v.style==='rod'){const cols=v.style==='rod'?[FALU,FALU,FALU,FALU]:[0xe9dca4,0xf1eee6,0xc9d6dc,0xe6cfa8],body=mat(cols[v.col]);const H=v.style==='rod'?5.6:7,L=v.style==='rod'?11:12,Wd=v.style==='rod'?8:9;
@@ -7349,6 +7589,8 @@ function mkStructMesh(st){
     if(hash2(Math.round(st.x),Math.round(st.y),9)<.5){g.add(mesh(cyl(.08,.1,9,5),mat(0xf0f0ea),-6.5,4.5,-3));g.add(mesh(box(.05,.5,1.8),mat(0x2a5aa8),-6.5,8.6,-2.05));g.add(mesh(box(.06,.14,1.8),mat(0xf2c230),-6.5,8.6,-2.05));}}
   else if(st.kind==='depot'){g.add(mesh(box(15,5,9),mat(0x7a837e),0,2.5,0));g.add(mesh(box(15.4,.4,9.4),mat(0x4f5753),0,5.2,0));g.add(mesh(box(.2,3.6,4.5),mat(0x3c4440),7.6,1.8,0));for(const x of[-4,0,4])g.add(mesh(box(2,.7,.12),WM,x,3.9,4.52));for(const z of[-3,3])g.add(mesh(box(2,1.4,1.4),mat(0x6b6a3a),9.2,.7,z));}
   else if(st.kind==='fuel'){for(const x of[-4,4]){g.add(mesh(cyl(3.3,3.3,4.6,14),mat(0xcfc6b2),x,2.3,0));g.add(mesh(cyl(3.35,3.35,.6,14),mat(0xc27a2c),x,3.4,0));}const pp=mesh(cyl(.25,.25,8,6),mat(0x555555),0,.6,2.6);pp.rotation.z=PI/2;g.add(pp);}
+  else if(st.kind==='cistern'){if(typeof mkCistern==='function')g.add(mkCistern(false));else{g.add(mesh(cyl(11,11,14,20),mat(0xc9ccca),0,7,0));g.add(mesh(cyl(11.1,11.1,1.6,20),mat(0xb03a2c),0,9,0));g.add(mesh(cyl(.5,11,1.6,20),mat(0xaeb2b0),0,14.8,0));}}
+  else if(st.kind==='pumphus'){if(typeof mkPumphus==='function')g.add(mkPumphus());else{g.add(mesh(box(12,5,8),mat(0x7c8173),0,2.5,0));g.add(mesh(box(12.6,.5,8.6),mat(0x4a5058),0,5.2,0));g.add(mesh(box(.8,.5,.5),R3.lampMat,6.1,4,0));}}
   else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}const d=mesh(new THREE.SphereGeometry(1.2,10,6,0,TAU,0,PI/2),mat(0xe0e2e0),0,19,.9);d.rotation.x=PI/2;g.add(d);g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
   g.rotation.y=-st.a;g.position.set(st.x,groundY(st.x,st.y),st.y);return sh(bake(g,true,{strict:true}));
 }
@@ -8659,6 +8901,7 @@ function sync3D(dtr){
   /* the secret installations, all that the chart hides at the start, are not seen in the intro or the fly-over either (Magnus 1 nov) */
   for(const st of G.structs){if(st.dead)continue;seen.add(st.id);let m=R3.structs.get(st.id);if(!m){m=mkStructMesh(st);D.add(m);R3.structs.set(st.id,m);}m.visible=!structHid(st);}
   for(const[id,m]of R3.structs)if(!seen.has(id)){D.remove(m);R3.structs.delete(id);}
+  scenView();
   seen.clear();
   for(const e of G.enemies){
     /* 3D shows an enemy only where it is (decided 25 okt, Magnus, provspel ö 7670 kp05): one seen now, or a known one that has not moved since
@@ -9232,7 +9475,7 @@ function selfItems(t){const it=[],sel=G.selIds.includes(t.id),sole=sel&&G.selIds
     for(const r of G.relays.filter(r=>!r.captured&&rKnown(r)).sort((a,b)=>dm(a)-dm(b)).slice(0,2))if(room())it.push({l:'Ta '+r.id+' · '+PTYPE[r.type].label.toLowerCase()+' ('+dm(r)+' m)'+nc,off,f:()=>giveOrder(t,{type:'capture',relay:r,post:wheelPost},false)});
     for(const b of G.barriers.filter(b=>!b.cleared).sort((a,b)=>dm(a)-dm(b)).slice(0,1))if(room())it.push({l:'Spräng spärr '+b.id+' ('+dm(b)+' m)'+nc,off,f:()=>giveOrder(t,{type:'clear',barrier:b,post:wheelPost},false)});
     for(const st of G.structs.filter(st=>mastFree(st)&&inNet(st.x,st.y)).sort((a,b)=>dm(a)-dm(b)).slice(0,1))if(room())it.push({l:'Koppla in radiomasten ('+dm(st)+' m)'+nc,off,f:()=>giveOrder(t,{type:'mast',s:st,post:wheelPost},false)});
-    for(const st of G.structs.filter(st=>!st.dead&&isKnown(st.x,st.y)&&dm(st)<500).sort((a,b)=>dm(a)-dm(b)).slice(0,2))if(room())it.push({l:'Riv '+slabel(st)+' ('+dm(st)+' m)'+nc,off,f:()=>{st.krok=true;giveOrder(t,{type:'demolish',s:st,post:wheelPost},false);}});}
+    for(const st of G.structs.filter(st=>!st.dead&&!STRUCT[st.kind].scen&&isKnown(st.x,st.y)&&dm(st)<500).sort((a,b)=>dm(a)-dm(b)).slice(0,2))if(room())it.push({l:'Riv '+slabel(st)+' ('+dm(st)+' m)'+nc,off,f:()=>{st.krok=true;giveOrder(t,{type:'demolish',s:st,post:wheelPost},false);}});}
   return it;}
 function selfMenu(sx,sy,pk,srcEl){const t=pk.unit;if(!t||t.dead)return;
   renderWheel(sx,sy,srcEl,t.name,'egen meny',selfItems(t),()=>false,()=>wheelWho(sx,sy,pk,srcEl,null));}
@@ -9911,8 +10154,8 @@ let lastUi=0;
 function uiTick(force){
   const now=performance.now();if(!force&&now-lastUi<120)return;lastUi=now;
   const net=Math.max(0,G.lostValue-G.salvagedOwn);
-  {const m=misOf(),C=MIS_CFG,[lb,tx]=misLimit()?['Tid kvar',fmt(Math.max(0,misLimit()-G.time))]:G.mission==='crew'?(G.misGot?['Besättningen','ombord']:G.misCrew&&G.misCrew.patrol?['Patrull','på väg']:['Patrull om',fmt(Math.max(0,C.crewPatrol-G.time))]):['Punkter',G.relays.filter(r=>r.captured).length+'/'+G.relays.length];
-   $('sRel').textContent=G.cont?'misslyckat':tx;$('sRel').previousElementSibling.textContent=G.cont?'Uppdraget':lb;$('sRel').title=misText(m.goal,m);}
+  {const m=misOf(),C=MIS_CFG,[lb,tx]=G.scen?['Steg',scenStepNow().map(s=>s.name).join(' + ')||(G.scen.done?'klart':'')]:misLimit()?['Tid kvar',fmt(Math.max(0,misLimit()-G.time))]:G.mission==='crew'?(G.misGot?['Besättningen','ombord']:G.misCrew&&G.misCrew.patrol?['Patrull','på väg']:['Patrull om',fmt(Math.max(0,C.crewPatrol-G.time))]):['Punkter',G.relays.filter(r=>r.captured).length+'/'+G.relays.length];
+   $('sRel').textContent=G.cont?'misslyckat':tx;$('sRel').previousElementSibling.textContent=G.cont?'Uppdraget':lb;$('sRel').title=G.scen?scenStepNow().map(s=>s.name+': '+s.hint).join('\n'):misText(m.goal,m);}
   $('sRes').textContent=Math.floor(G.res);
   $('sLoss').textContent=net;$('lossBox').classList.toggle('warn',net>0);
   $('sTime').textContent=fmt(G.time);{const hh=Math.floor(G.tod),mm=Math.floor((G.tod-hh)*60),c=$('sClock');c.textContent=fmtDay(G.doy)+' '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
@@ -11427,7 +11670,7 @@ const BOOTQ=(()=>{try{return new URLSearchParams(location.search);}catch(_){retu
 /* &datum=2032-12-15 (or 12-15) and &klocka=08:30 choose the date and starting hour, like Ny ö */
 try{const m=BOOTQ.get('moln');if(m!=null&&m!=='')CLOUD.force=clamp(+m/100,0,1);}catch(_){}
 function bootWhen(){const m=/^(?:2032-)?(\d\d)-(\d\d)$/.exec(BOOTQ.get('datum')||''),k=/^(\d\d?):(\d\d)$/.exec(BOOTQ.get('klocka')||'');
-  return{doy:m&&+m[1]>=1&&+m[1]<=12?doyOf(+m[1]-1,+m[2]):null,tod:k?(+k[1]+ +k[2]/60)%24:null,uppdrag:MISSION[BOOTQ.get('uppdrag')]?BOOTQ.get('uppdrag'):null};}
+  return{doy:m&&+m[1]>=1&&+m[1]<=12?doyOf(+m[1]-1,+m[2]):null,tod:k?(+k[1]+ +k[2]/60)%24:null,uppdrag:MISSION[BOOTQ.get('uppdrag')]?BOOTQ.get('uppdrag'):null,scen:SCEN[BOOTQ.get('scen')]?BOOTQ.get('scen'):null/* ?scen=stroemmen: the campaign's prototype (issue 129) */};}
 /* the start in steps, for the statistics panel (F3): the page and script up to here, the island, the 3D setup, the scene, the
    shaders compiled ahead (lightsWarm) and the first frame; a new island's scene and first frame are kept too */
 const BOOT=globalThis.__boot={js:performance.now()};const bootMark=k=>{BOOT[k]=performance.now();};
