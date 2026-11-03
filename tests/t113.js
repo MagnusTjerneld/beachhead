@@ -38,4 +38,8 @@ fresh();{const L=B.LANDING,v=put('tank',L.x,L.y-40),h=put('drone',L.x+5,L.y-30),
   B.newGame(5555);B.newGame(q.s,q.o,B.banaWhen(q));ok(sig()===a&&B.G.start.doy===120&&B.G.start.tod===6.5,'played again: the same enemies, vehicle, date and hour');
   ok(B.banaParse('#bana-12-nej-barg')===null&&B.banaParse('#tf-x')===null,'a link with an unknown doctrine is not read');
   const old={s:2547,o:'djup',m:'barg'};B.newGame(old.s,old.o,B.banaWhen(old));ok(B.G.start.own,'a result from before 3 nov gets the island own date and hour');}
+// Spela vidare (Magnus 3 nov after ö 2169): a failed mission plays on, and nothing more ends it
+{B.newGame(2547,'djup',{uppdrag:'halshugg'});const G=B.G;G.running=true;G.time=B.misLimit()+1;B.checkWin();ok(G.over&&G.failed,'out of time: the mission fails');
+  B.playOn();ok(!G.over&&G.running&&G.cont,'Spela vidare: the game runs again');run(20);B.checkWin();ok(!G.over,'and the time out does not end it again');
+  for(const r of G.relays)r.captured=true;B.checkWin();ok(!G.over&&G.log.some(l=>/räknas inte/.test(l.text)),'the goal reached after it does not count');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
