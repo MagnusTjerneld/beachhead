@@ -40,6 +40,7 @@ const CONTRACT={
     tank:{parts:['tur'],tri:1900,calls:6,h:[2,6.5],len:[6,13],foot:[-.15,.1]},
     eng:{parts:[],tri:1450,calls:5,h:[2.5,7],len:[4.5,9],foot:[-.15,.1]},
     mus:{parts:[],tri:800,calls:3,h:[1.2,3.5],len:[1.2,3],foot:[-.15,.1]},
+    crew:{parts:[],tri:700,calls:3,h:[1.5,2.4],len:[1.5,4],foot:[-.15,.1]},/* the downed crew (issue 124): three men and a panel */
     gadda:{parts:['launcher','caps','fn:setLift'],tri:1850,calls:28,h:[3,7],len:[6,13],foot:[-.8,.1]},
     krok:{parts:['spin','legs','sw','hook','cable'],legDef:true,tri:3050,calls:28,h:[7,16],len:[14,26],foot:[-10,0]},
   },
