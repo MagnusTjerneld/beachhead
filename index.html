@@ -5388,7 +5388,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={playOn,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={mkKraftverk,mkCistern,mkPumphus,mkTanker,playOn,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -6494,6 +6494,139 @@ function prof(pts,w,taper){const s=new THREE.Shape();pts.forEach((p,i)=>i?s.line
   const g=new THREE.ExtrudeGeometry(s,{depth:w,bevelEnabled:false,steps:1});g.translate(0,0,-w/2);
   if(taper){const[y0,y1,k]=taper,P=g.attributes.position;for(let i=0;i<P.count;i++){const y=P.getY(i);if(y>y0)P.setZ(i,P.getZ(i)*(1-(1-k)*Math.min(1,(y-y0)/(y1-y0))));}g.computeVertexNormals();}
   return g;}
+/* ---- issue 129 models (Magnus 4 nov): the campaign's first scenario, Strömmen och cisternerna. Four buildings and a ship, all in metres, origin on the
+   ground (the ship at its waterline), +x forward (the front of a building, the bow of the ship). The game builds none of them yet; the scenario calls them.
+   Fixed parts are baked (bake) and the glass and lamps use R3.winMat and R3.lampMat so that pointLit works unchanged. The measured parts hang in
+   userData (hall, body, house, hull, ...) so that t120 can check the sizes. No two faces share a plane: parts that meet overlap or sit a few
+   centimetres inside each other. ---- */
+const MAT_D=c=>{const k='d'+c;if(!MATS.has(k))MATS.set(k,new THREE.MeshLambertMaterial({color:c,side:THREE.DoubleSide}));return MATS.get(k);};
+/* a gable roof prism along x: halfW across, rise high, len long */
+function gableGeo(len,halfW,rise){const s=new THREE.Shape();s.moveTo(-halfW,0);s.lineTo(halfW,0);s.lineTo(0,rise);s.closePath();
+  const ge=new THREE.ExtrudeGeometry(s,{depth:len,bevelEnabled:false});ge.translate(0,0,-len/2);ge.rotateY(PI/2);return ge;}
+/* a thin square rod between two points */
+function rodAB(p,a,b,t,m){const d=Math.round(Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2])*100)/100,o=mesh(box(t,t,d),m,(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);o.lookAt(b[0],b[1],b[2]);p.add(o);return o;}
+/* a horizontal cylinder along x ('x') or z ('z') */
+function pipeH(p,ax,r,len,m,x,y,z,n){const o=mesh(cyl(r,r,len,n||10),m,x,y,z);if(ax==='x')o.rotation.z=PI/2;else o.rotation.x=PI/2;p.add(o);return o;}
+/* reserve power station (issue 129): a 36 x 18 x 9 m hall with a gable roof, two stacks (18 and 14 m, white stripes), windows along the +z side,
+   a lit gate at the +x end, and a fenced transformer yard behind the hall (x from -33 to -19) with three transformers and two rows of insulators */
+function mkKraftverk(){const g=new THREE.Group(),hall=new THREE.Group(),yard=new THREE.Group(),
+    WALL=mat(0x9a9b94),PLINTH=mat(0x6c6d68),ROOF=mat(0x56606a),DARK=mat(0x2a2e31),STEEL=mat(0x8a9097),STEEL2=mat(0x5f686e),WHITE=mat(0xe8e6de),RED=mat(0xa23a2a),YEL=mat(0xd9b13b),GRAV=mat(0x77746b),TRAFO=mat(0x58656b),INS=mat(0xb8a98a);
+  const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
+  /* the hall: plinth, walls, pilasters on both long sides, the roof, the portal */
+  add(hall,box(36.1,.8,18.1),PLINTH,0,.4,0);add(hall,box(36,6.5,18),WALL,0,3.25,0);
+  for(const x of[-17.7,-12,-4,4,12,17.7])for(const s of[-1,1])add(hall,box(.6,6.2,.35),WALL,x,3.3,s*9.1);
+  add(hall,gableGeo(36.6,9.35,2.55),ROOF,0,6.45,0);
+  for(let i=0;i<8;i++)add(hall,box(2.2,1.5,.12),R3.winMat,-14+i*4,4.4,9.03);
+  add(hall,box(.2,4.9,5.4),YEL,18.05,2.45,0);add(hall,box(.12,4.6,5),DARK,18.12,2.3,0);add(hall,box(.5,.3,.5),R3.lampMat,18.2,5.5,0);
+  /* two big vent tubes on the roof, the diesel generators' exhaust */
+  for(const x of[9,14])for(const z of[-3.6,3.6]){add(hall,cyl(.8,.8,1.4,8),STEEL2,x,8.1,z);add(hall,cyl(.95,.95,.18,8),DARK,x,8.9,z);}
+  g.add(hall);g.userData.hall=hall;
+  /* the stacks: tapered steel with white stripes at the top, rising through the roof */
+  const stacks=new THREE.Group();g.userData.stacks=stacks;g.userData.stackH=[18,14];
+  [[-13,18,1.3,.95],[-6,14,1.1,.8]].forEach(([x,h,r0,r1])=>{const rr=y=>r0+(r1-r0)*y/h;add(stacks,cyl(r1,r0,h,12),STEEL,x,h/2,0);
+    for(const[y,t]of[[h-1.6,1.1],[h-4,1.1]])add(stacks,cyl(rr(y+t/2)+.05,rr(y-t/2)+.05,t,12),WHITE,x,y,0);
+    add(stacks,cyl(r1+.12,r1+.12,.3,12),DARK,x,h-.15,0);add(stacks,cyl(r0+.3,r0+.3,.8,12),PLINTH,x,8.9,0);});
+  g.add(stacks);
+  /* the yard: gravel, a fence of posts and three rails, three transformers (3 m cubes with fins, bushings and a conservator), two insulator rows */
+  add(yard,box(13.6,.1,11.6),GRAV,-25.8,.05,0);
+  const X0=-32.8,X1=-18.8,Z=6;
+  for(const h of[.7,1.4,2.1])for(const s of[-1,1]){add(yard,box(X1-X0,.06,.06),STEEL2,(X0+X1)/2,h,s*Z);add(yard,box(.06,.06,2*Z),STEEL2,s>0?X1:X0,h,0);}
+  for(let x=X0;x<=X1+.01;x+=2.8)for(const s of[-1,1])add(yard,box(.1,2.2,.1),STEEL2,x,1.1,s*Z);
+  for(let z=-Z+3;z<Z-.01;z+=3)for(const x of[X0,X1])add(yard,box(.1,2.2,.1),STEEL2,x,1.1,z);
+  for(const z of[-3.8,0,3.8]){add(yard,box(3,3,3),TRAFO,-26,1.5,z);add(yard,box(3.2,.2,3.2),DARK,-26,3.05,z);add(yard,box(.4,2.2,2.4),STEEL,-24.4,1.6,z);add(yard,box(.4,2.2,2.4),STEEL,-27.6,1.6,z);
+    for(const dx of[-.8,0,.8])add(yard,cyl(.15,.18,1.1,6),INS,-26+dx,3.7,z+.6);add(yard,cyl(.45,.45,2.4,10),STEEL,-26.4,3.55,z-.5).rotation.x=PI/2;}
+  for(const x of[-21,-31])for(const z of[-4,0,4]){add(yard,cyl(.09,.11,3.4,6),STEEL2,x,1.7,z);add(yard,cyl(.26,.26,.07,8),INS,x,2.9,z);add(yard,box(.14,.14,2.6),STEEL2,x,3.45,z);}
+  for(const[x,z]of[[X1,-Z],[X0,Z]]){add(yard,cyl(.07,.07,4,6),STEEL2,x,2,z);add(yard,box(.35,.2,.2),R3.lampMat,x,4.05,z);}
+  g.add(yard);g.userData.yard=yard;g.userData.lampAt=[[18.2,5.5,0]];
+  return sh(bake(g,true));}
+/* oil cistern (issue 129): a standing steel tank 22 m across, 14 m high with a flat cone roof and a rail, a spiral stair, a pipe at the foot and a concrete bund 36 x 36 m,
+   3 m high, with a gate in its +x wall. broken: the roof has sunk into a dish, the shell is sooted and the bund floor is black (the game lays the fire on it) */
+function mkCistern(broken){const g=new THREE.Group(),body=new THREE.Group(),
+    SHELL=mat(broken?0x4a4745:0xdadad2),BAND=mat(broken?0x3a2622:0xb3352a),CONC=mat(0x8a8a84),CONC2=mat(broken?0x7a766f:0xa09d95),OIL=mat(broken?0x0e0d0c:0x2c2b28),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),SOOT=MAT_D(0x151413);
+  const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
+  add(body,new THREE.CylinderGeometry(11,11,12.6,40,1,true),SHELL,0,6.3,0);add(body,new THREE.CylinderGeometry(11.05,11.05,1.4,40,1,true),BAND,0,9,0);
+  add(body,cyl(11.2,11.2,.5,40),CONC,0,.25,0);
+  if(!broken){add(body,cyl(.9,11.15,1.2,40),SHELL,0,13.2,0);add(body,cyl(1.2,1.2,.2,12),STEEL,0,13.9,0);
+    const rail=new THREE.Mesh(new THREE.TorusGeometry(10.9,.05,3,36),STEEL);rail.rotation.x=PI/2;rail.position.y=13.65;body.add(rail);
+    const rail2=new THREE.Mesh(new THREE.TorusGeometry(10.9,.04,3,36),STEEL);rail2.rotation.x=PI/2;rail2.position.y=13.15;body.add(rail2);
+    for(let i=0;i<16;i++){const a=i/16*TAU;add(body,box(.08,1.1,.08),STEEL,Math.cos(a)*10.9,13.15,Math.sin(a)*10.9);}}
+  else{add(body,new THREE.CylinderGeometry(11,2,2.4,40,1,true),MAT_D(0x2a2625),0,11.4,0);add(body,new THREE.CylinderGeometry(11.1,11.1,5,40,1,true),SOOT,0,10.1,0);
+    const rail=new THREE.Mesh(new THREE.TorusGeometry(10.9,.05,4,24,2.2),STEEL2);rail.rotation.x=PI/2;rail.position.y=13.2;rail.rotation.z=.5;body.add(rail);
+    for(const[a,rx,rz,w]of[[.4,.35,.2,5],[2.3,-.3,.25,4.5],[4.1,.4,-.2,5]]){const p=mesh(box(w,.18,2.6),STEEL2,Math.cos(a)*7.4,12.2,Math.sin(a)*7.4);p.rotation.set(rx,-a,rz);body.add(p);}}
+  g.add(body);g.userData.body=body;
+  /* the spiral stair on the shell: 34 steps, a bit more than one turn, a post and rail on the outside */
+  const st=new THREE.Group(),N=34,dA=1.15*TAU/N,a0=.15,dy=12.3/N,pts=[];
+  for(let i=0;i<N;i++){const a=a0+i*dA,y=.5+i*dy,s=mesh(box(1.1,.1,1.0),STEEL,Math.cos(a)*11.6,y,Math.sin(a)*11.6);s.rotation.y=-a;st.add(s);pts.push([Math.cos(a)*12.2,y+1.05,Math.sin(a)*12.2]);
+    if(i%3===0)add(st,box(.06,1.05,.06),STEEL2,pts[i][0],y+.52,pts[i][2]);}
+  for(let i=0;i<N-1;i++)rodAB(st,pts[i],pts[i+1],.06,STEEL2);
+  add(st,box(1.6,.12,1.6),STEEL,Math.cos(a0+(N-1)*dA)*11.8,.5+(N-1)*dy+.1,Math.sin(a0+(N-1)*dA)*11.8).rotation.y=-(a0+(N-1)*dA);
+  g.add(st);g.userData.stair=st;
+  /* the foot: an outlet pipe through the bund wall on the +z side, a valve and a flange */
+  const ft=new THREE.Group();pipeH(ft,'z',.32,9,STEEL,0,.9,15.1,10);add(ft,cyl(.5,.5,.14,10),STEEL2,0,.9,13.2).rotation.x=PI/2;add(ft,cyl(.14,.14,1.2,6),STEEL2,0,1.55,14.2);add(ft,cyl(.4,.4,.1,12),STEEL2,0,2.2,14.2);
+  add(ft,box(.6,.58,.6),STEEL2,0,.29,16);g.add(ft);
+  /* the bund: floor, four walls, a gate in the +x wall (3.2 m gap with a lintel and two leaves) */
+  const bd=new THREE.Group();add(bd,box(34.6,.1,34.6),OIL,0,.05,0);
+  for(const s of[-1,1])add(bd,box(36,3,.6),CONC2,0,1.5,s*17.7);
+  add(bd,box(.6,3,34.8),CONC2,-17.7,1.5,0);
+  for(const s of[-1,1])add(bd,box(.6,3,15.8),CONC2,17.7,1.5,s*9.5);
+  add(bd,box(.6,.5,3.4),CONC2,17.7,2.75,0);for(const s of[-1,1]){add(bd,box(.12,2.5,1.5),STEEL,17.7,1.25,s*.8);add(bd,box(.16,2.5,.12),STEEL2,17.7,1.25,s*1.62);}
+  g.add(bd);g.userData.bund=bd;g.userData.fireAt=[0,12.6,0];g.userData.hp=120;
+  return sh(bake(g,true));}
+/* pumphouse (issue 129): 12 x 8 x 5 m with a sheet roof and a door at the +x end, and a short stretch of the pipeline (two 0.8 m pipes on 1 m supports) leaving through the +x wall */
+function mkPumphus(){const g=new THREE.Group(),house=new THREE.Group(),pipes=new THREE.Group(),
+    WALL=mat(0x8f9189),ROOF=mat(0x4c565e),DARK=mat(0x2a2e31),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),PIPE=mat(0x7d8a78),YEL=mat(0xd9b13b),CONC=mat(0x77746b);
+  const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
+  add(house,box(12,.4,8),CONC,0,.2,0);add(house,box(11.8,3.4,7.8),WALL,0,2.1,0);add(house,gableGeo(12.1,4.15,1.25),ROOF,0,3.75,0);
+  add(house,box(.2,3.2,2.6),YEL,5.93,1.8,-2.2);add(house,box(.15,3,2.4),DARK,5.98,1.7,-2.2);add(house,box(.5,.3,.4),R3.lampMat,6.1,3.5,-2.2);
+  for(const x of[-3.5,0,3.5])add(house,box(1.6,1.1,.1),R3.winMat,x,2.4,3.92);
+  add(house,cyl(.35,.35,1,10),STEEL2,-3.5,4.5,-1.6);add(house,cyl(.5,.5,.12,10),DARK,-3.5,4.94,-1.6);
+  g.add(house);g.userData.house=house;
+  /* the pipe stretch: two pipes at z = +-0.75 from the wall to x = 18, flanges and saddles on 1 m supports every 4 m */
+  for(const z of[-.75,.75]){pipeH(pipes,'x',.4,12.4,PIPE,12,1.4,z,12);for(const x of[7,11,15,18])add(pipes,cyl(.5,.5,.14,12),STEEL,x,1.4,z).rotation.z=PI/2;
+    for(const x of[8,12,16]){add(pipes,box(.5,1,.7),STEEL2,x,.5,z);add(pipes,box(.6,.16,.9),STEEL,x,1.0,z);}}
+  g.add(pipes);g.userData.pipes=pipes;g.userData.pipeEnd=[18,1.4,0];
+  return sh(bake(g,true));}
+/* oil tanker (issue 129): 150 m long, 24 m wide, 8 m of freeboard, black below the waterline and red above, a white four-deck superstructure aft with
+   windows in R3.winMat, a funnel, the cargo deck with pipes and manifold, two cranes, a foremast, and position and deck lights in R3.lampMat.
+   Origin at the waterline amidships, +x toward the bow (the starboard side is +z) */
+function mkTanker(){const g=new THREE.Group(),hull=new THREE.Group(),fit=new THREE.Group(),sup=new THREE.Group(),
+    BLK=mat(0x1b1d20),RED=mat(0x9d2d25),DECK=mat(0x676a60),WHITE=mat(0xe9e7df),STEEL=mat(0x7d858a),STEEL2=mat(0x4b5258),DARK=mat(0x22262a),FUN=mat(0xa22a22),REDL=mat(0xb02020),GRNL=mat(0x1f9a3a),PIPE=mat(0x8f4a2c),PIPE2=mat(0x5f6b70);
+  const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
+  const plan=k=>{const s=new THREE.Shape();s.moveTo(-75*k,-8*k);s.lineTo(-75*k,8*k);s.bezierCurveTo(-72*k,12*k,-68*k,12*k,-62*k,12*k);s.lineTo(45*k,12*k);s.bezierCurveTo(62*k,12*k,72*k,6*k,75*k,0);
+    s.bezierCurveTo(72*k,-6*k,62*k,-12*k,45*k,-12*k);s.lineTo(-62*k,-12*k);s.bezierCurveTo(-68*k,-12*k,-72*k,-12*k,-75*k,-8*k);return s;};
+  const ext=(k,depth,y,m)=>{const ge=new THREE.ExtrudeGeometry(plan(k),{depth,bevelEnabled:false,curveSegments:10});ge.rotateX(-PI/2);return add(hull,ge,m,0,y,0);};
+  ext(1,10,-10,BLK);ext(1,8,0,RED);ext(.985,.12,8,DECK);
+  g.add(hull);g.userData.hull=hull;
+  /* rails along the parallel body, the stanchions, and a bow rail */
+  for(const s of[-1,1]){add(fit,box(100,.08,.08),STEEL,-5,9.1,s*11.8);add(fit,box(100,.08,.08),STEEL,-5,8.6,s*11.8);for(let x=-55;x<=44;x+=5)add(fit,box(.08,1.1,.08),STEEL,x,8.62,s*11.8);}
+  /* the cargo deck: two long pipe lines on saddles, ten manifold cross pipes, a catwalk on posts, six bollards */
+  for(const z of[-2.4,2.4]){pipeH(fit,'x',.35,92,PIPE,-3,8.8,z,10);for(let x=-45;x<=40;x+=6)add(fit,box(.5,.6,.6),STEEL2,x,8.4,z);}
+  for(let i=0;i<10;i++){const x=-14+i*3.6;pipeH(fit,'z',.22,8.4,PIPE,x,9.3,0,8);for(const s of[-1,1])add(fit,cyl(.38,.38,.14,8),STEEL2,x,9.3,s*4.15).rotation.x=PI/2;add(fit,box(.4,.9,.4),STEEL2,x,8.65,0);}
+  add(fit,box(96,.1,1.2),STEEL,-3,10.5,0);for(let x=-45;x<=40;x+=9){add(fit,box(.12,2.3,.12),STEEL2,x,9.3,.45);add(fit,box(.12,2.3,.12),STEEL2,x,9.3,-.45);}
+  for(const x of[-60,-30,0,30])for(const s of[-1,1])add(fit,cyl(.35,.45,.9,8),STEEL2,x,8.55,s*10.9);
+  /* two cranes by the manifold, boom outboard */
+  for(const s of[-1,1]){const c=new THREE.Group();c.position.set(5,8.1,s*7.5);c.rotation.y=s>0?-PI/2:PI/2;add(c,cyl(.45,.55,4.2,10),STEEL,0,2.1,0);add(c,box(1.4,.5,1.4),STEEL2,0,4.4,0);
+    const b=new THREE.Group();b.position.set(0,4.5,0);b.rotation.z=.55;add(b,box(9,.35,.35),STEEL,4.5,0,0);add(b,box(.5,.5,.5),DARK,9,0,0);c.add(b);fit.add(c);}
+  /* the bow: windlass, a foremast with a yardarm and a masthead light, a bow rail */
+  add(fit,box(3,1.1,2.4),STEEL2,60,8.6,0);pipeH(fit,'z',.45,2.6,DARK,60,9.3,0,10);add(fit,cyl(.28,.36,14,8),STEEL,52,15.1,0);add(fit,box(.2,.2,6),STEEL2,52,19.5,0);add(fit,box(.5,.35,.5),R3.lampMat,52,22.3,0);
+  for(const s of[-1,1])rodAB(fit,[66,8.6,s*6],[72,8.6,s*1.6],.08,STEEL);
+  g.add(fit);g.userData.fittings=fit;
+  /* the superstructure: four decks, 22 m wide, white, with a window band on every deck and a funnel behind the bridge */
+  const decks=[[-68,-48,3.2,22,8],[-67,-49,3,21,11.2],[-66,-50,3,20,14.2],[-57,-49,3.2,22,17.2]];
+  decks.forEach(([xa,xb,h,w,y0],i)=>{const l=xb-xa,xc=(xa+xb)/2;add(sup,box(l,h,w),WHITE,xc,y0+h/2,0);add(sup,box(l+.8,.2,w+.4),STEEL,xc,y0+.05,0);
+    const ny=Math.round(w/2)-1,wy=y0+h*.58;
+    for(let k=0;k<ny;k++){const z=-w/2+1.7+k*((w-3.4)/(ny-1));add(sup,box(.1,1,1.3),R3.winMat,xb+.03,wy,z);}
+    const nx=Math.round(l/2.4);for(let k=0;k<nx;k++){const x=xa+1.6+k*((l-3.2)/Math.max(1,nx-1));for(const s of[-1,1])add(sup,box(1.3,1,.1),R3.winMat,x,wy,s*(w/2+.03));}});
+  add(sup,box(10,.25,22.6),STEEL,-53,20.5,0);
+  add(sup,cyl(2.7,2.3,5.5,18),FUN,-63,19.8,0);add(sup,cyl(2.75,2.75,1.5,18),DARK,-63,22.1,0);add(sup,box(5.8,.4,5.8),STEEL2,-63,17.2,0);
+  add(sup,cyl(.2,.28,6,8),STEEL,-52,23.5,0);add(sup,box(.2,.2,5),STEEL2,-52,25,0);add(sup,box(.5,.35,.5),R3.lampMat,-52,26.7,0);add(sup,box(.7,.18,3.5),DARK,-52,22.2,0);
+  /* position lights: red to port (-z), green to starboard (+z) on the bridge wings, a stern light, and floodlights on the deck */
+  add(sup,box(.8,.8,.8),REDL,-53,19.3,-11);add(sup,box(.4,.4,.4),R3.lampMat,-52.7,19.3,-11.3);add(sup,box(.8,.8,.8),GRNL,-53,19.3,11);add(sup,box(.4,.4,.4),R3.lampMat,-52.7,19.3,11.3);
+  add(sup,box(.45,.45,.45),R3.lampMat,-68,10,0);
+  for(const x of[-35,-12,12,36])for(const s of[-1,1]){add(fit,cyl(.1,.1,3.2,6),STEEL2,x,9.7,s*10.5);add(fit,box(.5,.3,.4),R3.lampMat,x,11.3,s*10.5);}
+  g.add(sup);g.userData.house=sup;g.userData.funnelTop=[-63,23,0];g.userData.length=150;g.userData.beam=24;g.userData.freeboard=8;
+  return sh(bake(g,true));}
+/* ---- end of the issue 129 models ---- */
 function mkEnemyMesh(e){
   const g=new THREE.Group();
   const RUST=mat(0x6a2a22),RUST2=mat(0x7a3328),RUST3=mat(0x5a241e),DK=mat(0x2a1a18),BLK=mat(0x1b1c1e),MET=mat(0x4a4440),OLV=mat(0x4b4632),SKIN=mat(0xb08a6a);
