@@ -25,7 +25,7 @@ const mk=(kind)=>{const u=B.makeUnit(kind,G.units[0].x+5,G.units[0].y);G.units.p
   const k2=B.makeKrok();G.kroks.push(k2);ok(k2.tag==='K02'&&k2.name==='KROK K02','a second KROK is K02');
   G.kroks[0].dead=true;const k3=B.makeKrok();ok(k3.tag==='K01','a KROK that is lost leaves K01 to the next ('+k3.tag+')');G.kroks.push(k3);
   const m=mk('mus');ok(m.tag==='M02','another MUS is M02 ('+m.tag+')');
-  ok(Object.values(B.CALLSIGN).join('')==='VHXGBMK','one letter per kind: V H X G B M K ('+Object.values(B.CALLSIGN).join('')+')');
+  ok(Object.values(B.CALLSIGN).join('')==='VHXGBMKC','one letter per kind: V H X G B M K, and C for the downed crew (issue 124) ('+Object.values(B.CALLSIGN).join('')+')');
   ok(G.units.every(u=>u.tag.length===3&&u.tag[0]===B.CALLSIGN[u.kind]),'every tag is a letter and two digits (the chart marks and the panel fit three characters)');}
 /* a save keeps the numbers; an older save without them gets them when it is loaded */
 {G.paused=true;const sv=JSON.parse(JSON.stringify(B.saveState())),before=G.units.map(u=>u.id+':'+u.tag+':'+u.name).join('|'),kb=G.kroks.map(k=>k.id+':'+k.tag).join('|');
