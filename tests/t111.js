@@ -35,8 +35,15 @@ const w2=B.addWreck(P.x,P.y,40,false,'rubble'),b2=put('eng',P.x-20,P.y);b2.post=
 B.towOrder(b2,w2,{x:P.x-400,y:P.y},false);
 run(400,()=>b2.orders[0]&&b2.orders[0].hooked);run(100);
 const mid={x:w2.x,y:w2.y};ok(Math.hypot(mid.x-P.x,mid.y-P.y)>3,'the pile has moved ('+Math.round(Math.hypot(mid.x-P.x,mid.y-P.y))+' m)');
-B.giveOrder(b2,{type:'move',x:P.x+100,y:P.y,post:'off'},false);run(40);
-ok(!w2.tow&&!w2.claimed&&Math.hypot(w2.x-mid.x,w2.y-mid.y)<1.5,'a new order lets go and the pile stays');
+// a plain move keeps the pile on the rope (issue 126, Magnus 3 nov), at half speed, and it waits coupled at the end of the move
+B.giveOrder(b2,{type:'move',x:P.x+60,y:P.y,post:'off'},false);run(40);
+ok(w2.tow===b2.id&&b2.orders[0].type==='move'&&b2.orders[1]&&b2.orders[1].hooked&&b2.orders[1].x==null,'a move keeps the pile on the rope');
+run(2000,()=>b2.orders[0]&&b2.orders[0].type==='tow');run(40);
+ok(w2.tow===b2.id&&Math.hypot(w2.x-(P.x+60),w2.y-P.y)<25,'and the pile came along to the point ('+Math.round(Math.hypot(w2.x-(P.x+60),w2.y-P.y))+' m)');
+ok(b2.orders[0]&&b2.orders[0].type==='tow'&&b2.orders[0].x==null&&w2.tow===b2.id,'waiting there for Lämna lasten här');
+// another kind of order lets go: the pile stays where it was
+const mid2={x:w2.x,y:w2.y};B.giveOrder(b2,{type:'explore',tgt:{x:P.x-300,y:P.y},post:'off'},false);run(40);
+ok(!w2.tow&&!w2.claimed&&Math.hypot(w2.x-mid2.x,w2.y-mid2.y)<1.5,'another order lets go and the pile stays');
 // the click: Bogsera without a place waits coupled for one; the downed crew is not towed
 fresh();
 const w3=B.addWreck(P.x,P.y,40,false,'rubble'),b3=put('eng',P.x-20,P.y);b3.post='off';

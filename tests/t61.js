@@ -132,8 +132,8 @@ const quiet=G=>{for(const e of G.enemies)e.dead=true;G.known.fill(1);G.knownV++;
 // recycling at Birka: 80 % of the build cost, a MUS aboard included; nothing away from the ship
 {B.newGame(1234);const G=B.G;G.running=true;run(.2);const C=B.CARRIER;const v=G.units.find(u=>u.kind==='tank'),h=G.units.find(u=>u.kind==='drone');
  G.wings={'1':[v.id,h.id]};h.x=C.x+400;h.y=C.y;ok(!B.atBirka(h),'a HÖK out at sea cannot be recycled');ok(B.recycle([h])===0&&G.units.includes(h),'and is not');
- v.x=C.x;v.y=C.y;const r0=G.res;ok(B.recycleValue(v)===160+24,'a VARG is worth 160 plus 24 for its MUS ('+B.recycleValue(v)+')');
- B.recycle([v]);ok(!G.units.includes(v)&&!G.units.some(u=>u.kind==='mus'&&u.owner===v.id),'the VARG and its MUS are gone');ok(Math.round(G.res-r0)===184,'184 material back');
+ v.x=C.x;v.y=C.y;const r0=G.res;ok(B.recycleValue(v)===160+48,'a VARG is worth 160 plus 48 for its MUS ('+B.recycleValue(v)+')');
+ B.recycle([v]);ok(!G.units.includes(v)&&!G.units.some(u=>u.kind==='mus'&&u.owner===v.id),'the VARG and its MUS are gone');ok(Math.round(G.res-r0)===208,'208 material back');
  ok(G.wings['1']&&!G.wings['1'].includes(v.id),'it leaves its wing');}
 // a BÄVER from the yard waits in the build bay, takes no service pad, and is not under KROK's spot (18 okt, issue 34)
 {B.START.units=['eng'];B.newGame(1234);const G=B.G;G.running=true;const e=G.units.find(u=>u.kind==='eng'),k=G.kroks[0];const e0={x:e.x,y:e.y};run(15);
