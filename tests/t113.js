@@ -31,4 +31,11 @@ fresh();{const L=B.LANDING,v=put('tank',L.x,L.y-40),h=put('drone',L.x+5,L.y-30),
   B.groupOrder({world:{x:L.x,y:L.y-150},us:[v,h,h2]},false);
   ok(!h.rtb&&!h.orders.some(o=>o.type==='rtb'),'a fit HÖK at 50 % leaves service for the group order');
   ok(h2.rtb,'one at 10 % stays on service');}
+// 145: a finished map carries its date and hour, its link reads back, and the same set-up gives the same island, enemies and vehicle
+{B.newGame(2547,'djup',{uppdrag:'barg',doy:120,tod:6.5});const G0=B.G,r=B.resultOf();ok(r.y===120&&r.h===6.5&&r.o==='djup'&&r.m==='barg','the result keeps the date and hour ('+r.y+', '+r.h+')');
+  const sig=()=>B.G.enemies.map(e=>e.id+Math.round(e.x)+','+Math.round(e.y)).join('|')+'|'+(B.G.misW?Math.round(B.G.misW.x)+','+Math.round(B.G.misW.y):''),a=sig();
+  const q=B.banaParse(B.banaHash(r));ok(q&&q.s===2547&&q.o==='djup'&&q.m==='barg'&&q.y===120&&Math.abs(q.h-6.5)<1e-9,'the link reads back: '+B.banaHash(r));
+  B.newGame(5555);B.newGame(q.s,q.o,B.banaWhen(q));ok(sig()===a&&B.G.start.doy===120&&B.G.start.tod===6.5,'played again: the same enemies, vehicle, date and hour');
+  ok(B.banaParse('#bana-12-nej-barg')===null&&B.banaParse('#tf-x')===null,'a link with an unknown doctrine is not read');
+  const old={s:2547,o:'djup',m:'barg'};B.newGame(old.s,old.o,B.banaWhen(old));ok(B.G.start.own,'a result from before 3 nov gets the island own date and hour');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
