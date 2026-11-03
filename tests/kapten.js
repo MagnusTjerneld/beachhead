@@ -8,7 +8,7 @@
 module.exports=(B,{reach,fpOK,reachVer})=>{
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 // his forces at the end of 1490 and 3019: four VARG, four HÖK, one GETING and one BÄVER, built GETING first and HÖK after the third VARG
-const PLAN=[['scout',1],['tank',2],['tank',3],['drone',2],['tank',4],['drone',4]];
+const PLAN=[['scout',1],['tank',2],['tank',3],['drone',2],['tank',4],['drone',4],['eng',1]];
 const BOUND=120,/* he waited about a minute from spotting to the first attack order (median 26 to 65 s) */WAIT=20,SCAN_T=40,SVC=.6,SVC_IDLE=.85;
 const hurt=u=>u.fighting||B.G.time-(u.lastHit??-99)<6;
 /* service costs material: with none a VARG at service waits for good, so it is not counted as at service (and not sent there) once it is
@@ -157,6 +157,10 @@ return function tick(G){
     K.tgt=e;K.tgtT=K.tgtAt=G.time;K.tgtAny=false;K.bound=null;K.from={x:vc.x,y:vc.y};ord(e.kind==='aa'||aaNear(e)?ready:ready.concat(cover),{enemy:e});return;}
   // nothing in reach: the next bound towards the nearest point or barrier the wing can drive to
   if(K.bound&&G.time-K.bound.t<60&&ready.some(t=>d(t,K.bound)>40)){K.why='på väg';return;}
+  /* issue 119: a point the wing stands beside is held until the B�VER has taken it; before, the wing left it for the next objective (the
+     nearest outside 80 m), came back to it and left again every 8 s for twenty minutes on 2718. With no B�VER alive or built it moves on */
+  {const hold=G.relays.find(r=>!r.captured&&(!r.hid||r.seen)&&d(r,vc)<=80);
+   if(hold&&(en||cnt('eng')>0)){K.why='h�ller punkten';return;}}
   const objs=[...G.relays.filter(r=>!r.captured&&(!r.hid||r.seen)).map(r=>({x:r.x,y:r.y})),...G.barriers.filter(b=>!b.cleared).flatMap(b=>b.sides.filter(s=>s.z!==b.far).map(s=>({x:s.x,y:s.y})))]
     .filter(o=>d(o,vc)>80&&reach(vc.x,vc.y,o.x,o.y)).sort((a,b)=>d(a,vc)-d(b,vc));
   if(!objs.length){K.why='inget mål';return;}
@@ -175,5 +179,5 @@ return function tick(G){
     if(blk&&en&&en.unsafeWait&&en.orders[0]&&en.orders[0].type==='clear'){K.enWait=K.enWait||G.time;if(G.time-K.enWait>60){en.override=true;en.hold=false;K.enWait=null;}}else K.enWait=null;
     return;}
   if(lowShare(G,p,90)<.7&&!scanned('p'+Math.round(p.x/40)+','+Math.round(p.y/40),p,null)){K.why='spanar steget';return;}
-  K.why='steg';K.bound={x:p.x,y:p.y,t:G.time};K.act=G.time;ord(ready.concat(cover),{world:{x:p.x,y:p.y}});
+  K.why='steg';K.bound={x:p.x,y:p.y,t:G.time};if(process.env.T45_DBG)console.log('STEG',Math.round(G.time),'vc',Math.round(vc.x),Math.round(vc.y),'p',Math.round(p.x),Math.round(p.y),'objs',objs.slice(0,3).map(o=>Math.round(o.x)+','+Math.round(o.y)).join(' '),'tanks',tanks.map(t=>Math.round(t.x)+','+Math.round(t.y)+(t.orders[0]?':'+t.orders[0].type:'')).join(' '),'rel',G.relays.map(r=>r.id+(r.captured?'C':'')+(r.hid&&!r.seen?'h':'')+'@'+Math.round(r.x)+','+Math.round(r.y)).join(' '));K.act=G.time;ord(ready.concat(cover),{world:{x:p.x,y:p.y}});
 };};
