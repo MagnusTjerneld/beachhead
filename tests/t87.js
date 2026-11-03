@@ -39,7 +39,7 @@ B.newGame(9949);G().running=true;G().netAll=true;
   const V=B.makeUnit('tank',q.x,q.y);G().units.push(V);V.hp=V.maxhp*.6;G().res=500;B.groupService([V],'Kaptenen');
   ok(until(()=>V.onPad&&V.pad.key==='ship',120)!=null,'a VARG on the beach drives up the bow ramp to a pad on Birka ('+V.state+', eng '+S.state+' pad '+!!S.pad+')');
   V.hp=V.maxhp*.6;ok(B.beachGo(false),'the order to back out is taken');until(()=>G().beach.ph==='run',20);const h0=V.hp;run(5);
-  ok(Math.abs(V.hp-h0)<.01&&B.birkaMoving(),'no service while she moves (VARG on its pad at '+Math.round(V.hp/V.maxhp*100)+' %)');
+  ok(V.hp>h0&&B.birkaMoving(),'service goes on while she moves (issue 134; VARG on its pad from '+Math.round(h0/V.maxhp*100)+' to '+Math.round(V.hp/V.maxhp*100)+' %)');
   const tA=until(()=>G().beach.st==='anchor',300);const b=B.W.beach;ok(tA!=null&&Math.hypot(B.CARRIER.x-b.ax,B.CARRIER.y-b.ay)<.5,'back at the anchorage');
   ok(!onDeckOf(S)&&B.W.baseGrid[B.cellIdx(S.x,S.y)]>1&&d(S,B.CARRIER)>60,'BÄVER, driven off its pad onto the beach after service, is left on land ('+S.state+')');}
 function onDeckOf(u){const f={x:Math.cos(B.CARRIER.a),y:Math.sin(B.CARRIER.a)},dx=u.x-B.CARRIER.x,dy=u.y-B.CARRIER.y;return Math.abs(-dx*f.y+dy*f.x)<16&&Math.abs(dx*f.x+dy*f.y)<45;}
