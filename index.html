@@ -4197,7 +4197,7 @@ function blast(st,by){
 }
 function workStruct(st,u,dt){
   if(st.dead){u.orders.shift();return;}
-  if(STRUCT[st.kind].scen){u.orders.shift();u.path=null;say(u,'Cisternerna och pumphuset får inte rivas.');return;}/* issue 129 */
+  if(STRUCT[st.kind].scen){u.orders.shift();u.path=null;say(u,'Cisternerna får inte rivas.');return;}/* issue 129 */
   st.prog=Math.min(1,st.prog+dt/STRUCT[st.kind].demo);u.state='River '+slabel(st)+' '+Math.round(st.prog*100)+' %';
   if(st.prog>=1){if(u.orders[0]&&u.orders[0].s===st)u.orders.shift();u.path=null;killStruct(st,u,'demo');}
 }
@@ -4932,7 +4932,8 @@ function scenSetup(){const S=G.scen,def=S.def,W=WORLD,sit=scenSites(),L=W.landin
   /* the cisterns (issue 129, 4 nov): the four big ones count against the mission (def.cist.lose of them lost and it is failed), the small
      ones burn when shot but do not count */
   let nb=0,ns=0;for(const t of sit.tanks){const s=scenStruct('cistern',t.big?'CI'+(++nb):'CS'+(++ns),t.x,t.y);s.a=t.a;s.big=t.big;s.r=t.r;s.hp=s.maxhp=t.big?OIL.bigHp:OIL.smallHp;}
-  scenStruct('pumphus','PH1',sit.pump.x,sit.pump.y);
+  /* the pump house is no longer a building that can be shot (Magnus 4 nov: it counted for nothing when it fell); mkOilWorks draws it and
+     its cells stay shut below. STRUCT.pumphus is kept for saves from before */
   /* the bunds and the pump house shut to vehicles, every cell under them and not only the one in the middle (Magnus 4 nov, provspel ö 3100
      kp04: VARG drove through the cisterns); the big bund is 36 m square round its tank, a small group's round its four or six, the pump
      house 12 x 8 m. The pipes stay open, so that the depot does not close the roads */
@@ -7269,7 +7270,10 @@ function mkOilWorks(sit){const g=new THREE.Group(),lamps=[],PIPE=mat(0xb4bab2),P
       for(const o of[-8,8])for(const q of[-3.5,3.5])add(box(.35,5.2,.35),STEEL,c.x+ux*o-uy*q,hc+2.6,c.y+uy*o+ux*q);
       for(const q of[-2,2])add(box(14,.3,1.2),CONC2,c.x-uy*q,hc+.15,c.y+ux*q,ry);for(const o of[-4,4]){const p={x:c.x+ux*o,y:c.y+uy*o};add(box(.9,1.6,.6),mat(0xb83a2a),p.x,hc+.8,p.y,ry);}
       const l=mesh(box(1.2,.2,1.2),R3.lampMat,c.x,hc+5.3,c.y);g.add(l);lamps.push(l);}}
-  g.userData.lamps=lamps;return sh(bake(g,true,{strict:true,keep:lamps}));}
+  g.userData.lamps=lamps;const out=sh(bake(g,true,{strict:true,keep:lamps}));
+  /* the pump house, part of the scenery since 4 nov; added after the bake so that its lamp stays its own */
+  if(sit.pump&&typeof mkPumphus==='function'){const ph=mkPumphus();ph.position.set(sit.pump.x,groundY(sit.pump.x,sit.pump.y),sit.pump.y);out.add(ph);}
+  return out;}
 /* oil tanker (issue 129): 150 m long, 24 m wide, 8 m of freeboard, black below the waterline and red above, a white four-deck superstructure aft with
    windows in R3.winMat, a funnel, the cargo deck with pipes and manifold, two cranes, a foremast, and position and deck lights in R3.lampMat.
    Origin at the waterline amidships, +x toward the bow (the starboard side is +z) */

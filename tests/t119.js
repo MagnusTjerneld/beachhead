@@ -21,7 +21,7 @@ ok(G.power===false,'the island starts dark');
 ok(Object.keys(G.scen.st).length===SC.steps.length,'the scenario has its '+SC.steps.length+' steps');
 ok(G.relays.some(r=>r.type==='kraft')&&G.relays.some(r=>r.type==='olja'),'the power station and the oil depot are points');
 {const C=G.structs.filter(s=>s.kind==='cistern'),big=C.filter(s=>s.big),small=C.filter(s=>s.big===false);
-  ok(big.length===4&&small.length>=4&&small.length<=10&&G.structs.some(s=>s.kind==='pumphus'),'four big cisterns, '+small.length+' small (4 to 10) and a pump house (4 nov)');
+  ok(big.length===4&&small.length>=4&&small.length<=10&&!G.structs.some(s=>s.kind==='pumphus'),'four big cisterns, '+small.length+' small (4 to 10), and the pump house no target (4 nov)');
   ok(big.every(s=>s.maxhp===B.OIL.bigHp)&&small.every(s=>s.maxhp===B.OIL.smallHp&&s.r<6),'the big ones have '+B.OIL.bigHp+' hull and the small ones '+B.OIL.smallHp);}
 {const S=G.scen.sites,J=S.jetty,d=B.W.harbor.dock;
   ok(!!J,'the oil jetty has a berth');
