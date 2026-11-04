@@ -157,10 +157,10 @@ return function tick(G){
     K.tgt=e;K.tgtT=K.tgtAt=G.time;K.tgtAny=false;K.bound=null;K.from={x:vc.x,y:vc.y};ord(e.kind==='aa'||aaNear(e)?ready:ready.concat(cover),{enemy:e});return;}
   // nothing in reach: the next bound towards the nearest point or barrier the wing can drive to
   if(K.bound&&G.time-K.bound.t<60&&ready.some(t=>d(t,K.bound)>40)){K.why='på väg';return;}
-  /* issue 119: a point the wing stands beside is held until the B�VER has taken it; before, the wing left it for the next objective (the
-     nearest outside 80 m), came back to it and left again every 8 s for twenty minutes on 2718. With no B�VER alive or built it moves on */
+  /* issue 119: a point the wing stands beside is held until the BÄVER has taken it; before, the wing left it for the next objective (the
+     nearest outside 80 m), came back to it and left again every 8 s for twenty minutes on 2718. With no BÄVER alive or built it moves on */
   {const hold=G.relays.find(r=>!r.captured&&(!r.hid||r.seen)&&d(r,vc)<=80);
-   if(hold&&(en||cnt('eng')>0)){K.why='h�ller punkten';return;}}
+   if(hold&&(en||cnt('eng')>0)){K.why='håller punkten';return;}}
   const objs=[...G.relays.filter(r=>!r.captured&&(!r.hid||r.seen)).map(r=>({x:r.x,y:r.y})),...G.barriers.filter(b=>!b.cleared).flatMap(b=>b.sides.filter(s=>s.z!==b.far).map(s=>({x:s.x,y:s.y})))]
     .filter(o=>d(o,vc)>80&&reach(vc.x,vc.y,o.x,o.y)).sort((a,b)=>d(a,vc)-d(b,vc));
   if(!objs.length){K.why='inget mål';return;}
