@@ -20,9 +20,22 @@ ok(B.ENEMY_CFG.budget===130,'and the budget is back after the island is made');
 ok(G.power===false,'the island starts dark');
 ok(Object.keys(G.scen.st).length===SC.steps.length,'the scenario has its '+SC.steps.length+' steps');
 ok(G.relays.some(r=>r.type==='kraft')&&G.relays.some(r=>r.type==='olja'),'the power station and the oil depot are points');
-ok(G.structs.filter(s=>s.kind==='cistern').length===4&&G.structs.some(s=>s.kind==='pumphus'),'four cisterns and a pump house');
-{const r=G.relays.find(q=>q.type==='kraft'),o=G.relays.find(q=>q.type==='olja'),hq=B.W.harborQ;
-  ok(Math.hypot(o.x-hq.x,o.y-hq.y)>=250&&Math.hypot(o.x-hq.x,o.y-hq.y)<=420,'the depot lies 250 to 420 m from the harbour ('+Math.round(Math.hypot(o.x-hq.x,o.y-hq.y))+')');
+{const C=G.structs.filter(s=>s.kind==='cistern'),big=C.filter(s=>s.big),small=C.filter(s=>s.big===false);
+  ok(big.length===4&&small.length>=4&&small.length<=10&&G.structs.some(s=>s.kind==='pumphus'),'four big cisterns, '+small.length+' small (4 to 10) and a pump house (4 nov)');
+  ok(big.every(s=>s.maxhp===B.OIL.bigHp)&&small.every(s=>s.maxhp===B.OIL.smallHp&&s.r<6),'the big ones have '+B.OIL.bigHp+' hull and the small ones '+B.OIL.smallHp);}
+{const S=G.scen.sites,J=S.jetty,d=B.W.harbor.dock;
+  ok(!!J,'the oil jetty has a berth');
+  if(J){let deep=true;for(let s=-85;s<=85;s+=5)for(let w=-13;w<=13;w+=6.5)if(B.heightAt(J.x+J.ux*s-J.uy*w,J.y+J.uy*s+J.ux*w)>-3)deep=false;
+    ok(deep,'the tanker\'s berth is 3 m deep or more under all of her and 10 m beyond her ends');
+    ok(J.dd>=130&&Math.hypot(J.x-d.x,J.y-d.y)>=130,'the berth lies 130 m or more from Birka\'s ('+Math.round(Math.hypot(J.x-d.x,J.y-d.y))+' m)');
+    ok(J.gap<=45,'its side is '+J.gap+' m from the shore (45 at most)');
+    const near=S.tanks.filter(t=>t.big).map(t=>Math.hypot(t.x-J.root.x,t.y-J.root.y));ok(Math.min(...near)<=220,'the nearest big cistern is '+Math.round(Math.min(...near))+' m from the jetty\'s root');
+    const last=S.pipes.find(l=>{const e=l[l.length-1];return Math.hypot(e.x-J.plat.x,e.y-J.plat.y)<1;});ok(!!last&&last.some(p=>Math.hypot(p.x-S.pump.x,p.y-S.pump.y)<1),'a pipe runs from the big cisterns by the pump house out onto the jetty');}
+  const big=S.tanks.filter(t=>t.big),hd=S.pipes[0];ok(big.every(t=>S.pipes.some(l=>l.length===2&&Math.abs(l[0].x-t.x)<.1&&Math.abs(l[1].y-hd[0].y)<.1)),'every big cistern has a pipe to the header');
+  ok(S.smalls.every(sm=>S.pipes.some(l=>l.length===3&&Math.abs(l[2].y-sm.y)<.1)),'every small group is piped to the big one');
+  ok(B.W.trees.every(t=>Math.hypot(t.x-S.cist.x,t.y-S.cist.y)>B.OIL.bigR+20),'no trees on the big pad');}
+{const r=G.relays.find(q=>q.type==='kraft'),o=G.relays.find(q=>q.type==='olja'),hq=B.W.harborQ,d=B.W.harbor.dock,dq=Math.min(Math.hypot(o.x-hq.x,o.y-hq.y),Math.hypot(o.x-d.x,o.y-d.y));
+  ok(dq>=60&&dq<=220,'the depot lies 60 to 220 m from the quay ('+Math.round(dq)+', 4 nov: by the harbour)');
   ok(B.scenShore(B.W)[B.cellIdx(r.x,r.y)]>=220,'the power station lies well inland ('+Math.round(B.scenShore(B.W)[B.cellIdx(r.x,r.y)])+' m from the shore)');
   ok(r.guards.length>=2&&o.guards.length>=3,'the points are guarded ('+r.guards.length+' and '+o.guards.length+')');}
 // the dark and the power: windows and lamps share 0 without power, then rise over four seconds
@@ -69,7 +82,9 @@ ok(st('tanker').open&&G.scen.ships.length===1,'and the tanker is under way');
 // the tanker
 {const tf=G.scen.ships[0],R=G.scen.tfRoute,hq=B.W.harborQ;
   ok(R&&R.length>20,'its route is planned ('+(R&&R.length)+' poses)');ok(Math.hypot(tf.x-hq.x,tf.y-hq.y)>1500,'it starts far out ('+Math.round(Math.hypot(tf.x-hq.x,tf.y-hq.y))+' m from the harbour)');
-  const d=B.W.harbor.dock,end=R[R.length-1];ok(Math.hypot(end.x-d.x,end.y-d.y)>=150,'and ends 150 m or more from Birka\'s berth ('+Math.round(Math.hypot(end.x-d.x,end.y-d.y))+' m)');
+  const d=B.W.harbor.dock,end=R[R.length-1],J=G.scen.sites.jetty;ok(Math.hypot(end.x-d.x,end.y-d.y)>=150,'and ends 150 m or more from Birka\'s berth ('+Math.round(Math.hypot(end.x-d.x,end.y-d.y))+' m)');
+  ok(J&&Math.hypot(end.x-J.x,end.y-J.y)<.5&&Math.abs(Math.sin(end.a-J.a))<1e-6,'alongside the oil jetty');
+  {const p=R[R.length-2];ok(Math.abs(Math.hypot(p.x-J.x,p.y-J.y)-B.OIL.stage)<1,'from a pose '+B.OIL.stage+' m off it, sideways');}
   // a coast bunker in reach shoots it
   const x0=tf.x,y0=tf.y;let vmax=0;run(1200,()=>{vmax=Math.max(vmax,tf.v);return false;});ok(Math.hypot(tf.x-x0,tf.y-y0)>100&&vmax<=6.01&&vmax>5,'it speeds up to 6 m/s and no more ('+Math.round(Math.hypot(tf.x-x0,tf.y-y0))+' m in 60 s, top speed '+vmax.toFixed(2)+')');
   const hp0=tf.hp,bk=B.makeEnemy({id:'XB',kind:'turret',x:tf.x+100,y:tf.y,coast:true});bk.seen=true;G.enemies.push(bk);run(160);ok(tf.hp<hp0,'a coast bunker in reach shoots it ('+hp0+' to '+tf.hp+')');bk.dead=true;tf.hp=tf.maxhp;
@@ -78,10 +93,12 @@ ok(st('tanker').open&&G.scen.ships.length===1,'and the tanker is under way');
 ok(G.scen.done&&G.over&&!G.failed,'the scenario is won');
 // three cisterns lost fail the scenario
 B.newGame(1,'auto',{scen:'stroemmen'});G=B.G;G.running=true;run(2);
-for(const s of G.structs.filter(q=>q.kind==='cistern').slice(0,2))B.killStruct(s,null,'shot');
+for(const s of G.structs.filter(q=>q.kind==='cistern'&&q.big===false))B.killStruct(s,null,'shot');
+G.scen.st.cist.open=true;run(2);ok(!G.over,'all the small cisterns lost: no failure, only the big ones count');
+for(const s of G.structs.filter(q=>q.kind==='cistern'&&q.big).slice(0,2))B.killStruct(s,null,'shot');
 run(2);ok(!G.over,'two of four cisterns lost: not yet');
 G.scen.st.cist.open=true;
-B.killStruct(G.structs.filter(q=>q.kind==='cistern'&&!q.dead)[0],null,'shot');run(2);
+B.killStruct(G.structs.filter(q=>q.kind==='cistern'&&q.big&&!q.dead)[0],null,'shot');run(2);
 ok(G.over&&G.failed,'three of four cisterns lost: the scenario fails');
 // a tanker that is sunk fails it
 B.newGame(1,'auto',{scen:'stroemmen'});G=B.G;G.running=true;run(2);

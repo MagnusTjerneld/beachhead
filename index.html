@@ -4760,9 +4760,9 @@ const SCEN={stroemmen:{
   id:'stroemmen',name:'Strömmen och cisternerna',seed:3100,doc:'fastning',when:{doy:319,tod:22},budget:110,limit:3600,
   cist:{n:4,hp:120,lose:3},tf:{hp:500,v:6,from:1800,gap:150,name:'TF Gotland Olja'},
   brief:{
-    lage:'Fienden har släckt ön för att dölja sina förflyttningar på natten och håller reservkraftverket. Ön har varit utan ström i tre dygn. Vid hamnen ligger en oljehamn med fyra cisterner, som tankfartyget Gotland Olja ska hämta. Utan ström fungerar ingen sändare, och utan radiomasten kan Birka inte tala med fartyget.',
-    uppgift:'Ta reservkraftverket så att nätet får ström, ta sedan radiomasten och oljehamnen, håll cisternerna mot fiendens motanfall och förtöj Birka i hamnen. När hamnen är säkrad går tankfartyget in. Uppdraget är klart när det har angjort.',
-    begr:'Skjut inte på cisternerna: är tre av fyra förstörda har uppdraget misslyckats. Tankfartyget får inte sänkas. Total tid 60 minuter, 35 till 45 väntas.'},
+    lage:'Fienden har släckt ön för att dölja sina förflyttningar på natten och håller reservkraftverket. Ön har varit utan ström i tre dygn. På höjden bakom hamnen ligger en oljehamn med fyra stora cisterner och flera små, och en egen oljepir där tankfartyget Gotland Olja ska lägga till och lasta. Utan ström fungerar ingen sändare, och utan radiomasten kan Birka inte tala med fartyget.',
+    uppgift:'Ta reservkraftverket så att nätet får ström, ta sedan radiomasten och oljehamnen, håll cisternerna mot fiendens motanfall och förtöj Birka i hamnen. När hamnen är säkrad går tankfartyget in till oljepiren. Uppdraget är klart när det har lagt till.',
+    begr:'Skjut inte på cisternerna: är tre av de fyra stora förstörda har uppdraget misslyckats. Tankfartyget får inte sänkas. Total tid 60 minuter, 35 till 45 väntas.'},
   /* the enemy's own, laid out after the island's defence (the fortress doctrine round the command centre stays, but it is not a goal) */
   extra:[
     {at:'kraft',kind:'turret',n:2,r:[55,85],g:'kraft'},{at:'kraft',kind:'aa',n:1,r:[70,95],g:'kraft'},
@@ -4779,9 +4779,9 @@ const SCEN={stroemmen:{
     {id:'mast',name:'Radiomasten',needs:['strom'],goal:{type:'take',ref:'radar'},hint:'Ta radiomasten (radarstationen) så att Birka kan tala med fartyget.',
       onStart:[{do:'say',text:'Masten kan kopplas in nu när det finns ström. Ta radarstationen.'}],
       onDone:[{do:'say',who:'TF Gotland Olja',text:'Vi ligger 40 distansminuter ut, redo på er signal. Säg till när hamnen är säkrad.'}]},
-    {id:'cist',name:'Cisternerna',needs:['mast'],goal:{type:'take',ref:'olja'},hint:'Ta oljehamnen. Skjut inte på cisternerna: tre förstörda och uppdraget är förlorat.',
-      onStart:[{do:'say',text:'Oljehamnen ligger vid hamnen. Skjut inte på cisternerna.'},{do:'mark',id:'olja',at:'olja',r:200,label:'OLJEHAMNEN'}],
-      onDone:[{do:'unmark',id:'olja'},{do:'say',text:'Cisternerna är våra. Tankfartygets kapten vill ha hamnen säkrad och Birka förtöjd innan han går in. Räkna med ett motanfall.'},{do:'give',res:100}]},
+    {id:'cist',name:'Cisternerna',needs:['mast'],goal:{type:'take',ref:'olja'},hint:'Ta oljehamnen. Skjut inte på cisternerna: tre av de fyra stora förstörda och uppdraget är förlorat.',
+      onStart:[{do:'say',text:'Oljehamnen ligger på höjden bakom hamnen. Skjut inte på cisternerna.'},{do:'mark',id:'olja',at:'olja',r:200,label:'OLJEHAMNEN'}],
+      onDone:[{do:'unmark',id:'olja'},{do:'say',text:'Cisternerna är våra. Tankfartygets kapten vill ha hamnen säkrad och Birka förtöjd innan fartyget går in. Räkna med ett motanfall.'},{do:'give',res:100}]},
     {id:'motanfall',name:'Motanfallet',needs:['cist'],goal:{type:'any',of:[{type:'time',t:405},{type:'wavesDead'}]},hint:'Håll cisternerna. Fienden landar vid en annan strand och går på dem.',
       onStart:[{do:'say',text:'Rörelser vid kusten. Fienden förbereder ett motanfall mot cisternerna.'},{do:'mark',id:'strand',at:'strand2',r:150,label:'MOTANFALL'},
         {do:'spawn',after:45,group:'w1',units:{inf:6,at:2,light:1},at:'strand2',target:'cistern'},
@@ -4789,7 +4789,7 @@ const SCEN={stroemmen:{
       onDone:[{do:'unmark',id:'strand'},{do:'say',text:'Motanfallet är slaget.'},{do:'give',res:100}]},
     {id:'hamn',name:'Hamnen',needs:['mast'],goal:{type:'all',of:[{type:'take',ref:'hamn'},{type:'docked'}]},hint:'Ta hamnen och förtöj Birka vid kajen. Tankfartyget går in när hon ligger där.',
       onDone:[{do:'say',text:'Hamnen är säkrad och Birka ligger vid kaj.'}]},
-    {id:'tanker',name:'Tankfartyget',needs:['motanfall','hamn'],goal:{type:'dock',ref:'tf'},hint:'Håll farleden fri. Kustbunkrarna skjuter på fartyget, och det får inte sänkas.',
+    {id:'tanker',name:'Tankfartyget',needs:['motanfall','hamn'],goal:{type:'dock',ref:'tf'},hint:'Håll farleden fri. Tankfartyget går in till oljepiren. Kustbunkrarna skjuter på det, och det får inte sänkas.',
       onStart:[{do:'say',who:'TF Gotland Olja',text:'Går in. Håll farleden fri.'},{do:'ship',id:'tf'}],
       onDone:[{do:'say',who:'TF Gotland Olja',text:'Förtöjda. Tack för hjälpen, Birka.'},{do:'end'}]}]
 }};
@@ -4798,9 +4798,35 @@ const KRAFT_MIN=220;
 const SCEN_CFG={wave:.2,lampSpeed:90,lampAll:8};
 /* a scenario's state, made when the game starts */
 function scenInit(def){const S={def,id:def.id,st:{},q:[],marks:[],done:false,ships:[],powerT:-99,groups:{},fired:0};for(const s of def.steps)S.st[s.id]={open:false,done:false,t0:0};return S;}
-/* the island's places for the scenario, from the world alone (so a search over seeds can ask it): the oil depot 250 to 420 m from the
-   harbour on level, open ground; the power station 350 to 700 m from the shore, far from the depot; a second and a third beach for the
-   counterattack. null when the island has no room for it */
+/* the island's places for the scenario, from the world alone (so a search over seeds can ask it): the oil depot by the harbour, the power
+   station 220 to 700 m from the shore and far from the depot, a second and a third beach for the counterattack. null when the island has
+   no room for it.
+   The oil depot (issue 129, Magnus 4 nov, from his pictures of Bergs oljehamn and Stora Höggarn): the four big cisterns on a level pad 60
+   to 220 m from the quay, one or two groups of small ones beside them, and an oil jetty of its own along the shore beside Birka's berth,
+   where the tanker lies alongside. Pipes join the cisterns of a group, the groups to each other, and the nearest of the big ones by the
+   pump house down to the jetty. A search on 100 islands (4 nov) found the pads on 95 and a berth on all, both within 200 m of each other
+   on 91 */
+const OIL={pad:[60,220],bigR:50,smallR:30,smallN:[4,6],smallMax:10,smallTank:5.5,bigHp:120,smallHp:60,hull:[150,26],berthMin:130,berthMax:450,pathKeep:34,gapMax:45,endKeep:10,depth:3,stage:36,plat:[44,8],deck:2.4};
+/* the distance from (px,py) to the segment a b */
+const oilSegD=(px,py,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy||1,t=clamp(((px-a.x)*dx+(py-a.y)*dy)/l2,0,1);return Math.hypot(px-a.x-dx*t,py-a.y-dy*t);};
+/* the berths for the tanker: a hull of OIL.hull on deep water joined to the open sea, clear of Birka's way in and of her berth, its side
+   within OIL.gapMax m of a fairly straight shore. Each with its heading a, its along (ux,uy) and landward (vx,vy) directions, the gap to
+   land and the root of the jetty on land */
+function scenBerths(W){const g=W.baseGrid||W.grid,d=W.harbor.dock,at=(x,y)=>x<0||y<0||x>=WW||y>=WH?DEEP:g[cellIdx(x,y)];
+  const sea=new Uint8Array(GW*GH),st=[];for(let i=0;i<GW;i++)for(const c of[i,(GH-1)*GW+i,i*GW,i*GW+GW-1])if(g[c]===DEEP&&!sea[c]){sea[c]=1;st.push(c);}
+  while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const m=ny*GW+nx;if(!sea[m]&&g[m]===DEEP){sea[m]=1;st.push(m);}}}
+  /* Birka's way in, widened by OIL.pathKeep, and her berth */
+  const keep=new Uint8Array(GW*GH),kr=Math.ceil(OIL.pathKeep/CELL);for(const p of W.birkaPath.pts.concat([d])){const gx=Math.floor(p.x/CELL),gy=Math.floor(p.y/CELL);
+    for(let dy=-kr;dy<=kr;dy++)for(let dx=-kr;dx<=kr;dx++){const x=gx+dx,y=gy+dy;if(x<0||y<0||x>=GW||y>=GH)continue;if(Math.hypot(dx,dy)*CELL<=OIL.pathKeep)keep[y*GW+x]=1;}}
+  const wet=(x,y)=>x>=0&&y>=0&&x<WW&&y<WH&&sea[cellIdx(x,y)]===1&&!keep[cellIdx(x,y)],hard=v=>v===LAND||v===ROCK||v===BEACH,L2=OIL.hull[0]/2,B2=OIL.hull[1]/2,out=[];
+  for(let cy=d.y-OIL.berthMax;cy<=d.y+OIL.berthMax;cy+=20)for(let cx=d.x-OIL.berthMax;cx<=d.x+OIL.berthMax;cx+=20){const dd=Math.hypot(cx-d.x,cy-d.y);if(dd<OIL.berthMin||dd>OIL.berthMax||!wet(cx,cy))continue;
+    for(let k=0;k<16;k++){const a=k*PI/16,ux=Math.cos(a),uy=Math.sin(a),px0=-uy,py0=ux;let ok=true;
+      for(let s=-L2-OIL.endKeep;s<=L2+OIL.endKeep&&ok;s+=7.5)for(let w=-B2;w<=B2;w+=6.5){const px=cx+ux*s+px0*w,py=cy+uy*s+py0*w;if(!wet(px,py)||heightAt(px,py)>-OIL.depth){ok=false;break;}}/* deep enough under all of her, with room at the ends (4 nov: her stern lay over a slope) */
+      if(!ok)continue;
+      for(const sg of[1,-1]){const vx=px0*sg,vy=py0*sg;let gap=null;for(let t=B2;t<=B2+OIL.gapMax;t+=5)if(hard(at(cx+vx*t,cy+vy*t))){gap=t-B2;break;}if(gap==null)continue;
+        let along=0;for(const s of[-50,0,50])for(let t=B2;t<=B2+OIL.gapMax+30;t+=5)if(hard(at(cx+ux*s+vx*t,cy+uy*s+vy*t))){along++;break;}if(along<2)continue;
+        out.push({x:cx,y:cy,a,ux,uy,vx,vy,gap,dd,root:{x:cx+vx*(B2+gap),y:cy+vy*(B2+gap)}});}}}
+  return out;}
 /* the distance in metres from the nearest water or beach, over land (the navigator's field is the distance to land, over water) */
 function scenShore(W){if(W._shoreD)return W._shoreD;const g=W.baseGrid||W.grid,N=GW*GH,D=new Float32Array(N),d1=CELL,d2=CELL*Math.SQRT2;
   for(let i=0;i<N;i++)D[i]=g[i]===LAND||g[i]===ROCK?1e9:0;
@@ -4809,30 +4835,65 @@ function scenShore(W){if(W._shoreD)return W._shoreD;const g=W.baseGrid||W.grid,N
   return W._shoreD=D;}
 function scenSites(){const W=WORLD;if(W._sites!==undefined)return W._sites;
   const hq=W.harborQ,L=W.landing;if(!W.harbor||!W.birkaPath||!hq||!L){W._sitesWhy='harbour/landing';return W._sites=null;}
-  const open=(gx,gy,r)=>!misNear(gx,gy,r,v=>v!==LAND),D=scenShore(W),zl=W.zones&&W.zones.land,inZ=(x,y)=>!W.zid||zl==null||W.zid[cellIdx(x,y)]===zl;
-  const flat=(x,y,h)=>{let lo=1e9,hi=-1e9;for(const[dx,dy]of[[0,0],[-h,-h],[h,-h],[-h,h],[h,h]]){const v=heightAt(x+dx,y+dy);lo=Math.min(lo,v);hi=Math.max(hi,v);}return hi-lo;};
-  const rel=(x,y,d)=>W.relays.every(r=>Math.hypot(x-r.x,y-r.y)>d);
-  let cist=null;for(const r of[6,5,4]){cist=misCell((x,y,gx,gy)=>{const d=Math.hypot(x-hq.x,y-hq.y);return d>=250&&d<=420&&open(gx,gy,r)&&rel(x,y,60)&&flat(x,y,45)<4;},
-      (x,y,gx,gy)=>-Math.abs(Math.hypot(x-hq.x,y-hq.y)-330)*.1-flat(x,y,45)*4+hash2(gx,gy,129)*3);if(cist)break;}
-  if(!cist){W._sitesWhy='oljehamn';return W._sites=null;}
+  const open=(gx,gy,r)=>!misNear(gx,gy,r,v=>v!==LAND),D=scenShore(W),dk=W.harbor.dock;
+  const flat=(x,y,h)=>{let lo=1e9,hi=-1e9;for(const[dx,dy]of[[0,0],[-h,-h],[h,-h],[-h,h],[h,h],[0,-h],[0,h],[-h,0],[h,0]]){const v=heightAt(x+dx,y+dy);lo=Math.min(lo,v);hi=Math.max(hi,v);}return hi-lo;};
+  const rel=(x,y,d)=>W.relays.every(r=>Math.hypot(x-r.x,y-r.y)>d),Dd=W.decor||{},masts=(W.structs||[]).filter(s=>s.kind==='mast');
+  /* a pad of radius r: open land (no water, rock or building within r), clear of the points, the masts, the villas and the lighthouse */
+  const padOK=(x,y,gx,gy,r)=>open(gx,gy,Math.ceil(r/CELL))&&rel(x,y,r+30)&&masts.every(m=>Math.hypot(m.x-x,m.y-y)>r+15)&&(Dd.villas||[]).every(v=>Math.hypot(v.x-x,v.y-y)>r+10)&&!(Dd.light&&Math.hypot(Dd.light.x-x,Dd.light.y-y)<r+30);
+  const dq=(x,y)=>Math.min(Math.hypot(x-hq.x,y-hq.y),Math.hypot(x-dk.x,y-dk.y));
+  /* the big pad: every cell that will do, scored on flatness and a distance of about 130 m from the quay; then the berth nearest to it */
+  const big=[];for(const r of[OIL.bigR,OIL.bigR-10]){for(let gy=6;gy<GH-6;gy++)for(let gx=6;gx<GW-6;gx++){if(W.grid[gy*GW+gx]!==LAND)continue;const x=gx*CELL+5,y=gy*CELL+5,q=dq(x,y);if(q<OIL.pad[0]||q>OIL.pad[1])continue;
+      if(!padOK(x,y,gx,gy,r))continue;const f=flat(x,y,45);if(f>5)continue;big.push({x,y,sc:-f*4-Math.abs(q-130)*.05+hash2(gx,gy,129)*2});}if(big.length)break;}
+  if(!big.length){W._sitesWhy='oljehamn';return W._sites=null;}
+  const berths=scenBerths(W);let cist=null,jetty=null,best=-1e9;
+  for(const p of big){let js=-60,jb=null;for(const b of berths){const s=-Math.max(0,Math.hypot(b.root.x-p.x,b.root.y-p.y)-120)*.3-Math.abs(b.gap-15)*.4-b.dd*.01;if(s>js){js=s;jb=b;}}
+    if(p.sc+js>best){best=p.sc+js;cist=p;jetty=jb;}}
+  cist={x:cist.x,y:cist.y};
+  /* the small groups: one or two pads of OIL.smallR, 85 to 200 m from the big one and 70 m from each other, within 260 m of the quay */
+  const smalls=[];for(let n=0;n<2;n++){const p=misCell((x,y,gx,gy)=>{const db=Math.hypot(x-cist.x,y-cist.y);return db>=85&&db<=200&&dq(x,y)<=260&&smalls.every(s=>Math.hypot(s.x-x,s.y-y)>=70)&&padOK(x,y,gx,gy,OIL.smallR)&&flat(x,y,28)<4;},
+      (x,y,gx,gy)=>-Math.hypot(x-cist.x,y-cist.y)*.05-flat(x,y,28)*3-(jetty?Math.hypot(x-jetty.root.x,y-jetty.root.y)*.02:0)+hash2(gx,gy,135)*2);if(!p)break;smalls.push(p);}
   const kraft=misCell((x,y,gx,gy)=>{const e=D[cellIdx(x,y)];return e>=KRAFT_MIN&&e<=700&&open(gx,gy,2)&&rel(x,y,110)&&Math.hypot(x-cist.x,y-cist.y)>=250&&Math.hypot(x-L.x,y-L.y)>250;},
     (x,y,gx,gy)=>Math.hypot(x-cist.x,y-cist.y)*.1+hash2(gx,gy,130)*5);
   if(!kraft){W._sitesWhy='kraftverk';return W._sites=null;}
   const beach=(minD,avoid)=>misCell((x,y,gx,gy)=>{const dc=Math.hypot(x-cist.x,y-cist.y);return dc>=minD&&dc<=1100&&Math.hypot(x-L.x,y-L.y)>350&&misNear(gx,gy,3,v=>v===BEACH||v===SHAL||v===DEEP)&&open(gx,gy,1)&&rel(x,y,60)&&(!avoid||Math.hypot(x-avoid.x,y-avoid.y)>350);},
     (x,y,gx,gy)=>-Math.abs(Math.hypot(x-cist.x,y-cist.y)-750)*.05+hash2(gx,gy,131)*2);
   const s2=beach(600)||beach(450);if(!s2){W._sitesWhy='strand';return W._sites=null;}const s3=beach(450,s2)||s2;
-  const pump=[[0,-52],[0,52],[-52,0],[52,0]].map(([dx,dy])=>({x:cist.x+dx,y:cist.y+dy})).find(p=>passLand(cellIdx(p.x,p.y)))||{x:cist.x+52,y:cist.y};
+  /* the tanks: the big ones 2 x 2 at 54 m round the pad, the far row turned about so that every outlet faces the header between the rows;
+     the small ones 2 x 2 or 2 x 3 at 16 m */
+  const tanks=[];[[-27,-27,0],[27,-27,0],[-27,27,PI],[27,27,PI]].forEach(([dx,dy,a])=>tanks.push({x:cist.x+dx,y:cist.y+dy,a,big:true,r:11,g:0}));
+  let nS=0;smalls.forEach((s,i)=>{const n=Math.min(OIL.smallN[hash2(Math.round(s.x),Math.round(s.y),136)<.5?0:1],OIL.smallMax-nS<6?4:6);nS+=n;const xs0=0,xs=n===6?[-16,0,16]:[-8,8];for(const dx of xs)for(const dy of[-8,8])tanks.push({x:s.x+dx,y:s.y+dy,a:0,big:false,r:OIL.smallTank,g:i+1});s.n=n;s.hx=n===6?16:8;});
+  /* the pipes, as lines of points on the ground: the header between the big rows out to 50 m either side, beyond the bunds; feeders from
+     each outlet; each small group's header and an L to the nearer end of the big one (outside the bunds); and from the end nearer the
+     jetty, round the corner of the bunds if it lies to the side, by the pump house to the jetty's root */
+  const pipes=[],C=cist;pipes.push([{x:C.x-50,y:C.y},{x:C.x+50,y:C.y}]);
+  for(const t of tanks.filter(t=>t.big))pipes.push([{x:t.x,y:t.y+(t.a?-19.6:19.6)},{x:t.x,y:C.y}]);
+  for(const s of smalls){pipes.push([{x:s.x-s.hx-6,y:s.y},{x:s.x+s.hx+6,y:s.y}]);
+    for(const t of tanks.filter(t=>!t.big&&Math.hypot(t.x-s.x,t.y-s.y)<30))pipes.push([{x:t.x,y:t.y+(t.y<s.y?OIL.smallTank:-OIL.smallTank)},{x:t.x,y:s.y}]);
+    const ex=C.x+(s.x>C.x?50:-50),sx=s.x+(s.x>C.x?-(s.hx+6):s.hx+6);pipes.push([{x:ex,y:C.y},{x:ex,y:s.y},{x:sx,y:s.y}]);}
+  let pump=null;
+  if(jetty){const R=jetty.root,ex=C.x+(R.x>C.x?50:-50),line=[{x:ex,y:C.y}];if(Math.abs(R.y-C.y)>50)line.push({x:ex,y:C.y+Math.sign(R.y-C.y)*50});
+    const a=line[line.length-1];for(let f=.35;f<=.8&&!pump;f+=.05){const p={x:lerp(a.x,R.x,f),y:lerp(a.y,R.y,f)};if(W.grid[cellIdx(p.x,p.y)]===LAND&&tanks.every(t=>Math.hypot(t.x-p.x,t.y-p.y)>t.r+12))pump=p;}
+    if(!pump){const p={x:lerp(a.x,R.x,.5),y:lerp(a.y,R.y,.5)};if(passLand(cellIdx(p.x,p.y)))pump=p;}
+    if(pump)line.push(pump);line.push(R);const B2=OIL.hull[1]/2,pl={x:jetty.x+jetty.vx*(B2+1+OIL.plat[1]/2),y:jetty.y+jetty.vy*(B2+1+OIL.plat[1]/2)};line.push(pl);pipes.push(line);jetty.plat=pl;}
+  if(!pump)pump=[[0,-60],[0,60],[-60,0],[60,0]].map(([dx,dy])=>({x:cist.x+dx,y:cist.y+dy})).find(p=>passLand(cellIdx(p.x,p.y)))||{x:cist.x+60,y:cist.y};
   for(const p of[cist,kraft,s2,s3]){const a=astar(L.x,L.y,p.x,p.y,i=>W.baseGrid[i]===LAND||W.baseGrid[i]===BEACH,()=>1);if(!a||!a.length){W._sitesWhy='väg över land';return W._sites=null;}}/* the walk from the beach: on the base grid: barriers are for BÄVER to blow */
-  return W._sites={cist,kraft,s2,s3,pump};}
+  return W._sites={cist,kraft,s2,s3,pump,smalls,tanks,pipes,jetty};}
 /* where the tanker comes from and its way in: open water about SCEN.tf.from m from the harbour (the nearest to that the navigator
-   finds a way from), and the navigator's route to the berth off the quay; the tanker's hull is longer than Birka's, but the route is
-   hers (a first version) */
+   finds a way from), and the navigator's route; with an oil jetty to a pose OIL.stage m off it, then sideways on her thrusters alongside
+   (issue 129, 4 nov); without one it stops in the approach to Birka's berth as before. The navigator plans for Birka's hull, the tanker's
+   is longer (a first version) */
 function scenTankerPlan(){const W=WORLD;if(W._tf!==undefined)return W._tf;
-  const P=W.birkaPath;if(!P)return W._tf=null;const s0=P.pts[0],d=W.harbor.dock,want=SCEN.stroemmen.tf.from,cand=[];
+  const P=W.birkaPath;if(!P)return W._tf=null;const s0=P.pts[0],d=W.harbor.dock,want=SCEN.stroemmen.tf.from,cand=[],sit=scenSites(),J=sit&&sit.jetty;
   for(let r=want-300;r<=want+300;r+=100)for(let a=0;a<36;a++){const x=s0.x+Math.cos(a*TAU/36)*r,y=s0.y+Math.sin(a*TAU/36)*r;if(x<80||y<80||x>WW-80||y>WH-80)continue;
     if(W.baseGrid[cellIdx(x,y)]!==DEEP)continue;cand.push({x,y,k:Math.abs(r-want)});}
   cand.sort((a,b)=>a.k-b.k);const mN=NAV.maxN;NAV.maxN=120000;let plan=null;
-  for(const c of cand.slice(0,10)){const th=Math.atan2(s0.y-c.y,s0.x-c.x);if(!navFree(W,c.x,c.y,th))continue;
+  if(J){const stg={x:J.x-J.vx*OIL.stage,y:J.y-J.vy*OIL.stage};
+    for(const c of cand.slice(0,6)){const th=Math.atan2(stg.y-c.y,stg.x-c.x);if(!navFree(W,c.x,c.y,th))continue;
+      const t0=Math.abs(angWrap(J.a-th))<PI/2?J.a:J.a+PI;
+      for(const tg of[t0,t0+PI]){const R=birkaNav(W,{x:c.x,y:c.y,th},{x:stg.x,y:stg.y,th:tg});if(!R)continue;
+        R[R.length-1].v=BIRKA_MOVE.glide;R.push({x:J.x,y:J.y,a:tg+PI,v:0});plan={from:c,route:R,jetty:true};break;}
+      if(plan)break;}}
+  if(!plan)for(const c of cand.slice(0,10)){const th=Math.atan2(s0.y-c.y,s0.x-c.x);if(!navFree(W,c.x,c.y,th))continue;
     const R=birkaNav(W,{x:c.x,y:c.y,th},{x:s0.x,y:s0.y,th:d.a+PI});if(R){/* the quay off Birka's berth is 20 m long, so the tanker stops in the approach 150 m from it (A2 asked 130 m between the ships' berths) */
       let k=R.length-1;while(k>0&&Math.hypot(R[k].x-d.x,R[k].y-d.y)<SCEN.stroemmen.tf.gap)k--;R.length=k+1;R[k].v=0;plan={from:c,route:R};break;}}
   NAV.maxN=mN;return W._tf=plan;}
@@ -4844,16 +4905,22 @@ function scenPlace(c,r0,r1,a0,spread,k,taken){for(let t=0;t<60;t++){const a=a0==
    as buildings, the enemy's own round them. false when the island cannot hold it */
 function scenSetup(){const S=G.scen,def=S.def,W=WORLD,sit=scenSites(),L=W.landing;if(!sit)return false;
   const mk=(id,type,p,guards)=>{const r={id,type,hid:false,seen:true,x:p.x,y:p.y,prog:0,captured:false,lockMsg:null,guards,bld:{x:p.x,y:p.y,a:0}};G.relays.push(r);return r;};
-  const taken=G.enemies.map(e=>({x:e.x,y:e.y})).concat(G.relays.map(r=>({x:r.x,y:r.y})),[sit.cist,sit.kraft,sit.pump]);
+  const taken=G.enemies.map(e=>({x:e.x,y:e.y})).concat(G.relays.map(r=>({x:r.x,y:r.y})),[sit.cist,sit.kraft,sit.pump],sit.tanks);
   const where={kraft:sit.kraft,olja:sit.cist},guard={kraft:[],olja:[]};let n=0;
   for(const x of def.extra){const c=where[x.at],a0=x.to==='landing'?Math.atan2(L.y-c.y,L.x-c.x):null;
     for(let i=0;i<x.n;i++){const p=scenPlace(c,x.r[0],x.r[1],a0,x.spread||TAU,++n,taken);if(!p)continue;taken.push(p);
       const e=makeEnemy({id:'S'+(x.at==='kraft'?'K':'O')+n,kind:x.kind,x:p.x,y:p.y});G.enemies.push(e);if(x.g)guard[x.g].push(e.id);}}
   mk('KV','kraft',sit.kraft,guard.kraft);mk('OH','olja',sit.cist,guard.olja);
-  const cs=[[-27,-27],[27,-27],[-27,27],[27,27]].slice(0,def.cist.n);
-  cs.forEach(([dx,dy],i)=>scenStruct('cistern','CI'+(i+1),sit.cist.x+dx,sit.cist.y+dy));scenStruct('pumphus','PH1',sit.pump.x,sit.pump.y);
-  /* the trees come off the depot's ground and the power station's yard (the depot's site is open land, not clear of trees) */
-  WORLD.trees=(WORLD.trees||[]).filter(t=>Math.hypot(t.x-sit.cist.x,t.y-sit.cist.y)>95&&Math.hypot(t.x-sit.kraft.x,t.y-sit.kraft.y)>40);misTreeW=null;
+  /* the cisterns (issue 129, 4 nov): the four big ones count against the mission (def.cist.lose of them lost and it is failed), the small
+     ones burn when shot but do not count */
+  let nb=0,ns=0;for(const t of sit.tanks){const s=scenStruct('cistern',t.big?'CI'+(++nb):'CS'+(++ns),t.x,t.y);s.a=t.a;s.big=t.big;s.r=t.r;s.hp=s.maxhp=t.big?OIL.bigHp:OIL.smallHp;}
+  scenStruct('pumphus','PH1',sit.pump.x,sit.pump.y);
+  /* the depot's ground, the pipes' way and the jetty's root are cleared of trees and of the small houses there */
+  const pads=[{x:sit.cist.x,y:sit.cist.y,r:OIL.bigR+20},...sit.smalls.map(s=>({x:s.x,y:s.y,r:OIL.smallR+12})),{x:sit.kraft.x,y:sit.kraft.y,r:40}].concat(sit.jetty?[{x:sit.jetty.root.x,y:sit.jetty.root.y,r:20}]:[]);
+  const onPipe=(x,y,r)=>sit.pipes.some(l=>{for(let k=0;k<l.length-1;k++)if(oilSegD(x,y,l[k],l[k+1])<r)return true;return false;});
+  const clear=(x,y,m)=>pads.every(p=>Math.hypot(x-p.x,y-p.y)>p.r+m)&&!onPipe(x,y,12+m);
+  WORLD.trees=(WORLD.trees||[]).filter(t=>clear(t.x,t.y,0));misTreeW=null;
+  const Dd=W.decor;if(Dd){for(const k of['cabins','sheds'])if(Dd[k])Dd[k]=Dd[k].filter(h=>clear(h.x,h.y,6));}
   S.sites=sit;G.power=false;return true;}
 /* a building of the scenario among the island's, with a hull like the others (STRUCT) */
 function scenStruct(kind,id,x,y){const T=STRUCT[kind],s={id,kind,x,y,a:0,cell:cellIdx(x,y),isStruct:true,hp:T.hp,maxhp:T.hp,value:T.value,dead:false,prog:0,krok:false,hitBy:{},scen:true};
@@ -4900,7 +4967,7 @@ function scenTick(dt){const S=G.scen;if(!S||G.over)return;
     if(!s.open){const nd=st.needs||(i?[S.def.steps[i-1].id]:[]);if(!nd.every(id=>S.st[id].done))return;s.open=true;s.t0=G.time;s.fired=0;scenRun(st.onStart,st,s);}
     if(!scenGoal(st.goal,st,s))return;s.done=true;s.t1=G.time;scenRun(st.onDone,st,s);});
   scenShipTick(dt);
-  const lost=G.structs.filter(s=>s.kind==='cistern'&&s.dead).length;
+  const lost=G.structs.filter(s=>s.kind==='cistern'&&s.big!==false&&s.dead).length;/* the big ones only (4 nov) */
   if(S.st.cist.open&&lost>=S.def.cist.lose){misFail('Cisternerna är förlorade.');return;}
   const tf=S.ships.find(s=>s.id==='tf');if(tf&&tf.dead){misFail('Tankfartyget är sänkt.');return;}}
 const scenStepNow=()=>{const S=G.scen;return S?S.def.steps.filter(st=>S.st[st.id].open&&!S.st[st.id].done):[];};
@@ -4910,7 +4977,7 @@ function scenShipStart(id){const S=G.scen,pl=scenTankerPlan();if(!pl){misFail('T
   const R=pl.route.map(q=>({...q})),sh={id,label:S.def.tf.name,x:R[0].x,y:R[0].y,a:R[0].a,hp:S.def.tf.hp,maxhp:S.def.tf.hp,v:0,i:0,u:0,route:R,arr:routeArr(R),docked:false,dead:false,hitBy:{},isShip:true,cd:0};
   S.ships.push(sh);S.tfRoute=R;}
 function scenShipTick(dt){const S=G.scen;for(const sh of S.ships){if(sh.dead||sh.docked)continue;
-  if(scenShipStep(sh,dt)){sh.docked=true;sh.v=0;say(null,sh.label+' har lagt till vid kajen.');}}}
+  if(scenShipStep(sh,dt)){sh.docked=true;sh.v=0;say(null,sh.label+(G.scen.sites&&G.scen.sites.jetty?' har lagt till vid oljepiren.':' har lagt till vid kajen.'));}}}
 /* routeStep for a ship of its own: the same walk along the poses, at the ship's speed and a gentler acceleration */
 function scenShipStep(S,dt){const R=S.route,M=BIRKA_MOVE,vm=SCEN.stroemmen.tf.v,ac=M.acc*.6,dc=M.dec*.6;let first=true;
   const mv=(x,y,a)=>{S.x=x;S.y=y;S.a=a;};
@@ -4936,8 +5003,8 @@ function scenFire(e,dt){const S=G.scen;if(!S)return false;
    station once it is taken */
 function scenLights(){const S=G.scen;if(!S||!R3||!R3.stat)return;
   const k=S.sites&&S.sites.kraft||{x:0,y:0};
-  if(!S.lamps||S.lampsFor!==R3.stat){S.lampsFor=R3.stat;S.lamps=[];R3.stat.updateMatrixWorld(true);const p=new THREE.Vector3();
-    R3.stat.traverse(o=>{if(o.isMesh&&(o.material===R3.lampMat||o.material===R3.winMat)){p.setFromMatrixPosition(o.matrixWorld);S.lamps.push({o,m:o.material,d:Math.hypot(p.x-k.x,p.z-k.y),on:null});}});}
+  if(!S.lamps||S.lampsFor!==R3.stat||S.lampsOil!==R3.oilWorks){S.lampsFor=R3.stat;S.lampsOil=R3.oilWorks;S.lampsDone=false;S.lamps=[];R3.stat.updateMatrixWorld(true);if(R3.oilWorks)R3.oilWorks.updateMatrixWorld(true);const p=new THREE.Vector3();
+    for(const root of[R3.stat,R3.oilWorks])if(root)root.traverse(o=>{if(o.isMesh&&(o.material===R3.lampMat||o.material===R3.winMat)){p.setFromMatrixPosition(o.matrixWorld);S.lamps.push({o,m:o.material,d:Math.hypot(p.x-k.x,p.z-k.y),on:null});}});}
   const off=R3.litOff||(R3.litOff=new THREE.MeshLambertMaterial({color:0x34383a})),pw=G.power!==false,el=G.time-S.powerT;
   if(pw&&el>SCEN_CFG.lampAll+5&&S.lampsDone)return;S.lampsDone=pw&&el>SCEN_CFG.lampAll+5;
   for(const L of S.lamps){const on=pw&&(el*SCEN_CFG.lampSpeed>=L.d||el>SCEN_CFG.lampAll);if(L.on===on)continue;L.on=on;L.o.material=on?L.m:off;}}
@@ -4951,15 +5018,24 @@ function mkTankerMesh(){if(typeof mkTanker==='function')return mkTanker();
   for(let x=-25;x<=55;x+=8)g.add(mesh(box(1,1,16),mat(0x8a8d8f),x,9.4,0));g.add(mesh(cyl(.3,.3,14,6),mat(0x8a8d8f),60,15,0));g.add(mesh(box(.5,.5,.5),R3.lampMat,60,22.5,0));
   return g;}
 function scenView(){if(!R3||!R3.dyn)return;const S=G.scen;
-  if(R3.scenOwn&&R3.scenOwn!==S){for(const o of R3.scenObjs||[])R3.dyn.remove(o);R3.scenObjs=[];R3.scenOwn=null;}/* the last game's tanker and ruins */
-  if(!S)return;R3.scenOwn=S;const add=o=>{R3.dyn.add(o);(R3.scenObjs||(R3.scenObjs=[])).push(o);};scenLights();
+  if(R3.scenOwn&&R3.scenOwn!==S){for(const o of R3.scenObjs||[])R3.dyn.remove(o);R3.scenObjs=[];R3.scenOwn=null;R3.oilWorks=null;R3.oilFlag=null;}/* the last game's tanker, ruins and depot */
+  if(!S)return;R3.scenOwn=S;const add=o=>{R3.dyn.add(o);(R3.scenObjs||(R3.scenObjs=[])).push(o);};
+  /* the depot's pipes, jetty, masts and fence, and the Swedish flag on the first big cistern's roof once the depot is taken (Magnus 4 nov) */
+  if(!R3.oilWorks&&S.sites&&S.sites.tanks){R3.oilWorks=mkOilWorks(S.sites);add(R3.oilWorks);const c=G.structs.find(q=>q.id==='CI1');
+    if(c){const fg=new THREE.Group();R3.oilFlag=kamFlag(fg,c.x,groundY(c.x,c.y)+13.95,c.y,6);add(fg);R3.oilFlagFor=c;}}
+  if(R3.oilFlag){const oh=scenRef('olja'),on=!!(oh&&oh.captured)&&!R3.oilFlagFor.dead;R3.oilFlag.visible=on;if(on)R3.oilFlag.rotation.y=Math.sin(performance.now()/1000*2.3)*.14;}
+  scenLights();
   for(const sh of S.ships){let m=sh.mesh;if(sh.dead){if(m){R3.dyn.remove(m);sh.mesh=null;}continue;}
     if(!m){m=sh.mesh=mkTankerMesh();add(m);}
     m.position.set(sh.x,0,sh.y);m.rotation.y=-(sh.a+PI);}
-  for(const st of G.structs)if(st.dead&&st.kind==='cistern'&&!st.stub){st.stub=true;const g=typeof mkCistern==='function'?mkCistern(true):new THREE.Group();
+  for(const st of G.structs)if(st.dead&&st.kind==='cistern'&&!st.stub){st.stub=true;const g=st.big===false?mkCisternS(true):typeof mkCistern==='function'?mkCistern(true):new THREE.Group();
     if(!g.children.length)g.add(mesh(cyl(11,11,3,14),mat(0x2a2a2a),0,1.5,0));g.position.set(st.x,groundY(st.x,st.y),st.y);add(g);}}
 /* the chart: the marks, the tanker's way and the tanker */
 function scenChart(ctx,k){const S=G.scen;if(!S)return;ctx.save();
+  /* the depot's pipes and the oil jetty (4 nov) */
+  const sit=S.sites;if(sit&&sit.pipes){ctx.strokeStyle='rgba(74,58,42,.75)';ctx.lineWidth=1.1*k;for(const l of sit.pipes){ctx.beginPath();ctx.moveTo(l[0].x,l[0].y);for(const q of l)ctx.lineTo(q.x,q.y);ctx.stroke();}
+    const J=sit.jetty;if(J){const B2=OIL.hull[1]/2,P=(s,t)=>[J.x+J.ux*s+J.vx*t,J.y+J.uy*s+J.vy*t],W2=OIL.plat[0]/2,t0=B2+1,t1=B2+1+OIL.plat[1],t2=B2+J.gap+2;ctx.fillStyle='#4a3a2a';
+      ctx.beginPath();for(const[s2,t]of[[-W2,t0],[W2,t0],[W2,t1],[2,t1],[2,t2],[-2,t2],[-2,t1],[-W2,t1]]){const p=P(s2,t);ctx.lineTo(p[0],p[1]);}ctx.closePath();ctx.fill();}}
   for(const m of S.marks){ctx.setLineDash([6*k,4*k]);ctx.strokeStyle=MAG;ctx.lineWidth=2*k;ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,TAU);ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle=MAG;ctx.font=`700 ${10*k}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(m.label,m.x,m.y-m.r-3*k);}
   const R=S.tfRoute;if(R&&R.length>1){ctx.setLineDash([5*k,4*k]);ctx.strokeStyle='rgba(31,46,74,.85)';ctx.lineWidth=1.4*k;ctx.beginPath();ctx.moveTo(R[0].x,R[0].y);for(const q of R)ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([]);}
@@ -5887,7 +5963,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,navHmap,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,selUnits,CREW,isCrew,crewCan,crewU,crewTick,crewBoard,crewOff,crewFetch,crewStill,crewTip,krokCrewLand,stowed,airR,RAMP,rampReach,onDeck,fetchTick,selfItems,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={OIL,scenBerths,mkCisternS,mkOilWorks,oilSegD,KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,navHmap,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,selUnits,CREW,isCrew,crewCan,crewU,crewTick,crewBoard,crewOff,crewFetch,crewStill,crewTip,krokCrewLand,stowed,airR,RAMP,rampReach,onDeck,fetchTick,selfItems,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -6153,7 +6229,7 @@ function drawMap(ctx,w,h,small){
        (Magnus 21 okt, provspel ö 3019 kp09: the full orange ring left from coupling it in read as an unclear sign) */
     else if(st.kind==='mast'){if(st.relay){ctx.strokeStyle=ctx.fillStyle='#2b7550';ctx.lineWidth=1.5*k;}ctx.beginPath();ctx.moveTo(0,-6*f);ctx.lineTo(4*f,4*f);ctx.lineTo(-4*f,4*f);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(0,-6*f,1.6*f,0,TAU);ctx.fill();
       if(st.relay)for(const r of[4,7])for(const sg of[1,-1]){ctx.beginPath();ctx.arc(0,-6*f,r*f,sg>0?-.6:PI-.6,sg>0?.6:PI+.6);ctx.stroke();}}
-    else if(st.kind==='cistern'){ctx.fillStyle='#8f9294';ctx.beginPath();ctx.arc(0,0,11*f,0,TAU);ctx.fill();ctx.stroke();}
+    else if(st.kind==='cistern'){ctx.fillStyle='#8f9294';ctx.beginPath();ctx.arc(0,0,(st.r||11)*f,0,TAU);ctx.fill();ctx.stroke();}
     else{ctx.rotate(st.a);const[bw,bh]=st.kind==='depot'?[15,9]:st.kind==='house'?[10,8]:[8,5.5];ctx.fillRect(-bw*f/2,-bh*f/2,bw*f,bh*f);if(st.kind==='depot'){ctx.strokeStyle=PAPER;ctx.lineWidth=.9*k;ctx.strokeRect(-bw*f/2+2*f,-bh*f/2+2*f,bw*f-4*f,bh*f-4*f);}else if(st.kind==='house'){ctx.strokeStyle=PAPER;ctx.lineWidth=.9*k;ctx.beginPath();ctx.moveTo(-bw*f/2,0);ctx.lineTo(bw*f/2,0);ctx.stroke();}}
     ctx.restore();
     if(st.prog>0&&!st.relay){ctx.strokeStyle='#e0a21f';ctx.lineWidth=2.6*k;ctx.beginPath();ctx.arc(st.x,st.y,11*f,-PI/2,-PI/2+TAU*st.prog);ctx.stroke();}
@@ -7094,6 +7170,78 @@ function mkPumphus(){const g=new THREE.Group(),house=new THREE.Group(),pipes=new
     for(const x of[8,12,16]){add(pipes,box(.5,1,.7),STEEL2,x,.5,z);add(pipes,box(.6,.16,.9),STEEL,x,1.0,z);}}
   g.add(pipes);g.userData.pipes=pipes;g.userData.pipeEnd=[18,1.4,0];
   return sh(bake(g,true));}
+/* small oil cistern (issue 129, Magnus 4 nov, the small tanks at Bergs and Stora Höggarn): 11 m across and 10 m high, a flat cone roof with
+   a rail, a straight ladder with a cage, a concrete ring at the foot; pale grey or grey-green by place (paint). No bund of its own: its
+   group has one. broken: no roof, the shell sooted from the top */
+function mkCisternS(broken,paint){const g=new THREE.Group(),body=new THREE.Group(),R=OIL.smallTank,
+    SHELL=mat(broken?0x4a4745:paint||0xd6d7d0),BAND=mat(broken?0x3a2622:0x9a3a2c),CONC=mat(0x8a8a84),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),SOOT=MAT_D(0x151413);
+  const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
+  add(body,cyl(R+.3,R+.3,.5,24),CONC,0,.25,0);add(body,new THREE.CylinderGeometry(R,R,9.4,28,1,true),SHELL,0,5.1,0);add(body,new THREE.CylinderGeometry(R+.03,R+.03,.8,28,1,true),BAND,0,7.6,0);
+  if(!broken){add(body,cyl(.6,R+.1,.9,28),SHELL,0,10.25,0);const rail=new THREE.Mesh(new THREE.TorusGeometry(R-.15,.04,3,24),STEEL);rail.rotation.x=PI/2;rail.position.y=10.75;body.add(rail);
+    for(let i=0;i<10;i++){const a=i/10*TAU;add(body,box(.07,.95,.07),STEEL,Math.cos(a)*(R-.15),10.3,Math.sin(a)*(R-.15));}}
+  else add(body,new THREE.CylinderGeometry(R+.05,R+.05,4,28,1,true),SOOT,0,7.8,0);
+  g.add(body);g.userData.body=body;
+  /* the ladder on the +x side: two stiles, rungs every 0.4 m, a cage of hoops from 2.5 m up */
+  const ld=new THREE.Group();for(const z of[-.25,.25])add(ld,box(.06,9.6,.06),STEEL2,R+.35,5.3,z);for(let y=.6;y<10;y+=.4)add(ld,box(.05,.05,.5),STEEL,R+.35,y,0);
+  if(!broken)for(let y=2.6;y<10.5;y+=1.2){const h=new THREE.Mesh(new THREE.TorusGeometry(.45,.025,3,10,PI),STEEL2);h.rotation.set(PI/2,0,-PI/2);h.position.set(R+.45,y,0);ld.add(h);}
+  g.add(ld);g.userData.ladder=ld;g.userData.fireAt=[0,9.5,0];
+  return sh(bake(g,true));}
+/* a bar of radius r between two points (a round pipe, eight sides) */
+function oilBar(P,m,a,c,r){const d=new THREE.Vector3(c[0]-a[0],c[1]-a[1],c[2]-a[2]),L=d.length();if(L<.01)return null;const o=mesh(cyl(.5,.5,1,8),m,(a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2);
+  o.scale.set(r*2,L,r*2);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());P.add(o);return o;}
+/* the oil depot's fixed scenery (issue 129, Magnus 4 nov): the pipes, the small groups' bunds, the oil jetty, the light masts, the fence,
+   the office and the loading canopy for the lorries. All in world coordinates; one baked group, the lamp heads kept apart so that the
+   scenario's dark can switch them (scenLights) */
+function mkOilWorks(sit){const g=new THREE.Group(),lamps=[],PIPE=mat(0xb4bab2),PIPE2=mat(0xd0d4cc),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),CONC=mat(0xa09d95),CONC2=mat(0x8a8a84),
+    DECK=mat(0x8c8a84),DARK=mat(0x2a2e31),YEL=mat(0xd9b13b),WALLM=mat(0x8f9189),ROOF=mat(0x4c565e),J=sit.jetty,B2=OIL.hull[1]/2;
+  const add=(geo,m,x,y,z,ry)=>{const o=mesh(geo,m,x,y,z);if(ry)o.rotation.y=ry;g.add(o);return o;};
+  /* on the jetty (within its deck's outline) the pipes run at deck height, elsewhere 1.1 m over the ground or the water */
+  const onJ=(x,y)=>{if(!J)return false;const dx=x-J.x,dy=y-J.y,s=dx*J.ux+dy*J.uy,t=dx*J.vx+dy*J.vy;return Math.abs(s)<=OIL.plat[0]/2+.5&&t>=B2+.5&&t<=B2+1+OIL.plat[1]+.5||Math.abs(s)<=2.5&&t>=B2+OIL.plat[1]&&t<=B2+J.gap+4;};
+  const yAt=(x,y)=>onJ(x,y)?OIL.deck+.85:Math.max(groundY(x,y),0)+1.3;
+  /* a pipe run: two pipes side by side on supports every 6 m, in pieces of at most 4 m that follow the ground */
+  for(const line of sit.pipes)for(let k=0;k<line.length-1;k++){const a=line[k],b=line[k+1],L=Math.hypot(b.x-a.x,b.y-a.y);if(L<.5)continue;const n=Math.max(1,Math.ceil(L/4)),nx=-(b.y-a.y)/L,ny=(b.x-a.x)/L,ry=-Math.atan2(b.y-a.y,b.x-a.x);
+    let q0=null;for(let i=0;i<=n;i++){const f=i/n,x=lerp(a.x,b.x,f),y=lerp(a.y,b.y,f),h=yAt(x,y),q=[x,h,y];
+      if(q0)for(const[o,r,m]of[[-.55,.42,PIPE],[.5,.3,PIPE2]])oilBar(g,m,[q0[0]+nx*o,q0[1]+(r-.42),q0[2]+ny*o],[x+nx*o,h+(r-.42),y+ny*o],r);q0=q;}
+    for(let s=3;s<L;s+=6){const x=a.x+(b.x-a.x)*s/L,y=a.y+(b.y-a.y)*s/L;if(onJ(x,y))continue;const gy=Math.max(groundY(x,y),0)-.3,h=yAt(x,y)-.3-gy;if(h<.2)continue;
+      for(const o of[-.75,.75])add(box(.2,h,.2),STEEL2,x+nx*o,gy+h/2,y+ny*o);add(box(.22,.18,1.9),STEEL,x,gy+h-.5,y,ry);}}
+  /* the small groups' bunds: a 1.4 m concrete wall round each, in pieces of at most 6 m on the ground */
+  const wall=(a,b,h)=>{const L=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(L/6)),ry=-Math.atan2(b.y-a.y,b.x-a.x);for(let i=0;i<n;i++){const x=lerp(a.x,b.x,(i+.5)/n),y=lerp(a.y,b.y,(i+.5)/n);add(box(L/n+.1,h+.8,.5),CONC,x,groundY(x,y)+h/2-.4,y,ry);}};
+  for(const s of sit.smalls){const hx=s.hx+OIL.smallTank+4,hy=8+OIL.smallTank+4,P4=[[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy]].map(([dx,dy])=>({x:s.x+dx,y:s.y+dy}));for(let i=0;i<4;i++)wall(P4[i],P4[(i+1)%4],1.4);
+    add(box(hx*2-1,.08,hy*2-1),mat(0x2c2b28),s.x,groundY(s.x,s.y)+.06,s.y);}
+  /* a light mast: 16 m, a cross-arm and two lamp heads */
+  const mast=(x,y,h)=>{const y0=groundY(x,y);add(cyl(.16,.24,h,6),STEEL,x,y0+h/2,y);add(box(2.4,.15,.15),STEEL,x,y0+h,y);for(const o of[-1,1]){const l=mesh(box(.7,.3,.5),R3.lampMat,x+o*1.1,y0+h-.25,y);g.add(l);lamps.push(l);}};
+  const C=sit.cist;for(const[dx,dy]of[[-52,-52],[52,-52],[-52,52],[52,52]])mast(C.x+dx,C.y+dy,16);for(const s of sit.smalls)mast(s.x+s.hx+OIL.smallTank+8,s.y,12);
+  /* the oil jetty: a concrete deck on piles along the berth with fenders on the ship's side, three loading arms, a hut, bollards and two
+     lamp posts, and a trestle to the shore with a ramp up onto it */
+  if(J){const P=(s,t)=>({x:J.x+J.ux*s+J.vx*t,y:J.y+J.uy*s+J.vy*t}),ry=-Math.atan2(J.uy,J.ux),W2=OIL.plat[0],D2=OIL.plat[1],tc=B2+1+D2/2,dk=OIL.deck,pc=P(0,tc);
+    const at=(s,t,geo,m,y,ry2)=>{const p=P(s,t);return add(geo,m,p.x,y,p.y,ry+(ry2||0));};
+    at(0,tc,box(W2,.6,D2),DECK,dk-.3);at(0,B2+1.1,box(W2,.9,.4),DARK,dk-.6);
+    for(let s=-W2/2+2;s<=W2/2-2;s+=6)for(const t of[B2+1.6,B2+D2+.4])at(s,t,cyl(.4,.45,dk+6,8),CONC2,dk-3.3);
+    for(let s=-W2/2+4;s<=W2/2-4;s+=8){at(s,B2+.8,box(2.2,1.6,.5),DARK,dk-.8);at(s,B2+2,cyl(.22,.3,.6,8),DARK,dk+.3);}
+    for(const s of[-8,0,8]){at(s,B2+5,box(.6,6,.6),YEL,dk+3);at(s,B2+5,box(.5,.5,.5),STEEL2,dk+6.2);const a=P(s,B2+5),c=P(s,B2+1.6);oilBar(g,STEEL,[a.x,dk+6,a.y],[c.x,dk+3.5,c.y],.18);oilBar(g,STEEL2,[c.x,dk+3.5,c.y],[c.x,dk+1,c.y],.16);}
+    at(W2/2-5,tc+1,box(4,3,3),mat(0xe8e6de),dk+1.5);at(W2/2-5,tc+1,box(4.3,.25,3.3),ROOF,dk+3.1);const hw=P(W2/2-5,tc+1-1.55);add(box(1.2,.8,.08),R3.winMat,hw.x,dk+1.8,hw.y,ry);
+    for(const s of[-W2/2+1.5,W2/2-1.5]){const p=P(s,B2+D2);add(cyl(.12,.15,7,6),STEEL,p.x,dk+3.5,p.y);const l=mesh(box(.6,.3,.6),R3.lampMat,p.x,dk+7,p.y);g.add(l);lamps.push(l);}
+    /* the trestle: 4 m wide at deck height from the deck's land edge to the shore, then a ramp onto the ground */
+    const t0=B2+1+D2,t1=B2+J.gap+2;if(t1>t0+.5){const L=t1-t0;at(0,(t0+t1)/2,box(4,.4,L),DECK,dk-.2);for(let t=t0+3;t<t1;t+=6)for(const o of[-1.6,1.6])at(o,t,cyl(.3,.35,dk+6,8),CONC2,dk-3.3);
+      for(const o of[-2,2])at(o,(t0+t1)/2,box(.06,1,L),STEEL2,dk+.6);}
+    {const p0=P(0,Math.max(t0,t1)),p1=P(0,Math.max(t0,t1)+8),y1=Math.max(groundY(p1.x,p1.y),dk),L3=Math.hypot(8,y1-dk),o=mesh(box(4,.4,L3),DECK,(p0.x+p1.x)/2,(dk+y1)/2-.2,(p0.y+p1.y)/2);o.lookAt(p1.x,y1-.2,p1.y);g.add(o);}}
+  /* the fence: round each pad with a margin, 2.2 m posts every 5 m on land, two rails; gaps where the pipes pass */
+  {const near=(x,y)=>sit.pipes.some(l=>{for(let k=0;k<l.length-1;k++)if(oilSegD(x,y,l[k],l[k+1])<4)return true;return false;});
+    for(const r of[{x:C.x,y:C.y,hx:62,hy:62},...sit.smalls.map(s=>({x:s.x,y:s.y,hx:s.hx+OIL.smallTank+10,hy:24}))]){const C4=[{x:r.x-r.hx,y:r.y-r.hy},{x:r.x+r.hx,y:r.y-r.hy},{x:r.x+r.hx,y:r.y+r.hy},{x:r.x-r.hx,y:r.y+r.hy}];for(let i=0;i<4;i++){const a=C4[i],b=C4[(i+1)%4],L=Math.hypot(b.x-a.x,b.y-a.y),n=Math.ceil(L/5),ry=-Math.atan2(b.y-a.y,b.x-a.x);let prev=null;
+      for(let k=0;k<=n;k++){const x=lerp(a.x,b.x,k/n),y=lerp(a.y,b.y,k/n),ok=WORLD.grid[cellIdx(x,y)]===LAND&&!near(x,y),h=groundY(x,y);if(!ok){prev=null;continue;}
+        add(box(.1,2.4,.1),STEEL2,x,h+1.1,y);if(prev)for(const yy of[.9,2])oilBar(g,STEEL,[prev.x,prev.h+yy,prev.y],[x,h+yy,y],.03);prev={x,y,h};}}}}
+  /* the office and the loading canopy: on open land 70 to 90 m from the big pad, clear of the pipes and the tanks */
+  {const T=sit.tanks;let spot=null;for(const r of[72,86])for(let i=0;i<8&&!spot;i++){const a=i/8*TAU+.2,x=C.x+Math.cos(a)*r,y=C.y+Math.sin(a)*r;
+      if(WORLD.grid[cellIdx(x,y)]!==LAND||sit.pipes.some(l=>{for(let k=0;k<l.length-1;k++)if(oilSegD(x,y,l[k],l[k+1])<16)return true;return false;})||T.some(t=>Math.hypot(t.x-x,t.y-y)<t.r+20)||Math.hypot(sit.pump.x-x,sit.pump.y-y)<20)continue;
+      if(Math.abs(groundY(x+12,y)-groundY(x-12,y))>2.5||Math.abs(groundY(x,y+12)-groundY(x,y-12))>2.5)continue;spot={x,y,a};}
+    if(spot){const{x,y}=spot,h=groundY(x,y),ux=-Math.sin(spot.a),uy=Math.cos(spot.a),ry=-Math.atan2(uy,ux);sit.office=spot;
+      add(box(16,.4,8),CONC2,x,h+.1,y,ry);add(box(15.8,5.6,7.8),WALLM,x,h+3,y,ry);add(box(16.4,.4,8.4),ROOF,x,h+5.9,y,ry);
+      for(const o of[-5,0,5]){const p={x:x+ux*o-uy*3.95,y:y+uy*o+ux*3.95};add(box(2.8,1.2,.1),R3.winMat,p.x,h+3.6,p.y,ry);}
+      const c={x:x+ux*24,y:y+uy*24},hc=groundY(c.x,c.y);add(box(20,.4,9),ROOF,c.x,hc+5.6,c.y,ry);add(box(20.4,.6,9.4),YEL,c.x,hc+5.2,c.y,ry);
+      for(const o of[-8,8])for(const q of[-3.5,3.5])add(box(.35,5.2,.35),STEEL,c.x+ux*o-uy*q,hc+2.6,c.y+uy*o+ux*q);
+      for(const q of[-2,2])add(box(14,.3,1.2),CONC2,c.x-uy*q,hc+.15,c.y+ux*q,ry);for(const o of[-4,4]){const p={x:c.x+ux*o,y:c.y+uy*o};add(box(.9,1.6,.6),mat(0xb83a2a),p.x,hc+.8,p.y,ry);}
+      const l=mesh(box(1.2,.2,1.2),R3.lampMat,c.x,hc+5.3,c.y);g.add(l);lamps.push(l);}}
+  g.userData.lamps=lamps;return sh(bake(g,true,{strict:true,keep:lamps}));}
 /* oil tanker (issue 129): 150 m long, 24 m wide, 8 m of freeboard, black below the waterline and red above, a white four-deck superstructure aft with
    windows in R3.winMat, a funnel, the cargo deck with pipes and manifold, two cranes, a foremast, and position and deck lights in R3.lampMat.
    Origin at the waterline amidships, +x toward the bow (the starboard side is +z) */
@@ -7736,6 +7884,7 @@ function mkStructMesh(st){
     if(hash2(Math.round(st.x),Math.round(st.y),9)<.5){g.add(mesh(cyl(.08,.1,9,5),mat(0xf0f0ea),-6.5,4.5,-3));g.add(mesh(box(.05,.5,1.8),mat(0x2a5aa8),-6.5,8.6,-2.05));g.add(mesh(box(.06,.14,1.8),mat(0xf2c230),-6.5,8.6,-2.05));}}
   else if(st.kind==='depot'){g.add(mesh(box(15,5,9),mat(0x7a837e),0,2.5,0));g.add(mesh(box(15.4,.4,9.4),mat(0x4f5753),0,5.2,0));g.add(mesh(box(.2,3.6,4.5),mat(0x3c4440),7.6,1.8,0));for(const x of[-4,0,4])g.add(mesh(box(2,.7,.12),WM,x,3.9,4.52));for(const z of[-3,3])g.add(mesh(box(2,1.4,1.4),mat(0x6b6a3a),9.2,.7,z));}
   else if(st.kind==='fuel'){for(const x of[-4,4]){g.add(mesh(cyl(3.3,3.3,4.6,14),mat(0xcfc6b2),x,2.3,0));g.add(mesh(cyl(3.35,3.35,.6,14),mat(0xc27a2c),x,3.4,0));}const pp=mesh(cyl(.25,.25,8,6),mat(0x555555),0,.6,2.6);pp.rotation.z=PI/2;g.add(pp);}
+  else if(st.kind==='cistern'&&st.big===false)g.add(mkCisternS(false));
   else if(st.kind==='cistern'){if(typeof mkCistern==='function')g.add(mkCistern(false));else{g.add(mesh(cyl(11,11,14,20),mat(0xc9ccca),0,7,0));g.add(mesh(cyl(11.1,11.1,1.6,20),mat(0xb03a2c),0,9,0));g.add(mesh(cyl(.5,11,1.6,20),mat(0xaeb2b0),0,14.8,0));}}
   else if(st.kind==='pumphus'){if(typeof mkPumphus==='function')g.add(mkPumphus());else{g.add(mesh(box(12,5,8),mat(0x7c8173),0,2.5,0));g.add(mesh(box(12.6,.5,8.6),mat(0x4a5058),0,5.2,0));g.add(mesh(box(.8,.5,.5),R3.lampMat,6.1,4,0));}}
   else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}const d=mesh(new THREE.SphereGeometry(1.2,10,6,0,TAU,0,PI/2),mat(0xe0e2e0),0,19,.9);d.rotation.x=PI/2;g.add(d);g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
