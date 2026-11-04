@@ -11978,7 +11978,9 @@ globalThis.__BHt=()=>TITLE;/* the intro stepped without drawing, and one picture
 try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
 try{const q=new URLSearchParams(location.search),bu=+q.get('budget');if(bu>0)ENEMY_CFG.budget=bu;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
-const BOOTQ=(()=>{try{return new URLSearchParams(location.search);}catch(_){return new Map();}})();
+/* the options may also come after # (4 nov, Magnus: ?scen=stroemmen on the artefact started an ordinary mission, since claude.ai does not pass
+   the query on to the page, but it does pass the hash, as for #tf-): #scen=stroemmen, #scen=stroemmen&klocka=12:00; the query wins */
+const BOOTQ=(()=>{try{const q=new URLSearchParams(location.search),h=(location.hash||'').slice(1);if(h.includes('='))for(const[k,v]of new URLSearchParams(h))if(!q.has(k))q.set(k,v);return q;}catch(_){return new Map();}})();
 /* &datum=2032-12-15 (or 12-15) and &klocka=08:30 choose the date and starting hour, like Ny ö */
 try{const m=BOOTQ.get('moln');if(m!=null&&m!=='')CLOUD.force=clamp(+m/100,0,1);}catch(_){}
 function bootWhen(){const m=/^(?:2032-)?(\d\d)-(\d\d)$/.exec(BOOTQ.get('datum')||''),k=/^(\d\d?):(\d\d)$/.exec(BOOTQ.get('klocka')||'');
