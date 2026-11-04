@@ -602,8 +602,7 @@ const STRUCT={
   fuel:{hp:30,value:60,demo:6,label:'Bränsledepå',boom:true},
   mast:{hp:40,value:55,demo:5,label:'Radiomast'},
   /* the scenario's buildings (issue 129, Magnus 3 nov): not to be pulled down by BÄVER (workStruct), shot apart they burn */
-  cistern:{hp:120,value:0,demo:9999,label:'Cistern',scen:true},
-  pumphus:{hp:60,value:0,demo:9999,label:'Pumphus',scen:true}
+  cistern:{hp:120,value:0,demo:9999,label:'Cistern',scen:true}
 };
 const DEBRIS={crate:'Materiel',hulk:'Gammalt vrak',rubble:'Rasmassor',crew:'Besättningen',proto:'Havererat fordon'};
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
@@ -4933,7 +4932,7 @@ function scenSetup(){const S=G.scen,def=S.def,W=WORLD,sit=scenSites(),L=W.landin
      ones burn when shot but do not count */
   let nb=0,ns=0;for(const t of sit.tanks){const s=scenStruct('cistern',t.big?'CI'+(++nb):'CS'+(++ns),t.x,t.y);s.a=t.a;s.big=t.big;s.r=t.r;s.hp=s.maxhp=t.big?OIL.bigHp:OIL.smallHp;}
   /* the pump house is no longer a building that can be shot (Magnus 4 nov: it counted for nothing when it fell); mkOilWorks draws it and
-     its cells stay shut below. STRUCT.pumphus is kept for saves from before */
+     its cells stay shut below (no old saves kept in alpha, Magnus 4 nov) */
   /* the bunds and the pump house shut to vehicles, every cell under them and not only the one in the middle (Magnus 4 nov, provspel ö 3100
      kp04: VARG drove through the cisterns); the big bund is 36 m square round its tank, a small group's round its four or six, the pump
      house 12 x 8 m. The pipes stay open, so that the depot does not close the roads */
@@ -7919,7 +7918,6 @@ function mkStructMesh(st){
   else if(st.kind==='fuel'){for(const x of[-4,4]){g.add(mesh(cyl(3.3,3.3,4.6,14),mat(0xcfc6b2),x,2.3,0));g.add(mesh(cyl(3.35,3.35,.6,14),mat(0xc27a2c),x,3.4,0));}const pp=mesh(cyl(.25,.25,8,6),mat(0x555555),0,.6,2.6);pp.rotation.z=PI/2;g.add(pp);}
   else if(st.kind==='cistern'&&st.big===false)g.add(mkCisternS(false));
   else if(st.kind==='cistern'){if(typeof mkCistern==='function')g.add(mkCistern(false));else{g.add(mesh(cyl(11,11,14,20),mat(0xc9ccca),0,7,0));g.add(mesh(cyl(11.1,11.1,1.6,20),mat(0xb03a2c),0,9,0));g.add(mesh(cyl(.5,11,1.6,20),mat(0xaeb2b0),0,14.8,0));}}
-  else if(st.kind==='pumphus'){if(typeof mkPumphus==='function')g.add(mkPumphus());else{g.add(mesh(box(12,5,8),mat(0x7c8173),0,2.5,0));g.add(mesh(box(12.6,.5,8.6),mat(0x4a5058),0,5.2,0));g.add(mesh(box(.8,.5,.5),R3.lampMat,6.1,4,0));}}
   else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}const d=mesh(new THREE.SphereGeometry(1.2,10,6,0,TAU,0,PI/2),mat(0xe0e2e0),0,19,.9);d.rotation.x=PI/2;g.add(d);g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
   g.rotation.y=-st.a;g.position.set(st.x,groundY(st.x,st.y),st.y);return sh(bake(g,true,{strict:true}));
 }
