@@ -316,6 +316,29 @@ function slingLugs(g,P,bare){if(!GEOS.has('lug')){const t=[0,.07,0],c=[[.1,-.07,
   /* the lugs are seen only while the unit hangs in the hook or is being hooked (Magnus 1 nov), so they are a group of their own
      (userData.lugs, one draw call more), hidden otherwise */
   if(!bare){const q=new THREE.Group();for(const p of P)q.add(mesh(GEOS.get('lug'),m,p[0],p[1]+.07,p[2]));q.visible=false;g.add(q);g.userData.lugs=q;}g.userData.slingPts=P.map(p=>new THREE.Vector3(p[0],p[1]+(bare?.02:.13),p[2]));}
+/* BJÖRN's moving gear (Magnus 5 nov: the tracks must run): the pads of both bands and the seven road wheels a side in one mesh with the corners'
+   colours, rewritten when the tank has moved. sp and sm are how far the band on the +z and the -z side has run (m in the model's own measure, +
+   forward): the pads slide back along the ground and round the loop, the wheels turn; none drawn on the top run, which the skirt hides. Only the
+   faces that can be seen: a pad's tread, its outer side and one end; a wheel's outer face and hub */
+function bjGear(ge,sp,sm){const B=VARG_GEO.bjG,P=ge.attributes.position.array,TW=1.1,TZ=2.15,h=B.h;let o=0;
+  const tri=(a,b,c,nx,ny,nz)=>{const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+      if((uy*vz-uz*vy)*nx+(uz*vx-ux*vz)*ny+(ux*vy-uy*vx)*nz<0){const t=b;b=c;c=t;}for(const q of[a,b,c]){P[o++]=q[0];P[o++]=q[1];P[o++]=q[2];}},
+    quad=(a,b,c,d,nx,ny,nz)=>{tri(a,b,c,nx,ny,nz);tri(a,c,d,nx,ny,nz);};
+  for(const[sz,s]of[[1,sp],[-1,sm]]){const zc=sz*TZ,zo=zc+sz*(TW/2+.03),zi=zc-sz*(TW/2+.03);let w=0;
+    for(let k=0;k<B.n&&w<B.slots;k++){const t=(((k*B.d-s)%B.len)+B.len)%B.len;if(t>B.T0&&t<B.T1)continue;
+      let i=0,acc=0;while(acc+B.seg[i][2]<t){acc+=B.seg[i][2];i++;}const[c,q,l]=B.seg[i],f=(t-acc)/l,tx=(q[0]-c[0])/l,ty=(q[1]-c[1])/l,nx=ty,ny=-tx,px=c[0]+(q[0]-c[0])*f,py=c[1]+(q[1]-c[1])*f;
+      const V=(u,d,z)=>[px+u*tx*.2+nx*(h+d),py+u*ty*.2+ny*(h+d),z];
+      quad(V(-1,.06,zi),V(1,.06,zi),V(1,.06,zo),V(-1,.06,zo),nx,ny,0);quad(V(-1,-.06,zo),V(1,-.06,zo),V(1,.06,zo),V(-1,.06,zo),0,0,sz);
+      quad(V(1,-.06,zi),V(1,.06,zi),V(1,.06,zo),V(1,-.06,zo),tx,ty,0);w++;}
+    for(;w<B.slots;w++)for(let j=0;j<54;j++)P[o++]=0;/* the pads not drawn this time: empty triangles */
+    const a0=-s/B.rw,zr=zc+sz*TW*.41;
+    for(let i=0;i<7;i++){const x=-3.6+i*1.17,y=.56;for(const[r,m,dz]of[[B.rw,12,0],[.18,6,.03]])for(let j=0;j<m;j++){const a=a0+j/m*2*PI,b=a0+(j+1)/m*2*PI;
+      tri([x,y,zr+sz*dz],[x+Math.cos(a)*r,y+Math.sin(a)*r,zr+sz*dz],[x+Math.cos(b)*r,y+Math.sin(b)*r,zr+sz*dz],0,0,sz);}}}
+  ge.attributes.position.needsUpdate=true;ge.computeVertexNormals();}
+function mkBjGear(){const B=VARG_GEO.bjG,np=B.slots*18,nw=7*18*3,ge=new THREE.BufferGeometry(),C=[],cols=[[0x1b1c1e,np],[0x232629,12*3],[0x3b4046,6*3]];
+  for(let s=0;s<2;s++){const pc=new THREE.Color(0x1b1c1e);for(let i=0;i<np;i++)C.push(pc.r,pc.g,pc.b);for(let i=0;i<7;i++)for(const[hx,k]of cols.slice(1)){const c=new THREE.Color(hx);for(let j=0;j<k;j++)C.push(c.r,c.g,c.b);}}
+  ge.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(C.length),3));ge.setAttribute('color',new THREE.Float32BufferAttribute(C,3));
+  bjGear(ge,0,0);ge.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.8,0),6.5);return new THREE.Mesh(ge,vcMat());}
 function mkUnitMesh(u){
   if(u.kind==='bjorn')u=Object.assign({},u,{kind:'tank',ty:'bjorn'});/* a model asked for by the build kind: the wrecks and the gallery */
   const g=new THREE.Group(),SK=unitSkin(),CS=svCall(u),v3=(x,y,z)=>new THREE.Vector3(x,y,z);/* CS: the call number, on the model (issue 114) */
@@ -344,55 +367,80 @@ function mkUnitMesh(u){
     g.add(mesh(box(.36,.22,.5),mat(0x3a3a30),-.35,1.0,-.05));for(const dz of[-.15,0,.15])g.add(mesh(box(.37,.06,.06),mat(0xe0b02e),-.35,1.06,-.05+dz));
     return sh(bake(g,true));}
   if(u.ty==='bjorn'){
-    // BJÖRN 01 (Magnus 4 nov, issue 154, after his picture "BJÖRN / 01"): VARG's language on a heavy tank. A faceted hull whose skirts hang over
-    // the upper tracks, a glacis that runs down between two shoulders over the tracks, white lamp lines in their fronts; a low wedge turret set
-    // well back, with a sensor box each side and an optic on the roof, white lamp lines in them; a shorter heavy gun with a slotted muzzle brake;
-    // two aerials, an engine grille behind. VARG's scheme: the hull in the season's tone, dark skirts and running gear, the unit's colour on two
-    // panels on the glacis and one on the turret roof. At 0.8 like the other ground vehicles; it stands on its tracks, so no hover and no fans
-    const HULL=mat(SK.a),HULL2=mat(SK.b),DK=mat(0x232629),GR=mat(0x3b4046),TRK=mat(0x1b1c1e),T=mat(u.color),GUN=mat(0x4e565d),RED=mat(0xb8382a);
-    const L=9.6,TW=1.05,TZ=2.05;
-    for(const sz of[-1,1]){const z=sz*TZ;
-      g.add(mesh(box(L-.6,.32,TW),TRK,0,.16,z));g.add(mesh(box(L-1.2,.32,TW),TRK,.1,1.38,z));
-      const fr=mesh(box(1.2,.32,TW),TRK,L/2-.55,.78,z);fr.rotation.z=-1.05;g.add(fr);const bk=mesh(box(1.1,.32,TW),TRK,-L/2+.6,.78,z);bk.rotation.z=1.05;g.add(bk);
-      for(let i=0;i<6;i++){const w=mesh(cyl(.46,.46,TW*.8,10),DK,-3.6+i*1.44,.6,z);w.rotation.x=PI/2;g.add(w);}
-      const sp=mesh(cyl(.55,.55,TW*.9,10),GR,-L/2+.55,1.05,z);sp.rotation.x=PI/2;g.add(sp);const id=mesh(cyl(.45,.45,TW*.9,10),GR,L/2-.5,1.05,z);id.rotation.x=PI/2;g.add(id);}
-    g.add(mesh(box(L-1.4,1.1,2.9),DK,0,1.15,0));/* the tub between the tracks, seen only from low down */
-    if(!VARG_GEO.bjHull){
-      /* the hull with its skirts: [z,y] round each section along x, an optional third value pulls that corner back in x. The skirts' foot at 1.1 leaves
-         the road wheels free below; the shoulders over the tracks stand higher than the glacis between them */
-      const M=[[-2.75,1.1],[-2.75,2.0],[-2.35,2.42],[-1.15,2.5],[1.15,2.5],[2.35,2.42],[2.75,2.0],[2.75,1.1]],
-        S=[[-2.75,1.1,-.55],[-2.75,1.8,-.2],[-2.3,2.05],[-1.15,1.72,-.6],[1.15,1.72,-.6],[2.3,2.05],[2.75,1.8,-.2],[2.75,1.1,-.55]],
-        R=[[-2.6,1.1],[-2.6,1.9],[-2.25,2.3],[-1.15,2.38],[1.15,2.38],[2.25,2.3],[2.6,1.9],[2.6,1.1]];
-      VARG_GEO.bjHull=vLoft([[-4.9,R],[-4.4,M],[2.4,M],[4.6,S]]);
-      /* the turret round the gun's height (y 0 at its foot): wide at the hips, a long wedge face forward */
-      const Tr=[[-1.95,0],[-1.95,.72],[-1.45,1.08],[1.45,1.08],[1.95,.72],[1.95,0]],Tf=[[-.95,.1],[-1.15,.6],[-.65,.86],[.65,.86],[1.15,.6],[.95,.1]];
-      VARG_GEO.bjTur=vLoft([[-2.7,Tr.map(([z,y])=>[z*.94,y*.92])],[-2.3,Tr],[1.1,Tr],[3.0,Tf]]);}
-    g.add(new THREE.Mesh(VARG_GEO.bjHull,HULL));
-    /* the shoulders' fronts: a dark housing with a white lamp line each, low on the face */
-    for(const sz of[-1,1]){g.add(mesh(box(.12,.3,1.0),DK,4.12,1.42,sz*2.2));g.add(mesh(box(.06,.1,.8),R3.lampMat,4.19,1.44,sz*2.2));}
-    g.add(mesh(box(.3,.4,2.0),DK,3.85,1.2,0));/* the lower glacis between the shoulders */
-    /* the unit's colour: a panel on each shoulder's slope */
-    for(const sz of[-1,1])g.add(onFace(mesh(box(1.5,.05,.9),T),[2.4,2.42,sz*2.35],[2.4,2.5,sz*1.15],[4.6,2.05,sz*2.3],3.45,sz*1.85));
-    /* the skirts' joints: dark lines down the sides, and the Swedish flag (issue 111) */
-    for(const sz of[-1,1]){for(const x of[-2.2,.6])g.add(mesh(box(.06,.85,.04),DK,x,1.55,sz*2.765));
-      const fl=svFlag(1.0,sz);fl.position.set(-.8,1.6,sz*2.77);g.add(fl);}
-    /* the engine deck: a grille of slats behind the turret, exhausts, tail lamps and a towing bar at the stern */
-    g.add(mesh(box(2.0,.1,3.4),DK,-3.55,2.5,0));for(let i=0;i<6;i++)g.add(mesh(box(.12,.08,3.2),GR,-4.35+i*.32,2.57,0));
-    for(const sz of[-1,1]){g.add(mesh(box(.5,.3,.6),DK,-4.55,2.5,sz*1.9));g.add(mesh(box(.06,.14,.4),RED,-4.92,1.7,sz*2.3));}
-    g.add(mesh(box(.2,.2,3.6),DK,-4.95,1.2,0));
-    slingLugs(g,[[3.2,2.3,2.3],[3.2,2.3,-2.3],[-3.9,2.45,2.1],[-3.9,2.45,-2.1]]);
-    /* the turret on its ring */
-    const t=new THREE.Group();t.position.set(-.4,2.5,0);
-    t.add(mesh(cyl(1.5,1.55,.16,12),GR,-.2,.02,0));t.add(new THREE.Mesh(VARG_GEO.bjTur,HULL));
-    t.add(mesh(box(1.4,.05,1.4),T,-1.0,1.105,0));/* the unit's colour on the roof */
-    for(const sz of[-1,1]){t.add(mesh(box(.9,.38,.32),DK,.6,.62,sz*1.98));t.add(mesh(box(.04,.08,.24),R3.lampMat,1.06,.64,sz*1.98));}/* the sensor boxes, lamp lines forward */
-    t.add(mesh(box(.5,.28,.42),DK,.4,1.22,-.85));t.add(mesh(box(.04,.08,.3),R3.lampMat,.66,1.23,-.85));/* the roof optic */
-    for(const z of[-1.1,1.1])t.add(mesh(cyl(.03,.03,2.0,4),DK,-2.2,2.05,z));
-    t.add(mesh(box(.5,.5,.06),DK,-2.0,.5,1.86));t.add(mesh(box(.5,.5,.06),DK,-2.0,.5,-1.86));
-    for(const sz of[-1,1])svPut(t,CS,.14,v3(-.6,.38,sz*1.956),v3(0,0,sz),v3(0,1,0));/* the call number on the turret's sides (issue 114), turned with it */
-    const barrel=new THREE.Group();barrel.position.set(2.9,.5,0);
-    barrel.add(mesh(box(.7,.62,.9),DK,.1,0,0));const b=mesh(cyl(.22,.26,4.4,10),GUN,2.4,0,0);b.rotation.z=PI/2;barrel.add(b);
-    barrel.add(mesh(box(.9,.5,.52),DK,4.9,0,0));for(const dx of[-.22,0,.22])barrel.add(mesh(box(.1,.52,.54),GR,4.75+dx,0,0));
+    // BJÖRN 01 (Magnus 4 nov, issue 154, after his picture "BJÖRN / 01"; second pass 5 nov: real tracks, a closed front, the turret raised clear of the
+    // engine deck). VARG's language on a heavy tank: a faceted hull whose skirts hang over the upper tracks; the front in three convex pieces, two
+    // shoulders over the tracks with white lamp lines in their fronts and a lower ridged glacis between them that runs down to a nose; a wedge turret on
+    // a dark ring, a sensor box each side and an optic on the roof with lamp lines, a heavy gun with a slotted muzzle brake, two aerials; an engine
+    // grille behind the turret. The tracks are a band round sprocket, idler and seven road wheels, with pads all round. VARG's scheme: the hull in the
+    // season's tone, dark running gear, the unit's colour on the shoulders and the turret roof. At 0.8 like the other ground vehicles; no hover, no fans
+    const HULL=mat(SK.a),HULL2=mat(SK.b),DK=mat(0x232629),GR=mat(0x3b4046),TRK=mat(0x1b1c1e),BAND=mat(0x2a2c2f),T=mat(u.color),GUN=mat(0x4e565d),RED=mat(0xb8382a);
+    const TW=1.1,TZ=2.15,XF=4.5,XR=-4.7,RF=.6,RR=.62,YW=1.02;/* track width and centre, idler and sprocket x, their radii and the height of their axles */
+    if(!VARG_GEO.bjTrack){
+      /* the band seen from the side: a centre line on the ground under the road wheels, round the idler and the sprocket (its top run hidden by the
+         skirt), and the band's two edges offset from it by the same step, so that outside and inside stay in phase round the curves */
+      const h=.12,r1=RF-h,r2=RR-h,CL=[[XR+.5,.06+h],[XF-.5,.06+h]];
+      for(let i=0;i<=6;i++){const a=-PI/2-.55+(PI+.55)*i/6;CL.push([XF+Math.cos(a)*r1,YW+Math.sin(a)*r1]);}
+      for(let i=0;i<=6;i++){const a=PI/2+(PI-.55)*i/6;CL.push([XR+Math.cos(a)*r2,YW+Math.sin(a)*r2]);}
+      const N=CL.length,nrm=i=>{const p=CL[(i+N-1)%N],c=CL[i],q=CL[(i+1)%N],l1=Math.hypot(c[0]-p[0],c[1]-p[1]),l2=Math.hypot(q[0]-c[0],q[1]-c[1]),
+          d1=[(c[0]-p[0])/l1,(c[1]-p[1])/l1],d2=[(q[0]-c[0])/l2,(q[1]-c[1])/l2],n=[d1[1]+d2[1],-(d1[0]+d2[0])],ln=Math.hypot(...n),k=1/Math.max(.5,(n[0]*d2[1]-n[1]*d2[0])/ln);
+          return[n[0]/ln*k,n[1]/ln*k];},
+        Po=CL.map((c,i)=>{const n=nrm(i);return new THREE.Vector2(c[0]+n[0]*h,c[1]+n[1]*h);}),Pi=CL.map((c,i)=>{const n=nrm(i);return new THREE.Vector2(c[0]-n[0]*h,c[1]-n[1]*h);});
+      /* the band as walls outside and in and its two faces (the inner one shows from behind and ahead), one geometry per side */
+      VARG_GEO.bjTrack=[1,-1].map(s=>{const P=[],C=[],zo=s*TW/2,zi=-zo,V=(q,z)=>new THREE.Vector3(q.x,q.y,z),Q=(a,b,c,d,m)=>{P.push(a,b,c,a,c,d);C.push(m,m);};
+        for(let i=0;i<N;i++){const j=(i+1)%N,a=Po[i],b=Po[j],c=Pi[i],d=Pi[j];Q(V(a,zi),V(b,zi),V(b,zo),V(a,zo),V(c,0));Q(V(c,zi),V(d,zi),V(d,zo),V(c,zo),V(a,0));
+          for(const z of[zo,zi])Q(V(a,z),V(b,z),V(d,z),V(c,z),V(a.clone().add(d).multiplyScalar(.5),0));}
+        return vFaces(P,i=>C[i]);});
+      /* the pads and road wheels move (Magnus 5 nov: the tracks must run), so they are not baked: VARG_GEO.bjG holds the loop for bjGear below.
+         The road wheels' radius is set so that one pad spacing turns a six-fold hub by a sixth, and the gear repeats itself every pad */
+      const seg=CL.map((c,i)=>{const q=CL[(i+1)%N];return[c,q,Math.hypot(q[0]-c[0],q[1]-c[1])];}),len=seg.reduce((a,s)=>a+s[2],0),n=Math.round(len/.47),T0=seg.slice(0,8).reduce((a,s)=>a+s[2],0);
+      VARG_GEO.bjG={seg,len,n,d:len/n,T0,T1:T0+seg[8][2],rw:len/n*6/(2*PI),h,slots:Math.ceil((len-seg[8][2])/(len/n))+1};
+      VARG_GEO.bjBack=new THREE.PlaneGeometry(9.2,1.5);VARG_GEO.bjDisc=[[.42,12],[.4,12]].map(([r,k])=>new THREE.CircleGeometry(r,k));
+      /* the hull behind the front: sides with skirts to 1.0 m, creased at 1.45 m with the lower part drawn in as in the picture, chamfered top edges; the stern a little smaller */
+      const M=[[-2.7,1.0],[-2.82,1.45],[-2.82,1.95],[-2.45,2.4],[2.45,2.4],[2.82,1.95],[2.82,1.45],[2.7,1.0]],R=[[-2.6,1.1],[-2.7,1.45],[-2.7,1.85],[-2.35,2.28],[2.35,2.28],[2.7,1.85],[2.7,1.45],[2.6,1.1]];
+      VARG_GEO.bjHull=vLoft([[-4.95,R],[-4.6,M],[2.5,M]]);
+      /* the shoulders over the tracks: a flat top sloping down to a lamp face, each convex so that nothing shows through */
+      VARG_GEO.bjSh=[1,-1].map(s=>vLoft([[2.4,[[1.45,1.0],[1.45,2.4],[2.45,2.4],[2.82,1.95],[2.82,1.45],[2.7,1.0]]],[4.3,[[1.45,1.05],[1.45,2.08],[2.42,2.08],[2.8,1.8],[2.8,1.42],[2.68,1.05]]],
+        [4.85,[[1.5,1.2],[1.5,1.82],[2.36,1.82],[2.68,1.62],[2.68,1.4],[2.58,1.2]]]].map(([x,A])=>[x,A.map(([z,y])=>[s*z,y])])));
+      /* the glacis between them, with a ridge down the middle, running down into a blunt nose */
+      VARG_GEO.bjGl=vLoft([[2.4,[[-1.55,.95],[-1.55,2.3],[0,2.44],[1.55,2.3],[1.55,.95]]],[4.6,[[-1.55,.85],[-1.55,1.42],[0,1.58],[1.55,1.42],[1.55,.85]]],
+        [5.1,[[-1.25,.75],[-1.25,1.05],[0,1.16],[1.25,1.05],[1.25,.75]]]]);
+      /* the turret round its foot (y 0): wide at the hips, a long wedge face forward */
+      const Tr=[[-1.95,0],[-2.05,.55],[-1.5,1.05],[1.5,1.05],[2.05,.55],[1.95,0]],Tf=[[-.8,.12],[-.95,.52],[-.55,.8],[.55,.8],[.95,.52],[.8,.12]];
+      VARG_GEO.bjTur=vLoft([[-2.35,Tr.map(([z,y])=>[z*.86,y*.9])],[-1.95,Tr],[.9,Tr],[2.75,Tf]]);}
+    /* the running gear: band, sprocket and idler, the moving pads and road wheels (bjGear), the tub between the tracks */
+    for(const sz of[-1,1]){const z=sz*TZ;g.add(mesh(VARG_GEO.bjTrack[sz>0?0:1],BAND,0,0,z));
+      const D=VARG_GEO.bjDisc,dk=(k,m,x,y,dz)=>{const d=mesh(D[k],m,x,y,z+sz*dz);d.rotation.y=sz>0?0:PI;g.add(d);};
+      dk(0,GR,XR,YW,TW*.42);dk(1,GR,XF,YW,TW*.42);}
+    {const gm=mkBjGear();g.add(gm);g.userData.gearM=gm;g.userData.gs=[0,0];}/* the pads and road wheels, which move (bjGear) */
+    g.add(mesh(box(9.0,1.0,3.0),DK,0,1.1,0));
+    for(const sz of[-1,1]){const w=mesh(VARG_GEO.bjBack,DK,-.1,.85,sz*(TZ-TW*.3));w.rotation.y=sz>0?0:PI;g.add(w);}/* a dark backing inside each loop, so the ground does not show between the wheels */
+    g.add(new THREE.Mesh(VARG_GEO.bjHull,HULL));for(const s of VARG_GEO.bjSh)g.add(new THREE.Mesh(s,HULL));g.add(new THREE.Mesh(VARG_GEO.bjGl,HULL2));
+    /* the shoulders' fronts: a dark housing with a white lamp line each; */
+    for(const sz of[-1,1]){g.add(mesh(box(.1,.32,1.0),DK,4.86,1.5,sz*1.98));g.add(mesh(box(.06,.1,.82),R3.lampMat,4.9,1.52,sz*1.98));}
+    /* the unit's colour: a panel on each shoulder's slope, turned a little so it reads as a slanted stripe as in the picture, and a vision slot behind it */
+    for(const sz of[-1,1]){const p=onFace(mesh(box(1.35,.05,.72),T),[2.4,2.4,sz*1.5],[2.4,2.4,sz*2.4],[4.3,2.08,sz*2.0],3.45,sz*1.95);p.rotateY(sz*.28);g.add(p);
+      g.add(onFace(mesh(box(.7,.04,.24),DK),[2.4,2.4,sz*1.5],[2.4,2.4,sz*2.4],[4.3,2.08,sz*2.0],2.5,sz*2.05));}
+    /* the skirts: dark joints down the sides, a dark line along the crease, and the Swedish flag (issue 111) */
+    for(const sz of[-1,1]){for(const x of[-2.6,-.1,2.4])g.add(mesh(box(.05,.48,.04),DK,x,1.7,sz*2.83));g.add(mesh(box(7.5,.05,.04),DK,-1.0,1.45,sz*2.83));
+      const fl=svFlag(.8,sz);fl.position.set(-1.35,1.71,sz*2.84);g.add(fl);}
+    /* the engine deck: a dark panel with a grille of slats behind the turret, exhausts at the corners, tail lamps, a stern plate and a towing bar */
+    g.add(mesh(box(1.75,.06,3.3),DK,-3.75,2.42,0));for(let i=0;i<5;i++)g.add(mesh(box(.12,.06,3.1),GR,-4.4+i*.32,2.47,0));
+    for(const sz of[-1,1]){g.add(mesh(box(.55,.18,.5),DK,-4.45,2.45,sz*2.0));g.add(mesh(box(.06,.14,.42),RED,-4.97,1.75,sz*2.25));}
+    g.add(mesh(box(.06,.5,2.4),HULL2,-4.97,1.65,0));g.add(mesh(box(.2,.2,3.4),DK,-5.0,1.18,0));
+    slingLugs(g,[[3.3,2.24,2.1],[3.3,2.24,-2.1],[-4.2,2.4,2.25],[-4.2,2.4,-2.25]]);
+    /* the turret on its ring, well clear of the deck and the hull roof */
+    const t=new THREE.Group();t.position.set(.1,2.58,0);
+    t.add(mesh(cyl(1.7,1.75,.24,10),DK,-.3,-.06,0));t.add(new THREE.Mesh(VARG_GEO.bjTur,HULL));
+    t.add(mesh(box(.12,.5,3.2),DK,-2.37,.42,0));/* the dark bustle plate at the back */
+    t.add(mesh(box(1.25,.05,1.15),T,-1.05,1.075,.35));/* the unit's colour on the roof */
+    for(const sz of[-1,1]){t.add(mesh(box(.95,.36,.3),DK,.75,.58,sz*2.02));t.add(mesh(box(.04,.08,.24),R3.lampMat,1.24,.6,sz*2.02));}/* the sensor boxes, lamp lines forward */
+    t.add(mesh(box(.5,.26,.42),DK,.35,1.18,-.85));t.add(mesh(box(.04,.08,.3),R3.lampMat,.61,1.19,-.85));/* the roof optic */
+    for(const z of[-1.15,1.15]){t.add(mesh(box(.16,.08,.16),DK,-1.85,1.09,z));t.add(mesh(cyl(.03,.03,2.0,4),DK,-1.85,2.05,z));}
+    for(const sz of[-1,1])svPut(t,CS,.13,v3(-.75,.8,sz*1.775),v3(0,.743,sz*.669),v3(0,1,0));/* the call number on the turret's upper sides (issue 114), turned with it */
+    const barrel=new THREE.Group();barrel.position.set(2.5,.5,0);
+    barrel.add(mesh(box(.7,.6,.85),DK,.1,0,0));const b=mesh(cyl(.2,.25,4.4,10),GUN,2.4,0,0);b.rotation.z=PI/2;barrel.add(b);
+    const fx=mesh(cyl(.29,.29,.5,10),GUN,1.0,0,0);fx.rotation.z=PI/2;barrel.add(fx);/* the fume extractor */
+    barrel.add(mesh(box(.7,.46,.5),DK,4.9,0,0));for(const dx of[-.14,.18])barrel.add(mesh(box(.08,.48,.52),GR,4.8+dx,0,0));
     t.add(barrel);g.add(t);g.userData.tur=t;}
   else if(u.kind==='tank'){
     // VARG 01B (Magnus design 1 nov, issue 110): a faceted hull with a low spine and a wedge bow, a segmented skirt, a bigger faceted
