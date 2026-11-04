@@ -33,10 +33,10 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
   const S=G().structs.find(s=>s.kind==='house'&&B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},s.x,s.y));const sp=B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},S.x,S.y),u=boat(sp.x,sp.y);
   B.giveOrder(u,{type:'strike',s:S,post:'off'});until(()=>S.dead,40);ok(S.dead&&u.ammo===3,'a farm falls to one robot ('+u.ammo+' left)');
   B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x+20,y:S.y+10}},'off'));until(()=>!u.orders.length,40);ok(u.ammo===2,'a robot at a point on land ('+u.ammo+' left)');
-  // 6. out of robots: home by itself, and the reload waits for the captain
-  u.ammo=1;B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x-15,y:S.y}},'off'));until(()=>u.ammo<1,30);until(()=>B.atBirkaSide(u)&&!u.orders.length,200);
-  ok(B.atBirkaSide(u)&&u.ammo===0,'out of robots it goes to Birka by itself and does not load');until(()=>false,15);ok(u.ammo===0,'no robot without the captain\'s word');
-  const r0=G().res;B.gaddaRearm(u);until(()=>u.ammo===4,20);ok(r0-G().res===160&&u.ammo===4,'the approved reload costs 160 and fills it ('+(r0-G().res)+', '+u.ammo+')');}
+  // 6. out of robots: home by itself, and it loads by itself alongside (Magnus 4 nov, provspel ö 3100)
+  u.ammo=1;B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x-15,y:S.y}},'off'));until(()=>u.ammo<1,30);const r0=G().res;until(()=>B.atBirkaSide(u)&&!u.orders.length,200);
+  ok(B.atBirkaSide(u),'out of robots it goes to Birka by itself');until(()=>u.ammo===4,30);ok(r0-G().res===160&&u.ammo===4,'alongside it loads four by itself for 160 ('+(r0-G().res)+', '+u.ammo+')');
+  u.ammo=0;u.rearm=0;G().res=10;until(()=>false,10);ok(u.ammo===0,'without the material it waits ('+u.state+')');}
 // 7. an air defence shoots about one robot in seven down
 {B.newGame(9052,'fastning');const A=G().enemies.find(e=>e.kind==='aa');for(const e of G().enemies)if(e!==A)e.dead=true;A.dead=false;let n=0;const N=4000;
   for(let i=0;i<N;i++){const f={x1:A.x-300,y1:A.y,x2:A.x+50,y2:A.y,h2:2,a:null};if(B.gaddaDown(f))n++;}
@@ -94,4 +94,12 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
   until(()=>false,6);B.giveOrder(u,{type:'move',x:505,y:1455,post:'off'});const t0=G().time;let st=0,stMax=0;
   const got=until(()=>{st=u.v<1?st+.05:0;stMax=Math.max(stMax,st);return !u.orders.length;},120);
   ok(got&&stMax<2,'turned about by a rock on 1490, it gets off and reaches the point in '+Math.round(G().time-t0)+' s, still for at most '+stMax.toFixed(1)+' s');}
+// 9. an air defence on the move (Magnus 4 nov, provspel ö 3100 kp01): in reach the boat brakes and fires from where it is instead of
+// chasing a firing spot that moves with the target; "I skjutläge" is said only at the spot, never at speed
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;const A=G().enemies.find(e=>e.kind==='aa');for(const e of G().enemies)if(e!==A)e.dead=true;
+  const sp=B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},A.x,A.y),u=boat(sp.x,sp.y);const a0=u.ammo;B.startScoot(A);let lie=false;
+  const v=B.makeUnit('drone',A.x+60,A.y);v.hp=v.maxhp=1e6;v.ammo=v.maxAmmo=0;v.fuel=v.maxFuel=1e6;v.range=v.dmg=0;G().units.push(v);/* an unarmed HÖK held over it paints it */
+  B.giveOrder(u,{type:'attack',enemy:A,post:'off'});
+  const shot=until(()=>{v.x=A.x+60;v.y=A.y;v.orders=[];if(/^I skjutläge/.test(u.state)&&(u.v||0)>6)lie=true;return u.ammo<a0;},20);until(()=>{v.x=A.x+60;v.y=A.y;v.orders=[];if(/^I skjutläge/.test(u.state)&&(u.v||0)>6)lie=true;return false;},15);
+  ok(shot,'a moving air defence in reach gets a robot ('+u.state+', '+(A.sc?'moving':'still')+')');ok(!lie,'never "I skjutläge" at speed');}
 process.exit(fail?1:0);

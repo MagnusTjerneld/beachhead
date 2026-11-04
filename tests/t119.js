@@ -33,7 +33,13 @@ ok(G.relays.some(r=>r.type==='kraft')&&G.relays.some(r=>r.type==='olja'),'the po
     const last=S.pipes.find(l=>{const e=l[l.length-1];return Math.hypot(e.x-J.plat.x,e.y-J.plat.y)<1;});ok(!!last&&last.some(p=>Math.hypot(p.x-S.pump.x,p.y-S.pump.y)<1),'a pipe runs from the big cisterns by the pump house out onto the jetty');}
   const big=S.tanks.filter(t=>t.big),hd=S.pipes[0];ok(big.every(t=>S.pipes.some(l=>l.length===2&&Math.abs(l[0].x-t.x)<.1&&Math.abs(l[1].y-hd[0].y)<.1)),'every big cistern has a pipe to the header');
   ok(S.smalls.every(sm=>S.pipes.some(l=>l.length===3&&Math.abs(l[2].y-sm.y)<.1)),'every small group is piped to the big one');
-  ok(B.W.trees.every(t=>Math.hypot(t.x-S.cist.x,t.y-S.cist.y)>B.OIL.bigR+20),'no trees on the big pad');}
+  ok(B.W.trees.every(t=>Math.hypot(t.x-S.cist.x,t.y-S.cist.y)>B.OIL.bigR+20),'no trees on the big pad');
+  // the bunds and the pump house shut to vehicles, every cell under them (Magnus 4 nov, provspel kp04: VARG drove through the cisterns)
+  const shut=(x,y)=>!B.passLand(B.cellIdx(x,y));
+  ok(big.every(t=>[[0,0],[12,12],[-12,12],[12,-12],[-12,-12]].every(([dx,dy])=>shut(t.x+dx,t.y+dy))),'each big bund is shut to vehicles, not only its middle');
+  ok(S.tanks.filter(t=>!t.big).every(t=>shut(t.x,t.y))&&shut(S.pump.x,S.pump.y),'the small groups and the pump house too');
+  ok(G.enemies.every(e=>e.dead||B.W.grid[B.cellIdx(e.x,e.y)]!==5),'no enemy left standing inside a bund');
+  const o=G.relays.find(q=>q.type==='olja'),L=B.W.landing;ok(!!B.astar(L.x,L.y,o.x,o.y,B.passLand,()=>1),'the depot\'s point can still be reached on land');}
 {const r=G.relays.find(q=>q.type==='kraft'),o=G.relays.find(q=>q.type==='olja'),hq=B.W.harborQ,d=B.W.harbor.dock,dq=Math.min(Math.hypot(o.x-hq.x,o.y-hq.y),Math.hypot(o.x-d.x,o.y-d.y));
   ok(dq>=60&&dq<=220,'the depot lies 60 to 220 m from the quay ('+Math.round(dq)+', 4 nov: by the harbour)');
   ok(B.scenShore(B.W)[B.cellIdx(r.x,r.y)]>=220,'the power station lies well inland ('+Math.round(B.scenShore(B.W)[B.cellIdx(r.x,r.y)])+' m from the shore)');
@@ -85,6 +91,10 @@ ok(st('tanker').open&&G.scen.ships.length===1,'and the tanker is under way');
   const d=B.W.harbor.dock,end=R[R.length-1],J=G.scen.sites.jetty;ok(Math.hypot(end.x-d.x,end.y-d.y)>=150,'and ends 150 m or more from Birka\'s berth ('+Math.round(Math.hypot(end.x-d.x,end.y-d.y))+' m)');
   ok(J&&Math.hypot(end.x-J.x,end.y-J.y)<.5&&Math.abs(Math.sin(end.a-J.a))<1e-6,'alongside the oil jetty');
   {const p=R[R.length-2];ok(Math.abs(Math.hypot(p.x-J.x,p.y-J.y)-B.OIL.stage)<1,'from a pose '+B.OIL.stage+' m off it, sideways');}
+  // planned with its own 150 m hull, and with the side to the jetty that needs the least turning on the spot (Magnus 4 nov, provspel kp09)
+  {let spin=0;for(let i=1;i<R.length-1;i++)if(Math.hypot(R[i].x-R[i-1].x,R[i].y-R[i-1].y)<1&&Math.hypot(R[i].x-J.x,R[i].y-J.y)<400)spin+=Math.abs(Math.atan2(Math.sin(R[i].a-R[i-1].a),Math.cos(R[i].a-R[i-1].a)));
+   ok(spin<.6,'no turn on the spot near the jetty ('+Math.round(spin*180/Math.PI)+' degrees)');
+   B.NAV.hull=B.TANKER_HULL;const bad=R.slice(1,-1).filter(q=>!B.navFree(B.W,q.x,q.y,q.a-Math.PI)).length;B.NAV.hull=null;ok(!bad,'its whole hull clear of land the whole way ('+bad+' poses not)');}
   // a coast bunker in reach shoots it
   const x0=tf.x,y0=tf.y;let vmax=0;run(1200,()=>{vmax=Math.max(vmax,tf.v);return false;});ok(Math.hypot(tf.x-x0,tf.y-y0)>100&&vmax<=6.01&&vmax>5,'it speeds up to 6 m/s and no more ('+Math.round(Math.hypot(tf.x-x0,tf.y-y0))+' m in 60 s, top speed '+vmax.toFixed(2)+')');
   const hp0=tf.hp,bk=B.makeEnemy({id:'XB',kind:'turret',x:tf.x+100,y:tf.y,coast:true});bk.seen=true;G.enemies.push(bk);run(160);ok(tf.hp<hp0,'a coast bunker in reach shoots it ('+hp0+' to '+tf.hp+')');bk.dead=true;tf.hp=tf.maxhp;
