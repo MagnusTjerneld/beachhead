@@ -13,7 +13,7 @@ code='const MATS=new Map(),GEOS=new Map(),TAU=Math.PI*2;\n'+''.join(models).repl
 code+='const R3={lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0,emissive:0x3a3826})};\n'
 cost=re.search(r'COST=(\{[^}]*\})',g).group(1)
 krok=re.search(r"kind:'krok',name:'KROK '[^\n]*",g).group(0)
-stats='\n'.join([stmt('const HOVER_Y='),stmt('const ENEMY={'),stmt('const TYPES={'),stmt('const BJORN='),stmt('const ENG2='),stmt('const MG='),stmt('const ROCKET_EXT='),stmt('const SCOOT='),stmt('const SIZE_ACC='),stmt('const KROK_COST='),stmt('const GADDA='),stmt('const CALLSIGN='),stmt('const callTag='),
+stats='\n'.join([stmt('const HOVER_Y='),stmt('const hov='),stmt('const ENEMY={'),stmt('const TYPES={'),stmt('const BJORN='),stmt('const ENG2='),stmt('const MG='),stmt('const ROCKET_EXT='),stmt('const SCOOT='),stmt('const SIZE_ACC='),stmt('const KROK_COST='),stmt('const GADDA='),stmt('const CALLSIGN='),stmt('const callTag='),
                  'const COST='+cost+';','const KROK_SRC='+repr(krok)+';'])
 src=open(os.path.join(here,'enhetsgalleri.src.html'),encoding='utf-8').read()
 src=src.replace('/*GAME-MODELS*/',code).replace('/*GAME-STATS*/',stats)
