@@ -38,6 +38,7 @@ const CONTRACT={
     scout:{parts:['spin'],tri:1300,calls:8,h:[.4,2],len:[1.5,4],foot:[-.8,.1]},
     drone:{parts:['spin','rockets','legs','ducts'],tri:3000,calls:24,h:[.8,3],len:[5,12],foot:[-.8,.1]},
     tank:{parts:['tur'],tri:1900,calls:6,h:[2,6.5],len:[6,13],foot:[-.15,.1]},
+    bjorn:{parts:['tur'],tri:1900,calls:6,h:[2,6.5],len:[8,16],foot:[-.15,.1]},/* BJÖRN (issue 92): asked for by its build kind, the model is a tank with ty bjorn */
     eng:{parts:[],tri:1450,calls:5,h:[2.5,7],len:[4.5,9],foot:[-.15,.1]},
     mus:{parts:[],tri:800,calls:3,h:[1.2,3.5],len:[1.2,3],foot:[-.15,.1]},
     crew:{parts:[],tri:700,calls:3,h:[1.5,2.4],len:[1.5,4],foot:[-.15,.1]},/* the downed crew (issue 124): three men and a panel */

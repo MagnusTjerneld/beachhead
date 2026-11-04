@@ -20,6 +20,10 @@ const DT=.05,TMAX=300,SEED=7341;
 const SC={
   bunker:{txt:'3 VARG och en offensiv HÖK mot en bunker med två pansarvärnslag',
     own:{tank:3,hok:['off']},def:[['turret',0,0],['at',-25,55],['at',-20,-60]],plan:'chain',order:[1,2,0]},
+  bjbunker:{txt:'1 BJÖRN mot en bunker med två pansarvärnslag (issue 92)',own:{bjorn:1},def:[['turret',0,0],['at',-25,55],['at',-20,-60]],plan:'chain',order:[1,2,0]},
+  bjpansar:{txt:'1 BJÖRN mot två stridsvagnar (issue 92)',own:{bjorn:1},def:[['tank',0,-30],['tank',10,30]],plan:'chain',order:[0,1]},
+  vpansar1:{txt:'1 VARG mot två stridsvagnar, som bjpansar med en VARG',own:{tank:1},def:[['tank',0,-30],['tank',10,30]],plan:'chain',order:[0,1]},
+  bjturret:{txt:'1 BJÖRN mot en ensam bunker (issue 92)',own:{bjorn:1},def:[['turret',0,0]],plan:'chain',order:[0]},
   pansar:{txt:'3 VARG mot två stridsvagnar',own:{tank:3},def:[['tank',0,-30],['tank',10,30]],plan:'chain',order:[0,1]},
   lv:{txt:'2 VARG och två offensiva HÖK mot luftvärn, bunker och infanteri; luftvärnet först',
     own:{tank:2,hok:['off','off']},def:[['aa',30,0],['turret',0,40],['inf',-20,-40]],plan:'chain',order:[0,1,2]},
@@ -89,6 +93,7 @@ function play(name,rep){
   for(const k of S.hide||[])G.enemies[k].seen=false;
   G.units=[];const own=[],nt=S.own.tank||0,hk=(S.own.hok&&S.own.hok.length)?S.own.hok:HOK?['def']:[],back=-(S.dist||420);
   for(let i=0;i<nt;i++){const p=at(back,(i-(nt-1)/2)*26),u=B.makeUnit('tank',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);if(S.own.hp)u.hp=Math.round(u.maxhp*S.own.hp);G.units.push(u);own.push(u);}
+  for(let i=0;i<(S.own.bjorn||0);i++){const p=at(back,(i-((S.own.bjorn||1)-1)/2)*26+nt*26),u=B.makeUnit('bjorn',p.x,p.y);u.heading=u.turret=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);}/* BJÖRN (issue 92) */
   hk.forEach((post,i)=>{const p=at(back-30,(i-(hk.length-1)/2)*30),u=B.makeUnit('drone',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
   (S.own.get||[]).forEach((post,i)=>{const p=at(back-50,(i-((S.own.get.length-1)/2))*30),u=B.makeUnit('scout',p.x,p.y);u.post=post;u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);});
   if(S.own.gadda){const p=at(-380,0),u=B.makeUnit('gadda',p.x,p.y);u.heading=Math.atan2(f.y,f.x);G.units.push(u);own.push(u);

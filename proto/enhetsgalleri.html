@@ -293,8 +293,8 @@ const SV_H=.8,SV_FONT={'0':['01110','10001','10001','10001','10001','10001','011
   V:['10001','10001','10001','10001','10001','01010','00100'],H:['10001','10001','10001','11111','10001','10001','10001'],
   X:['10001','10001','01010','00100','01010','10001','10001'],G:['01110','10001','10000','10111','10001','10001','01111'],
   B:['11110','10001','10001','11110','10001','10001','11110'],M:['10001','11011','10101','10101','10001','10001','10001'],
-  K:['10001','10010','10100','11000','10100','10010','10001']};
-const svCall=u=>u&&u.num&&CALLSIGN[u.kind]?callTag(u.kind,u.num):'';
+  K:['10001','10010','10100','11000','10100','10010','10001'],J:['00111','00010','00010','00010','00010','10010','01100']};
+const svCall=u=>{const ck=u&&(u.ty||u.kind);return u&&u.num&&CALLSIGN[ck]?callTag(ck,u.num):'';};
 function svNum(t,p,own){const k='num:'+t+':'+p;if(!GEOS.has(k)){const n=SV_FONT['0'].length,P=[],gl=[...t].map(c=>SV_FONT[c]||SV_FONT['0']);p=p*5*SV_H/n;
     const W=gl.reduce((a,r)=>a+r[0].length+1,-1)*p;let x0=-W/2;
     for(const r of gl){const w=r[0].length,used=r.map(()=>Array(w).fill(false));
@@ -317,6 +317,7 @@ function slingLugs(g,P,bare){if(!GEOS.has('lug')){const t=[0,.07,0],c=[[.1,-.07,
      (userData.lugs, one draw call more), hidden otherwise */
   if(!bare){const q=new THREE.Group();for(const p of P)q.add(mesh(GEOS.get('lug'),m,p[0],p[1]+.07,p[2]));q.visible=false;g.add(q);g.userData.lugs=q;}g.userData.slingPts=P.map(p=>new THREE.Vector3(p[0],p[1]+(bare?.02:.13),p[2]));}
 function mkUnitMesh(u){
+  if(u.kind==='bjorn')u=Object.assign({},u,{kind:'tank',ty:'bjorn'});/* a model asked for by the build kind: the wrecks and the gallery */
   const g=new THREE.Group(),SK=unitSkin(),CS=svCall(u),v3=(x,y,z)=>new THREE.Vector3(x,y,z);/* CS: the call number, on the model (issue 114) */
   if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK,call:CS}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();
     slingLugs(m,[[2.5,1.04,1],[2.5,1.04,-1],[-4.4,.99,1],[-4.4,.99,-1]]);/* on the deck, ahead of the ridge's slope and abaft the launcher */root.add(sh(bake(m,true)));root.add(L);root.add(ram);
@@ -342,7 +343,41 @@ function mkUnitMesh(u){
     g.add(mesh(cyl(.02,.02,1.4,4),mat(0x2a2a2a),-.5,1.55,.32));g.add(mesh(new THREE.SphereGeometry(.04,6,4),mat(0xd03a2a),-.5,2.26,.32));
     g.add(mesh(box(.36,.22,.5),mat(0x3a3a30),-.35,1.0,-.05));for(const dz of[-.15,0,.15])g.add(mesh(box(.37,.06,.06),mat(0xe0b02e),-.35,1.06,-.05+dz));
     return sh(bake(g,true));}
-  if(u.kind==='tank'){
+  if(u.ty==='bjorn'){
+    // BJÖRN (issue 92): the form decided in the unit gallery ("Tung stridsvagn på band", 22 okt), moved into the game on 4 nov. Tracks with road wheels,
+    // sprocket and idler under skirts, a tub with a sloped glacis, an engine deck with grilles and two exhausts, and a wide wedge turret with a
+    // long gun, fume extractor and muzzle brake; the hull in the season's tone. A band round the turret is in the unit's colour. At 0.8 like the
+    // other ground vehicles; it stands on its tracks, so no hover and no fans
+    const steel=mat(SK.a),steel2=mat(SK.b),dark=mat(0x1b1c1e),track=mat(0x2a2c2e),deck=mat(0x9aa2a0),grill=mat(0x262a2c),gun=mat(0x4a5256),TM=mat(u.color);
+    const L=9.6,TW=1.05,TZ=2.05;
+    for(const sz of[-1,1]){const z=sz*TZ;
+      g.add(mesh(box(L-.6,.32,TW),track,0,.16,z));g.add(mesh(box(L-1.2,.32,TW),track,.1,1.38,z));
+      const fr=mesh(box(1.2,.32,TW),track,L/2-.55,.78,z);fr.rotation.z=-1.05;g.add(fr);const bk=mesh(box(1.1,.32,TW),track,-L/2+.6,.78,z);bk.rotation.z=1.05;g.add(bk);
+      for(let i=0;i<5;i++){const w=mesh(cyl(.5,.5,TW*.8,12),dark,-3.3+i*1.65,.62,z);w.rotation.x=PI/2;g.add(w);}
+      const sp=mesh(cyl(.55,.55,TW*.9,10),steel2,-L/2+.55,1.05,z);sp.rotation.x=PI/2;g.add(sp);const id=mesh(cyl(.45,.45,TW*.9,10),steel2,L/2-.5,1.05,z);id.rotation.x=PI/2;g.add(id);
+      g.add(mesh(box(L-1.4,.75,.12),steel,.15,1.25,sz*(TZ+TW/2+.06)));}
+    g.add(mesh(box(L-1.4,1.1,2.9),steel2,0,1.15,0));
+    g.add(mesh(box(L-2.4,.7,5.1),steel,-.4,2.0,0));
+    const gl=mesh(box(2.2,.18,5.1),steel,L/2-1.45,1.86,0);gl.rotation.z=-.38;g.add(gl);
+    const nose=mesh(box(.5,.9,4.6),steel2,L/2-.5,1.25,0);nose.rotation.z=.5;g.add(nose);
+    for(const z of[-1.9,1.9])g.add(mesh(box(.2,.3,.5),R3.lampMat,L/2-.3,1.75,z));
+    g.add(mesh(box(3.0,.12,4.7),deck,-L/2+2.3,2.41,0));
+    for(let i=0;i<3;i++)g.add(mesh(box(.2,.06,3.6),grill,-L/2+1.3+i*.7,2.5,0));
+    for(const z of[-1.6,1.6])g.add(mesh(box(.5,.5,.9),dark,-L/2+.85,2.15,z));
+    for(const z of[-2.745,2.745]){const fl=svFlag(1.1,z);fl.position.set(-1.6,1.25,z);g.add(fl);}/* the Swedish flag on the skirts (issue 111); the skirts' outer face is at 2.69 */
+    const t=new THREE.Group();t.position.set(.7,2.35,0);
+    t.add(mesh(box(4.2,1.15,3.7),steel,-.3,.6,0));
+    for(const sz of[-1,1]){const ch=mesh(box(1.9,1.1,1.5),steel,1.55,.58,sz*1.05);ch.rotation.y=sz*.42;t.add(ch);}
+    t.add(mesh(box(2.2,.5,3.9),steel2,-2.0,.55,0));
+    t.add(mesh(box(4.26,.2,3.76),TM,-.3,.9,0));/* the unit's band round the turret, 3 cm proud of its sides and below its roof (z-fighting, CLAUDE.md) */
+    for(const sz of[-1,1])svPut(t,CS,.14,v3(-.3,.55,sz*1.856),v3(0,0,sz),v3(0,1,0));/* the call number on the turret's sides (issue 114), turned with it */
+    t.add(mesh(cyl(.45,.5,.45,10),steel2,-.9,1.42,-.9));
+    const barrel=new THREE.Group();barrel.position.set(2.2,.62,0);
+    const b=mesh(cyl(.21,.25,6.4,10),gun,3.2,0,0);b.rotation.z=PI/2;barrel.add(b);
+    barrel.add(mesh(box(.7,.42,.5),gun,6.5,0,0));
+    barrel.add(mesh(box(.8,.9,1.3),steel2,.2,0,0));
+    t.add(barrel);g.add(t);g.userData.tur=t;}
+  else if(u.kind==='tank'){
     // VARG 01B (Magnus design 1 nov, issue 110): a faceted hull with a low spine and a wedge bow, a segmented skirt, a bigger faceted
     // turret with a long gun and a slotted muzzle brake, two ducted fans on grey mounts with rudders behind, a stern with a hatch, grilles,
     // tail lamps and towing eyes; the unit's colour on the panels on the bow, the chamfers and the turret roof; the hull in the season's tone
@@ -401,10 +436,10 @@ function mkUnitMesh(u){
        which shows too much in the field). An armoured six-wheeler with a sloped glacis, a dozer blade with a yellow and black warning
        edge, an excavator arm lying along the roof with its yellow bucket down at the front, a low armoured cab on the left with narrow
        vision blocks, stowage boxes, a rear winch, an amber beacon, an antenna and a band in its own colour; yellow only as a warning */
-    const OL=mat(SK.a),OL2=mat(SK.b),OL3=mat(SK.c),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),GL=mat(0x5d7a86),YE=mat(0xe0b02e),T=mat(u.color);
+    const OL=mat(SK.a),OL2=mat(SK.b),OL3=mat(SK.c),DK=mat(0x2e2e2c),BLK=mat(0x1b1c1e),MET=mat(0x7d7a72),GL=mat(0x5d7a86),YE=mat(0xe0b02e),T=mat(u.color),CAB=u.v2?mat(0x4f6d7e):OL;/* BÄVER v2 (issue 92): a slate-blue cab and a crane on the roof's aft end, below */
     for(const x of[-2.1,0,2.1])for(const z of[-1.75,1.75]){const w=mesh(cyl(.78,.78,.55,12),BLK,x,.78,z);w.rotation.x=PI/2;g.add(w);const hb=mesh(cyl(.3,.3,.58,8),MET,x,.78,z);hb.rotation.x=PI/2;g.add(hb);}
     g.add(mesh(box(6,1.0,3.0),OL2,0,1.15,0));
-    g.add(mesh(box(4.8,1.3,3.6),OL,-.5,2.25,0));const gl=mesh(box(1.8,1.25,3.6),OL,2.35,2.0,0);gl.rotation.z=-.62;g.add(gl);
+    g.add(mesh(box(4.8,1.3,3.6),CAB,-.5,2.25,0));const gl=mesh(box(1.8,1.25,3.6),CAB,2.35,2.0,0);gl.rotation.z=-.62;g.add(gl);
     for(const z of[-1.82,1.82])g.add(mesh(box(6.1,.5,.12),OL3,0,1.75,z));
     for(const z of[-1.802,1.802]){const fl=svFlag(.8,z);fl.position.set(-1.7,2.42,z);g.add(fl);}/* the Swedish flag (issue 111) */
     for(const z of[-1.8,1.8])svPut(g,CS,.15,v3(.4,2.45,z),v3(0,0,z),v3(0,1,0));/* the call number on the cab's sides (issue 114) */
@@ -424,6 +459,13 @@ function mkUnitMesh(u){
     g.add(mesh(cyl(.3,.3,1.4,10),DK,-3.05,1.35,0).rotateX(PI/2));
     for(let i=0;i<6;i++)g.add(mesh(box(.06,.18,.45),i%2?BLK:YE,-3.04,1.8,-1.25+i*.5));
     for(const z of[-1.3,1.3])g.add(mesh(box(.06,.2,.3),mat(0xb02a20),-3.04,1.25,z));
+    if(u.v2){/* BÄVER v2 (issue 92, Magnus 4 nov: its own look): a recovery crane on the aft roof between the arm's base and the stowage, an orange mast and a boom that rises backwards with a wire and a hook, and an orange band round the cab's top */
+      const OR=mat(0xd9781e);
+      g.add(mesh(cyl(.26,.3,.9,8),OR,-2.45,3.4,0));g.add(mesh(box(.5,.3,.5),DK,-2.45,3.0,0));
+      const bm=mesh(box(2.6,.26,.3),OR,-2.45-1.3*Math.cos(.6),3.85+1.3*Math.sin(.6),0);bm.rotation.z=PI-.6;g.add(bm);
+      g.add(mesh(cyl(.07,.07,1.3,6),MET,-2.45-.5*Math.cos(1.1),3.6+.4,0).rotateZ(.5));
+      g.add(mesh(box(.05,1.7,.05),DK,-4.6,4.75,0));g.add(mesh(box(.28,.3,.2),YE,-4.6,3.78,0));
+      for(const z of[-1.85,1.85])g.add(mesh(box(4.7,.16,.06),OR,-.5,2.78,z));}
     slingLugs(g,[[1.55,3.9,-1.45],[1.75,2.97,1.55],[-2.65,2.97,-1.55],[-2.65,2.97,1.6]]);/* on the cab's roof, beside the arm and at the roof's aft corners */}
   else if(u.kind==='scout'){
     // SPARV: a small quadcopter with arms, rotor guards, a camera gimbal, a battery pack and four thin legs
@@ -548,7 +590,7 @@ function mkUnitMesh(u){
     hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
   }
-  {const r=sh(bake(g,true));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,u.kind==='tank'?.02-HOVER_Y:.02);
+  {const r=sh(bake(g,true));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,hov(u)?.02-HOVER_Y:.02);
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
     if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
@@ -567,7 +609,7 @@ function prof(pts,w,taper){const s=new THREE.Shape();pts.forEach((p,i)=>i?s.line
    centimetres inside each other. ---- */
 const MAT_D=c=>{const k='d'+c;if(!MATS.has(k))MATS.set(k,new THREE.MeshLambertMaterial({color:c,side:THREE.DoubleSide}));return MATS.get(k);};
 /* a gable roof prism along x: halfW across, rise high, len long */
-function gableGeo(len,halfW,rise){const s=new THREE.Shape();s.moveTo(-halfW,0);s.lineTo(halfW,0);s.lineTo(0,rise);s.closePath();
+function gableLen(len,halfW,rise){/* named apart from gableGeo(right) below, which the later declaration would win */const s=new THREE.Shape();s.moveTo(-halfW,0);s.lineTo(halfW,0);s.lineTo(0,rise);s.closePath();
   const ge=new THREE.ExtrudeGeometry(s,{depth:len,bevelEnabled:false});ge.translate(0,0,-len/2);ge.rotateY(PI/2);return ge;}
 /* a thin square rod between two points */
 function rodAB(p,a,b,t,m){const d=Math.round(Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2])*100)/100,o=mesh(box(t,t,d),m,(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);o.lookAt(b[0],b[1],b[2]);p.add(o);return o;}
@@ -581,7 +623,7 @@ function mkKraftverk(){const g=new THREE.Group(),hall=new THREE.Group(),yard=new
   /* the hall: plinth, walls, pilasters on both long sides, the roof, the portal */
   add(hall,box(36.1,.8,18.1),PLINTH,0,.4,0);add(hall,box(36,6.5,18),WALL,0,3.25,0);
   for(const x of[-17.7,-12,-4,4,12,17.7])for(const s of[-1,1])add(hall,box(.6,6.2,.35),WALL,x,3.3,s*9.1);
-  add(hall,gableGeo(36.6,9.35,2.55),ROOF,0,6.45,0);
+  add(hall,gableLen(36.6,9.35,2.55),ROOF,0,6.45,0);
   for(let i=0;i<8;i++)add(hall,box(2.2,1.5,.12),R3.winMat,-14+i*4,4.4,9.03);
   add(hall,box(.2,4.9,5.4),YEL,18.05,2.45,0);add(hall,box(.12,4.6,5),DARK,18.12,2.3,0);add(hall,box(.5,.3,.5),R3.lampMat,18.2,5.5,0);
   /* two big vent tubes on the roof, the diesel generators' exhaust */
@@ -642,7 +684,7 @@ function mkCistern(broken){const g=new THREE.Group(),body=new THREE.Group(),
 function mkPumphus(){const g=new THREE.Group(),house=new THREE.Group(),pipes=new THREE.Group(),
     WALL=mat(0x8f9189),ROOF=mat(0x4c565e),DARK=mat(0x2a2e31),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),PIPE=mat(0x7d8a78),YEL=mat(0xd9b13b),CONC=mat(0x77746b);
   const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
-  add(house,box(12,.4,8),CONC,0,.2,0);add(house,box(11.8,3.4,7.8),WALL,0,2.1,0);add(house,gableGeo(12.1,4.15,1.25),ROOF,0,3.75,0);
+  add(house,box(12,.4,8),CONC,0,.2,0);add(house,box(11.8,3.4,7.8),WALL,0,2.1,0);add(house,gableLen(12.1,4.15,1.25),ROOF,0,3.75,0);
   add(house,box(.2,3.2,2.6),YEL,5.93,1.8,-2.2);add(house,box(.15,3,2.4),DARK,5.98,1.7,-2.2);add(house,box(.5,.3,.4),R3.lampMat,6.1,3.5,-2.2);
   for(const x of[-3.5,0,3.5])add(house,box(1.6,1.1,.1),R3.winMat,x,2.4,3.92);
   add(house,cyl(.35,.35,1,10),STEEL2,-3.5,4.5,-1.6);add(house,cyl(.5,.5,.12,10),DARK,-3.5,4.94,-1.6);
@@ -652,11 +694,87 @@ function mkPumphus(){const g=new THREE.Group(),house=new THREE.Group(),pipes=new
     for(const x of[8,12,16]){add(pipes,box(.5,1,.7),STEEL2,x,.5,z);add(pipes,box(.6,.16,.9),STEEL,x,1.0,z);}}
   g.add(pipes);g.userData.pipes=pipes;g.userData.pipeEnd=[18,1.4,0];
   return sh(bake(g,true));}
+/* small oil cistern (issue 129, Magnus 4 nov, the small tanks at Bergs and Stora Höggarn): 11 m across and 10 m high, a flat cone roof with
+   a rail, a straight ladder with a cage, a concrete ring at the foot; pale grey or grey-green by place (paint). No bund of its own: its
+   group has one. broken: no roof, the shell sooted from the top */
+function mkCisternS(broken,paint){const g=new THREE.Group(),body=new THREE.Group(),R=OIL.smallTank,
+    SHELL=mat(broken?0x4a4745:paint||0xd6d7d0),BAND=mat(broken?0x3a2622:0x9a3a2c),CONC=mat(0x8a8a84),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),SOOT=MAT_D(0x151413);
+  const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
+  add(body,cyl(R+.3,R+.3,.5,24),CONC,0,.25,0);add(body,new THREE.CylinderGeometry(R,R,9.4,28,1,true),SHELL,0,5.1,0);add(body,new THREE.CylinderGeometry(R+.03,R+.03,.8,28,1,true),BAND,0,7.6,0);
+  if(!broken){add(body,cyl(.6,R+.1,.9,28),SHELL,0,10.25,0);const rail=new THREE.Mesh(new THREE.TorusGeometry(R-.15,.04,3,24),STEEL);rail.rotation.x=PI/2;rail.position.y=10.75;body.add(rail);
+    for(let i=0;i<10;i++){const a=i/10*TAU;add(body,box(.07,.95,.07),STEEL,Math.cos(a)*(R-.15),10.3,Math.sin(a)*(R-.15));}}
+  else add(body,new THREE.CylinderGeometry(R+.05,R+.05,4,28,1,true),SOOT,0,7.8,0);
+  g.add(body);g.userData.body=body;
+  /* the ladder on the +x side: two stiles, rungs every 0.4 m, a cage of hoops from 2.5 m up */
+  const ld=new THREE.Group();for(const z of[-.25,.25])add(ld,box(.06,9.6,.06),STEEL2,R+.35,5.3,z);for(let y=.6;y<10;y+=.4)add(ld,box(.05,.05,.5),STEEL,R+.35,y,0);
+  if(!broken)for(let y=2.6;y<10.5;y+=1.2){const h=new THREE.Mesh(new THREE.TorusGeometry(.45,.025,3,10,PI),STEEL2);h.rotation.set(PI/2,0,-PI/2);h.position.set(R+.45,y,0);ld.add(h);}
+  g.add(ld);g.userData.ladder=ld;g.userData.fireAt=[0,9.5,0];
+  return sh(bake(g,true));}
+/* a bar of radius r between two points (a round pipe, eight sides) */
+function oilBar(P,m,a,c,r){const d=new THREE.Vector3(c[0]-a[0],c[1]-a[1],c[2]-a[2]),L=d.length();if(L<.01)return null;const o=mesh(cyl(.5,.5,1,8),m,(a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2);
+  o.scale.set(r*2,L,r*2);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());P.add(o);return o;}
+/* the oil depot's fixed scenery (issue 129, Magnus 4 nov): the pipes, the small groups' bunds, the oil jetty, the light masts, the fence,
+   the office and the loading canopy for the lorries. All in world coordinates; one baked group, the lamp heads kept apart so that the
+   scenario's dark can switch them (scenLights) */
+function mkOilWorks(sit){const g=new THREE.Group(),lamps=[],PIPE=mat(0xb4bab2),PIPE2=mat(0xd0d4cc),STEEL=mat(0x6f777c),STEEL2=mat(0x4b5258),CONC=mat(0xa09d95),CONC2=mat(0x8a8a84),
+    DECK=mat(0x8c8a84),DARK=mat(0x2a2e31),YEL=mat(0xd9b13b),WALLM=mat(0x8f9189),ROOF=mat(0x4c565e),J=sit.jetty,B2=OIL.hull[1]/2;
+  const add=(geo,m,x,y,z,ry)=>{const o=mesh(geo,m,x,y,z);if(ry)o.rotation.y=ry;g.add(o);return o;};
+  /* on the jetty (within its deck's outline) the pipes run at deck height, elsewhere 1.1 m over the ground or the water */
+  const onJ=(x,y)=>{if(!J)return false;const dx=x-J.x,dy=y-J.y,s=dx*J.ux+dy*J.uy,t=dx*J.vx+dy*J.vy;return Math.abs(s)<=OIL.plat[0]/2+.5&&t>=B2+.5&&t<=B2+1+OIL.plat[1]+.5||Math.abs(s)<=2.5&&t>=B2+OIL.plat[1]&&t<=B2+J.gap+4;};
+  const yAt=(x,y)=>onJ(x,y)?OIL.deck+.85:Math.max(groundY(x,y),0)+1.3;
+  /* a pipe run: two pipes side by side on supports every 6 m, in pieces of at most 4 m that follow the ground */
+  for(const line of sit.pipes)for(let k=0;k<line.length-1;k++){const a=line[k],b=line[k+1],L=Math.hypot(b.x-a.x,b.y-a.y);if(L<.5)continue;const n=Math.max(1,Math.ceil(L/4)),nx=-(b.y-a.y)/L,ny=(b.x-a.x)/L,ry=-Math.atan2(b.y-a.y,b.x-a.x);
+    let q0=null;for(let i=0;i<=n;i++){const f=i/n,x=lerp(a.x,b.x,f),y=lerp(a.y,b.y,f),h=yAt(x,y),q=[x,h,y];
+      if(q0)for(const[o,r,m]of[[-.55,.42,PIPE],[.5,.3,PIPE2]])oilBar(g,m,[q0[0]+nx*o,q0[1]+(r-.42),q0[2]+ny*o],[x+nx*o,h+(r-.42),y+ny*o],r);q0=q;}
+    for(let s=3;s<L;s+=6){const x=a.x+(b.x-a.x)*s/L,y=a.y+(b.y-a.y)*s/L;if(onJ(x,y))continue;const gy=Math.max(groundY(x,y),0)-.3,h=yAt(x,y)-.3-gy;if(h<.2)continue;
+      for(const o of[-.75,.75])add(box(.2,h,.2),STEEL2,x+nx*o,gy+h/2,y+ny*o);add(box(.22,.18,1.9),STEEL,x,gy+h-.5,y,ry);}}
+  /* the small groups' bunds: a 1.4 m concrete wall round each, in pieces of at most 6 m on the ground */
+  const wall=(a,b,h)=>{const L=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(L/6)),ry=-Math.atan2(b.y-a.y,b.x-a.x);for(let i=0;i<n;i++){const x=lerp(a.x,b.x,(i+.5)/n),y=lerp(a.y,b.y,(i+.5)/n);add(box(L/n+.1,h+.8,.5),CONC,x,groundY(x,y)+h/2-.4,y,ry);}};
+  for(const s of sit.smalls){const hx=s.hx+OIL.smallTank+4,hy=8+OIL.smallTank+4,P4=[[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy]].map(([dx,dy])=>({x:s.x+dx,y:s.y+dy}));for(let i=0;i<4;i++)wall(P4[i],P4[(i+1)%4],1.4);
+    add(box(hx*2-1,.08,hy*2-1),mat(0x2c2b28),s.x,groundY(s.x,s.y)+.06,s.y);}
+  /* a light mast: 16 m, a cross-arm and two lamp heads */
+  const mast=(x,y,h)=>{const y0=groundY(x,y);add(cyl(.16,.24,h,6),STEEL,x,y0+h/2,y);add(box(2.4,.15,.15),STEEL,x,y0+h,y);for(const o of[-1,1]){const l=mesh(box(.7,.3,.5),R3.lampMat,x+o*1.1,y0+h-.25,y);g.add(l);lamps.push(l);}};
+  const C=sit.cist;for(const[dx,dy]of[[-52,-52],[52,-52],[-52,52],[52,52]])mast(C.x+dx,C.y+dy,16);for(const s of sit.smalls)mast(s.x+s.hx+OIL.smallTank+8,s.y,12);
+  /* the oil jetty: a concrete deck on piles along the berth with fenders on the ship's side, three loading arms, a hut, bollards and two
+     lamp posts, and a trestle to the shore with a ramp up onto it */
+  if(J){const P=(s,t)=>({x:J.x+J.ux*s+J.vx*t,y:J.y+J.uy*s+J.vy*t}),ry=-Math.atan2(J.uy,J.ux),W2=OIL.plat[0],D2=OIL.plat[1],tc=B2+1+D2/2,dk=OIL.deck,pc=P(0,tc);
+    const at=(s,t,geo,m,y,ry2)=>{const p=P(s,t);return add(geo,m,p.x,y,p.y,ry+(ry2||0));};
+    at(0,tc,box(W2,.6,D2),DECK,dk-.3);at(0,B2+1.1,box(W2,.9,.4),DARK,dk-.6);
+    for(let s=-W2/2+2;s<=W2/2-2;s+=6)for(const t of[B2+1.6,B2+D2+.4])at(s,t,cyl(.4,.45,dk+6,8),CONC2,dk-3.3);
+    for(let s=-W2/2+4;s<=W2/2-4;s+=8){at(s,B2+.8,box(2.2,1.6,.5),DARK,dk-.8);at(s,B2+2,cyl(.22,.3,.6,8),DARK,dk+.3);}
+    for(const s of[-8,0,8]){at(s,B2+5,box(.6,6,.6),YEL,dk+3);at(s,B2+5,box(.5,.5,.5),STEEL2,dk+6.2);const a=P(s,B2+5),c=P(s,B2+1.6);oilBar(g,STEEL,[a.x,dk+6,a.y],[c.x,dk+3.5,c.y],.18);oilBar(g,STEEL2,[c.x,dk+3.5,c.y],[c.x,dk+1,c.y],.16);}
+    at(W2/2-5,tc+1,box(4,3,3),mat(0xe8e6de),dk+1.5);at(W2/2-5,tc+1,box(4.3,.25,3.3),ROOF,dk+3.1);const hw=P(W2/2-5,tc+1-1.55);add(box(1.2,.8,.08),R3.winMat,hw.x,dk+1.8,hw.y,ry);
+    for(const s of[-W2/2+1.5,W2/2-1.5]){const p=P(s,B2+D2);add(cyl(.12,.15,7,6),STEEL,p.x,dk+3.5,p.y);const l=mesh(box(.6,.3,.6),R3.lampMat,p.x,dk+7,p.y);g.add(l);lamps.push(l);}
+    /* the trestle: 4 m wide at deck height from the deck's land edge to the shore, then a ramp onto the ground */
+    const t0=B2+1+D2,t1=B2+J.gap+2;if(t1>t0+.5){const L=t1-t0;at(0,(t0+t1)/2,box(4,.4,L),DECK,dk-.2);for(let t=t0+3;t<t1;t+=6)for(const o of[-1.6,1.6])at(o,t,cyl(.3,.35,dk+6,8),CONC2,dk-3.3);
+      for(const o of[-2,2])at(o,(t0+t1)/2,box(.06,1,L),STEEL2,dk+.6);}
+    {const p0=P(0,Math.max(t0,t1)),p1=P(0,Math.max(t0,t1)+8),y1=Math.max(groundY(p1.x,p1.y),dk),L3=Math.hypot(8,y1-dk),o=mesh(box(4,.4,L3),DECK,(p0.x+p1.x)/2,(dk+y1)/2-.2,(p0.y+p1.y)/2);o.lookAt(p1.x,y1-.2,p1.y);g.add(o);}}
+  /* the fence: round each pad with a margin, 2.2 m posts every 5 m on land, two rails; gaps where the pipes pass */
+  {const near=(x,y)=>sit.pipes.some(l=>{for(let k=0;k<l.length-1;k++)if(oilSegD(x,y,l[k],l[k+1])<4)return true;return false;});
+    for(const r of[{x:C.x,y:C.y,hx:62,hy:62},...sit.smalls.map(s=>({x:s.x,y:s.y,hx:s.hx+OIL.smallTank+10,hy:24}))]){const C4=[{x:r.x-r.hx,y:r.y-r.hy},{x:r.x+r.hx,y:r.y-r.hy},{x:r.x+r.hx,y:r.y+r.hy},{x:r.x-r.hx,y:r.y+r.hy}];for(let i=0;i<4;i++){const a=C4[i],b=C4[(i+1)%4],L=Math.hypot(b.x-a.x,b.y-a.y),n=Math.ceil(L/5),ry=-Math.atan2(b.y-a.y,b.x-a.x);let prev=null;
+      for(let k=0;k<=n;k++){const x=lerp(a.x,b.x,k/n),y=lerp(a.y,b.y,k/n),ok=WORLD.grid[cellIdx(x,y)]===LAND&&!near(x,y),h=groundY(x,y);if(!ok){prev=null;continue;}
+        add(box(.1,2.4,.1),STEEL2,x,h+1.1,y);if(prev)for(const yy of[.9,2])oilBar(g,STEEL,[prev.x,prev.h+yy,prev.y],[x,h+yy,y],.03);prev={x,y,h};}}}}
+  /* the office and the loading canopy: on open land 70 to 90 m from the big pad, clear of the pipes and the tanks */
+  {const T=sit.tanks;let spot=null;for(const r of[72,86])for(let i=0;i<8&&!spot;i++){const a=i/8*TAU+.2,x=C.x+Math.cos(a)*r,y=C.y+Math.sin(a)*r;
+      if(WORLD.grid[cellIdx(x,y)]!==LAND||sit.pipes.some(l=>{for(let k=0;k<l.length-1;k++)if(oilSegD(x,y,l[k],l[k+1])<16)return true;return false;})||T.some(t=>Math.hypot(t.x-x,t.y-y)<t.r+20)||Math.hypot(sit.pump.x-x,sit.pump.y-y)<20)continue;
+      if(Math.abs(groundY(x+12,y)-groundY(x-12,y))>2.5||Math.abs(groundY(x,y+12)-groundY(x,y-12))>2.5)continue;spot={x,y,a};}
+    if(spot){const{x,y}=spot,h=groundY(x,y),ux=-Math.sin(spot.a),uy=Math.cos(spot.a),ry=-Math.atan2(uy,ux);sit.office=spot;
+      add(box(16,.4,8),CONC2,x,h+.1,y,ry);add(box(15.8,5.6,7.8),WALLM,x,h+3,y,ry);add(box(16.4,.4,8.4),ROOF,x,h+5.9,y,ry);
+      for(const o of[-5,0,5]){const p={x:x+ux*o-uy*3.95,y:y+uy*o+ux*3.95};add(box(2.8,1.2,.1),R3.winMat,p.x,h+3.6,p.y,ry);}
+      const c={x:x+ux*24,y:y+uy*24},hc=groundY(c.x,c.y);add(box(20,.4,9),ROOF,c.x,hc+5.6,c.y,ry);add(box(20.4,.6,9.4),YEL,c.x,hc+5.2,c.y,ry);
+      for(const o of[-8,8])for(const q of[-3.5,3.5])add(box(.35,5.2,.35),STEEL,c.x+ux*o-uy*q,hc+2.6,c.y+uy*o+ux*q);
+      for(const q of[-2,2])add(box(14,.3,1.2),CONC2,c.x-uy*q,hc+.15,c.y+ux*q,ry);for(const o of[-4,4]){const p={x:c.x+ux*o,y:c.y+uy*o};add(box(.9,1.6,.6),mat(0xb83a2a),p.x,hc+.8,p.y,ry);}
+      const l=mesh(box(1.2,.2,1.2),R3.lampMat,c.x,hc+5.3,c.y);g.add(l);lamps.push(l);}}
+  g.userData.lamps=lamps;const out=sh(bake(g,true,{strict:true,keep:lamps}));
+  /* the pump house, part of the scenery since 4 nov; added after the bake so that its lamp stays its own */
+  if(sit.pump&&typeof mkPumphus==='function'){const ph=mkPumphus();ph.position.set(sit.pump.x,groundY(sit.pump.x,sit.pump.y),sit.pump.y);out.add(ph);}
+  return out;}
 /* oil tanker (issue 129): 150 m long, 24 m wide, 8 m of freeboard, black below the waterline and red above, a white four-deck superstructure aft with
    windows in R3.winMat, a funnel, the cargo deck with pipes and manifold, two cranes, a foremast, and position and deck lights in R3.lampMat.
    Origin at the waterline amidships, +x toward the bow (the starboard side is +z) */
+/* the hull and the funnel are blue, a ship on our side; red is the enemy's colour (Magnus 4 nov, provspel ö 3100 kp08). RED keeps its old name */
 function mkTanker(){const g=new THREE.Group(),hull=new THREE.Group(),fit=new THREE.Group(),sup=new THREE.Group(),
-    BLK=mat(0x1b1d20),RED=mat(0x9d2d25),DECK=mat(0x676a60),WHITE=mat(0xe9e7df),STEEL=mat(0x7d858a),STEEL2=mat(0x4b5258),DARK=mat(0x22262a),FUN=mat(0xa22a22),REDL=mat(0xb02020),GRNL=mat(0x1f9a3a),PIPE=mat(0x8f4a2c),PIPE2=mat(0x5f6b70);
+    BLK=mat(0x1b1d20),RED=mat(0x2c5a86),DECK=mat(0x676a60),WHITE=mat(0xe9e7df),STEEL=mat(0x7d858a),STEEL2=mat(0x4b5258),DARK=mat(0x22262a),FUN=mat(0x234a70),REDL=mat(0xb02020),GRNL=mat(0x1f9a3a),PIPE=mat(0x8f4a2c),PIPE2=mat(0x5f6b70);
   const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
   const plan=k=>{const s=new THREE.Shape();s.moveTo(-75*k,-8*k);s.lineTo(-75*k,8*k);s.bezierCurveTo(-72*k,12*k,-68*k,12*k,-62*k,12*k);s.lineTo(45*k,12*k);s.bezierCurveTo(62*k,12*k,72*k,6*k,75*k,0);
     s.bezierCurveTo(72*k,-6*k,62*k,-12*k,45*k,-12*k);s.lineTo(-62*k,-12*k);s.bezierCurveTo(-68*k,-12*k,-72*k,-12*k,-75*k,-8*k);return s;};
@@ -902,12 +1020,18 @@ const TYPES={
   scout:{label:'GETING',tag:'X',role:'spaning och verkan',cost:60,build:10,hp:5,speed:28,vision:120,fuel:600,air:true,sig:70},
   drone:{label:'HÖK',air:true,tag:'H',role:'anfall',cost:120,build:15,hp:60,speed:23,vision:175,fuel:360,range:120,dmg:30,rate:.7,acc:.9,ammo:4}/* a robot misses 10 % of the time, and each air defence that reaches the target has HOK_AA to shoot it down (issue 95, Magnus 30 okt: about as before, 90 % free and 85 % under one, but the air defence now shows) */,
   tank:{label:'VARG',tag:'V',role:'strid',cost:200,build:25,hp:150,speed:11,vision:120,range:140,dmg:11,rate:1,acc:.85,dep:8},
+  /* BJÖRN (issue 92, Magnus 4 nov): a heavy tank on tracks that KROK cannot lift, built on Birka once she lies in the harbour. It is a VARG in the code, kind 'tank' with ty 'bjorn' (makeUnit), so VARG's whole fighting code serves it; what differs is in BJORN below */
+  bjorn:{label:'BJÖRN',tag:'J',role:'tung strid',cost:360,build:40,hp:400,speed:6,vision:90,range:160,dmg:40,rate:.25,acc:.85},
   eng:{label:'BÄVER',tag:'B',role:'ingenjör',cost:150,build:20,hp:55,speed:8,vision:85},
   mus:{label:'MUS',tag:'M',role:'spaning',cost:60,build:15,hp:10,speed:14,vision:70},
   /* the downed crew of Nedskjuten besättning (issue 124, Magnus 3 nov): a unit of its own once found, not built; see CREW */
   crew:{label:'BESÄTTNING',tag:'C',role:'nedskjuten',cost:0,build:0,hp:20,speed:1.5,vision:30},
   gadda:{label:'GÄDDA',tag:'G',role:'robotbåt',cost:220,build:20,hp:60,speed:22,vision:150,range:260,dmg:60,rate:1/3,acc:1,ammo:4,sea:true}/* a robot at a target someone sees always hits, so a bunker takes exactly two (Magnus 26 okt: two for the economy); only an air defence takes one down */
 };
+
+const BJORN={max:2,armor:{front:.5,side:1,rear:1.5},cone:PI/3,seen:1.5,mine:2};
+
+const ENG2={cost:190,hp:70,cap:1,upg:50,upgT:20};
 
 const MG={range:80,dmg:3,rate:2,acc:.6};
 
@@ -921,58 +1045,24 @@ const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
 
 const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,clr:25,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimA:.3,aimT:6,aimThr:.35};
 
-const CALLSIGN={tank:'V',drone:'H',scout:'X',gadda:'G',eng:'B',mus:'M',krok:'K',crew:'C'};
+const CALLSIGN={tank:'V',bjorn:'J',drone:'H',scout:'X',gadda:'G',eng:'B',mus:'M',krok:'K',crew:'C'};
 
 const callTag=(kind,n)=>CALLSIGN[kind]+String(n).padStart(2,'0');
 
 const COST={turret:5,aa:5,rb:1.5,inf:1,at:2,light:3,tank:5,barrier:3,mine:2};
 const KROK_SRC="kind:'krok',name:'KROK '+tag,tag,num,color:'#e2b84a',ink:'#8a6510',x:pad[0],y:pad[1],pad:{x:pad[0],y:pad[1]},post:'def',heading:CARRIER.a,camH:CARRIER.a,alt:null,orders:[],cargo:null,path:null,hitBy:{},lastHit:-99,lastHitMsg:-99,air:true,diedAt:0,state:'idle',status:'Väntar vid fartyget',target:null,carry:null,t:0,speed:24,vision:140,dead:false,hp:240,maxhp:240};";
 
-function bjorn(){const g=new THREE.Group();
-  const steel=mat(0x6f7b80),steel2=mat(0x5c676c),dark=mat(0x1b1c1e),track=mat(0x2a2c2e),deck=mat(0x9aa2a0),grill=mat(0x262a2c),gun=mat(0x4a5256);
-  const L=9.6,TW=1.05,TZ=2.05;
-  // tracks: belt, road wheels, drive sprocket at the rear, idler at the front
-  for(const sz of[-1,1]){const z=sz*TZ;
-    g.add(mesh(box(L-.6,.32,TW),track,0,.16,z));g.add(mesh(box(L-1.2,.32,TW),track,.1,1.38,z));
-    const fr=mesh(box(1.2,.32,TW),track,L/2-.55,.78,z);fr.rotation.z=-1.05;g.add(fr);const bk=mesh(box(1.1,.32,TW),track,-L/2+.6,.78,z);bk.rotation.z=1.05;g.add(bk);
-    for(let i=0;i<5;i++){const w=mesh(cyl(.5,.5,TW*.8,12),dark,-3.3+i*1.65,.62,z);w.rotation.x=PI/2;g.add(w);}
-    const sp=mesh(cyl(.55,.55,TW*.9,10),steel2,-L/2+.55,1.05,z);sp.rotation.x=PI/2;g.add(sp);const id=mesh(cyl(.45,.45,TW*.9,10),steel2,L/2-.5,1.05,z);id.rotation.x=PI/2;g.add(id);
-    // skirts with a team stripe
-    g.add(mesh(box(L-1.4,.75,.12),steel,.15,1.25,sz*(TZ+TW/2+.06)));}
-  // hull: lower tub, upper deck, sloped glacis at the front
-  g.add(mesh(box(L-1.4,1.1,2.9),steel2,0,1.15,0));
-  g.add(mesh(box(L-2.4,.7,5.1),steel,-.4,2.0,0));
-  const gl=mesh(box(2.2,.18,5.1),steel,L/2-1.45,1.86,0);gl.rotation.z=-.38;g.add(gl);
-  const nose=mesh(box(.5,.9,4.6),steel2,L/2-.5,1.25,0);nose.rotation.z=.5;g.add(nose);
-  for(const z of[-1.9,1.9])g.add(mesh(box(.2,.3,.5),R3.lampMat,L/2-.3,1.75,z));
-  // engine deck at the back: lighter plate, grilles, two exhausts
-  g.add(mesh(box(3.0,.12,4.7),deck,-L/2+2.3,2.41,0));
-  for(let i=0;i<3;i++)g.add(mesh(box(.2,.06,3.6),grill,-L/2+1.3+i*.7,2.5,0));
-  for(const z of[-1.6,1.6]){const ex=mesh(box(.5,.5,.9),dark,-L/2+.85,2.15,z);g.add(ex);}
-  // turret: wide wedge, team band, commander cupola, remote gun, smoke dischargers, long gun with fume extractor and muzzle brake
-  const t=new THREE.Group();t.position.set(.7,2.35,0);
-  t.add(mesh(box(4.2,1.15,3.7),steel,-.3,.6,0));
-  for(const sz of[-1,1]){const ch=mesh(box(1.9,1.1,1.5),steel,1.55,.58,sz*1.05);ch.rotation.y=sz*.42;t.add(ch);}
-  t.add(mesh(box(2.2,.5,3.9),steel2,-2.0,.55,0));
-  t.add(mesh(box(4.24,.2,3.74),mat(TEAM),-.3,1.08,0));
-  const cup=mesh(cyl(.45,.5,.45,10),steel2,-.9,1.42,-.9);t.add(cup);
-  const barrel=new THREE.Group();barrel.position.set(2.2,.62,0);
-  const b=mesh(cyl(.21,.25,6.4,10),gun,3.2,0,0);b.rotation.z=PI/2;barrel.add(b);
-  barrel.add(mesh(box(.7,.42,.5),gun,6.5,0,0));
-  barrel.add(mesh(box(.8,.9,1.3),steel2,.2,0,0));
-  barrel.userData.gun=1;t.add(barrel);g.add(t);g.userData.tur=t;return bake(g);}
-
-
 const C='#5fb6cc';
 const US=[
   {id:'tank',name:'VARG',mk:()=>mkUnitMesh({kind:'tank',color:C,num:1}),move:'Svävare',note:'Stridsfordonet. En svävare som tar sig över vatten och land, når 140 m och skjuter på allt som någon ser.'},
   {id:'drone',name:'HÖK',mk:()=>mkUnitMesh({kind:'drone',color:C,ammo:4,num:1}),move:'Flyger',lift:2.5,note:'Attackdrönare med fyra robotar och en kulspruta. Spanar åt VARG och slår mot trupp; pansar bara på order.'},
   {id:'scout',name:'GETING',mk:()=>mkUnitMesh({kind:'scout',color:C,num:1}),move:'Flyger',lift:1.2,note:'Spaningsdrönare med inbyggd sprängladdning (ersatte SPARV 16 okt). Flyger lågt och ser långt; på order, eller själv på Offensiv, dyker den in i ett pansarvärn, en robotskytt, infanteri, lätt pansar eller ett luftvärn och förbrukas. Laddningen gör 100 i skada inom 3 m och avtar till noll vid 12 m, för lite för bunker och stridsvagn.'},
-  {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C,num:1}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält.'},
+  {id:'eng',name:'BÄVER',mk:()=>mkUnitMesh({kind:'eng',color:C,num:1}),move:'Hjul',note:'Ingenjörsfordonet. Tar punkter, spränger spärrar, röjer minor, river och lagar fordon i fält till 75 %.'},
+  {id:'eng2',name:'BÄVER v2',mk:()=>mkUnitMesh({kind:'eng',v2:true,color:C,num:1}),move:'Hjul',note:'Uppgraderad BÄVER (issue 92): låses upp när Birka har förtöjt i hamnen. Lagar fordon i fält till 100 %, tål mer och har egen hytt och kran. Ny kostar '+ENG2.cost+' material, en gammal på Birka uppgraderas för '+ENG2.upg+' material och '+ENG2.upgT+' s. Kan dra ett BJÖRN-vrak.'},
   {id:'mus',name:'MUS',mk:()=>mkUnitMesh({kind:'mus',color:C,num:1}),move:'Hjul',note:'Fjärrstyrd spaningsbil som varje VARG bär. Ser kamouflage och har en sprängladdning.'},
   {id:'krok',name:'KROK',mk:()=>mkUnitMesh({kind:'krok',color:C,num:1}),move:'Flyger',note:'Lyfthelikopter som bär fordon och bärgar materiel.'},
   {id:'gadda',name:'GÄDDA',mk:()=>mkUnitMesh({kind:'gadda',color:C,num:1}),move:'Vattenjet',note:'Obemannad robotbåt på batteri (26 okt). Ser nästan inget på land själv, men skjuter fyra stora robotar på det någon annan ser, eller mot en punkt på kartan, från utom fiendens räckvidd. Omladdning vid Birka när du godkänner den.'},
-  {id:'bjorn',name:'BJÖRN',mk:bjorn,move:'Band',plan:true,note:'Tung stridsvagn på band, beslutad form. Kommer i land med kranen när Birka har dockat. Värdena är inte bestämda.'}
+  {id:'bjorn',name:'BJÖRN',mk:()=>mkUnitMesh({kind:'bjorn',color:C,num:1}),move:'Band',note:'Tung stridsvagn på band (issue 92, i spelet 4 nov). Byggs bara på HMS Birka när hon har förtöjt i hamnen och kör i land över sidorampen till kajen. Kör inte i vatten och KROK kan inte lyfta den eller dess vrak. Riktat pansar: en träff framifrån tar hälften, från sidan allt, bakifrån hälften till. Syns 1,5 gånger så långt av fienden, minor gör dubbel skada. Högst två åt gången. Lagas på verkstadens och fältvarvets plattor och av BÄVER v2, aldrig på Birkas plattor.'}
 ];
 const THEM=[
   {id:'turret',name:'Bunker',move:'Fast',note:'Kamouflerad kanon i en betonggrop. Skjuter mot mark och flyg.'},
@@ -989,7 +1079,8 @@ const THEM=[
 const nf=(v,d)=>v==null?'':(+v).toFixed(d==null?0:d).replace('.',',');
 const pct=v=>Math.round(v*100)+' %';
 const KR=(()=>{const m={};for(const k of['hp','speed','vision'])m[k]=+(KROK_SRC.match(new RegExp(k+':(\\d+)'))||[])[1];return m;})();
-function usStats(u){const T=TYPES[u.id];if(u.id==='bjorn')return[['Status','ej i spelet']];
+function usStats(u){if(u.id==='eng2')return[['Ny kostar',ENG2.cost+' material'],['Uppgradering',ENG2.upg+' material, '+ENG2.upgT+' s på Birka i hamnen'],['Skrov',ENG2.hp],['Fart',TYPES.eng.speed+' m/s'],['Syn',TYPES.eng.vision+' m'],['Lagar i fält till',pct(ENG2.cap)]];
+  const T=TYPES[u.id];
   if(u.id==='krok')return[['Kostnad',KROK_COST+' material'],['Byggtid',KROK_BUILD+' s'],['Skrov',KR.hp],['Fart',KR.speed+' m/s'],['Syn',KR.vision+' m'],['Antal',KROK_MAX+' högst'],['Träffas av luftvärn',pct(SIZE_ACC.krok)+' av grundvärdet']];
   const r=[['Kostnad',T.cost+' material'],['Byggtid',T.build+' s'],['Skrov',T.hp],['Fart',T.speed+' m/s'],['Syn',T.vision+' m']];
   if(T.range)r.push(['Räckvidd',(u.id==='gadda'?GADDA.minR+' till ':'')+T.range+(u.id==='drone'?' m ('+(T.range+ROCKET_EXT)+' m utpekat)':' m')]);
@@ -998,7 +1089,8 @@ function usStats(u){const T=TYPES[u.id];if(u.id==='bjorn')return[['Status','ej i
   else if(T.ammo)r.push(['Robotar',T.ammo+' st'],['Kulspruta',MG.range+' m, '+MG.dmg+' skada, '+MG.rate+' skott/s']);
   if(T.fuel)r.push(['Batteri',Math.round(T.fuel/60)+' min']);
   if(SIZE_ACC[u.id])r.push(['Träffas av luftvärn',pct(SIZE_ACC[u.id])+' av grundvärdet']);
-  if(u.id==='tank'){const d=T.dmg*T.rate*T.acc;r.push(['Slår ut en stridsvagn',nf(ENEMY.tank.hp/d)+' s ensam']);}
+  if(u.id==='bjorn')r.push(['Pansar framifrån / sida / bakifrån',nf(BJORN.armor.front,1)+' / '+nf(BJORN.armor.side,1)+' / '+nf(BJORN.armor.rear,1)+' av skadan'],['Syns på',nf(BJORN.seen,1)+' gånger avståndet'],['Minor',nf(BJORN.mine,0)+' gånger skadan'],['Antal','högst '+BJORN.max]);
+  if(u.id==='tank'||u.id==='bjorn'){const d=T.dmg*T.rate*T.acc;r.push(['Slår ut en stridsvagn',nf(ENEMY.tank.hp/d)+' s ensam']);}
   return r;}
 const CLS={armor:'Pansar',light:'Lätt pansar',inf:'Trupp'},VS={rb:.5,light:.6};
 function effRate(E){return E.mag?E.mag/((E.mag-1)/E.rate+E.reload):E.rate;}
