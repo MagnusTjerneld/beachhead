@@ -63,7 +63,7 @@ return function tick(G){
   const scanFree=()=>!K.scan||K.scan.done,key=w=>'s'+Math.round(w.x/50)+','+Math.round(w.y/50);
   const salvScan=()=>{if(!sc||!scanFree())return;const c0=tanks.length?cen(tanks):B.W.landing;
     const w=G.wrecks.filter(w=>!w.claimed&&!B.lockedAt(w.x,w.y)&&d(w,c0)<350&&lowShare(G,w,110)<.9&&!G.enemies.some(e=>!e.dead&&e.seen&&Math.hypot(e.lx-w.x,e.ly-w.y)<(e.kRange||e.airRange||e.range||0)+20))
-      .concat(G.structs.filter(s=>!s.dead&&d(s,c0)<300&&lowShare(G,s,100)<.6&&!G.enemies.some(e=>!e.dead&&e.seen&&Math.hypot(e.lx-s.x,e.ly-s.y)<(e.range||0)+40)))
+      .concat(G.structs.filter(s=>!s.dead&&!B.mastKeep(s)&&d(s,c0)<300&&lowShare(G,s,100)<.6&&!G.enemies.some(e=>!e.dead&&e.seen&&Math.hypot(e.lx-s.x,e.ly-s.y)<(e.range||0)+40)))
       .filter(w=>!K.done[key(w)]).sort((a,b)=>d(a,sc)-d(b,sc))[0];
     if(w)scanned(key(w),{x:w.x,y:w.y},null);};
   salvScan();
@@ -95,7 +95,7 @@ return function tick(G){
       .sort((a,b)=>d(en,a.at)-d(en,b.at));
     /* buildings first while material is short: on 9949 he pulled down the two sheds by the beach before anything else. On Offensiv, as
        he gave it: KROK then sets it down where it is sent, not only on secured land, which early in a game is nowhere */
-    const st=()=>G.structs.filter(s=>!s.dead&&!near(s,40)&&safe(s)&&jobOK({s})).sort((a,b)=>d(a,en)-d(b,en)).slice(0,6).find(s=>reach(en.x,en.y,s.x,s.y));
+    const st=()=>G.structs.filter(s=>!s.dead&&!B.mastKeep(s)&&!near(s,40)&&safe(s)&&jobOK({s})).sort((a,b)=>d(a,en)-d(b,en)).slice(0,6).find(s=>reach(en.x,en.y,s.x,s.y));
     const s0=G.res<300?st():null;
     if(s0){s0.krok=true;B.giveOrder(en,{type:'demolish',s:s0,post:'off'},false);}
     else if(job[0]){const j=job[0];delete j.at;delete j.cov;j.post='off';B.giveOrder(en,j,false);}

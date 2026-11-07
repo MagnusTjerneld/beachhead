@@ -23,7 +23,7 @@ function reach(sx,sy,tx,ty){const s=cellC(sx,sy);let t=cellC(tx,ty);if(!passC(t)
 function fpOK(u,e){const k=labsOf(cellC(u.x,u.y)).join(',')+'|'+e.id+'|'+e.visibleNow;if(!FPC.has(k))FPC.set(k,!!B.firingPoint(u,e));return FPC.get(k);}
 let kapten=null;
 function play(seed,limit){
-  B.newGame(seed);const G=B.G;G.running=true;
+  if(process.env.T45_UPPDRAG)B.newGame(seed,'auto',{uppdrag:process.env.T45_UPPDRAG,isle:seed});else B.newGame(seed);const G=B.G;G.running=true;
   if(V==='kapten')kapten=require('./kapten.js')(B,{reach,fpOK,reachVer});
   // T45_EXPLORE=1: one extra SPARV explores freely from the start and is left alone by the bot; T45_RADIO sets its radio range
   if(process.env.T45_RADIO)B.RADIO.r=+process.env.T45_RADIO;const exK={};let exS=null;if(process.env.T45_EXPLORE){exS=B.makeUnit('scout',B.W.landing.x,B.W.landing.y+60);exS.simX=1;G.units.push(exS);B.giveOrder(exS,{type:'explore',post:'def'},false,'mission');}
