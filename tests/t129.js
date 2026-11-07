@@ -12,9 +12,9 @@ ok(!!G.scen&&G.mission==='scen'&&G.relays.some(r=>r.type==='kraft'),'and the sce
 ok(G.start.isle===5555,'the start keeps the island for Spela igen ('+G.start.isle+')');
 B.newGame(G.seed,G.doc,G.start);G=B.G;ok(G.seed===5555&&G.doy===200&&!!G.scen,'Spela igen plays the same island and date');
 B.newGame(5555,'auto',{uppdrag:'scen',isle:5555,tod:9.5});ok(Math.abs(B.G.tod-9.5)<1e-6,'a chosen hour is taken ('+B.G.tod+')');
-{const W0=B.W,f1=B.scenFit(S,5555),f2=B.scenFit(S,7341),f3=B.scenFit(F,8080),f4=B.scenFit(F,3100);
+{const W0=B.W,f1=B.scenFit(S,5555),f2=B.scenFit(S,7341),f3=B.scenFit(F,8080),f4=B.scenFit(F,5555);
   ok(B.W===W0,'scenFit gives the world in play back');
   ok(f1.ok&&!f2.ok&&/kraftverk/.test(f2.why),'Strömmen fits on 5555 and not on 7341 ('+f2.why+')');
-  ok(f3.ok&&!f4.ok&&/färjeläge/.test(f4.why),'Färjeläget fits on 8080 and not on 3100 ('+f4.why+')');}
+  ok(f3.ok&&!f4.ok&&/färjeläge/.test(f4.why),'Färjeläget fits on 8080 and not on 5555 ('+f4.why+')');}
 B.newGame(8080,'auto',{uppdrag:'scenfarjelaget',isle:8080});G=B.G;ok(G.seed===8080&&!!G.scen&&G.scen.id==='farjelaget','Färjeläget is set up on 8080');
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);

@@ -30,6 +30,8 @@ ok(!!FL&&FL.guards.length>=4,'the ferry berth is a point at the head of the quay
   ok(deep,'the berth is '+B.FERRY.depth+' m deep or more under all of her');
   const f=sit.lane.far,off=Math.abs((f.x-b.x)*-b.uy+(f.y-b.y)*b.ux);ok(sit.lane.L>=B.FERRY.laneMin&&off<1,'the lane is a straight line of '+sit.lane.L+' m out from the berth');
   ok(sit.lane.hit,'on island 1518 it ends at the island across the sound');
+  {const L=B.W.landing,cr=Math.hypot(b.lp.x-L.x,b.lp.y-L.y);ok(b.drive>=B.FERRY.drive&&cr*B.FERRY.crow>=B.FERRY.drive,'the berth lies far from the landing ('+Math.round(cr)+' m as the crow flies, '+b.drive+' m overland)');
+    ok(b.quay>0&&b.quay<=B.FERRY.pier+B.FERRY.inland,'and the quay reaches over the shore to the land ('+b.quay+' m more than the apron)');}
   const R=sit.road,e=R[R.length-1];ok(R.length>4&&W.roads.includes(R)&&Math.hypot(R[0].x-b.x,R[0].y-b.y)<L2+5,'a road runs from the quay edge');
   ok(W.roads.some(rd=>rd!==R&&rd.some(q=>Math.hypot(q.x-e.x,q.y-e.y)<1)),'and meets the island\'s roads');
   ok(R.every(q=>!(B.W.trees||[]).some(t=>Math.hypot(t.x-q.x,t.y-q.y)<7)),'no tree stands on it');}
