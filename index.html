@@ -11877,7 +11877,7 @@ function fGround(x,z){return Math.max(0,groundY(x,z));}
    The load's height is kept; it is moved so the middle of its box is under the hook */
 function fHang(km,bm){const ud=km.userData;if(!ud.sw)return;const b=krokBox(bm),sl=Math.max(KROK_SLING,b.h*.5+1),yt=bm.position.y+b.c.y-km.position.y,yh=yt+sl,L=Math.max(.3,-yh-KROK_HOOK_H);
   ud.sw.rotation.set(0,0,0);ud.cable.visible=ud.hook.visible=true;ud.cable.scale.y=L/5;ud.cable.position.y=-L/2;ud.hook.position.y=-L;
-  const y0=-L-KROK_HOOK_H-sl;krokSlings(ud,{o:bm,b,s:1},-L-KROK_HOOK_H,y0);
+  const y0=-L-KROK_HOOK_H-sl;krokSlings(ud,{o:bm,b,s:1,unit:true},-L-KROK_HOOK_H,y0);/* unit: the lift points by the model's own scale, 0.8, or the slings end in the air beside it (Magnus 7 nov) */
   km.updateMatrixWorld(true);ud.sw.localToWorld(_kv.set(-b.c.x,y0-b.c.y,-b.c.z));const pr=bm.parent;if(pr){pr.updateMatrixWorld(true);pr.worldToLocal(_kv);}bm.position.copy(_kv);ud.sw.getWorldQuaternion(bm.quaternion);if(pr)bm.quaternion.premultiply(pr.getWorldQuaternion(_kq2).invert());if(bm.userData.lugs)bm.userData.lugs.visible=true;}
 /* on the ground (or afloat), pitched and rolled with the slope; the model's nose is +x */
 function fPlace(m,x,z,hd,lift){const c=Math.cos(hd),s=Math.sin(hd),L=3,g=(a,b)=>fGround(a,b);
@@ -12184,9 +12184,11 @@ const FILM_SHOTS=[
   const qx=H.x+30,qz=H.y+22;fCam(qx,fGround(qx,qz)+12,qz,x,6,y,0);FILM.fov=44;}},
 /* 22. BJÖRN (Magnus 7 nov: the one unit the film did not have): it is built once Birka lies at the quay, so that is where it comes: down her side ramp and onto the
    quay under the lamps, tracks running, from a camera low on the quay. Half a bar's cut of the harbour shot gives it its time and the film keeps its length */
-{k:34.5,id:'bjorn',birka:false,f(tau,dur,dtr,S){const P=WORLD.birkaPath;if(!P)return;G.harbor.secured=true;const e=WORLD.harbor.dock;moveCarrier(e.x,e.y,e.a);G.ramp={bow:0,side:1};
-  const m=fUnit('bjorn','bjorn'),sp=5.5,lat=RAMP.side-6+tau*sp,p=shipPos(lat,BAY.fwd),hd=CARRIER.a+PI/2,r=rampY(p[0],p[1]),R=rampReach();
-  m.position.set(p[0],lat<RAMP.side?DECK_Y:r!=null?r:Math.max(fGround(p[0],p[1]),rampTip()),p[1]);m.rotation.set(0,-hd,r!=null&&lat>RAMP.side?-Math.asin((DECK_Y-rampTip())/RAMP.len):0);
+{k:34.5,id:'bjorn',birka:false,f(tau,dur,dtr,S){const BJ_T=3.7,P=WORLD.birkaPath;/* BJ_T: half the track's length on the ground, at the model's 0.8 */if(!P)return;G.harbor.secured=true;const e=WORLD.harbor.dock;moveCarrier(e.x,e.y,e.a);G.ramp={bow:0,side:1};
+  const m=fUnit('bjorn','bjorn'),sp=5.5,lat=RAMP.side-6+tau*sp,p=shipPos(lat,BAY.fwd),hd=CARRIER.a+PI/2,R=rampReach(),
+  yAt=l=>{const q=shipPos(l,BAY.fwd),v=l<RAMP.side?DECK_Y:rampY(q[0],q[1]);return v!=null?v:Math.max(fGround(q[0],q[1]),rampTip());},/* the track's two ends stand on what is under them (Magnus 7 nov: the nose went through the quay at the foot of the ramp) */
+    yb=yAt(lat-BJ_T),yf=yAt(lat+BJ_T);
+  m.position.set(p[0],Math.max((yb+yf)/2,yAt(lat)),p[1]);m.rotation.set(0,-hd,Math.atan2(yf-yb,2*BJ_T));
   {const U=m.userData;if(U.gearM){const g=tau*sp/.8;bjGear(U.gearM.geometry,g,g);}}/* in the model's measure, as in the game */
   const q=shipPos(RAMP.side+R+13-tau*.5,BAY.fwd-3),l=shipPos(lat+6,BAY.fwd-2);fLight(l[0],m.position.y+5,l[1],0xffe4c4,1.6,16,.08);
   fCam(q[0],Math.max(fGround(q[0],q[1]),rampTip())+1.4,q[1],p[0],m.position.y+2,p[1],.01);FILM.fov=40;}},
