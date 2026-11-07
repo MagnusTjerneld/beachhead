@@ -5196,9 +5196,11 @@ function scenSetupF(){const S=G.scen,def=S.def,sit=scenSitesF(),W=WORLD;if(!sit)
   const taken=G.enemies.map(e=>({x:e.x,y:e.y})).concat(G.relays.map(r=>({x:r.x,y:r.y})),[lp,sit.berth]);let n=0;
   for(const x of def.extra)for(let i=0;i<x.n;i++){let p=null;for(let t=0;t<6&&!p;t++){const q=scenPlace(lp,x.r[0],x.r[1],null,TAU,++n,taken);if(q&&!sit.road.some(c=>Math.hypot(q.x-c.x,q.y-c.y)<9))p=q;}if(!p)continue;taken.push(p);
     const e=makeEnemy({id:'SF'+n,kind:x.kind,x:p.x,y:p.y});G.enemies.push(e);if(x.g)gd.push(e.id);}
-  G.relays.push({id:'FL',type:'farja',hid:false,seen:true,x:lp.x,y:lp.y,prog:0,captured:false,lockMsg:null,guards:gd,bld:{x:lp.x,y:lp.y,a:0}});
+  const side=FERRY.apron[1]/2-2;G.relays.push({id:'FL',type:'farja',hid:false,seen:true,x:lp.x,y:lp.y,prog:0,captured:false,lockMsg:null,guards:gd,bld:{x:lp.x-sit.berth.uy*side,y:lp.y+sit.berth.ux*side,a:0}});
   if(!W._fRoad){W._fRoad=true;W.roads.push(sit.road);}
-  W.trees=(W.trees||[]).filter(t=>Math.hypot(t.x-lp.x,t.y-lp.y)>24&&sit.road.every(q=>Math.hypot(t.x-q.x,t.y-q.y)>7));misTreeW=null;
+  {const b=sit.berth,s0=-(FERRY.ramp+(b.quay||0)+4),s1=FERRY.apron[0]+1,hw=FERRY.apron[1]/2+3,onQ=o=>{const dx=o.x-lp.x,dy=o.y-lp.y,s=dx*b.ux+dy*b.uy,t=-dx*b.uy+dy*b.ux;return s>s0&&s<s1&&Math.abs(t)<hw;};W._onQuay=onQ;/* nothing stands on the quay (Magnus 7 nov), and the bushes the view grows on bare rock ask W._onQuay */
+    for(const k of['coastStones','bushes','junipers','ridgeStones','debris'])if(W[k])W[k]=W[k].filter(o=>!onQ(o));
+    W.trees=(W.trees||[]).filter(t=>!onQ(t)&&Math.hypot(t.x-lp.x,t.y-lp.y)>24&&sit.road.every(q=>Math.hypot(t.x-q.x,t.y-q.y)>7));}misTreeW=null;
   S.sites=sit;return true;}
 function scenSetup(){if(G.scen.def.kind==='ferry')return scenSetupF();const S=G.scen,def=S.def,W=WORLD,sit=scenSites(),L=W.landing;if(!sit)return false;
   const mk=(id,type,p,guards)=>{const r={id,type,hid:false,seen:true,x:p.x,y:p.y,prog:0,captured:false,lockMsg:null,guards,bld:{x:p.x,y:p.y,a:0}};G.relays.push(r);return r;};
@@ -6988,25 +6990,25 @@ function pointLit(g,on){let L=g.userData.lit;if(!L){L=g.userData.lit=[];L.on=nul
   if(!g.userData.hid&&g.userData.top)g.userData.top.visible=on;}
 function mkPointMesh(r){
   const g=new THREE.Group(),C=0x8a8f8c,D=0x5d625f,ROOF=0x4a5058;let topY=12;
-  if(r.type!=='hamn'&&r.type!=='central'&&r.type!=='varv')g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
+  if(r.type!=='hamn'&&r.type!=='farja'&&r.type!=='central'&&r.type!=='varv')g.add(mesh(box(16,.5,16),mat(0x6e706a),0,.25,0));
   if(r.type==='central')kamCentral(g);/* issue 106 */
   else if(r.type==='verkstad'){const hall=new THREE.Group();hall.add(mesh(box(12,6,9),mat(0x7c8173),0,3.5,0));hall.add(mesh(box(12.6,.6,9.6),mat(ROOF),0,6.8,0));hall.add(mesh(box(.2,4.6,6),mat(0x3b3f3c),6.05,2.8,0));hall.position.set(-1.5,0,0);g.add(hall);
     g.add(mesh(cyl(.22,.3,9,6),mat(0x9aa0a4),5.5,4.5,-5.5));g.add(mesh(box(2.4,.8,.4),mat(0x2f3a44),5.5,8.4,-5.5));g.add(mesh(box(2,.5,.1),R3.lampMat,5.5,8.4,-5.25));
     const top=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(5.5,9.6,-5.5);g.add(top);g.userData.top=top;}
   else if(r.type==='radar'){mkRadar(g,r);}
-  else if(r.type==='hamn'){/* the harbour point is a lamp post, not a building (decided 25 okt, Magnus, issue 70: the harbour office
+  else if(r.type==='hamn'||r.type==='farja'){/* the ferry's point too, at the edge of the quay (Magnus 7 nov: a house stood in the way of what is landed). The harbour point is a lamp post, not a building (decided 25 okt, Magnus, issue 70: the harbour office
        stood 11 m from the point on the quay or the slope and floated over the ground there): a grey post with a lamp on an arm and
        the point's light on top */
     g.add(mesh(cyl(.12,.16,6.5,6),mat(0x9aa0a4),0,3.25,0));g.add(mesh(box(1,.12,.12),mat(0x9aa0a4),.45,5.9,0));g.add(mesh(box(.42,.3,.42),R3.lampMat,.85,5.7,0));
     const top=new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),new THREE.MeshBasicMaterial({color:0xe0283a}));top.position.set(0,7.1,0);g.add(top);g.userData.top=top;}
-  else if(r.type==='kraft'||r.type==='olja'||r.type==='farja')scenPointMesh(g,r);/* issue 129 */
+  else if(r.type==='kraft'||r.type==='olja')scenPointMesh(g,r);/* issue 129 */
   else kamVarv(g);/* the forward yard (issue 106) */
   // the building sits beside the capture point, so vehicles taking it do not drive into the walls
   if(g.userData.top)g.userData.top.scale.setScalar(r.type==='hamn'?1.1:g.userData.hid?.6:1.7);/* the camouflaged points' green lamp is small: the flag is the sign (issue 106) */
   /* the harbour's post stands 3.5 m from the point towards where the office stood, on the ground under itself */
   if(r.type==='hamn'){const b=pointBld(r),d=Math.hypot(b.x-r.x,b.y-r.y)||1,px=r.x+(b.x-r.x)/d*3.5,py=r.y+(b.y-r.y)/d*3.5,dy=groundY(px,py)-groundY(r.x,r.y)-.2;
     for(const c of g.children){c.position.x+=px-r.x;c.position.z+=py-r.y;c.position.y+=dy;}return g;}
-  const b=pointBld(r);for(const c of g.children){c.position.x+=b.x-r.x;c.position.z+=b.y-r.y;}
+  const b=pointBld(r),dY=r.type==='farja'?Math.max(groundY(b.x,b.y)+.14,1.1)-groundY(r.x,r.y):0;for(const c of g.children){c.position.x+=b.x-r.x;c.position.z+=b.y-r.y;c.position.y+=dY;}
   return g;
 }
 /* a soft dark contact shadow on the ground under a vehicle or wreck (decided 16 okt): lamps and fires are point lights that cast no
@@ -8338,9 +8340,9 @@ function mkDecor(D,st){
       m.instanceColor.needsUpdate=true;m.castShadow=m.receiveShadow=true;m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,L]);});
     /* the bushes in 3D (decided 18 okt, markdetalj): three variants each of the broadleaf bush and the juniper, the seasons' colours as before */
     if(!G.bu3)G.bu3=[0,1,2].map(j=>mdBushGeo(500+j*31,false)),G.ju3=[0,1,2].map(j=>mdBushGeo(700+j*31,true));
-    for(let t=0;t<3;t++){const L=BU.filter((b,i)=>i%3===t);if(L.length){const m=new THREE.InstancedMesh(G.bu3[t],G.buM,L.length);L.forEach((b,i)=>{d.position.set(b.x,b.h-.15,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*1.3,b.s*.95,b.s*1.15);d.updateMatrix();m.setMatrixAt(i,d.matrix);m.setColorAt(i,cl.setRGB(b.r,b.sp/8,0));});
+    for(let t=0;t<3;t++){const L=BU.filter((b,i)=>i%3===t&&!(WORLD._onQuay&&WORLD._onQuay(b)));if(L.length){const m=new THREE.InstancedMesh(G.bu3[t],G.buM,L.length);L.forEach((b,i)=>{d.position.set(b.x,b.h-.15,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*1.3,b.s*.95,b.s*1.15);d.updateMatrix();m.setMatrixAt(i,d.matrix);m.setColorAt(i,cl.setRGB(b.r,b.sp/8,0));});
         m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,L]);}
-      const J=JU.filter((b,i)=>i%3===t);if(J.length){const m=new THREE.InstancedMesh(G.ju3[t],G.juM,J.length);J.forEach((b,i)=>{d.position.set(b.x,b.h-.1,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*.75,b.s*1.05,b.s*.75);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.85+hash2(i,9,3+t)*.3;m.setColorAt(i,cl.setRGB(v,v,v));});
+      const J=JU.filter((b,i)=>i%3===t&&!(WORLD._onQuay&&WORLD._onQuay(b)));if(J.length){const m=new THREE.InstancedMesh(G.ju3[t],G.juM,J.length);J.forEach((b,i)=>{d.position.set(b.x,b.h-.1,b.y);d.rotation.set(0,b.a,0);d.scale.set(b.s*.75,b.s*1.05,b.s*.75);d.updateMatrix();m.setMatrixAt(i,d.matrix);const v=.85+hash2(i,9,3+t)*.3;m.setColorAt(i,cl.setRGB(v,v,v));});
         m.instanceColor.needsUpdate=true;m.castShadow=true;m.frustumCulled=false;st.add(m);(R3.looseM||(R3.looseM=[])).push([m,J]);}}}
   R3.shedM=[];for(const sh of D.sheds||[]){const g=new THREE.Group();g.add(mesh(box(5,3.2,4),mat(FALU),0,1.6,0));roofOn(g,5.6,4,3.8,0x34343a,5,3.2,FALU);g.add(mesh(box(.12,2.2,1.8),mat(0x6a2018),2.52,1.1,0));for(const[x,z]of[[-2.5,-2],[2.5,-2],[-2.5,2],[2.5,2]])g.add(mesh(box(.22,3.2,.22),mat(TRIM),x,1.6,z));
     g.rotation.y=-sh.a;g.position.set(sh.x,Math.max(0,sh.h),sh.y);st.add(g);R3.shedM.push(g);}
