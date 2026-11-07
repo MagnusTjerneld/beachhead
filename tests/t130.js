@@ -32,4 +32,16 @@ fresh();{const L=B.LANDING,h=put('drone',L.x,L.y-60);h.orbit={x:L.x-300,y:L.y-30
     const u=B.makeUnit('tank',p.x,p.y),o={type:'attack',enemy:e};G.units=[u];
     B.FIRE.thin=0;const a0=B.fireSpot(u,o);B.FIRE.thin=keep;const a1=B.fireSpot(u,o);if(!a0||a0.none||!a1||a1.none)continue;n++;if(tight(a0,e))thin0++;if(tight(a1,e))thin1++;}
   ok(n>=8,'firing spots found for '+n+' targets');ok(thin1<=thin0,'spots where the line only just passes: '+thin0+' without the cost, '+thin1+' with it');ok(thin1===0||thin1<n/4,'and few are left');}
+/* ---- HOK badly hit ---- */
+fresh();{const L=B.LANDING,h=put('drone',L.x,L.y-60);h.post='off';const t=foe('XT','turret',L.x+400,L.y-60);
+  B.giveOrder(h,{type:'attack',enemy:t,post:'off'},false);run(2);h.hp=h.maxhp*.3;h.lastHit=G.time;run(2);
+  ok(!h.rtb&&h.orders[0]&&h.orders[0].type==='attack','HOK at 30 % on Offensiv keeps its attack order');ok(said(/Ordern gäller/),'and says so');
+  h.ammo-=1;h.lastHit=G.time;run(2);ok(h.rtb,'once it has fired, the next hit sends it home');
+  fresh();const d=put('drone',L.x,L.y-60);d.post='def';const t2=foe('XT','turret',L.x+400,L.y-60);B.giveOrder(d,{type:'attack',enemy:t2,post:'def'},false);run(2);d.hp=d.maxhp*.3;d.lastHit=G.time;run(2);ok(d.rtb,'on Defensiv it goes home at once');}
+/* ---- a new target in a fight: no staging ---- */
+fresh();{const L=B.LANDING,a=put('tank',L.x-20,L.y-60),b=put('tank',L.x+20,L.y-60);a.post=b.post='off';const t=foe('XT','turret',L.x,L.y-60-100);t.canGround=true;t.range=140;
+  const g=B.newGrp?B.newGrp():7;for(const v of[a,b])B.giveOrder(v,{type:'attack',enemy:t,post:'off',grp:g},false);const d0=Math.hypot(a.x-t.x,a.y-t.y);let far=d0;run(60,()=>{far=Math.max(far,Math.hypot(a.x-t.x,a.y-t.y));return false;});
+  ok(a.orders[0]&&a.orders[0].go,'a VARG within the target\'s reach goes straight in');ok(far<d0+5,'and does not back out ('+Math.round(d0)+' m, at most '+Math.round(far)+' m)');}
+fresh();{const L=B.LANDING,a=put('tank',L.x-20,L.y-60),b=put('tank',L.x+20,L.y-60);a.post=b.post='off';const t=foe('XT','turret',L.x,L.y-60-260);t.canGround=true;t.range=140;
+  const g=B.newGrp?B.newGrp():7;for(const v of[a,b])B.giveOrder(v,{type:'attack',enemy:t,post:'off',grp:g},false);run(10);ok(a.orders[0]&&!a.orders[0].go,'from outside its reach the group still staging');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
