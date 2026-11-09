@@ -32,9 +32,9 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;
   const S=G().structs.find(s=>s.kind==='house'&&B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},s.x,s.y));const sp=B.gaddaSpot({x:B.CARRIER.x,y:B.CARRIER.y,range:260},S.x,S.y),u=boat(sp.x,sp.y);
   B.giveOrder(u,{type:'strike',s:S,post:'off'});until(()=>S.dead,40);ok(S.dead&&u.ammo===3,'a farm falls to one robot ('+u.ammo+' left)');
-  B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x+20,y:S.y+10}},'off'));until(()=>!u.orders.length,40);ok(u.ammo===2,'a robot at a point on land ('+u.ammo+' left)');
+  B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x+20,y:S.y+10},strike:true},'off'));until(()=>!u.orders.length,40);ok(u.ammo===2,'a robot at a point on land ('+u.ammo+' left)');
   // 6. out of robots: home by itself, and it loads by itself alongside (Magnus 4 nov, provspel ö 3100)
-  u.ammo=1;B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x-15,y:S.y}},'off'));until(()=>u.ammo<1,30);const r0=G().res;until(()=>B.atBirkaSide(u)&&!u.orders.length,200);
+  u.ammo=1;B.giveOrder(u,B.gaddaOrder(u,{world:{x:S.x-15,y:S.y},strike:true},'off'));until(()=>u.ammo<1,30);const r0=G().res;until(()=>B.atBirkaSide(u)&&!u.orders.length,200);
   ok(B.atBirkaSide(u),'out of robots it goes to Birka by itself');until(()=>u.ammo===4,30);ok(r0-G().res===160&&u.ammo===4,'alongside it loads four by itself for 160 ('+(r0-G().res)+', '+u.ammo+')');
   u.ammo=0;u.rearm=0;G().res=10;until(()=>false,10);ok(u.ammo===0,'without the material it waits ('+u.state+')');}
 // 7. an air defence shoots about one robot in seven down
