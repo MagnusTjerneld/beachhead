@@ -84,7 +84,7 @@ function play(name,rep){
   {const{D,f,n}=S.sea?seaArena():arena();for(let s=S.sea?0:-480;s<=(S.sea?240:160);s+=5)for(let l=-150;l<=150;l+=5){const i=Math.floor((D.y+f.y*s+n.y*l)/10)*220+Math.floor((D.x+f.x*s+n.x*l)/10);if(B.W.grid[i]>=4)B.W.grid[i]=B.W.baseGrid[i]=3;}}
   G.reachAll=null;B.computeLock();
   const{D,f,n}=S.sea?seaArena():arena(),at=(fw,la)=>({x:D.x+f.x*fw+n.x*la,y:D.y+f.y*fw+n.y*la});
-  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(kind==='kust')e.face=Math.atan2(-f.y,-f.x);if(!UNSEEN)e.seen=true;return e;});
+  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(kind==='kust'){e.face=Math.atan2(-f.y,-f.x);e.cone=B.kustCone(e);}/* issue 172: its cone, as in the game */if(!UNSEEN)e.seen=true;return e;});
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
   /* cover: troops hidden from the air as in buildings; moved: they moved this far since they were seen, so the known place is stale;
      hide: defenders nobody has seen yet; need: the ones that must fall for a win (default all) */
