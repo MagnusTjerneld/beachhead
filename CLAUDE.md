@@ -70,5 +70,5 @@ En rad per fälla som har bitit oss (issue 77). Fyll på när en bugg visar sig 
 - `tests/t70.js` har CRLF-radslut: ersättningar med exakt text måste ta hänsyn till `\r`.
 - Swiftshader tappar WebGL-kontexten lokalt på Windows: kör renderande verktyg på grafikkortet där.
 - En artefakt som redan finns kan inte skrivas över utan att den publicerade versionen läses först; `force` bara när Magnus sagt det.
-- Artefaktverktyget minns filvägen: en publicering av `D:\Deveachhead\index.html` utan `url` uppdaterar huvudartefakten, också från en gren (10 nov, grenen 10nov hamnade där). Publicera en gren från en kopia i scratchpad med egen `<title>` och `root`, och main med `url` till huvudartefakten.
+- Artefaktverktyget minns filvägen: en publicering av `D:\Dev\beachhead\index.html` utan `url` uppdaterar huvudartefakten, också från en gren (10 nov, grenen 10nov hamnade där). Publicera en gren från en kopia i scratchpad med egen `<title>` och `root`, och main med `url` till huvudartefakten.
 - Val i adressen (`?scen=`, `#scen=`) kom inte fram till spelet på grenartefakten (4 nov, Strömmen och cisternerna): allt Magnus ska kunna starta på artefakten behöver en väg i spelets egna menyer, till exempel Ny ö eller Testfall.
