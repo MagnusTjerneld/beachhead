@@ -1937,6 +1937,8 @@ const isBj=u=>!!u&&u.ty==='bjorn';
 const hov=u=>u.kind==='tank'&&u.ty!=='bjorn';/* VARG hovers on its fans; BJÖRN stands on its tracks */
 const unlocked=()=>!!(G&&G.harbor&&G.harbor.docked);
 const repCap=b=>b&&b.v2?ENG2.cap:REP.cap;
+/* the menu offers the mending when some BÄVER of ours can take the vehicle higher than it is: v2 mends to ENG2.cap, not REP.cap (issue 169) */
+const damagedV=v=>(v.kind==='tank'||v.kind==='eng')&&v.hp<v.maxhp*Math.max(REP.cap,...G.units.filter(b=>b.kind==='eng'&&!b.dead&&b!==v).map(repCap))-1;
 const buildCost=k=>k==='eng'&&unlocked()?ENG2.cost:TYPES[k].cost;
 function bjornCount(){return G.units.filter(u=>!u.dead&&isBj(u)).length+G.build.filter(b=>b.kind==='bjorn').length;}
 function buildLock(k){if(k==='bjorn'){if(!unlocked())return'låses upp när HMS Birka har förtöjt i hamnen';if(bjornCount()>=BJORN.max)return'högst '+BJORN.max+' BJÖRN samtidigt';}return null;}
@@ -2728,10 +2730,10 @@ function updateUnit(u,dt){
   if(u.kind==='drone')landTick(u);
   if(G.ctrl===u.id&&!(u.kind==='scout'&&u.dive)){manualDrive(u,dt);return;}
   if(u.kind==='scout'&&getingTick(u,dt))return;
-  if(u.awaitRep){const b=G.units.find(x=>x.id===u.awaitRep);if(!b||b.dead||!b.orders[0]||b.orders[0].type!=='repair'||b.orders[0].unit!==u)u.awaitRep=null;else{u.cd-=dt;u.mgcd=(u.mgcd||0)-dt;if(u.kind==='tank'&&tankCombat(u,dt,'def'))return;u.state='Väntar på '+b.name+' för lagning';return;}}
+  if(u.awaitRep){const b=G.units.find(x=>x.id===u.awaitRep);if(!b||b.dead||!b.orders[0]||b.orders[0].type!=='repair'||b.orders[0].unit!==u)u.awaitRep=null;else{/* issue 169: the retreat is tried before the wait returns, otherwise a shelled VARG under 30 % never left */if(u.kind==='tank'&&G.time-u.lastHit<.5&&u.hp<u.maxhp*.3){if(b.orders[0]&&b.orders[0].type==='repair'&&b.orders[0].unit===u)b.orders.shift();u.awaitRep=null;goRtb(u,'Beskjuten medan jag väntar på lagning. Retirerar till '+hm.name+'.');return;}u.cd-=dt;u.mgcd=(u.mgcd||0)-dt;if(u.kind==='tank'&&tankCombat(u,dt,'def'))return;u.state='Väntar på '+b.name+' för lagning';return;}}
   if(u.holdHp!=null&&u.hp>u.maxhp*.5)u.holdHp=null;
-  if(u.kind==='tank'&&u.rtb&&!(u.orders[0]&&u.orders[0].cap)&&!u.awaitRep&&u.hp<u.maxhp*REP.cap-1&&G.time-u.lastHit>4&&G.time>=(u.medScan||0)){u.medScan=G.time+1;const b=fieldMedic(u);
-    if(b&&dist(u,b)<dist(u,hm)*.8){const sv=(u.saved||[]).filter(o=>o.type!=='rtb');u.rtb=false;u.saved=null;u.orders=[{type:'move',x:b.x,y:b.y,post:'def',toRep:b.id},...sv];u.path=null;say(u,'Ur elden. '+b.name+' är närmare än '+hm.name+', lagas i fält i stället.');}}
+  if(u.kind==='tank'&&u.rtb&&!(u.orders[0]&&u.orders[0].cap)&&!u.awaitRep&&u.hp<u.maxhp*Math.max(REP.cap,ENG2.cap)-1&&G.time-u.lastHit>4&&G.time>=(u.medScan||0)){u.medScan=G.time+1;const b=fieldMedic(u);
+    if(b&&u.hp<u.maxhp*repCap(b)-1&&dist(u,b)<dist(u,hm)*.8){/* issue 169: the cap of the BÄVER met, as the repair order itself */const sv=(u.saved||[]).filter(o=>o.type!=='rtb');u.rtb=false;u.saved=null;u.orders=[{type:'move',x:b.x,y:b.y,post:'def',toRep:b.id},...sv];u.path=null;say(u,'Ur elden. '+b.name+' är närmare än '+hm.name+', lagas i fält i stället.');}}
   {const o=u.orders[0];if(o&&o.toRep){const b=G.units.find(x=>x.id===o.toRep);
     if(!b||b.dead||b.carried||onDeck(b.x,b.y)){u.orders.shift();goRtb(u,'Ingen BÄVER att möta. Retirerar till '+hm.name+'.');return;}
     o.x=b.x;o.y=b.y;if(dist(u,b)<35&&!(b.orders[0]&&b.orders[0].type==='repair')){u.orders.shift();u.path=null;
@@ -2739,7 +2741,6 @@ function updateUnit(u,dt){
          it dropped five demolitions to mend a VARG and then stood waiting) */
       if(b.orders.length&&!b.rtb&&!(b.mission&&b.orders[0]===b.mission)){if(G.ctrl===b.id)dropCtrl();b.orders.unshift({type:'repair',unit:u,post:'def'});b.path=null;resetFor(b);}
       else giveOrder(b,{type:'repair',unit:u,post:'def'},false,'temp');}}}
-  if(u.awaitRep&&u.kind==='tank'&&G.time-u.lastHit<.5&&u.hp<u.maxhp*.3){const b=G.units.find(x=>x.id===u.awaitRep);if(b&&b.orders[0]&&b.orders[0].type==='repair'&&b.orders[0].unit===u)b.orders.shift();u.awaitRep=null;goRtb(u,'Beskjuten medan jag väntar på lagning. Retirerar till '+hm.name+'.');return;}
   if(!u.override&&!u.rtb){
     if(u.air&&!onPad&&u.fuel<Math.max(u.maxFuel*.15,homeDist(u,hm)/u.speed*1.2+8))goRtb(u,'Batteriet räcker precis. Återvänder till '+hm.name+' för laddning.');
     else if(u.kind==='tank'&&ENGAGE.calc&&!u.override&&engageHold(u)){}
@@ -4678,8 +4679,8 @@ function noContact(us){const off=us.filter(u=>!heard(u));if(off.length)say(null,
    order and the mission of the selected units, or KROK's queue, and they stop where they are; with no orders they still fight by
    their stance. A unit out of radio contact does not hear it */
 function haltSel(){const sk=selKrok();if(sk){if(sk.orders.length){clearKrok(sk);say(sk,'Kön rensad. Väntar på order.');}return;}
-  const us=noContact(selUnits()).filter(u=>u.id!==G.ctrl&&(u.orders.length||u.mission||u.rtb));if(!us.length)return;
-  for(const u of us){u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);}
+  const us=noContact(selUnits()).filter(u=>u.id!==G.ctrl&&(u.orders.length||u.mission||u.rtb||u.awaitKrok));if(!us.length)return;
+  for(const u of us){if(u.awaitKrok)cancelLift(u);/* issue 169: halt lets go of the lift too */u.orders=[];u.mission=null;u.tempOn=false;resetFor(u);}
   say(us.length===1?us[0]:null,us.length===1?'Order strukna. Står still.':us.map(u=>u.name).join(', ')+': order strukna. Står still.');}
 function capturePoint(r,u){
   if(r.captured)return;r.captured=true;r.capT=G.time;G.tver=(G.tver||0)+1;if(r.type==='radar'&&!G.netAll){G.netAll=true;say(null,'Radiomasten vid '+r.id+' tagen. Ledningsnätet täcker nu hela ön.');}
@@ -5872,24 +5873,26 @@ function safeLZ(u,tx,ty){
 /* a ground vehicle asks for a lift on its own: KROK only takes it to a safe landing zone; without one the vehicle waits.
    Only the captain (Kör ändå, Flyg ändå or an explicit lift order) sends KROK past its rules. */
 function autoLift(u,tx,ty){
-  if(u.override){airlift([u],{x:tx,y:ty},true,false,true);return true;}
+  if(u.override)return airlift([u],{x:tx,y:ty},true,false,true);
   const lz=safeLZ(u,tx,ty);
   if(!lz){u.hold=true;u.unsafeWait=true;u.safeT=G.time+3;if(!u.lzMsgT||G.time>u.lzMsgT){u.lzMsgT=G.time+25;const k=G.kroks.find(k2=>!k2.dead);
     say(k||u,'Ingen säker landningsplats för '+u.name+' mot ruta '+sq(tx,ty)+'. '+u.name+' väntar tills det finns en.'+secWhy(),[{l:'Flyg ändå',f:()=>{u.override=true;u.hold=false;u.unsafeWait=false;airlift([u],{x:tx,y:ty},true,false,true);}}]);}return false;}
-  if(u.unsafeWait){u.unsafeWait=false;u.hold=false;}airlift([u],lz,true,true);return true;}
+  if(u.unsafeWait){u.unsafeWait=false;u.hold=false;}return airlift([u],lz,true,true);}
 /* fly ground vehicles to a point with the least busy KROK; the captain's order (cap) unless auto, the vehicle's own request;
    force (Flyg ändå) goes into danger whatever KROK's stance */
 function airlift(units,pt,keep,auto,force){
   /* the KROK flown by hand only when the captain asks and no other is left, and then it is given back to its autonomy */
-  let ks=G.kroks.filter(k=>!k.dead&&G.ctrl!==k.id);if(!ks.length&&!auto)ks=G.kroks.filter(k=>!k.dead);if(ks.some(k=>G.ctrl===k.id)&&hasDOM)setCtrl(null);if(!ks.length){say(null,'Ingen KROK tillgänglig.');return;}
+  let ks=G.kroks.filter(k=>!k.dead&&G.ctrl!==k.id);if(!ks.length&&!auto)ks=G.kroks.filter(k=>!k.dead);if(ks.some(k=>G.ctrl===k.id)&&hasDOM)setCtrl(null);if(!ks.length){/* issue 169: false tells autoLift nothing was ordered; its retry every 3 s says it once per 25 s */if(!auto||!(units[0].krokMsgT>G.time)){say(null,'Ingen KROK tillgänglig.');if(auto)for(const u of units)u.krokMsgT=G.time+25;}return false;}
   const offs=formation(units.length,-PI/2);
   units.forEach((u,i)=>{const k=ks.slice().sort((a,b)=>a.orders.length-b.orders.length||dist(a,u)-dist(b,u))[0];
     k.orders.push({type:'lift',unit:u,keep:!!keep,cap:!auto,force:!!force},{type:'drop',x:clamp(pt.x+offs[i].x*1.6,10,WW-10),y:clamp(pt.y+offs[i].y*1.6,10,WH-10),cap:!auto,force:!!force});
     say(k,'Lufttransport av '+u.name+' till ruta '+sq(pt.x,pt.y)+' beställd.');});
-  ping(pt.x,pt.y);
+  ping(pt.x,pt.y);return true;
 }
+/* what KROK can lift: one rule for the click with KROK selected and for its default order (issue 169; the click had its own) */
+const krokCanLift=u=>!!u&&(u.kind==='tank'||u.kind==='eng'||u.kind==='gadda')&&!isBj(u)&&!u.dead&&!u.carried;
 function krokDefault(k,pk){
-  if(pk.unit&&(pk.unit.kind==='tank'||pk.unit.kind==='eng'||pk.unit.kind==='gadda')&&!isBj(pk.unit)&&!pk.unit.dead&&!pk.unit.carried)return{type:'lift',unit:pk.unit};/* GÄDDA afloat too (test round 26 okt, Magnus: KROK could not fetch it) */
+  if(krokCanLift(pk.unit))return{type:'lift',unit:pk.unit};/* GÄDDA afloat too (test round 26 okt, Magnus: KROK could not fetch it) */
   if(pk.wreck&&pk.wreck.kind!=='bjorn')return{type:'salvage',wreck:pk.wreck};
   if(!pk.world)return null;
   const pend=k.cargo||k.orders.some(o=>o.type==='lift')&&k.orders.filter(o=>o.type==='lift').length>k.orders.filter(o=>o.type==='drop').length;
@@ -5952,6 +5955,7 @@ function giveOrder(u,o,append,mode){append=append||WSHIFT;
      the order there and went off to mend a VARG) */
   if((o.type==='raze'||o.type==='strike'||o.type==='demolish')&&mastKeep(o.s)){say(u,'Radiomasten '+o.s.id+' behövs för ledningsnätet och står kvar tills radarstationen är tagen.');return;}
   if(o.type==='mast'&&o.s&&!inNet(o.s.x,o.s.y)){say(u,'Radiomasten '+o.s.id+' ligger utanför ledningsnätet och kan inte kopplas in därifrån. Koppla in en mast närmare, eller ta en punkt eller hamnen, så att nätet når den.');return;}
+  if(u.awaitKrok)cancelLift(u);/* issue 169: every new order lets go of a lift still waited for, not only the group click */
   u.awaitRep=null;if(u.kind==='tank'&&(u.rtb||u.hp<u.maxhp*.3)&&!o.toRep){u.holdHp=u.hp;u.rtb=false;u.saved=null;}
   if(G.ctrl===u.id)dropCtrl();
   if(append){if(u.rtb&&u.saved){u.saved.push(o);}else u.orders.push(o);}
@@ -6048,9 +6052,11 @@ function groupOrder(pk,append,postOverride){append=append||WSHIFT;
     const post=postOverride||(append?lastPost(u):u.post);let o;
     if(u.kind==='gadda')o=gaddaOrder(u,pk,post);
     else if(pk.relay&&u.kind==='eng'&&!pk.relay.captured)o={type:'capture',relay:pk.relay,post};
+    else if(u.kind==='eng'&&pk.enemy&&pk.enemy.kind==='kust'&&!pk.enemy.dead)o={type:'blast',enemy:pk.enemy,post};/* issue 169: as defaultOrder; a BÄVER in a wing blew up the coast battery only when alone */
     else if(pk.barrier&&!pk.barrier.cleared&&u.kind==='eng')o={type:'clear',barrier:pk.barrier,post};
     else if(pk.mine&&!pk.mine.cleared&&u.kind==='eng')o={type:'demine',mine:pk.mine,post};
     else if(pk.enemy&&!pk.enemy.dead&&(u.kind==='tank'||u.kind==='drone')&&canHit(u,pk.enemy,true))o={type:'attack',enemy:pk.enemy,post:'off',accept:!!pk.accept};
+    else if(u.kind==='eng'&&pk.unit&&pk.unit!==u&&!pk.unit.dead&&!pk.unit.air&&(pk.unit.kind==='tank'||pk.unit.kind==='eng')&&pk.unit.hp<pk.unit.maxhp*repCap(u)-1)o={type:'repair',unit:pk.unit,post};/* issue 169 */
     else if(pk.struct&&!pk.struct.dead){const only=pk.only||(us.some(v=>v.kind==='eng')?'eng':'gun');
       if(only==='eng'?u.kind==='eng':(u.kind==='tank'||u.kind==='drone'))o=u.kind==='eng'?(mastFree(pk.struct)&&!pk.raze?{type:'mast',s:pk.struct,post}:{type:'demolish',s:pk.struct,post}):{type:'raze',s:pk.struct,post};
       else{const st=pk.struct,dd=Math.hypot(u.x-st.x,u.y-st.y)||1,r=Math.min(60,dd);o={type:'move',x:st.x+(u.x-st.x)/dd*r+offs[i].x,y:st.y+(u.y-st.y)/dd*r+offs[i].y,post};}}
@@ -6286,7 +6292,7 @@ const TESTFALL=[
  {id:'flytt',t:'Förflyttning runt ön',seed:9949,when:TF_DAY,note:'En VARG vid stranden, fienden borta. Ge den en förflyttning till den pingade punkten i väster, på andra sidan spärren S2: den ska avböja och säga att S2 står i vägen, med Skicka BÄVER. Pröva sedan kortare order.',
   set(){for(const e of G.enemies)e.dead=true;const L=WORLD.landing,u=TF.put('tank',L.x,L.y-15,-PI/2);TF.wing('1',[u]);G.tfPing={x:748,y:1204};},check:()=>G.barriers.some(b=>b.id==='S2'&&!b.cleared)},
  {id:'ospanat',t:'Ensam i okänd terräng',seed:9949,when:TF_DAY,note:'En ensam VARG vid stranden, inget spanat, fienden och spärrarna borta och nätet över hela ön. Skicka den till den pingade punkten, dit vägen går runt: den ska föreslå att en GETING spanar först.',
-  set(){G.known.fill(0);G.knownV++;G.netAll=true;for(const e of G.enemies)e.dead=true;for(const b of G.barriers){b.cleared=true;for(const c of b.cells)WORLD.grid[c]=WORLD.baseGrid[c];}
+  set(){G.known.fill(0);G.knownV++;G.netAll=true;for(const e of G.enemies)e.dead=true;for(const b of G.barriers){b.cleared=true;for(const c of b.cells)WORLD.grid[c]=WORLD.baseGrid[c];}computeLock();/* issue 169 */
     const L=WORLD.landing,u=TF.put('tank',L.x,L.y-15,-PI/2);TF.wing('1',[u]);const len=p=>{let n=0,q=u;for(const r of p)n+=Math.hypot(r.x-q.x,r.y-q.y),q=r;return n;};
     /* a point the way to which is 2.5 to 4.5 times the distance (as t82) */
     for(let k=0;k<200&&!G.tfPing;k++){const x=200+((k*137)%1800),y=200+((k*251)%1800),cr=Math.hypot(x-u.x,y-u.y);if(WORLD.grid[cellIdx(x,y)]<2||cr<200)continue;const p=astar(u.x,u.y,x,y,i=>WORLD.grid[i]!==4&&WORLD.grid[i]!==5,()=>1);if(p&&len(p)>2.5*cr&&len(p)<4.5*cr)G.tfPing={x,y};}},
@@ -6325,7 +6331,7 @@ const TESTFALL=[
  {id:'birkaluft',t:'Birkas luft',seed:9949,when:TF_DAY,note:'Bara luftvärnet L2 och det lätta pansaret P1 nära stranden är kvar av fienden, båda kända, och KROK väntar vid Birka. Skicka VARG (wing 1) mot P1 och snabbspola: L2 ska aldrig ställa sig där det når KROK över Birka, och P1 ska stanna en bit från vattnet.',
   set(){TF.reveal();TF.only('L2','P1');const L=WORLD.landing;TF.wing('1',[TF.put('tank',L.x,L.y-15,-PI/2)]);},check:()=>!TF.en('L2').dead&&!TF.en('P1').dead},
  {id:'natet',t:'Tillbaka in i nätet',seed:9949,when:TF_DAY,note:'En VARG (wing 1) vid stranden och en känd fiende strax utanför ledningsnätet (pingad); resten av fienden och spärrarna är borta. Anfall den (snabbspola gärna): VARG ska köra tillbaka in i nätet cirka 3 s efter att målet slagits ut.',
-  set(){TF.reveal();for(const b of G.barriers){b.cleared=true;for(const c of b.cells)WORLD.grid[c]=WORLD.baseGrid[c];}const L=WORLD.landing,u=TF.put('tank',L.x,L.y-15,-PI/2);TF.wing('1',[u]);let best=null,bd=1e9;
+  set(){TF.reveal();for(const b of G.barriers){b.cleared=true;for(const c of b.cells)WORLD.grid[c]=WORLD.baseGrid[c];}computeLock();/* issue 169 */const L=WORLD.landing,u=TF.put('tank',L.x,L.y-15,-PI/2);TF.wing('1',[u]);let best=null,bd=1e9;
     for(const e of G.enemies){if(e.dead||!['turret','at','light','tank'].includes(e.kind)||inNet(e.x,e.y))continue;let near=1e9;for(let r=40;r<=300&&near>1e8;r+=20)for(let k=0;k<16;k++){const a=k/16*TAU;if(inNet(e.x+Math.cos(a)*r,e.y+Math.sin(a)*r)){near=r;break;}}
       /* 150 m or more from the net, so the VARG fires from outside it */const d=near*4+Math.hypot(e.x-u.x,e.y-u.y)*.2;if(near>=150&&near<1e8&&d<bd){bd=d;best=e;}}
     if(best){TF.only(best.id);best.camo=false;/* in plain sight, so the case tries the way back and not the spotting */G.tfPing={x:best.x,y:best.y};}},check:()=>G.enemies.some(e=>!e.dead&&!inNet(e.x,e.y))},
@@ -6393,7 +6399,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={wayCost,fireSpot,RTB_WAY,callHints,kustBoom,kustPortal,scenFit,krokPath,capPath,hullX,mastKeep,wreckWhy,spotFail,CAP,setCap,capTick,capRead,capUp,FERRY,FERRY_HULL,mkFerry,scenSitesF,scenFerryBerths,scenDrive,scenFerryLane,scenFerryRoad,scenFerryLand,scenFerryEta,scenFerryShut,scenOfKey,scenKeyOf,scenQuay,scenWet,BJORN,ENG2,isBj,armorF,buildLock,buildCost,startUpgrade,upgradable,applyV2,bjornSpot,krokPick,krokHookTarget,resolveShot,mineTick,unlocked,moveCarrier,updateEnemy,bargSpot,bargLine,setDefense,TANKER_HULL,OIL,scenBerths,mkCisternS,mkOilWorks,oilSegD,KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,navHmap,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,selUnits,CREW,isCrew,crewCan,crewU,crewTick,crewBoard,crewOff,crewFetch,crewStill,crewTip,krokCrewLand,stowed,airR,RAMP,rampReach,onDeck,fetchTick,selfItems,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={wayCost,fireSpot,RTB_WAY,callHints,kustBoom,kustPortal,scenFit,krokPath,capPath,hullX,mastKeep,wreckWhy,spotFail,CAP,setCap,capTick,capRead,capUp,FERRY,FERRY_HULL,mkFerry,scenSitesF,scenFerryBerths,scenDrive,scenFerryLane,scenFerryRoad,scenFerryLand,scenFerryEta,scenFerryShut,scenOfKey,scenKeyOf,scenQuay,scenWet,BJORN,ENG2,isBj,armorF,buildLock,buildCost,startUpgrade,upgradable,applyV2,bjornSpot,krokPick,krokHookTarget,resolveShot,mineTick,unlocked,moveCarrier,updateEnemy,bargSpot,bargLine,setDefense,TANKER_HULL,OIL,scenBerths,mkCisternS,mkOilWorks,oilSegD,KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,navHmap,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,selUnits,CREW,isCrew,crewCan,crewU,crewTick,crewBoard,crewOff,crewFetch,crewStill,crewTip,krokCrewLand,stowed,airR,RAMP,rampReach,onDeck,fetchTick,selfItems,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,haltSel,autoLift,damagedV,krokCanLift,repCap,cancelLift,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -10268,7 +10274,7 @@ function onUp(e){
   if(pk.beach){openWheel(x,y,pk,p.el);return;}
   if(sk){
     if(pk.krok){selectKrok(pk.krok);uiTick(true);return;}
-    const liftable=pk.unit&&(pk.unit.kind==='tank'||pk.unit.kind==='eng');
+    const liftable=krokCanLift(pk.unit);/* issue 169 */
     if(pk.unit&&(!liftable||e.ctrlKey||e.metaKey)){setSel([pk.unit.id]);uiTick(true);return;}
     const o=krokDefault(sk,pk);if(o){krokOrder(sk,o,e.shiftKey||o.type==='drop'&&!sk.cargo);/* a drop for a lift still to come joins it */uiTick(true);}return;
   }
@@ -10730,7 +10736,6 @@ function focusUnit(u){if(u&&!u.dead){userCam(u.id);uiTick(true);}}
 function focusPoint(x,y){ping(x,y);if(G.activeView==='map'){mv.free=true;mv.z=Math.max(mv.z,2.2);mv.cx=x;mv.cy=y;}}
 const barrierGate=b=>!b.cleared&&b.sides.some(sd=>!lockedAt(sd.x,sd.y))&&b.sides.some(sd=>lockedAt(sd.x,sd.y));
 function targetLabel(pk){return pk.mine?'MINFÄLT '+pk.mine.id:pk.barrier?'SPÄRR '+pk.barrier.id:pk.enemy?ENEMY[pk.enemy.kind].label.toUpperCase()+' '+pk.enemy.id:pk.relay?pname(pk.relay).toUpperCase():pk.struct?slabel(pk.struct).toUpperCase():pk.wreck?'VRAK':pk.unit?pk.unit.name:pk.krok?pk.krok.name:pk.world?'RUTA '+sq(pk.world.x,pk.world.y):'';}
-const damagedV=v=>(v.kind==='tank'||v.kind==='eng')&&v.hp<v.maxhp*REP.cap-1;
 function callHints(pk){
   if(pk.mine&&!pk.mine.cleared)return'B röjer';
   if(pk.barrier&&!pk.barrier.cleared)return'B spränger · V går fram';
