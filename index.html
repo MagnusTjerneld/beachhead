@@ -4673,10 +4673,13 @@ function workMast(o,u,dt){const s=o.s;u.path=null;
 function netShapes(){const C=[{x:CARRIER.x,y:CARRIER.y,r:NET.ship}],Z=[];for(const r of G.relays)if(r.captured)C.push({x:r.x,y:r.y,r:NET.point});
   for(const m of G.masts){C.push({x:m.x,y:m.y,r:NET.mast});const z=WORLD.zid?WORLD.zid[cellIdx(m.x,m.y)]:-1;if(z>=0&&!Z.includes(z))Z.push(z);}return{C,Z};}
 /* GÄDDA's way back in: the nearest navigable water with 30 m of net around it */
-function gaddaNetPt(u){let best=null,bd=1e9;
-  for(let gy=0;gy<GH;gy+=2)for(let gx=0;gx<GW;gx+=2){const i=gy*GW+gx;if(!seaPass(i))continue;const x=gx*CELL+CELL/2,y=gy*CELL+CELL/2,d=Math.hypot(x-u.x,y-u.y);
-    if(d>=bd||!inNet(x,y)||!inNet(x+30,y)||!inNet(x-30,y)||!inNet(x,y+30)||!inNet(x,y-30))continue;bd=d;best={x,y};}
-  return best;}
+/* the nearest water in the net that it reaches by water: a search over the water from where it lies, so that a lagoon cut off from
+   the sea is never its way back (provspel ö 3842 kp02, 10 nov: it chose the shut lagoon at I7 as the crow flies and lay still a minute) */
+function gaddaNetPt(u){const st=nearestPass(cellIdx(u.x,u.y),seaPass);if(st<0)return null;const seen=new Uint8Array(GW*GH),qu=[st];seen[st]=1;
+  for(let h=0;h<qu.length;h++){const c=qu[h],cx=c%GW,cy=(c/GW)|0,x=cx*CELL+CELL/2,y=cy*CELL+CELL/2;
+    if(inNet(x,y)&&inNet(x+30,y)&&inNet(x-30,y)&&inNet(x,y+30)&&inNet(x,y-30))return{x,y};
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!seen[n]&&seaPass(n)){seen[n]=1;qu.push(n);}}}
+  return null;}
 /* a zone as paths for the chart: its cells in runs per row to cut out, and its outer edge in straight runs to stroke */
 function zoneNetPath(z){const W=WORLD;if(!W.zNet)W.zNet={};if(W.zNet[z])return W.zNet[z];const zid=W.zid,fill=new Path2D(),edge=new Path2D(),inz=(x,y)=>x>=0&&y>=0&&x<GW&&y<GH&&zid[y*GW+x]===z;
   for(let y=0;y<GH;y++){let x0=-1;for(let x=0;x<=GW;x++){const a=inz(x,y);if(a&&x0<0)x0=x;if(!a&&x0>=0){fill.rect(x0*CELL,y*CELL,(x-x0)*CELL,CELL);x0=-1;}}}
