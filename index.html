@@ -977,7 +977,7 @@ function validWorld(W){
   if(W.V.shape.type!=='rund'||W.V.shape.rough){const r=new Uint8Array(g.length),s0=cellIdx(W.landing.x,W.landing.y),st=[s0];r[s0]=1;
     while(st.length){const c=st.pop(),x=c%GW,y=(c/GW)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(r[n]||none[n])continue;const t=g[n];if(t!==LAND&&t!==BEACH)continue;r[n]=1;st.push(n);}}
     if(!W.relays.concat(W.harbor&&W.harborQ?[W.harborQ]:[]).every(p=>r[at(p)])){W.why='punkt onåbar över land';return false;}}
-  W.why=!W.relays.every(r=>open[at(r)])?'punkt onåbar':!shut[at(W.relays[0])]?'R1 stängd':shut[at(W.relays[1])]?'R2 öppen från havet':shut[at(W.relays[2])]?'LC öppen från havet':!(W.gateCells||[]).length?'inga grindar':'bunkrar vid LC';
+  W.why=!W.relays.every(r=>open[at(r)])?'punkt onåbar':!shut[at(W.relays[0])]?'R1 stängd':shut[at(W.relays[1])]?'R2 öppen från havet':shut[at(W.relays[2])]?'LC öppen från havet':!(W.gateCells||[]).length?'inga grindar':W.enemies.filter(e=>e.kind==='turret'&&Math.hypot(e.x-W.relays[2].x,e.y-W.relays[2].y)<200).length<2?'bunkrar vid LC':null;/* null for a valid world (issue 171) */
   return W.relays.every(r=>open[at(r)])&&shut[at(W.relays[0])]&&!shut[at(W.relays[1])]&&!shut[at(W.relays[2])]&&(W.gateCells||[]).length>0&&W.enemies.filter(e=>e.kind==='turret'&&Math.hypot(e.x-W.relays[2].x,e.y-W.relays[2].y)<200).length>=2;
 }
 /* for each candidate point, the indices of targets within radius r: the planner's greedy AA and MANPADS placement used to scan
@@ -2123,7 +2123,11 @@ function resTick(now,ms){const D=DYNRES;if(!R3||!D.on||document.hidden||!(ms>0&&
    the sky stay */
 /* photo mode (&photo in the address, decided 17 okt): for stills and the seasons picture (tests/arstider.js), not for play. The fog
    lies 2.8 times further out, the sun's shadows cover 1.6 km with an 8192 map instead of 300 m, and no labels float over the land */
-const PHOTO=(()=>{try{return new URLSearchParams(location.search).has('photo');}catch(_){return false;}})();
+/* the options may also come after # (4 nov, Magnus: ?scen=stroemmen on the artefact started an ordinary mission, since claude.ai does not pass
+   the query on to the page, but it does pass the hash, as for #tf-): #scen=stroemmen, #scen=stroemmen&klocka=12:00; the query wins.
+   Moved up from the end of the script, and photo, eshare, ekapten, kust, wtok, efter, form, budget and the benchmark's options read it too (issue 171) */
+const BOOTQ=(()=>{try{const q=new URLSearchParams(location.search),h=(location.hash||'').slice(1);if(h.includes('='))for(const[k,v]of new URLSearchParams(h))if(!q.has(k))q.set(k,v);return q;}catch(_){return new Map();}})();
+const PHOTO=(()=>{try{return BOOTQ.has('photo');}catch(_){return false;}})();
 /* the lowest ground under a footprint of radius r: a loose stone is set against it so that it sits in the ground instead of resting on
    a corner, at most 0.4 r below the centre (a block at the waterline sank out of sight) */
 function gLow(x,y,r){const c=heightAt(x,y);let m=c;for(let k=0;k<8;k++){const a=k*Math.PI/4;m=Math.min(m,heightAt(x+Math.cos(a)*r,y+Math.sin(a)*r));}return Math.max(m,c-r*.4);}
@@ -4094,7 +4098,7 @@ function enemyStep(e,tx,ty,dt){const d=Math.hypot(tx-e.x,ty-e.y);if(d<1)return d
    at that range are let through up to its normal sight. It never fires without its own line of sight (sees) and its own range (rVs), and
    a high-flying GETING stays out of reach of the MANPADS as before. */
 const ENEMY_SHARE={on:false,t:5,keep:20,r:40,near:40};
-try{if(new URLSearchParams(location.search).has('eshare'))ENEMY_SHARE.on=true;}catch(_){}
+try{if(BOOTQ.has('eshare'))ENEMY_SHARE.on=true;}catch(_){}
 const shareUp=()=>{const c=G.relays.find(r=>r.type==='central');return!c||!c.captured;};
 const shareZone=e=>WORLD.zid[cellIdx(e.x,e.y)];
 function shareNote(e,u){const z=shareZone(e);if(z==null||z<0)return;const H=G.eRep||(G.eRep=new Map()),k=z+'|'+u.id;let a=H.get(k);if(!a)H.set(k,a=[]);
@@ -4113,9 +4117,10 @@ function shareTip(e,u){const S=ENEMY_SHARE;if(!S.on||!G.eRep)return null;const z
    CAP.reinf; (3) counterattack a taken point when the free reserve is CAP.ratio times the seen strength by it, else wait and raise the alarm.
    Decisions 4 (retreat to the next line) and 5 (regroup) and the intercepted radio traffic are not built; the measurement did not call for them. */
 const CAP={on:false,tick:5,hist:1,lag:10,lagR2:30,keep:60,zoneR:250,hotR:300,alarmR:500,nearR:150,reinf:150,frac:.4,maxSent:2,leash:200,cLeash:160,cN:3,ratio:1.5,
-  qAlarm:10,qReinf:45,qCounter:90,qWait:30,jit:.2,share0:null};
+  qAlarm:10,qReinf:45,qCounter:90,qWait:30,jit:.2,share0:null,
+  slow:10/* CAP.tick*2: the value was missing, so C.slowT became NaN; set because it was missing, only applies with ?ekapten (issue 171) */};
 function setCap(on){if(on&&!CAP.on)CAP.share0=ENEMY_SHARE.on;CAP.on=!!on;if(on)ENEMY_SHARE.on=true;else if(CAP.share0!=null){ENEMY_SHARE.on=CAP.share0;CAP.share0=null;}}
-try{if(new URLSearchParams(location.search).has('ekapten'))setCap(true);}catch(_){}
+try{if(BOOTQ.has('ekapten'))setCap(true);}catch(_){}
 try{if(typeof process!=='undefined'&&process.env&&process.env.BH_EKAPTEN==='1')setCap(true);}catch(_){}
 const capUp=()=>CAP.on&&ENEMY_SHARE.on&&shareUp();
 const capLag=()=>G.relays.some(r=>r.type==='radar'&&r.captured)?CAP.lagR2:CAP.lag;
@@ -4221,7 +4226,7 @@ const KUST={sil:45,minSil:8,blastT:30,portal:13,navOut:40};
 const KUST_ISLE={on:0,cand:16,sep:60,near:300,land:150,minRatio:1.2,minExtra:100};/* 1.2 and 100 m (Magnus 4 nov): about 25 of 105 islands, against 7 at 1.4 and 200 m */
 /* Inställningar › Kustartilleri on the islands (Magnus 4 nov: on after he has tried it): the switch kept in the browser, from the next island */
 try{if(typeof localStorage!=='undefined'&&localStorage.getItem('bh.kust')==='1')KUST_ISLE.on=1;}catch(_){}
-try{if(new URLSearchParams(location.search).has('kust'))KUST_ISLE.on=1;}catch(_){}
+try{if(BOOTQ.has('kust'))KUST_ISLE.on=1;}catch(_){}
 try{if(typeof process!=='undefined'&&process.env&&process.env.BH_KUST)KUST_ISLE.on=1;}catch(_){}
 const kustPortal=e=>({x:e.x-Math.cos(e.face)*KUST.portal,y:e.y-Math.sin(e.face)*KUST.portal});
 const seaTarget=u=>!u.dead&&!u.carried&&!flying(u)&&(u.kind==='gadda'||wetAt(u.x,u.y));
@@ -5925,7 +5930,7 @@ function orderKrok(w){
 /* the ring where an order is given ages in real time (fixed 17 okt, issue 12): with the game's clock, orders given while paused left
    their rings on the chart until it ran again */
 function ping(x,y){(G.pings||(G.pings=[])).push({x,y,t0:performance.now()});}
-function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.override=false;u.waitT=0;}
+function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.override=false;u.waitT=0;u.unsafeWait=false;/* a new order must not stall on the old wait (issue 171) */}
 function dropCtrl(){stopFollowMe();G.ctrl=null;G.firing=false;G.mlook=false;if(typeof document!=='undefined'&&document.pointerLockElement)document.exitPointerLock();}
 function lastPost(u){return u.orders.length?u.orders[u.orders.length-1].post:u.post;}
 function defaultOrder(u,pk,post){
@@ -6232,7 +6237,7 @@ function graphDec(tab){const out=tab.map(e=>{if(!e.$ta)return e.$a?[]:{};const u
 function saveState(){const enc=graphEnc(G);return{fmt:'uppdrag-arkipelag-sparning 1',ver:GAME_VER,saved:new Date().toISOString(),seed:G.seed,doc:G.doc,island:islandName(G.seed),t:Math.round(G.time),
   when:G.start,carrier:{x:CARRIER.x,y:CARRIER.y,a:CARRIER.a},grid:b64(WORLD.grid),g:enc.tab};}
 /* the state of a save put back over a freshly built island of the same number (the caller has built it) */
-function applySave(sv){G=graphDec(sv.g);if(G.kustIsle&&G.kustIsle.open)WORLD.navOut=null;/* the coast battery already blown in the save: the fairway is open (issue 90) */if(G.activeView==null){G.activeView=G.mainMode||'map';delete G.mainMode;}/* a checkpoint's save from before 2 nov (issue 116) *//* a save from before 24 okt may hold Dold or Observera: both read as Defensiv */
+function applySave(sv){G=graphDec(sv.g);for(const l of G.log||[])l.acts=null;/* the encoder skips functions, so a loaded row's buttons would throw (issue 171) */if(G.kustIsle&&G.kustIsle.open)WORLD.navOut=null;/* the coast battery already blown in the save: the fairway is open (issue 90) */if(G.activeView==null){G.activeView=G.mainMode||'map';delete G.mainMode;}/* a checkpoint's save from before 2 nov (issue 116) *//* a save from before 24 okt may hold Dold or Observera: both read as Defensiv */
   for(const u of G.units||[])for(const o of[u,u.mission,...(u.orders||[]),...(u.saved||[])])if(o&&o.post&&!POST[o.post])o.post='def';
   numberUnits();/* a save from before 2 nov has no call numbers (issue 114) */
   WORLD.grid.set(unb64(sv.grid));Object.assign(CARRIER,sv.carrier);G.running=true;G.paused=true;}
@@ -6399,7 +6404,7 @@ function testfall(id){const T=TESTFALL.find(t=>t.id===id);if(!T)return false;if(
     if(G.selIds.length)setSel(G.selIds);if(G.tfPing)ping(G.tfPing.x,G.tfPing.y);cardIds='';renderLog();uiTick(true);}
   say(null,'Testfall: '+T.t+'. '+T.note+' Spelet står pausat; mellanslag startar.');return true;}
 function testfallDialog(){recAsk('Testfall ur testplanen. Spelet du har på gång avbryts; ett testfall startar pausat med en rad i loggen om vad du ska pröva.',[...TESTFALL.map(T=>[T.t,()=>testfall(T.id)]),['Avbryt',null]]);}
-if(typeof globalThis!=='undefined')globalThis.__BH={wayCost,fireSpot,RTB_WAY,callHints,kustBoom,kustPortal,scenFit,krokPath,capPath,hullX,mastKeep,wreckWhy,spotFail,CAP,setCap,capTick,capRead,capUp,FERRY,FERRY_HULL,mkFerry,scenSitesF,scenFerryBerths,scenDrive,scenFerryLane,scenFerryRoad,scenFerryLand,scenFerryEta,scenFerryShut,scenOfKey,scenKeyOf,scenQuay,scenWet,BJORN,ENG2,isBj,armorF,buildLock,buildCost,startUpgrade,upgradable,applyV2,bjornSpot,krokPick,krokHookTarget,resolveShot,mineTick,unlocked,moveCarrier,updateEnemy,bargSpot,bargLine,setDefense,TANKER_HULL,OIL,scenBerths,mkCisternS,mkOilWorks,oilSegD,KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,navHmap,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,selUnits,CREW,isCrew,crewCan,crewU,crewTick,crewBoard,crewOff,crewFetch,crewStill,crewTip,krokCrewLand,stowed,airR,RAMP,rampReach,onDeck,fetchTick,selfItems,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,haltSel,autoLift,damagedV,krokCanLift,repCap,cancelLift,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
+if(typeof globalThis!=='undefined')globalThis.__BH={resetFor,benchDone,BOOTQ,PHOTO,say,wayCost,fireSpot,RTB_WAY,callHints,kustBoom,kustPortal,scenFit,krokPath,capPath,hullX,mastKeep,wreckWhy,spotFail,CAP,setCap,capTick,capRead,capUp,FERRY,FERRY_HULL,mkFerry,scenSitesF,scenFerryBerths,scenDrive,scenFerryLane,scenFerryRoad,scenFerryLand,scenFerryEta,scenFerryShut,scenOfKey,scenKeyOf,scenQuay,scenWet,BJORN,ENG2,isBj,armorF,buildLock,buildCost,startUpgrade,upgradable,applyV2,bjornSpot,krokPick,krokHookTarget,resolveShot,mineTick,unlocked,moveCarrier,updateEnemy,bargSpot,bargLine,setDefense,TANKER_HULL,OIL,scenBerths,mkCisternS,mkOilWorks,oilSegD,KUST_ISLE,KUST,kustIsle,kustShut,kustCone,kustIsleTick,misBrief,killEnemy,navHmap,depOK,shoot,mkKraftverk,mkCistern,mkPumphus,mkTanker,get WORLD(){return WORLD;},passTank,costFor,smooth,astarCells,lineOK,pathPost,snowFireK,FIRE_SNOW,birkaPatrol,BIRKA_PATROL,scenShipStart,scenShore,misCell,misOpen,misNear,SCEN,SCEN_CFG,scenTick,scenSites,scenTankerPlan,scenSetup,scenStepNow,scenFire,scenGoal,scenWin,selUnits,CREW,isCrew,crewCan,crewU,crewTick,crewBoard,crewOff,crewFetch,crewStill,crewTip,krokCrewLand,stowed,airR,RAMP,rampReach,onDeck,fetchTick,selfItems,playOn,gaddaGo,gaddaYield,gaddaBirkaMask,birkaSweep,unitById,gaddaFire,gaddaFirePt,musWait,ppLevels:n=>{if(EPP){EPP.N=n;EPP.w=0;}},banaHash,banaParse,banaWhen,gaddaRoute,gaddaPiece,drawDoctrine,MISSION,repairCand,fieldMedic,passLand,TOW,towOrder,towSafePt,towSet,towTick,towable,ENEMY_SHARE,shareTip,shareHint,get TF(){return TF;},CALLSIGN,callTag,nextCall,numberUnits,killUnit,BARG,bargLine,bargTime,misLimit,misSeen,misTick,landWhy,landSpot,landScouted,landThreat,HOKLAND,aloft,elevOK,goRtb,getingAim,getingStrike,rKnown,groupAll,asmtOf,newGrp,hokAim,HOK_AA,WRING,harborGo,misBriefText:F=>misBriefText(F),briefFacts:()=>briefFacts(),hides,airSeeR,resSave,resLoad,resultOf,finishResult,resBest,get R3(){return R3;},get EFTER(){return EFTER;},get EPP(){return EPP;},get BENCH(){return BENCH;},benchNext:()=>benchNext(),groundY:(x,z)=>groundY(x,z),get LANDING(){return WORLD.landing;},fxBoom:(...a)=>fxBoom(...a),fxFire:(...a)=>fxFire(...a),DECK_Y,CRANE,cranePose,gaddaShoal,krokDefault,haltSel,autoLift,damagedV,krokCanLift,repCap,cancelLift,launch,gaddaAt,gaddaBerth,gaddaNetPt,ROBOT,BOAT,gaddaPhys,WIN,COAST,checkWin,GADDA,gaddaFree,gaddaManual,CTRL,gaddaDown,gaddaTick,gaddaOrder,gaddaRearm,gaddaSpot,seaPass,atBirkaSide,gaddaSeeR,get BENCH(){return BENCH;},get FEEDQ(){return FEEDQ;},get FEED(){return FEED;},benchStart,MINE_PLAN,setHigh,highG,moonVec,hiHit,hiReach,get GETING(){return GETING;},reachVs,knownLo,secureMask,airCover:(x,y)=>airCover(x,y),get GW(){return GW;},unitHOf:o=>hOf(o),FIRE,fireSpot,wayCost,coverCheck,krokLegsWant,get KROK_LEGS_R(){return KROK_LEGS_R;},wreckSafe,BIRKA_AIR,inBirka,BEACH_IN,beachBerth,birkaNav,navFree,navField,routeIn,routeOut,beachClear,routeArr,beachLine,NAV,beachState,beachGo,beached,berthed,birkaMoving,beachIcon:()=>beachIcon(),birkaR,knownSafe,enemyStep,KROK_BROKE,noRes,KROK_COST,heightAt,reedsOf,surroundData,sync3D,FOCUS,AREA,areaOK,areaKnown,MAST,mastFree,workMast,LOS,LOS_CALL,losCall,SUPPORT,HEIGHT_F,sees,losClear,RANGE_F,MOVE_DEF,WEAVE,saveState,applySave,graphEnc,graphDec,KAJ,isSecured,cellIdx,servicePads,moveCarrier:(x,y,a)=>moveCarrier(x,y,a),FOREST_HIDE,SHAPE_CFG,SCOOT,SIZE_ACC,startScoot,ENEMY,TYPES,ENGAGE,engageCalc,makeEnemy,counterattack,SHAPES,HARB,birkaClear,BIRKA_MOVE,harborTick,moveCarrier,validWorld,buildWorldTry,zoneAt,elevAt,titleRoute,titleDirector,taskMarks,setSel:ids=>setSel(ids),freePad,recycle,atBirka,recycleValue,START,sendToService,homeAt,ROVER,roverOut,roverBlast,roverKey:()=>roverKey(),CTRL,SUPPORT,coverAt,ENEMY_CFG,CARRIER,inNet,RADIO,linkAt,reachR,AUTOPAUSE,setPaused,callItems,canHit,dmgMult,requestSpot,spotPoint,spotterFor,testfall,get TESTFALL(){return TESTFALL;},islandName,cancelBuild,droneRocket,callIn,krokHook,REP,computeLock,lockedAt,mineSide,queueBuild,obstacleFor,mineFound,winLevel,decorHit,startFire,setFollowMe,stopFollowMe,capturePoint,homeFor,makeUnit,krokOrder,addWreck,lookedEmpty,harborItem,airlift,killKrok,launchTest:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'cannon','f',true,0,'cannon');const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},launchTestE:(a,t,p)=>{launch(a,t,t.x,t.y,hOf(t),'e_shell','e',true,0);const f=G.fx[G.fx.length-2];f.t=f.ttl*p;},orderKrok,killStruct,manualFire,aimTarget,airPath,makeKrok,INCOME,SVC_COST,SALVAGE,STRUCT,firingPoint:(u,e)=>firingPoint(u,e),buildWorld,astar,newGame,applySave,step,giveOrder,defaultOrder,shipPos,groupOrder,setSel,assignWing,selectWing,CTRL,eyesOn,sentBackIn,netReturnPt,airThreatR,rejoinWing,groupService,BEV_SPOT,shipLocal,deckSpot,get G(){return G;},get W(){return WORLD;},unitById};
 
 function renderLog(){
   if(!hasDOM)return;
@@ -7320,7 +7325,7 @@ function mkUnitMesh(u){
     g.add(mesh(cyl(.05,.05,.3,6),DK,.3,1.05,0));g.add(mesh(box(.26,.2,.32),mat(0x22282e),.32,1.25,0));g.add(mesh(new THREE.SphereGeometry(.09,8,6),mat(0x101418),.46,1.25,0));
     g.add(mesh(cyl(.02,.02,1.4,4),mat(0x2a2a2a),-.5,1.55,.32));g.add(mesh(new THREE.SphereGeometry(.04,6,4),mat(0xd03a2a),-.5,2.26,.32));
     g.add(mesh(box(.36,.22,.5),mat(0x3a3a30),-.35,1.0,-.05));for(const dz of[-.15,0,.15])g.add(mesh(box(.37,.06,.06),mat(0xe0b02e),-.35,1.06,-.05+dz));
-    return sh(bake(g,true));}
+    {const r=sh(bake(g,true));contactShadow(r,.02);return r;}/* the shadow was asked for further down, after this return (issue 171) */}
   if(u.ty==='bjorn'){
     // BJÖRN 01 (Magnus 4 nov, issue 154, after his picture "BJÖRN / 01"; second pass 5 nov: real tracks, a closed front, the turret raised clear of the
     // engine deck). VARG's language on a heavy tank: a faceted hull whose skirts hang over the upper tracks; the front in three convex pieces, two
@@ -7611,7 +7616,7 @@ function mkUnitMesh(u){
     hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
   }
-  {const r=sh(bake(g,true));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,hov(u)?.02-HOVER_Y:.02);
+  {const r=sh(bake(g,true));if(u.kind==='tank'||u.kind==='eng')contactShadow(r,hov(u)?.02-HOVER_Y:.02);
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
     if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
@@ -9037,7 +9042,7 @@ function buildStatic(){
   R3.season=null;R3.seasonDoy=null;
   if(R3.stat){R3.scene.remove(R3.stat);R3.stat.traverse(o=>{if(o.geometry&&!o.userData.shared)o.geometry.dispose();});}
   for(const m of[R3.units,R3.enemies,R3.wrecks,R3.relays,R3.fx,R3.kroks,R3.structs])m.clear();R3.parts.length=0;
-  while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);R3.rings=null;
+  while(R3.dyn.children.length)R3.dyn.remove(R3.dyn.children[0]);R3.rings=null;R3.foam=null;/* the foam pool pointed at removed meshes (issue 171) */
   R3.route=null;if(R3.tags)for(const o of R3.tags.values()){o.sp.material.map.dispose();o.sp.material.dispose();if(o.dc){o.dc.geometry.dispose();o.dc.material.map.dispose();o.dc.material.dispose();}}R3.tags=new Map();R3.marks=new Map();R3.looseM=[];
   const W=WORLD,SX=W.SX,SY=W.SY,nx=SX+1,ny=SY+1,st=new THREE.Group();
   const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),idx=new (nx*ny>65535?Uint32Array:Uint16Array)(SX*SY*6);// the grid has more than 65535 vertices: 16-bit indices would wrap and scramble the southern triangles
@@ -9266,7 +9271,7 @@ function mkSky(){
       uMoonDir:{value:new THREE.Vector3(0,1,0)},uMoonVis:{value:0},uMoonK:{value:1},uMoonPh:{value:0},uNight:{value:0}},
     vertexShader:'varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
     fragmentShader:`uniform vec3 uHor,uSea,uZen,uSunCol;uniform vec3 uSunDir,uMoonDir;uniform float uSunVis,uMoonVis,uMoonK,uMoonPh,uNight;varying vec3 vD;
-      float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}
+      float hash(vec3 p){vec3 p3=fract(p*0.1031);p3+=dot(p3,p3.zyx+31.32);return fract((p3.x+p3.y)*p3.z);}/* no sine, which gives squares on a phone's low-precision GPU (issue 69, 171) */
       void main(){vec3 d=normalize(vD);float y=d.y;
         /* below the horizon the far sea's own tone, above it the sky with a thin brighter band along the horizon (17 okt) */
         vec3 col=mix(uHor,uZen,pow(clamp(y,0.0,1.0),0.5));col=mix(col,uHor*1.04,exp(-max(y,0.0)*55.0)*0.55);col=mix(uSea,col,smoothstep(-0.004,0.0015,y));
@@ -9463,7 +9468,7 @@ function seasonApply(doy){const S=seasonAt(doy);R3.season=S;R3.seasonDoy=doy;
   const WU=R3.water&&R3.water.material.userData.U;if(WU){WU.uIce.value=S.ice;WU.uFloe.value=S.floe;}}
 /* water: small moving waves bend the normals so the sun or moon leaves a glittering path; lighter towards the horizon;
    foam where it is shallow, from a depth map of the seabed (see setWaterDepth) */
-const WTOK=(()=>{try{const v=+new URLSearchParams(location.search).get("wtok");return v>0?v:1;}catch(_){return 1;}})();/* ?wtok= for comparing how much the faded waves widen the glint */
+const WTOK=(()=>{try{const v=+BOOTQ.get("wtok");return v>0?v:1;}catch(_){return 1;}})();/* ?wtok= for comparing how much the faded waves widen the glint */
 function mkWaterMat(){
   const m=new THREE.MeshPhongMaterial({color:0x21466f,transparent:true,opacity:.86,shininess:220,specular:0xdfe8ec});
   const U={uTime:{value:0},uWind:{value:.7},uWindDir:{value:new THREE.Vector2(1,0)},uHor:{value:new THREE.Color(0xa9bbc4)},uFoam:{value:new THREE.Color(0xe9f1f2)},uDepth:{value:null},uHasDepth:{value:0},uGrid:{value:new THREE.Vector2(1,1)},
@@ -10037,7 +10042,7 @@ const EFTER=(()=>{const P={tm:0,bloom:false,grade:false,exp:1,th:1.2,str:.6,lamp
   /* the strength was 0.6 until issue 88 (Magnus 30 okt: a third lower), then 0.4 until 1 nov (Magnus: half that), then 0.2 until 3 nov, when the lights came down from 4 times white to 1.5 and the
      threshold from 3 to 1.2, and the strength went back to 0.6 (issue 140, Magnus after stills on ö 2547: the house windows looked like
      10 000 lumen indoors; at 4 times white the windows went white, and the glow itself was so faint that its strength never showed). The setting (Inställningar, Efterbehandling) is knee and bloom; ?efter= overrides it for the comparisons */
-  try{const q=new URLSearchParams(location.search).get('efter');P.set(q!=null?q:localStorage.getItem('bh.efter')==='1'?'knee,bloom':'');}catch(_){}return P;})();
+  try{const q=BOOTQ.get('efter');P.set(q!=null?q:localStorage.getItem('bh.efter')==='1'?'knee,bloom':'');}catch(_){}return P;})();
 /* the night's lights (lamps, windows, lanterns, sector lights and daymarks) shine brighter than white while bloom is on, so they glow
    past the threshold; drawn straight to the screen they would only be clipped, so without bloom they stay as they were */
 const hdrK=()=>EFTER.bl?EFTER.lamp:1;
@@ -12508,7 +12513,7 @@ function benchSlag(n){const v=BENCH.v,f={x:v.ux,y:v.uy},s={x:-f.y,y:f.x},EK=['ta
   TF.reveal();}
 function benchTopUp(){for(const o of G.units){o.hp=o.maxhp;o.ammo=o.maxAmmo;o.fuel=o.maxFuel;}for(const e of G.enemies)if(e.id.startsWith('BX')&&!e.dead){e.hp=e.maxhp;if(e.mag)e.ammo=e.mag;}}
 function benchCam(){const v=BENCH.v;if(!v)return;R3.cam.position.set(v.px,v.py,v.pz);R3.lookAt.set(v.ax,v.ay,v.az);R3.cam.lookAt(R3.lookAt);R3.snap=false;}
-function benchStart(){if(BENCH.on)return;let q=null;try{q=new URLSearchParams(location.search);}catch(_){}
+function benchStart(){if(BENCH.on)return;let q=null;try{q=BOOTQ;}catch(_){}
   BENCH.warm=+(q&&q.get('benchwarm'))||2500;BENCH.len=+(q&&q.get('benchlen'))||8000;BENCH.run=(q&&q.get('label'))||'';
   BENCH.list=+(q&&q.get('benchmax'))>0?BENCH.all.slice(0,+q.get('benchmax')):BENCH.all;
   BENCH.on=true;BENCH.i=-1;BENCH.res=[];BENCH.long=[];BENCH.dyn0={on:DYNRES.on};DYNRES.on=false;DYNRES.scale=1;applyRes();BENCH.rnd0=Math.random;
@@ -12576,7 +12581,7 @@ function frame(now){if(globalThis.__boot&&!__boot.frame1)__boot.frame1=-1;else i
   requestAnimationFrame(frame);
   const P=[performance.now()];try{frameBody(now,P);}catch(err){diagErr('bildruta',err);}
   try{diagTick(now,P);}catch(err){console.error(err);}
-  if(BENCH.on)try{benchTick(now,P);}catch(err){BENCH.on=false;diagErr('benchmark',err);}
+  if(BENCH.on)try{benchTick(now,P);}catch(err){BENCH.on=false;diagErr('benchmark',err);try{benchDone();}catch(_){}/* restores BENCH.v, Math.random and DYNRES too (issue 171) */}
   if(REC.on)try{recTick();}catch(err){REC.on=false;diagErr('inspelning',err);}
   try{saveTick();}catch(err){diagErr('sparning',err);}
 }
@@ -12589,7 +12594,7 @@ function frameBody(now,P){
   P.push(performance.now());
   for(const u of[...G.units,...G.kroks]){const aimCam=G.ctrl===u.id&&u.kind==='tank',fast=G.ctrl===u.id&&G.mlook;u.camH+=angWrap((aimCam?u.turret:u.heading+(G.ctrl===u.id&&freeLook(u)?G.gyaw||0:0))-u.camH)*Math.min(1,(fast?20:3.5)*dtr);}
   const cu=unitById(G.cam);
-  if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead);setCam(n?n.id:'K');G.camDeadT=-1;}}}
+  if(!cu||cu.dead){if(G.camDeadT<0)G.camDeadT=2;else{G.camDeadT-=dtr;if(G.camDeadT<=0){const n=selUnit()||G.units.find(u=>!u.dead)||G.kroks.find(k=>!k.dead);setCam(n?n.id:'K');/* a living KROK, not always KROK 1 which may be dead (issue 171) */G.camDeadT=-1;}}}
   if(!FILM.on||FILM.map){mctx.setTransform(dpr,0,0,dpr,0,0);drawMap(mctx,size.map.w,size.map.h,FILM.map?false:G.activeView!=='map');}P.push(performance.now());/* the trailer draws the chart only in its chart shots */
   if(R3){sync3D(dtr);if(R3.chP&&(FILM.on||TITLE.on||OP.on||BENCH.v))camRestore();if(FILM.on)filmCam(dtr);else if(TITLE.on)titleCam(dtr);else if(OP.on)opCam(dtr);else if(BENCH.v)benchCam();else if(G.camDeadT<0)updateCam(dtr);updateSky();cloudTick();if(FILM.on)filmLight();treeCull(R3.cam,true);gpuBegin();if(FILM.on)drawMain(R3.scene,R3.cam);else renderMain();if(!FILM.on)renderPip();gpuEnd();if(!FILM.on)feedTick(now);}
   P.push(performance.now());updAudio(dtr);P.push(performance.now());
@@ -12616,12 +12621,10 @@ globalThis.__BHstill=o=>{if(!R3)return null;if(TITLE.on)startGame();if(OP.on){OP
   put();R3.snap=false;sync3D(.016);updateSky();cloudTick();put();treeCull(R3.cam,true);drawMain(R3.scene,R3.cam);return R3.renderer.domElement.toDataURL(o.png?'image/png':'image/jpeg',o.q||.85);};
 globalThis.__BHt=()=>TITLE;/* the intro stepped without drawing, and one picture of it (intro review, 27 okt) */globalThis.__BHtR3=()=>R3;globalThis.__BHtstep=(dt,n,draw)=>{for(let i=0;i<n;i++){sync3D(dt);titleCam(dt);}if(!draw)return null;updateSky();cloudTick();treeCull(R3.cam,true);renderMain();return R3.renderer.domElement.toDataURL('image/jpeg',.85);};globalThis.__BHui={ear:()=>{const ec=earCam();updListener();const F=FEED.list[0];return{ear:ec?"cam2":"cam1",L:[AUD.L.x|0,AUD.L.z|0],cam1:[R3.cam.position.x|0,R3.cam.position.z|0],cam2:F&&F.cam?[F.cam.position.x|0,F.cam.position.z|0]:null,views:[VW.main,VW.sub,VW.small],act:VW.act};},mapX:()=>mapX,mv,setCtrl,setCam,placePanes,uiTick,down:()=>({unit:downUnit(),swapped:downSwapped(),pip:pipRect(size.cam.w,size.cam.h),alt:R3&&R3.pipAlt,fov:R3&&R3.cam.fov,up:R3&&R3.cam.up.toArray()}),audio:()=>({ctx:AUD.ctx&&AUD.ctx.state,music:MUS.buf?Math.round(MUS.buf.duration):0,gain:MUS.g?+MUS.g.gain.value.toFixed(2):null})};
 // experiment with the enemy: ?budget=150&doktrin=framskjutet|djup|fastning|rorligt
-try{const q=new URLSearchParams(location.search),fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
-try{const q=new URLSearchParams(location.search),bu=+q.get('budget');if(bu>0)ENEMY_CFG.budget=bu;}catch(_){}
+try{const q=BOOTQ,fm=q.get('form');if(fm&&SHAPES[fm])SHAPE_CFG.force=fm;}catch(_){}
+try{const q=BOOTQ,bu=+q.get('budget');if(bu>0)ENEMY_CFG.budget=bu;}catch(_){}
 // every visit opens on a random island at that island's own hour; the intro shows the island you will play
-/* the options may also come after # (4 nov, Magnus: ?scen=stroemmen on the artefact started an ordinary mission, since claude.ai does not pass
-   the query on to the page, but it does pass the hash, as for #tf-): #scen=stroemmen, #scen=stroemmen&klocka=12:00; the query wins */
-const BOOTQ=(()=>{try{const q=new URLSearchParams(location.search),h=(location.hash||'').slice(1);if(h.includes('='))for(const[k,v]of new URLSearchParams(h))if(!q.has(k))q.set(k,v);return q;}catch(_){return new Map();}})();
+/* BOOTQ is defined early in the script (issue 171), so that every address option reads the same way */
 /* &datum=2032-12-15 (or 12-15) and &klocka=08:30 choose the date and starting hour, like Ny ö */
 try{const m=BOOTQ.get('moln');if(m!=null&&m!=='')CLOUD.force=clamp(+m/100,0,1);}catch(_){}
 function bootWhen(){const m=/^(?:2032-)?(\d\d)-(\d\d)$/.exec(BOOTQ.get('datum')||''),k=/^(\d\d?):(\d\d)$/.exec(BOOTQ.get('klocka')||'');
