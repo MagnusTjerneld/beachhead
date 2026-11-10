@@ -4,3 +4,4 @@ tests/*.png
 *.log
 .DS_Store
 tests/map.log
+tests/.runtimes.json

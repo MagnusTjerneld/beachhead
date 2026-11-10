@@ -2,17 +2,17 @@
 // harbour; the point R1 stands in the station's yard; a radio mast becomes a relay that widens the net (20 okt: as soon as BÄVER gets to
 // it, its whole zone and 250 m round it; with the radar station taken the masts are torn down like any building)
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;let fail=0;const SHARD=(process.env.SHARD||'0/1').split('/').map(Number),mine=k=>k%SHARD[1]===SHARD[0];/* run.js runs this test in parts (issue 181) */const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 // 1. R1 and the harbour, over a run of islands
 {let bad=0,inYard=0,yards=0,n=0;const ex=[];
-  for(let s=3000;s<3030;s++){B.newGame(s);const W=B.W,z=W.zones,V=W.V;n++;if(z.r1z===z.hz||(V.r1Harb!=null&&V.r1Harb<300)){bad++;ex.push(s);}
+  for(let s=3000;s<3030;s++){if(!mine(s))continue;B.newGame(s);const W=B.W,z=W.zones,V=W.V;n++;if(z.r1z===z.hz||(V.r1Harb!=null&&V.r1Harb<300)){bad++;ex.push(s);}
     if(W.yard){yards++;const r=W.relays[0];if(Math.hypot(r.x-W.yard.x,r.y-W.yard.y)<1)inYard++;}}
   ok(!bad,'R1 is never in the harbour\'s zone nor under 300 m from it along the passes ('+bad+' of '+n+(ex.length?': '+ex.join(','):'')+')');
-  ok(yards>0&&inYard===yards,'the point R1 stands in the station\'s yard ('+inYard+' of '+yards+' islands with a yard)');}
+  ok(inYard===yards&&(yards>0||SHARD[1]>1),'the point R1 stands in the station\'s yard ('+inYard+' of '+yards+' islands with a yard)');}
 // 2. island 9949: the workshop in F4 on the way to LC, not at the west end
-{B.newGame(9949);const r=B.W.relays[0];ok(r.x>1000&&r.x<1300&&r.y>600&&r.y<900,'on 9949 the workshop stands in F4 on the way to LC ('+Math.round(r.x)+','+Math.round(r.y)+')');}
+if(mine(0)){B.newGame(9949);const r=B.W.relays[0];ok(r.x>1000&&r.x<1300&&r.y>600&&r.y<900,'on 9949 the workshop stands in F4 on the way to LC ('+Math.round(r.x)+','+Math.round(r.y)+')');}
 // 3. BÄVER couples a radio mast in even with enemies left in its zone, the net covers the zone, and the reach stays when the mast is torn down
-{B.newGame(7341);const G=B.G,W=B.W;G.running=true;for(let i=0;i<20;i++)B.step(.05);
+if(mine(0)){B.newGame(7341);const G=B.G,W=B.W;G.running=true;for(let i=0;i<20;i++)B.step(.05);
   const ms=G.structs.filter(s=>s.kind==='mast'&&B.inNet(s.x,s.y));let m=null,P=null;
   for(const s of ms){for(let k=0;k<16&&!P;k++){const a=k/16*Math.PI*2,q={x:s.x+Math.cos(a)*200,y:s.y+Math.sin(a)*200};if(q.x>0&&q.y>0&&q.x<2200&&q.y<2200&&!B.inNet(q.x,q.y))P=q;}if(P){m=s;break;}}
   ok(!!m,'(a mast in the net with ground beyond the net within 200 m'+(m?' at '+Math.round(m.x)+','+Math.round(m.y):'')+')');
@@ -28,6 +28,6 @@ require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.l
     ok(B.inNet(far.x,far.y),'the whole zone is in the net, its far corner '+Math.round(fd)+' m from the mast too (before: '+(farIn0?'in':'out')+')');
     B.killStruct(m,u,'demolish');ok(B.inNet(P.x,P.y),'torn down later, the reach stays');}}
 // 4. with the radar station taken the masts are of no more use: a click with BÄVER tears one down
-{B.newGame(7341);const G=B.G;G.running=true;const m=G.structs.find(s=>s.kind==='mast'&&!s.dead);ok(B.mastFree(m),'before R2 a mast can be coupled in');
+if(mine(0)){B.newGame(7341);const G=B.G;G.running=true;const m=G.structs.find(s=>s.kind==='mast'&&!s.dead);ok(B.mastFree(m),'before R2 a mast can be coupled in');
   G.netAll=true;ok(!B.mastFree(m),'with R2 taken it cannot, and BÄVER tears it down like any building');}
 console.log(fail?fail+' FAILED':'all passed');process.exit(fail?1:0);

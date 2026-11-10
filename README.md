@@ -223,7 +223,7 @@ Hela reglerna finns under "Hur man spelar" i spelet.
 Testerna kör spelets skript utan webbläsare. `mk.py` plockar ut skriptet ur `index.html` till `tests/g2.js`.
 
 ```
-node tests/run.js  # bygger g2.js och kör de snabba testerna parallellt (drygt en minut)
+node tests/run.js  # bygger g2.js och kör de snabba testerna parallellt, de långsammaste först och t63, t73, t84 och t109 i delar, med samma seedade slump varje gång (cirka tre minuter; RUN_N= ger antalet processer, BH_SEED= en annan slump)
 node tests/sandbox.js   # anfallsscenarier i en sandlåda, tio omgångar var (några sekunder)
 node tests/falt.js      # fälttest: wingar på sex riktiga öar med order som från sjökortet, flaggar omvägar, fastlåsta enheter och träffar från en granne till målet (korseld) (cirka en halv minut)
 cd tests

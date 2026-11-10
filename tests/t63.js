@@ -3,8 +3,8 @@
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;B.START.res=500;B.START.units=['drone','tank','tank','eng'];let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const GW=220,DEEP=0,SHAL=1,BEACH=2,LAND=3,ROCK=4;
-const seeds=[1000,1037,1074,1111];
-for(const f of Object.keys(B.SHAPES)){
+const seeds=[1000,1037,1074,1111];const SHARD=(process.env.SHARD||'0/1').split('/').map(Number),mine=k=>k%SHARD[1]===SHARD[0];/* run.js runs this test in parts (issue 181) */
+for(const f of mine(1)?Object.keys(B.SHAPES):[]){
   B.SHAPE_CFG.force=f;let valid=0,reach=0,ship=0,inside=0,forms=0,ms=0,zones=0;
   for(const seed of seeds){const t0=Date.now();B.newGame(seed);ms+=Date.now()-t0;const G=B.G,W=B.W;
     if(W.valid)valid++;if(W.V.shape.type===f)forms++;zones+=W.V.zones.length;
@@ -23,9 +23,11 @@ for(const f of Object.keys(B.SHAPES)){
   ok(zones/n>=8,f+': on average '+(zones/n).toFixed(1)+' zones');
   console.log('     '+f+' builds in '+Math.round(ms/n)+' ms on average');
 }
+if(mine(0)){
 // the mix picks every shape over a spread of seeds, and the round island is the old one
 B.SHAPE_CFG.force=null;const seen={};for(let s=2000;s<2020;s++){B.newGame(s);seen[B.W.V.shape.type]=1;}
 ok(Object.keys(B.SHAPES).every(k=>seen[k]),'the mix gives every shape over 20 islands ('+Object.keys(seen).join(', ')+')');
 /* since 19 okt (issue 57) R1 there keeps 300 m from the harbour and stands in its yard, so R1 moved from 1175,1405; R2 and R3 are as before */
 B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;B.newGame(7341);{const R=B.G.relays.map(r=>Math.round(r.x)+','+Math.round(r.y)).join(' ');ok(R==='1140,1440 1115,945 955,815','round island 7341 is the same as before the shapes, R1 moved by the harbour rule ('+R+')');}
+}
 console.log(fail?'FAILED '+fail:'all passed');if(fail)process.exit(1);

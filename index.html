@@ -1996,13 +1996,13 @@ function deckDrive(u,dt){if(u.orders.length||u.carried||G.ctrl===u.id||!onDeck(u
   if(!u.deckPath)u.deckPath=deckRoute(u,u.deckTo);let t=u.deckPath[0],d=Math.hypot(t.x-u.x,t.y-u.y);if(d<.6&&u.deckPath.length>1){u.deckPath.shift();t=u.deckPath[0];d=Math.hypot(t.x-u.x,t.y-u.y);}
   if(d<.6){u.deckTo=null;u.deckPath=null;u.heading=CARRIER.a;u.state='Väntar på lyft i uppställningsrutan';return true;}
   const a=Math.atan2(t.y-u.y,t.x-u.x),st=Math.min(d,u.speed*.6*dt);u.x+=Math.cos(a)*st;u.y+=Math.sin(a)*st;u.heading=a;u.state='Kör till uppställningsrutan';return true;}
-function newGame(seed,doc,when){
+const WCACHE=new Map();function newGame(seed,doc,when){
   /* a scenario fixes the doctrine and the enemy's budget (issue 129); the island and the date are the captain's when he chose them, its own
      otherwise, and the hour its own unless he chose one (Magnus 5 nov: Strömmen was always 15 november on ö 3100 whatever Ny ö said). when.isle
      is the island chosen for the scenario: Ny ö passes it only for an island that holds the scenario's places (scenFit) */
   const SC=when&&(SCEN[when.scen]||scenOfKey(when.uppdrag)),bud0=ENEMY_CFG.budget;
   if(SC){seed=when.isle||SC.seed;doc=SC.doc;when=Object.assign({},when,{doy:when.doy||SC.when.doy,tod:when.tod!=null?when.tod:SC.when.tod,uppdrag:'scen'});ENEMY_CFG.budget=SC.budget;}
-  const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine+'|'+COAST.n;if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){buildWorld(seed,doc==='auto'?null:doc);WORLD.cfgKey=cfgKey;}
+  const cfgKey=ENEMY_CFG.budget+'|'+ENEMY_CFG.ground+'|'+ENEMY_CFG.doctrine+'|'+COAST.n+'|'+(SHAPE_CFG.force||'')+'|'+(SHAPE_CFG.rough?1:0)+'|'+JSON.stringify(SHAPE_CFG.mix);/* the shape too: a forced shape on the same island gave the old island (issue 181) */if(!WORLD||WORLD.seed!==seed||WORLD.cfgKey!==cfgKey){const wk=seed+'#'+cfgKey,hit=!hasDOM&&WCACHE.get(wk);if(hit)WORLD=hit;else{buildWorld(seed,doc==='auto'?null:doc);WORLD.cfgKey=cfgKey;if(!hasDOM){WCACHE.set(wk,WORLD);if(WCACHE.size>8)WCACHE.delete(WCACHE.keys().next().value);}}}/* headless (tests and bots) keeps the last eight islands, as the game keeps the last one: the tests went back and forth between the same islands and built each anew (issue 181) */
   /* headless (tests, testbot, kaptenboten) plays Frita ön unless asked, so their results compare with the ones before missions */
   const mis=SC?'scen':MISSION[when&&when.uppdrag]?when.uppdrag:hasDOM?missionOf(seed):'frita';
   /* Bärgningen with the fortress chosen by the captain (never by Auto, issue 139, Magnus 4 nov): the fortress is built round the wreck */
