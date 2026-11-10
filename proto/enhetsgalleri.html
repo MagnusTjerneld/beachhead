@@ -880,6 +880,21 @@ function mkTanker(){const g=new THREE.Group(),hull=new THREE.Group(),fit=new THR
 /* the ferry (issue 129, Färjeläget, Magnus 4 nov): a car ferry of the archipelago type, 54 x 15 m, an open car deck with the bow ramp down and
    the stern ramp up, a two-deck house with the wheelhouse on the starboard side, yellow above the waterline. Origin at the waterline, +x the bow
    (the ramp end), +z starboard; the measured parts hang in userData for t127 */
+/* the quay at the ferry berth (Magnus 7 nov: a quay edge with a road all the way out, not a beach): a concrete apron from the water's edge in over the shore, laid on
+   the ground and never under 1.1 m, with a vertical front down into the water, a dark fender along the edge, bollards and two lamp posts. All in world coordinates */
+function mkFerryWorks(sit){const g=new THREE.Group(),b=sit.berth,lp=sit.lp,ux=b.ux,uy=b.uy,vx=-uy,vy=ux,WD=FERRY.apron[1],LN=FERRY.apron[0]+(b.quay||0),s0=-(FERRY.ramp+1.5+(b.quay||0)),CONC=mat(0x9c9a92),DARK=mat(0x25282b),STEEL=mat(0x6f777c);
+  const X=(s,t)=>lp.x+ux*s+vx*t,Y=(s,t)=>lp.y+uy*s+vy*t,top=(s,t)=>Math.max(groundY(X(s,t),Y(s,t))+.14,1.1),ns=Math.ceil(LN/3),nt=Math.ceil(WD/3),P=[],I=[];
+  for(let i=0;i<=ns;i++)for(let j=0;j<=nt;j++){const s=s0+LN*i/ns,t=-WD/2+WD*j/nt;P.push(X(s,t),top(s,t),Y(s,t));}
+  const id=(i,j)=>i*(nt+1)+j;for(let i=0;i<ns;i++)for(let j=0;j<nt;j++)I.push(id(i,j),id(i,j+1),id(i+1,j),id(i+1,j),id(i,j+1),id(i+1,j+1));
+  /* the skirt round three sides, down into the water or the ground */
+  const skirt=pts=>{for(let k=0;k<pts.length-1;k++){const a=pts[k],c=pts[k+1],n=P.length/3;P.push(X(a[0],a[1]),top(a[0],a[1]),Y(a[0],a[1]),X(c[0],c[1]),top(c[0],c[1]),Y(c[0],c[1]),X(c[0],c[1]),-8,Y(c[0],c[1]),X(a[0],a[1]),-8,Y(a[0],a[1]));I.push(n,n+2,n+1,n,n+3,n+2);}};
+  const row=(fn,m)=>{const o=[];for(let k=0;k<=m;k++)o.push(fn(k/m));return o;};
+  skirt(row(f=>[s0,WD/2-WD*f],nt));skirt(row(f=>[s0+LN*f,-WD/2],ns));skirt(row(f=>[s0+LN*(1-f),WD/2],ns));
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));geo.setIndex(I);geo.computeVertexNormals();const CM=CONC.clone();CM.side=THREE.DoubleSide;g.add(new THREE.Mesh(geo,CM));
+  const ry=-Math.atan2(vy,vx),f=mesh(new THREE.BoxGeometry(WD,.5,.4),DARK,X(s0-.2,0),.85,Y(s0-.2,0));f.rotation.y=ry;g.add(f);
+  for(const t of[-WD/2+2,-WD/4,WD/4,WD/2-2])g.add(mesh(cyl(.18,.24,.7,8),DARK,X(s0+1,t),top(s0+1,t)+.35,Y(s0+1,t)));
+  for(const t of[-WD/2+1.2,WD/2-1.2]){const y=top(s0+6,t);g.add(mesh(cyl(.09,.13,8,6),STEEL,X(s0+6,t),y+4,Y(s0+6,t)));g.add(mesh(new THREE.BoxGeometry(.9,.18,.3),STEEL,X(s0+6,t),y+8,Y(s0+6,t)));}
+  return g;}
 function mkFerry(){const g=new THREE.Group(),hull=new THREE.Group(),fit=new THREE.Group(),sup=new THREE.Group(),
     BLK=mat(0x1c1f22),YEL=mat(0xd9a521),DECK=mat(0x55595a),WHITE=mat(0xe9e7df),STEEL=mat(0x7d858a),STEEL2=mat(0x4b5258),DARK=mat(0x22262a),FUN=mat(0xa83a24),FUN2=mat(0x1c1f22),REDL=mat(0xb02020),GRNL=mat(0x1f9a3a),LINE=mat(0xe0dccc);
   const add=(p,geo,m,x,y,z)=>{const o=mesh(geo,m,x,y,z);p.add(o);return o;};
