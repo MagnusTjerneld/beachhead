@@ -1,5 +1,5 @@
 // The enemy's alert level and the intercepted radio traffic (issue 187, Magnus 11 nov): two levels, calm and alarm, derived from the captain's
-// own picture; the lines "Avlyssnat: ..." come only while the player holds a point (a station), name only points the player knows, and stop
+// own picture; the lines "Avlyssnat: ..." come only while the player holds a station (a taken point, or a radio mast coupled in), name only points the player knows, and stop
 // when the command centre is taken ("Fiendens ledning har tystnat." once); with the captain off nothing is shown and nothing changes.
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
@@ -67,6 +67,10 @@ fresh(true,false,1);{const r=G.relays[0];r.captured=true;r.capT=0;G.time=1;run(1
   ok(G.eCap.stat.counter>0&&lines.some(l=>/^Fienden rycker ut mot /.test(l.text)),'a counterattack says "Fienden rycker ut mot ..." as before');}
 {fresh(true,false);const r=G.relays.find(q=>q.type!=='central'&&q.type!=='radar');
   run(700);const n=av().length;r.captured=true;r.capT=G.time;run(1200);ok(n===0&&av().length>0,'a station taken later: the lines start ('+n+' before, '+av().length+' after)');}
+/* a radio mast coupled in is a station as well (Magnus 11 nov): no point taken, and the lines start with the mast */
+{fresh(true,false);const m=G.structs.find(s=>s.kind==='mast'&&!s.dead);ok(!!m,'the island has a radio mast');
+  run(700);const n=av().length,st0=B.capStation();m.relay=true;G.masts.push({x:m.x,y:m.y,id:m.id});run(1200);
+  ok(!st0&&B.capStation()&&!G.relays.some(r=>r.captured),'a mast coupled in is a station, with no point taken');ok(n===0&&av().length>0,'a mast coupled in: the lines start ('+n+' before, '+av().length+' after)');}
 
 // the command centre taken: silent, one line, no new traffic
 fresh(true,true);run(600);
