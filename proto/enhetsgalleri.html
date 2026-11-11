@@ -205,7 +205,8 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
     for(const z of[-.16,.16]){g.add(mesh(box(.12,.1,.12),DK,mx-.55,1.72,z));g.add(mesh(cyl(.012,.02,1.6,4),BLK,mx-.55,2.56,z));}}
   /* the launcher, a separate module that is changed at Birka: a faceted box of four tubes, two by two, on a hinge at its after end; it
      lies along the deck and lifts its front to fire. The caps on the tubes' front ends go one by one as they fire (robots: how many are left) */
-  {const L=new THREE.Group();L.position.set(-3.75,1.02,0);g.add(L);g.userData.launcher=L;const lg=new THREE.Group();L.add(lg);
+  {const TT=new THREE.Group();TT.position.set(-2.5,1.02,0);g.add(TT);g.userData.trav=TT;/* the turntable (Magnus 11 nov): the box, its hinge and ram train on the plinth's middle */
+    const L=new THREE.Group();L.position.set(-1.25,0,0);TT.add(L);g.userData.launcher=L;const lg=new THREE.Group();L.add(lg);
     const q=(w,h,c)=>[[-w,0],[-w-.03,h-.16],[-c,h],[c,h],[w+.03,h-.16],[w,0]];
     lg.add(mesh(loft([[.05,q(.72,.7,.55)],[2.3,q(.72,.7,.55)],[2.6,q(.62,.6,.45)]]),HULL));
     lg.add(mesh(box(1.1,.04,.62),T,1.15,.71,0));lg.add(mesh(box(.5,.04,.3),DK,1.95,.67,0));
@@ -214,11 +215,12 @@ function mkGadda(THREE,o){o=o||{};const col=o.color!=null?o.color:0x2fb3a8,TAU=M
       const h=mesh(cyl(.11,.11,.04,8),BLK,2.6,y,z);h.rotation.z=PI/2;lg.add(h);caps.push(c);}
     g.userData.caps=caps;
     // the mount: the hinge block, a grey plinth with a dark edge each side and the lifting ram, which stretches as the box lifts
-    g.add(mesh(box(.4,.22,1.3),DK,-3.75,.98,0));g.add(mesh(box(2.75,.14,1.78),HULL2,-2.5,.97,0));for(const z of[-.885,.885])g.add(mesh(box(2.6,.06,.04),DK,-2.5,1.0,z));
-    const ram=mesh(cyl(.07,.07,1,6),MET,0,0,0);g.add(ram);g.userData.ram=ram;
+    TT.add(mesh(box(.4,.22,1.3),DK,-1.25,-.04,0));g.add(mesh(box(2.75,.14,1.78),HULL2,-2.5,.97,0));for(const z of[-.885,.885])g.add(mesh(box(2.6,.06,.04),DK,-2.5,1.0,z));
+    const ram=mesh(cyl(.07,.07,1,6),MET,0,0,0);TT.add(ram);g.userData.ram=ram;
     const rob=o.robots==null?4:o.robots;caps.forEach((c,i)=>{c.visible=i<rob;});
-    g.userData.setLift=t=>{L.rotation.z=t*.62;L.updateMatrix();const a=V(-1.9,.98,0).multiplyScalar(SC),b=V(1.6,.08,0).multiplyScalar(SC).applyAxisAngle(V(0,0,1),t*.62).add(L.position);
-      const d=b.clone().sub(a);ram.position.copy(a).addScaledVector(d,.5);ram.quaternion.setFromUnitVectors(V(0,1,0),d.clone().normalize());ram.scale.set(1,Math.max(.2,d.length()/SC),1);};}
+    g.userData.setLift=t=>{L.rotation.z=t*.62;L.updateMatrix();const a=V(.6,-.04,0).multiplyScalar(SC),b=V(1.6,.08,0).multiplyScalar(SC).applyAxisAngle(V(0,0,1),t*.62).add(L.position);
+      const d=b.clone().sub(a);ram.position.copy(a).addScaledVector(d,.5);ram.quaternion.setFromUnitVectors(V(0,1,0),d.clone().normalize());ram.scale.set(1,Math.max(.2,d.length()/SC),1);};
+    g.userData.setTrain=t=>{TT.rotation.y=-t;};/* t: the box's bearing from the bow, as u.train */}
   // the transom: two water jets with steering buckets, dark corner bumpers, a step and the stern light
   {const jets=[];for(const z of[-.62,.62]){const j=new THREE.Group();j.position.set(-4.38,.12,z);j.add(mesh(cyl(.2,.24,.36,10),DK,0,0,0).rotateZ(PI/2));j.add(mesh(cyl(.17,.2,.2,10),BLK,-.24,0,0).rotateZ(PI/2));g.add(j);jets.push(j);}
     g.userData.jets=jets;for(const z of[-1.05,1.05])g.add(mesh(box(.26,.5,.32),DK,-4.4,.66,z));g.add(mesh(box(.12,.1,1.7),DK,-4.4,.5,0));g.add(mesh(box(.06,.08,.14),WH,-4.37,.82,0));}
@@ -343,9 +345,9 @@ function mkBjGear(){const B=VARG_GEO.bjG,np=B.slots*18,nw=7*18*3,ge=new THREE.Bu
 function mkUnitMesh(u){
   if(u.kind==='bjorn')u=Object.assign({},u,{kind:'tank',ty:'bjorn'});/* a model asked for by the build kind: the wrecks and the gallery */
   const g=new THREE.Group(),SK=unitSkin(),CS=svCall(u),v3=(x,y,z)=>new THREE.Vector3(x,y,z);/* CS: the call number, on the model (issue 114) */
-  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK,call:CS}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(L);m.remove(ram);const root=new THREE.Group();
-    slingLugs(m,[[2.5,1.04,1],[2.5,1.04,-1],[-4.4,.99,1],[-4.4,.99,-1]]);/* on the deck, ahead of the ridge's slope and abaft the launcher */root.add(sh(bake(m,true)));root.add(L);root.add(ram);
-    L.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,lift:0,slingPts:m.userData.slingPts,lugs:m.userData.lugs});return root;}
+  if(u.kind==='gadda'){const m=mkGadda(THREE,{color:u.color,skin:SK,call:CS}),U=m.userData,L=U.launcher,ram=U.ram;m.remove(U.trav);const root=new THREE.Group();
+    slingLugs(m,[[2.5,1.04,1],[2.5,1.04,-1],[-4.4,.99,1],[-4.4,.99,-1]]);/* on the deck, ahead of the ridge's slope and abaft the launcher */root.add(sh(bake(m,true)));root.add(U.trav);
+    U.trav.traverse(q=>{if(q.isMesh)q.castShadow=true;});Object.assign(root.userData,{launcher:L,caps:U.caps,setLift:U.setLift,setTrain:U.setTrain,lift:0,slingPts:m.userData.slingPts,lugs:m.userData.lugs});return root;}
   if(u.kind==='crew'){/* the downed crew (issue 124): three men in orange suits and helmets, close together, and a signal panel on the ground */
     const OR=mat(0xe8641e),LEG=mat(0x4e5a3c),SKN=mat(0xc9a27e),HEL=mat(0xd9d9cf);
     for(let i=0;i<3;i++){const f=new THREE.Group();f.add(mesh(box(.22,.8,.3),LEG,-.13,.4,0));f.add(mesh(box(.22,.8,.3),LEG,.13,.4,0));f.add(mesh(box(.5,.7,.32),OR,0,1.15,0));
@@ -366,7 +368,7 @@ function mkUnitMesh(u){
     g.add(mesh(cyl(.05,.05,.3,6),DK,.3,1.05,0));g.add(mesh(box(.26,.2,.32),mat(0x22282e),.32,1.25,0));g.add(mesh(new THREE.SphereGeometry(.09,8,6),mat(0x101418),.46,1.25,0));
     g.add(mesh(cyl(.02,.02,1.4,4),mat(0x2a2a2a),-.5,1.55,.32));g.add(mesh(new THREE.SphereGeometry(.04,6,4),mat(0xd03a2a),-.5,2.26,.32));
     g.add(mesh(box(.36,.22,.5),mat(0x3a3a30),-.35,1.0,-.05));for(const dz of[-.15,0,.15])g.add(mesh(box(.37,.06,.06),mat(0xe0b02e),-.35,1.06,-.05+dz));
-    return sh(bake(g,true));}
+    {const r=sh(bake(g,true));contactShadow(r,.02);return r;}/* the shadow was asked for further down, after this return (issue 171) */}
   if(u.ty==='bjorn'){
     // BJÖRN 01 (Magnus 4 nov, issue 154, after his picture "BJÖRN / 01"; second pass 5 nov: real tracks, a closed front, the turret raised clear of the
     // engine deck). VARG's language on a heavy tank: a faceted hull whose skirts hang over the upper tracks; the front in three convex pieces, two
@@ -657,7 +659,7 @@ function mkUnitMesh(u){
     hook.position.y=-5;hook.visible=false;sw.add(hook);g.userData.hook=hook;
     const cable=mesh(cyl(.06,.06,5,4),mat(0x222222),0,-2.5,0);cable.visible=false;sw.add(cable);g.userData.cable=cable;
   }
-  {const r=sh(bake(g,true));if(u.kind==='tank'||u.kind==='eng'||u.kind==='mus')contactShadow(r,hov(u)?.02-HOVER_Y:.02);
+  {const r=sh(bake(g,true));if(u.kind==='tank'||u.kind==='eng')contactShadow(r,hov(u)?.02-HOVER_Y:.02);
     /* ground vehicles at 0.8 (decided 16 okt): next to houses in natural scale VARG and BÄVER looked like houses on tracks */
     if(u.kind==='tank'||u.kind==='eng')r.scale.setScalar(.8);return r;}
 }
@@ -1163,7 +1165,7 @@ const SIZE_ACC={krok:1.1,drone:1,scout:.5};
 
 const KROK_COST=150,KROK_BUILD=20,KROK_MAX=4;
 
-const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,clr:25,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimA:.3,aimT:6,aimThr:.35};
+const GADDA={keel:.45,gK:.11,gV:3,gUp:10,crane:14.5,draft:.6,robot:40,minR:60,landSee:40,aaDown:.15,acc:1,spread:12.5,blast:8,navD:10,clr:25,brake:7,berth:70,load:3,threat:15,mob:40,clear:60,spotT:4,offNet:800,aimT:6,aimThr:.35,arc:1.9,trainV:.7,trainLift:.25};
 
 const CALLSIGN={tank:'V',bjorn:'J',drone:'H',scout:'X',gadda:'G',eng:'B',mus:'M',krok:'K',crew:'C'};
 
