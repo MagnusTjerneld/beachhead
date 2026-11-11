@@ -9,6 +9,16 @@ Designdokumentet "Uppdrag Arkipelag: designdokument" (https://claude.ai/artifact
 - Ändra bara det som beslutet berör. Säg i svaret vad som ändrades i dokumentet.
 - Är det oklart om något är ett beslut eller bara en idé: fråga, eller för in det som öppen fråga.
 
+## Riktningen: ett smygspel
+
+Spelet är ett smygspel, inte ett actionspel (Magnus 11 nov, issue 186). Bedöm förslag och ändringar mot tre principer:
+
+- Korta, dödliga strider är belöningen för ett förberett anfall. De förlängs inte; det som ska ta tid är spaningen och vägvalet.
+- Att bli upptäckt ska kosta, och det ska synas innan det slår till. Varning och läsbarhet väger tyngre än motanfallens styrka.
+- Fienden vet bara det den har sett, och det når ledningen med fördröjning.
+
+Issue 186 håller arbetsordningen (sju paket, vart och ett med egen issue: 187, 188, 189, 167, 190, 191, och 98 med 152) och avsnittet "Så tar du vid". Ta ett paket i taget, i en gren, bakom en flagga. Värdena i paketens issues är första gissningar: ställ frågorna under "Avgörs av Magnus" innan de låses, och slå inte på en flagga som standard förrän paketet är mätt och provspelat av honom. Botarna smyger inte, så deras siffror visar vad en ändring kostar, inte om den är rolig.
+
 ## Språk och stil
 
 - Svara på svenska.
