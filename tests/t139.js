@@ -44,7 +44,10 @@ run(900);
   const gaps=re=>{const by={};let g=1e9;for(const l of av().filter(x=>re.test(x.text))){const k=l.text.replace(/ rapporterar.*|\. Pjäserna.*/,'');if(by[k]!=null)g=Math.min(g,l.t-by[k]);by[k]=l.t;}return g;};
   const g1=gaps(/rapporterar/),g2=gaps(/larm från/);
   ok(g1>=B.CAP.qAlarm*.79,'a post reports at most once per CAP.qAlarm ('+(g1>1e8?'only once':g1.toFixed(1)+' s')+')');
-  ok(g2>=B.CAP.qAlarm*.79,'an alarm from a post at most once per CAP.qAlarm ('+(g2>1e8?'only once':g2.toFixed(1)+' s')+')');}
+  ok(g2>=B.CAP.qAlarm*.79,'an alarm from a post at most once per CAP.qAlarm ('+(g2>1e8?'only once':g2.toFixed(1)+' s')+')');
+  /* the decision repeats every qAlarm; the same line (same post, same square) is written at most once per CAP.qLine */
+  {const by={};let g=1e9;for(const l of av().filter(x=>/larm från/.test(x.text))){if(by[l.text]!=null)g=Math.min(g,l.t-by[l.text]);by[l.text]=l.t;}
+    ok(g>=B.CAP.qLine-.06&&G.eCap.stat.alarm>av().filter(x=>/larm från/.test(x.text)).length,'the same alarm line at most once per CAP.qLine ('+(g>1e8?'only once':g.toFixed(1)+' s')+', '+G.eCap.stat.alarm+' decisions, '+av().filter(x=>/larm från/.test(x.text)).length+' lines)');}}
 ok(leak.length===0,'no line names a point the player does not know ('+leak.join(' | ')+')');
 
 // with no unit left nothing new is known: back to calm, not before CAP.calm after the last decision

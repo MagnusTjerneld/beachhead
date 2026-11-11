@@ -4134,7 +4134,7 @@ function shareTip(e,u){const S=ENEMY_SHARE;if(!S.on||!G.eRep)return null;const z
    Decisions 4 (retreat to the next line) and 5 (regroup) are not built; the measurement did not call for them. The alert level and the intercepted
    radio traffic (issue 187) show the player what the captain knows and does (see capLevel and capRadio). */
 const CAP={on:false/* set to true just below (issue 187); setCap keeps shared sight in step */,tick:5,hist:1,lag:10,lagR2:30,keep:60,zoneR:250,hotR:300,alarmR:500,nearR:150,reinf:150,frac:.4,maxSent:2,leash:200,cLeash:160,cN:3,ratio:1.5,
-  qAlarm:10,qReinf:45,qCounter:90,qWait:30,calm:90/* issue 187: seconds after the last decision before the alert level falls back to calm */,jit:.2,share0:null,
+  qAlarm:10,qReinf:45,qCounter:90,qWait:30,calm:90/* issue 187: seconds after the last decision before the alert level falls back to calm */,qLine:45/* issue 187: seconds between two intercepted alarm lines from the same post that point at the same chart square; the decision repeats every qAlarm, and the bot got a line every 15 s */,jit:.2,share0:null,
   slow:10/* CAP.tick*2: the value was missing, so C.slowT became NaN; set because it was missing, only applies with ?ekapten (issue 171) */};
 function setCap(on){if(on&&!CAP.on)CAP.share0=ENEMY_SHARE.on;CAP.on=!!on;if(on)ENEMY_SHARE.on=true;else if(CAP.share0!=null){ENEMY_SHARE.on=CAP.share0;CAP.share0=null;}}
 /* issue 187: ?ekapten=0 and BH_EKAPTEN=0 turn the captain off explicitly (needed once on is the default); anything else in the address turns it on */
@@ -4177,8 +4177,9 @@ const capAt=i=>capPost(i)?'posten vid '+capPost(i):'en post';
 function capReport(C,s){if(!capStation())return;const e=G.enemies.find(x=>x.id===s.by);if(!e)return;const i=capZone(e),k='p'+i;if((C.q.get(k)||0)>G.time)return;
   C.q.set(k,G.time+CAP.qAlarm*capJit(C,2));const T=TYPES[s.kind]||{};
   say(null,'Avlyssnat: '+capAt(i)+' rapporterar '+(T.air?'flyg':T.sea?'fartyg':'fordon')+' i '+sq(s.x,s.y)+'.');}
-function capRadio(d){if(!capStation())return;const r=G.relays[d.z];
-  if(d.type==='alarm'&&d.at)say(null,'Avlyssnat: larm från '+capAt(d.z)+'. Pjäserna i närheten vrids mot '+sq(d.at.x,d.at.y)+'.');
+function capRadio(d){if(!capStation())return;const r=G.relays[d.z],C=G.eCap;
+  if(d.type==='alarm'&&d.at){const k='l'+d.z,q=sq(d.at.x,d.at.y),o=C.line||(C.line={});/* the same post and square again within CAP.qLine says nothing new */
+    if(o[k]&&o[k].q===q&&G.time<o[k].t)return;o[k]={q,t:G.time+CAP.qLine};say(null,'Avlyssnat: larm från '+capAt(d.z)+'. Pjäserna i närheten vrids mot '+q+'.');}
   else if(d.type==='reinf')say(null,'Avlyssnat: '+(d.n===1?'ett förband går':capNum(d.n)+' förband går')+' till '+(capPost(d.z)||'en post')+'.');
   else if(d.type==='wait'&&r)say(null,'Avlyssnat: fienden vid '+r.id+' avvaktar, för svag för motanfall.');}
 function capLog(C,d){d.t=G.time;C.decT=G.time;C.log.push(d);if(C.log.length>300)C.log.shift();C.stat[d.type]=(C.stat[d.type]||0)+1;capAlert(C);capRadio(d);return d;}
@@ -6446,9 +6447,12 @@ const TESTFALL=[
 {id:'snoeld',t:'Eld mot snö',seed:2024,when:{doy:30,tod:17.5},note:'En vinterkväll med snö: närmaste bunkern brinner, och en VARG står 80 m från den (issue 151). Slå gärna på Efterbehandling i Inställningar och titta på elden från VARG och ovanifrån: lyser snön runt elden upp för starkt?',
   set(){TF.reveal();const L=WORLD.landing,e=G.enemies.filter(x=>!x.dead&&x.kind==='turret').sort((a,b)=>Math.hypot(a.x-L.x,a.y-L.y)-Math.hypot(b.x-L.x,b.y-L.y))[0];TF.clear(e);killEnemy(e,null);startFire(e.x,e.y,600,1.2,1.5);
     const v=TF.near('tank',e,80,Math.atan2(L.y-e.y,L.x-e.x));G.sel=v.id;G.selIds=[v.id];G.cam=v.id;},check:()=>G.fires.length>0},
-{id:'smyg',t:'Larmnivå och avlyssnad trafik',seed:1264,when:TF_DAY,note:'Fiendens kapten är på och du håller punkt R1 (issue 187). En VARG står 110 m från närmaste bunker, i dess sikt. Titta på Fienden i översta raden: lugnt, och cirka tio sekunder efter att bunkern sett VARG går den till larm. Loggen ska då få raden "Avlyssnat: posten vid ... rapporterar fordon i ..." och senare kaptenens beslut. Utan en tagen punkt skrivs inga Avlyssnat-rader, men nivån visas ändå.',
-  set(){TF.reveal();if(hasDOM)setEKapten(true,true);else setCap(true);G.relays[0].captured=true;G.relays[0].capT=0;G.tver=(G.tver||0)+1;const L=WORLD.landing,e=G.enemies.filter(x=>!x.dead&&x.kind==='turret').sort((a,b)=>Math.hypot(a.x-L.x,a.y-L.y)-Math.hypot(b.x-L.x,b.y-L.y))[0];
-    const v=TF.near('tank',e,110,Math.atan2(L.y-e.y,L.x-e.x));G.sel=v.id;G.selIds=[v.id];},check:()=>CAP.on&&capStation()&&capLevel()==='calm'&&G.units.some(u=>u.kind==='tank')},
+{id:'smyg',t:'Larmnivå och avlyssnad trafik',seed:1264,when:TF_DAY,note:'Fiendens kapten är på och du håller punkt R1 (issue 187). En VARG står 110 m från en bunker, inom dess räckhåll; allt annat som når platsen är borta. Bunkern skjuter direkt. Titta på Fienden i översta raden: lugnt, och cirka tio sekunder efter att bunkern sett VARG går den till larm. Loggen ska då få raden "Avlyssnat: posten vid ... rapporterar fordon i ..." och sedan kaptenens beslut; motanfallet mot R1 kommer först efter någon minut. Utan en tagen punkt skrivs inga Avlyssnat-rader, men nivån visas ändå.',
+  set(){TF.reveal();if(hasDOM)setEKapten(true,true);else setCap(true);G.relays[0].captured=true;G.relays[0].capT=G.time+60;/* the captain's counterattack on R1 waits a minute, so that the level is seen to rise on the report and not on that decision */G.tver=(G.tver||0)+1;const L=WORLD.landing,e=G.enemies.filter(x=>!x.dead&&x.kind==='turret').sort((a,b)=>dist(a,L)-dist(b,L))[0],a0=Math.atan2(L.y-e.y,L.x-e.x),v=TF.near('tank',e,110,a0);
+    /* 110 m from the bunker, inside its range: a fixed gun looks no farther than it shoots (look in enemyTick), so there is no place where it sees and cannot fire. The first bearing, from the landing's and
+       outward to both sides, where the bunker sees the VARG; then every other enemy whose gun reaches the place is gone (as TF.clear), so that the report comes from one post and the fight is one against one */
+    for(let k=1;k<24&&!(passLand(cellIdx(v.x,v.y))&&sees(e,v));k++){const a=a0+(k%2?1:-1)*Math.ceil(k/2)*PI/12;v.x=e.x+Math.cos(a)*110;v.y=e.y+Math.sin(a)*110;v.heading=v.turret=v.camH=a+PI;}
+    for(const o of G.enemies)if(o!==e&&dist(o,v)<(o.range||0)+60)o.dead=true;G.sel=v.id;G.selIds=[v.id];},check:()=>CAP.on&&capStation()&&capLevel()==='calm'&&G.units.some(u=>u.kind==='tank')},
 /* the islands where the captain bot stands still for the whole game (issue 109): the game's own start, as the bot has it, with the coast's
    bunkers, for Magnus to play and record (Spela in testrunda), so that the bot can learn how he opens */
 {id:'kap3019',t:'Kaptenboten fastnar: Råholmen',seed:3019,doc:'fastning',coast:true,when:{uppdrag:'frita'},keep:['eng'],note:'Spelets start på ö 3019 (fästning, Frita ön): BÄVER, KROK och 500 material. Kaptenboten bygger GETING och två VARG och står sedan still hela banan: lätt pansar P1 i ruta E6 täcks av luftvärn L2, och VARG når ingen eldställning mot L2. Spela in (Spela in testrunda) och lös det som du skulle göra.',
