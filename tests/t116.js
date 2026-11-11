@@ -142,12 +142,32 @@ fresh(SD);G.enemies=[];
 
 // 7: the patrol and the enemy reaching it
 fresh(SD);
-{const q=G.misCrew,{v,c}=found();v.dead=true;c.orders=[];G.time=B.MISSION.crew?480:480;
+{const q=G.misCrew,{v,c}=found();v.dead=true;c.orders=[];G.time=B.crewPatT();
   const e=G.enemies.find(x=>x.mobile);
-  if(e){e.x=c.x+200;e.y=c.y;B.misTick(.05);ok(q.patrol&&q.pat.length>=1,'after 8 minutes the patrol is sent for the crew');}
+  if(e){e.x=c.x+200;e.y=c.y;B.misTick(.05);ok(q.patrol&&q.pat.length>=1,'when the clock is out the patrol is sent for the crew');}
   const w=B.makeEnemy({id:'XW',kind:'inf',x:c.x+10,y:c.y});G.enemies=[w];B.misTick(.05);ok(G.over&&G.failed&&/tagit besättningen/.test(lastLog()),'an enemy within 15 m of it on foot: failed');}
 fresh(SD);G.enemies=[];
 {const{v,c}=found();B.crewBoard(c,v);const w=B.makeEnemy({id:'XW',kind:'inf',x:c.x+10,y:c.y});G.enemies=[w];B.misTick(.05);ok(!G.over,'aboard a vehicle the enemy beside it does not take it');}
+
+// the patrol's clock and its lead (issue 192): a second per metre from the landing to the centre of the ring, at the least 480 s; the patrol
+// is the troops with at least two minutes of march, and one standing close is left where it stands
+fresh(SD);
+{const q=G.misCrew,C=B.MIS_CFG,L=B.WORLD.landing,d=Math.hypot(q.rx-L.x,q.ry-L.y);
+  ok(Math.abs(B.crewPatT()-Math.max(C.crewPatrol,d*C.crewPerM))<1e-6&&B.crewPatT()>=480,'the clock follows the distance from the landing to the ring: '+Math.round(d)+' m, '+Math.round(B.crewPatT())+' s');
+  const mob=G.enemies.filter(e=>e.mobile&&!e.dead);G.enemies=mob;
+  const len=e=>{const p=B.astar(e.x,e.y,q.x,q.y,B.passLand,()=>1);if(!p||!p.length)return -1;let s=0,x=e.x,y=e.y;for(const o of p){s+=Math.hypot(o.x-x,o.y-y);x=o.x;y=o.y;}return s/(e.speed||4);};
+  const far=mob.filter(e=>!e.march&&len(e)>=C.crewLead),near=B.makeEnemy({id:'XN',kind:'at',x:q.x+60,y:q.y});G.enemies.push(near);
+  G.time=B.crewPatT()-1;B.misTick(.05);ok(!q.patrol,'a second before the clock is out no patrol is sent');
+  G.time=B.crewPatT();B.misTick(.05);
+  ok(far.length>0,'the island has troops with two minutes of march to the crew ('+far.length+' of '+mob.length+')');
+  ok(q.patrol&&q.pat.length===Math.min(3,far.length)&&!q.pat.includes(near)&&!near.march,'the patrol is drawn from them, and the one 60 m away stays');
+  ok(/tidigast om \d+ min\./.test(lastLog()),'the line says when it is there at the earliest: '+lastLog());
+  ok(q.eta-G.time>=C.crewLead-1,'and that is at least two minutes away ('+Math.round(q.eta-G.time)+' s)');}
+// with nobody that far off, the one with the longest way goes, and the line says within a minute
+fresh(SD);
+{const q=G.misCrew,a=B.makeEnemy({id:'XA',kind:'at',x:q.x+60,y:q.y}),b=B.makeEnemy({id:'XB',kind:'at',x:q.x+110,y:q.y});G.enemies=[a,b];
+  G.time=B.crewPatT();B.misTick(.05);ok(q.patrol&&q.pat.length===1&&q.pat[0]===b,'with nobody two minutes off, the one with the longest way goes alone');
+  ok(/inom en minut\./.test(lastLog()),'and the line says within a minute: '+lastLog());}
 
 // 8: lost
 fresh(SD);G.enemies=[];
