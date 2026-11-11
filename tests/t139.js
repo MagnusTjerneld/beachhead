@@ -71,4 +71,9 @@ fresh(true,true);run(600);
   ok(B.capLevel()==='silent','the command centre taken: the level is silent');
   ok(lines.filter(l=>l.text===SILENT).length===1,'"'+SILENT+'" is written once');
   ok(av().length===nAfter,'no new traffic after it ('+nAfter+' at the first seconds, '+av().length+' at the end)');}
+// a save with the captain on keeps its picture as Maps, and the loaded game goes on (the serializer saved Maps as empty objects)
+fresh(true,true);run(600);
+{const n=G.eRep.size,m=G.eCap.seen.size,lv=B.capLevel(),sv=JSON.parse(JSON.stringify(B.saveState()));B.newGame(1490);B.applySave(sv);G=B.G;
+  ok(G.eRep instanceof Map&&G.eRep.size===n&&G.eCap.seen instanceof Map&&G.eCap.seen.size===m&&G.eCap.q instanceof Map,'a loaded save has the picture as Maps ('+n+' reports, '+m+' seen)');
+  let err=null;try{for(let i=0;i<600;i++)B.step(.05);}catch(x){err=x;}ok(!err&&B.capLevel()===lv,'the loaded game goes on with the same alert level ('+(err?err.message:lv)+')');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
