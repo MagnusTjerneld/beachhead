@@ -74,6 +74,27 @@ const boat=(x,y)=>{const u=B.makeUnit('gadda',x,y);G().units.push(u);return u;};
     until(()=>{const dx=u.x-C.x,dy=u.y-C.y,L={lat:-dx*f.y+dy*f.x,fwd:dx*f.x+dy*f.y};if(Math.abs(L.lat)<20&&Math.abs(L.fwd)<56)bad++;return !u.orders.length;},150);
     const dx=u.x-C.x,dy=u.y-C.y,lt=-dx*f.y+dy*f.x,fw=dx*f.x+dy*f.y;if(!u.orders.length&&Math.abs(lt)>20&&Math.abs(lt)<40&&Math.abs(fw)<35)ok2++;G().units=G().units.filter(v=>v!==u);}
   ok(ok2>=3&&!bad,'home from four sides it lies along Birkas side ('+ok2+' of 4), never in her hull or on her ramps ('+bad+' steps)');}
+// issue 193 (Magnus 11 nov, provspel ö 3410: two boats lay in each other at Birka and at the point of a group order): boats sent home take a
+// berth each along her side, and boats in a group order to a point lie abreast about it, each with open water to the point
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const C=B.CARRIER,f={x:Math.cos(C.a),y:Math.sin(C.a)},at=(lat,fwd)=>[C.x-f.y*lat+f.x*fwd,C.y+f.x*lat+f.y*fwd];
+  const home=u=>{u.ammo=0;B.giveOrder(u,{type:'rtb',post:'off'});u.rtb=true;},us=[[-250,-200],[-220,-200],[-250,-160]].map(q=>boat(...at(q[0],q[1])));us.forEach(home);
+  until(()=>us.every(u=>!u.orders.length),120);let near=1e9;for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)near=Math.min(near,Math.hypot(us[i].x-us[j].x,us[i].y-us[j].y));
+  const L=us.map(u=>B.shipLocal(u.x,u.y));
+  ok(us.every(u=>!u.orders.length&&B.atBirkaSide(u))&&near>=B.GADDA.slot-8&&L.every(q=>Math.abs(q.lat)>20&&Math.abs(q.lat)<50),'three boats sent home together lie in a berth each along Birkas side, the nearest two '+Math.round(near)+' m apart');
+  const v=boat(...at(-250,-200));home(v);until(()=>!v.orders.length,120);const nv=Math.min(...us.map(u=>Math.hypot(u.x-v.x,u.y-v.y)));
+  ok(!v.orders.length&&B.atBirkaSide(v)&&nv>=B.GADDA.slot-8,'a fourth coming later takes a free berth, '+Math.round(nv)+' m from the nearest boat');}
+{B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const nf=B.navField(B.W);let bi=-1;for(let i=0;i<nf.length;i++)if(B.seaPass(i)&&nf[i]<400&&(bi<0||nf[i]>nf[bi]))bi=i;
+  const ox=(bi%220)*10+5,oy=Math.floor(bi/220)*10+5,C=B.CARRIER,dc=Math.hypot(C.x-ox,C.y-oy),us=[0,1,2].map(i=>boat(ox+(C.x-ox)/dc*i*25,oy+(C.y-oy)/dc*i*25)),tp={x:ox+(C.x-ox)/dc*230,y:oy+(C.y-oy)/dc*230},d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),F=B.GADDA.form;
+  B.groupOrder({world:tp,us});const P=us.map(u=>u.orders[0]);
+  ok(P.every(o=>o&&o.type==='move'&&wet(o.x,o.y))&&Math.abs(d(P[0],P[1])-F)<1&&Math.abs(d(P[1],P[2])-F)<1&&Math.abs(d(P[0],P[2])-2*F)<1&&d(P[1],tp)<1,'a group order to a point gives three boats places abreast about it, '+F+' m apart');
+  until(()=>us.every(u=>!u.orders.length),120);let near=1e9;for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)near=Math.min(near,d(us[i],us[j]));
+  ok(us.every(u=>!u.orders.length)&&near>F-10,'and they come to lie there, the nearest two '+Math.round(near)+' m apart');
+  B.groupOrder({world:{x:ox,y:oy},us:[us[0]]});ok(d(us[0].orders[0],{x:ox,y:oy})<1,'a boat alone gets the point itself');
+  /* by the shore: no place on land, none with land between it and the point, and no two boats on the same place */
+  const open=(a,b)=>{const n=Math.ceil(d(a,b)/2)||1;for(let i=0;i<=n;i++)if(!wet(a.x+(b.x-a.x)*i/n,a.y+(b.y-a.y)*i/n))return false;return true;};let tried=0,bad=0,same=0,apart=0;
+  for(let i=0;i<nf.length&&tried<60;i+=7){if(!B.seaPass(i)||nf[i]>18)continue;tried++;const q={x:(i%220)*10+5,y:Math.floor(i/220)*10+5};B.groupOrder({world:q,us});const O=us.map(u=>u.orders[0]);
+    if(O.some(o=>!o||o.type!=='move'||!open(q,o)))bad++;let s=0;for(let a=0;a<3;a++)for(let b=a+1;b<3;b++)if(d(O[a],O[b])<F/2)s++;if(s)same++;else apart++;}
+  ok(tried>=20&&!bad&&apart>=tried*.6,'by the shore ('+tried+' points within 18 m of land) every place has open water to the point, and on '+apart+' of them the three boats have a place each ('+same+' with two on the point itself)');}
 // 12. omprov 26 okt: a full turn at full speed keeps its way (36 knots, not 27) on a tighter turn than before
 {B.newGame(9052,'fastning');G().running=true;G().netAll=true;for(const e of G().enemies)e.dead=true;const nf=B.navField(B.W);let bi=0;for(let i=0;i<nf.length;i++)if(B.seaPass(i)&&nf[i]>nf[bi]&&nf[i]<400)bi=i;
   const u=boat((bi%220)*10+5,Math.floor(bi/220)*10+5);u.heading=0;u.v=0;G().ctrl=u.id;B.CTRL.thr=1;B.CTRL.steer=0;until(()=>false,15);B.CTRL.steer=1;const pts=[];for(let i=0;i<200;i++){B.step(.05);if(i>100)pts.push([u.x,u.y]);}
