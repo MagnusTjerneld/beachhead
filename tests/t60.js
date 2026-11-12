@@ -70,6 +70,29 @@ const kill=G=>{for(const e of G.enemies)e.dead=true;};
 // 9. robots hurt armor at half effect, the MG does not bother
 {B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone'),t=G.enemies.find(x=>x.kind==='turret');
  ok(B.canHit(h,t,true),'HÖK with robots can engage a bunker when told to');ok(!B.canHit(h,t),'but never picks armor on its own');h.ammo=0;ok(!B.canHit(h,t),'without robots it cannot');ok(Math.abs(B.dmgMult(h,t,'rocket')-.5)<1e-9,'robot vs armor at half effect');}
+// 9b. issue 197 (Magnus 12 nov, island 3410): a HÖK without robots told to attack armour says why and keeps what it was doing; the
+// click used to become an order to observe, without a word
+{B.newGame(7341);const G=B.G;G.running=true;const hs=G.units.filter(u=>u.kind==='drone'),h=hs[0],t=G.enemies.find(x=>x.kind==='turret');t.seen=true;t.lx=t.x;t.ly=t.y;
+ const h2=B.makeUnit('drone',h.x+15,h.y);G.units.push(h2);
+ const mv=u=>{u.orders=[{type:'move',x:u.x+50,y:u.y,post:'def'}];return u.orders[0];};
+ h.ammo=0;let o0=mv(h);B.setSel([h.id]);B.groupOrder({enemy:t},false);
+ ok(h.orders.length===1&&h.orders[0]===o0,'a HÖK without robots keeps its order when told to attack a bunker ('+(h.orders[0]&&h.orders[0].type)+')');
+ ok(G.log[0].uid===h.id&&/kulsprutan biter inte på bunker/.test(G.log[0].text)&&/Anfaller inte/.test(G.log[0].text)&&G.log[0].acts,'and says why, with the button to service: '+G.log[0].text);
+ h.rtb=true;G.time+=10;B.groupOrder({enemy:t},false);ok(/Laddar om först/.test(G.log[0].text)&&h.orders[0]===o0,'on its way to reload it says so and keeps going: '+G.log[0].text);h.rtb=false;
+ // two together, one of them dry: the one with robots attacks, the dry one is left out
+ o0=mv(h);mv(h2);G.time+=10;B.setSel([h.id,h2.id]);B.groupOrder({enemy:t},false);
+ ok(h.orders[0]===o0&&h2.orders[0]&&h2.orders[0].type==='attack'&&h2.orders[0].enemy===t,'of two HÖK the one with robots attacks and the dry one is left out');
+ // both dry: nobody gets an order
+ h2.ammo=0;const o2=mv(h2);G.time+=10;B.groupOrder({enemy:t},false);ok(h.orders[0]===o0&&h2.orders[0]===o2,'two dry HÖK both keep their orders');
+ // against troops the gun bites, and with robots the order goes through
+ const inf=B.makeEnemy({id:'QI',kind:'inf',x:t.x+30,y:t.y});inf.seen=true;inf.lx=inf.x;inf.ly=inf.y;G.enemies.push(inf);
+ B.setSel([h.id]);B.groupOrder({enemy:inf},false);ok(h.orders[0]&&h.orders[0].type==='attack'&&h.orders[0].enemy===inf,'against infantry the dry HÖK attacks with the gun');
+ h.ammo=4;B.groupOrder({enemy:t},false);ok(h.orders[0]&&h.orders[0].type==='attack'&&h.orders[0].enemy===t,'with robots the order on the bunker goes through');
+ ok(B.dryFor(h2,t)&&!B.dryFor(h,t)&&!B.dryFor(h2,inf),'dryFor: no robots and armour');
+ // called in as air support it says no as well, and in a wing with ground units it says that it guards the wing
+ const o3=mv(h2);G.time+=10;const r=B.callIn('air',{enemy:t},false,h2);ok(r===false&&h2.orders[0]===o3&&/Anfaller inte/.test(G.log[0].text),'a dry HÖK called in against the bunker says no: '+G.log[0].text);
+ const v=B.makeUnit('tank',h.x+30,h.y+30);G.units.push(v);G.time+=10;B.setSel([h2.id,v.id]);B.groupOrder({enemy:t},false);
+ const l=G.log.find(x=>x.uid===h2.id&&/Anfaller inte; skyddar wingen/.test(x.text));ok(l&&h2.mission&&h2.mission.type==='follow'&&v.orders[0]&&v.orders[0].type==='attack','with a VARG the dry HÖK says it guards the wing, and the VARG attacks: '+(l&&l.text));}
 // 10. HÖK's robot: hit chance from the type (0.9), and each air defence reaching the target shoots it down 5 % of the time (issue 95)
 {B.newGame(7341);const G=B.G;G.running=true;const h=G.units.find(u=>u.kind==='drone'),aa=G.enemies.find(e=>e.kind==='aa');
  ok(h.acc===.9&&B.HOK_AA===.05,'HÖK acc 0.9, air defence takes down 5 %');
