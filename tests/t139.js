@@ -1,6 +1,7 @@
 // The enemy's alert level and the intercepted radio traffic (issue 187, Magnus 11 nov): two levels, calm and alarm, derived from the captain's
 // own picture; the lines "Avlyssnat: ..." come only while the player holds a station (a taken point, or a radio mast coupled in), name only points the player knows, and stop
 // when the command centre is taken ("Fiendens ledning har tystnat." once); with the captain off nothing is shown and nothing changes.
+// The level is not shown to the player (Magnus 12 nov); it is the captain's state, and a recording keeps it and every decision (issue 194).
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 let G,lines,seenLog,unk=[];const leak=[];
@@ -83,4 +84,18 @@ fresh(true,true);run(600);
 {const n=G.eRep.size,m=G.eCap.seen.size,lv=B.capLevel(),sv=JSON.parse(JSON.stringify(B.saveState()));B.newGame(1490);B.applySave(sv);G=B.G;
   ok(G.eRep instanceof Map&&G.eRep.size===n&&G.eCap.seen instanceof Map&&G.eCap.seen.size===m&&G.eCap.q instanceof Map,'a loaded save has the picture as Maps ('+n+' reports, '+m+' seen)');
   let err=null;try{for(let i=0;i<600;i++)B.step(.05);}catch(x){err=x;}ok(!err&&B.capLevel()===lv,'the loaded game goes on with the same alert level ('+(err?err.message:lv)+')');}
+// a recording keeps the captain's picture and decisions (issue 194): seen before the first decision, each decision with the units it was built on,
+// the level's changes, and nothing at all while no recording runs
+fresh(true,true);ok(B.REC.on===false,'no recording runs in the tests');run(600);ok(!B.REC.ev.some(e=>e.type==='kapten')&&G.eCap.log.length>0,'without a recording no event is written ('+G.eCap.log.length+' decisions)');
+fresh(true,true);B.REC.ev=[];B.REC.cap=null;B.REC.on=true;run(1200);B.REC.on=false;
+{const ev=B.REC.ev.filter(e=>e.type==='kapten'),by=d=>ev.filter(e=>e.d===d),dec=ev.filter(e=>['alarm','counter','reinf','wait'].includes(e.d)),C=G.eCap;
+  ok(by('seen').length>0&&by('seen').every(e=>e.u&&e.by&&e.age>=B.CAP.lag-1.1),'a unit entering the picture is written with the post that saw it and the age of the sighting ('+by('seen').length+')');
+  {const al=by('level').find(e=>e.lvl==='alarm');ok(by('level')[0].lvl==='calm'&&al&&al.t>=by('seen')[0].t,'the level is written from the start (calm), and alarm not before the first sighting');}
+  ok(dec.length===C.log.length&&dec.length>0,'every decision is written ('+dec.length+' of '+C.log.length+')');
+  ok(dec.every(e=>e.p===G.relays[e.z].id&&Array.isArray(e.refs)&&e.refs.length>0&&e.refs.every(r=>r.u&&r.x!=null&&r.age!=null)),'each with its point and the units it was built on, with where they were seen');
+  ok(JSON.parse(JSON.stringify(ev)).length===ev.length,'the events are plain data');
+  G.units.length=0;B.REC.on=true;run(2400);B.REC.on=false;const ev2=B.REC.ev.filter(e=>e.type==='kapten');
+  ok(ev2.filter(e=>e.d==='lost').length===by('seen').length,'each unit that entered the picture is written as lost when it falls out ('+ev2.filter(e=>e.d==='lost').length+')');
+  ok(ev2[ev2.length-1].d==='level'&&ev2[ev2.length-1].lvl==='calm','and the last event is the level back at calm');
+  const c=G.relays.find(r=>r.type==='central');c.captured=true;B.REC.on=true;run(40);B.REC.on=false;ok(B.REC.ev.filter(e=>e.d==='silent').length===1,'the command centre taken is written once');B.REC.ev=[];}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
