@@ -8614,7 +8614,9 @@ function mkStructMesh(st){
   else if(st.kind==='fuel'){for(const x of[-4,4]){g.add(mesh(cyl(3.3,3.3,4.6,14),mat(0xcfc6b2),x,2.3,0));g.add(mesh(cyl(3.35,3.35,.6,14),mat(0xc27a2c),x,3.4,0));}const pp=mesh(cyl(.25,.25,8,6),mat(0x555555),0,.6,2.6);pp.rotation.z=PI/2;g.add(pp);}
   else if(st.kind==='cistern'&&st.big===false)g.add(mkCisternS(false));
   else if(st.kind==='cistern'){if(typeof mkCistern==='function')g.add(mkCistern(false));else{g.add(mesh(cyl(11,11,14,20),mat(0xc9ccca),0,7,0));g.add(mesh(cyl(11.1,11.1,1.6,20),mat(0xb03a2c),0,9,0));g.add(mesh(cyl(.5,11,1.6,20),mat(0xaeb2b0),0,14.8,0));}}
-  else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}const d=mesh(new THREE.SphereGeometry(1.2,10,6,0,TAU,0,PI/2),mat(0xe0e2e0),0,19,.9);d.rotation.x=PI/2;g.add(d);g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
+  else{g.add(mesh(box(3,.6,3),mat(0x6b6f72),0,.3,0));g.add(mesh(cyl(.25,.7,22,4),mat(0xa8adb0),0,11,0));for(const y of[6,12,18]){const c=mesh(box(2.4-y*.06,.15,.15),mat(0xa8adb0),0,y,0);g.add(c);}/* the dish sits on the pole (issue 205, Magnus 14 nov, island 6795, checkpoint 8: "det hänger något i luften"; it was a hemisphere 0.6 m off the pole with nothing between, its round side out): a shallow dish with the open side out, on an arm from a clamp round the pole, and a feed on a strut in front of it */
+    const d=mesh(new THREE.SphereGeometry(1.7,12,3,0,TAU,0,.7),MAT_D(0xe0e2e0),0,19,2.3);d.rotation.x=-PI/2;g.add(d);g.add(mesh(cyl(.4,.4,.34,8),mat(0x6b6f72),0,19,0));g.add(mesh(box(.16,.16,.5),mat(0x6b6f72),0,19,.38));
+    const fs=mesh(cyl(.03,.03,.9,5),mat(0x6b6f72),0,19,1.05);fs.rotation.x=PI/2;g.add(fs);g.add(mesh(box(.18,.18,.22),mat(0x8f9498),0,19,1.5));g.add(mesh(new THREE.SphereGeometry(.3,6,4),mat(0xd8d8d0),0,22.2,0));}
   g.rotation.y=-st.a;g.position.set(st.x,groundY(st.x,st.y),st.y);return sh(bake(g,true,{strict:true}));
 }
 /* vehicles blown apart (decided 16 okt, Magnus: a destroyed vehicle vanished in a fireball and a dark box took its place): the hull
