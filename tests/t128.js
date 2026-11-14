@@ -29,7 +29,7 @@ const last=G=>(G.log||[])[0]||{text:''};
   const t=B.wreckWhy(k,w);ok(/räckhåll för luftvärn/.test(t),'a pile 217 m from an air defence is said to lie within its reach ('+t+')');}
 /* ---- KROK waiting with a vehicle that is put on Offensiv ---- */
 {const G=fresh(7341),k=G.kroks[0],u=G.units.find(v=>v.kind==='eng');u.post='def';k.cargo=u;u.carried=k.id;
-  const ld=G.structs.find(q=>q.kind==='mast');k.waitDrop={x:ld.x+15,y:ld.y,cap:true,cg:u};k.orders=[];for(let i=0;i<10;i++)B.step(.05);ok(!k.orders.length,'on Defensiv the vehicle waits on the hook');
+  const ld=G.structs.find(q=>q.kind==='mast');k.waitDrop={x:ld.x+15,y:ld.y,cap:false,cg:u};/* the wait of automation; the captain's own set-down waits with a question (issue 201, t140) */k.orders=[];for(let i=0;i<10;i++)B.step(.05);ok(!k.orders.length,'on Defensiv the vehicle waits on the hook');
   u.post='off';B.step(.05);B.step(.05);ok(k.orders[0]&&k.orders[0].type==='drop'&&!k.waitDrop,'put on Offensiv, KROK takes it down to the point ('+(k.orders[0]&&k.orders[0].type)+')');
   ok(/står nu på Offensiv/.test((G.log||[]).map(m=>m.text).join('|')),'and says so');}
 /* ---- GADDA pressed to Birka's side, its way on across her ---- */
