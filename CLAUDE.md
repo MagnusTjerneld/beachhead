@@ -79,6 +79,7 @@ En rad per fälla som har bitit oss (issue 77). Fyll på när en bugg visar sig 
 - Hjälptexten, README och kodens kommentarer driver isär från koden om de inte ändras i samma commit (issue 95).
 - `tests/t70.js` har CRLF-radslut: ersättningar med exakt text måste ta hänsyn till `\r`.
 - Swiftshader tappar WebGL-kontexten lokalt på Windows: kör renderande verktyg på grafikkortet där.
+- En varying i en skuggare kan bli negativ längs en ytas kontur (kantutjämningen läser den strax utanför triangeln), och `pow` av ett negativt tal är inget tal. Skärmens 8 bitar klämmer bort det, men efterbehandlingens flyttalsbuffert behåller det som svarta punkter (fyrens ljuskägla 15 nov): håll värdet över noll med `max`, och granska ljuseffekter med efterbehandlingen på.
 - En artefakt som redan finns kan inte skrivas över utan att den publicerade versionen läses först; `force` bara när Magnus sagt det.
 - Artefaktverktyget minns filvägen: en publicering av `D:\Dev\beachhead\index.html` utan `url` uppdaterar huvudartefakten, också från en gren (10 nov, grenen 10nov hamnade där). Publicera en gren från en kopia i scratchpad med egen `<title>` och `root`, och main med `url` till huvudartefakten.
 - `git worktree remove --force` på agenternas arbetsmappar tömde `tests/node_modules` (10 nov; mappen var länkad in i en arbetsmapp), så testerna som kräver `three` föll: installera igen med `npm install --no-save --no-package-lock three@0.128.0` i `tests`.
