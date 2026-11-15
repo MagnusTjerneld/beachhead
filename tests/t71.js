@@ -3,7 +3,8 @@
 // a wrench and one waiting for a pad an hourglass; a new BÄVER drives out of the build bay to its own box and waits there
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
-const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;for(let i=0;i<40;i++)B.step(.05);return G;};
+// no minefields: the wing's way on ö 7341 crosses one, and since a mine costs a VARG 110 of 150 (15 nov) the leader would turn home
+const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(const e of G.enemies)e.dead=true;G.mines=[];for(let i=0;i<40;i++)B.step(.05);return G;};
 const land=(G,r)=>{const L=G.relays[r];return{x:L.x,y:L.y};};
 // 1. the wing's order: a move, an attack, and the leader when the wing stands idle
 {const G=setup(7341),p=land(G,0),a=B.makeUnit('tank',p.x,p.y),b=B.makeUnit('tank',p.x+12,p.y);G.units.push(a,b);B.setSel([a.id,b.id]);B.assignWing('1');
