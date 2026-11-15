@@ -71,7 +71,7 @@ fresh(SD);G.enemies=[];
   const self=B.selfItems(v).find(i=>/Sätt av besättningen/.test(i.l));ok(!!self,'the vehicle\'s own menu has Sätt av besättningen');self.f();
   ok(!c.carried&&!v.crew&&B.passLand(B.cellIdx(c.x,c.y)),'it is set down on land beside the vehicle');
   // BÄVER
-  B.giveOrder(c,{type:'board',unit:b,post:'def'},false);run(400,()=>!!c.carried);ok(c.carried===b.id,'BÄVER takes it too');}
+  B.giveOrder(c,{type:'board',unit:b,post:'def'},false);run(800,()=>!!c.carried)/* 40 s: on 3402 since 15 nov (the radar station off the shore) it walks round to BÄVER in 24 */;ok(c.carried===b.id,'BÄVER takes it too');}
 
 // fetch: the vehicle drives to it
 fresh(SD);G.enemies=[];

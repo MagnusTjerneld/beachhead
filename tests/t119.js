@@ -10,7 +10,7 @@ const sigOf=seed=>{B.newGame(seed,'djup',{});const G=B.G;
   return crypto.createHash('md5').update(s).digest('hex');};
 const SC=B.SCEN.stroemmen;
 // without the flag the world is as it was (hashes taken from the game before the scenario, same doctrine)
-ok(sigOf(1264)==='c81ed41ce444b3ffbd4722b9650a6cca'&&sigOf(2547)==='779a3b392713a53536d7bb8bc76eaa44'&&sigOf(4741)==='c54ea01e960c90619455ebdfa3f786b9','without the flag the island, points, enemies and buildings are as before');
+ok(sigOf(1264)==='c81ed41ce444b3ffbd4722b9650a6cca'&&sigOf(2547)==='d41fbcfd0f090c4b5cd80850b29845a1'/* new 15 nov: the radar station moved off the shore, so its stays stand on land */&&sigOf(4741)==='c54ea01e960c90619455ebdfa3f786b9','without the flag the island, points, enemies and buildings are as before');
 ok(B.G.scen===null&&B.G.mission==='frita'&&B.G.power===undefined,'no scenario state without the flag');
 ok(B.ENEMY_CFG.budget===130,'the enemy budget is back to 130');
 // the scenario's island

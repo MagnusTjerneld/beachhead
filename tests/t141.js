@@ -1,6 +1,7 @@
 // Magnus 15 nov. A HÖK shot down in the air blows up where she is hit, and the wreck falls on from there with most of the speed she
 // had: it lies at the point of impact from the start, with the fall as data on it (w.fall, drawn by wreckFall), and the blast and the
 // fire where it strikes come when it is down; at sea there is neither. A HÖK that is not flying leaves her wreck where she stood.
+// Also 15 nov: the radar station is moved off the shore where its mast's stays would stand in the water (block 5).
 // And a mine costs twice what it did: a VARG 110 of 150, a BÄVER its life.
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
@@ -41,4 +42,9 @@ const kill=(G,h)=>{const n=G.wrecks.length,f0=G.fires.length,x=h.x,y=h.y,t=G.tim
   const b=B.makeUnit('eng',L.x+200,L.y);G.units.push(b);const m2=mine();m2.x=b.x;m2.y=b.y;b.x+=3;
   /* a BÄVER finds a field within 20 m at the scan four times a second; this one is laid under it between two scans */
   G.mineT=.2;run(.05);ok(m2.found&&b.dead&&b.maxhp<90,'and a BÄVER its life (90 against a hull of '+b.maxhp+')');}
+// 5. the radar station stands where the stays of its mast reach land (Magnus 15 nov, ö 4787: it stood 28 m from the shore and two anchors
+//    stood in the sea): on 4787 it is moved inland, with dry ground round where the mast stands; on 1490, where they already reached land, not
+{B.newGame(4787);const W=B.WORLD,r=B.G.relays.find(q=>q.type==='radar');let dry=true;for(let k=0;k<8;k++)if(B.heightAt(r.x+Math.cos(k*Math.PI/4)*28,r.y+Math.sin(k*Math.PI/4)*28)<.5)dry=false;
+  ok(W.r2dry&&dry,'on ö 4787 the radar station is moved off the shore ('+Math.round(r.x)+','+Math.round(r.y)+'), with dry ground 28 m round it');
+  B.newGame(1490);ok(!B.WORLD.r2dry,'on ö 1490 it stays where it was');}
 console.log(fail?fail+' failed':'all passed');process.exit(fail?1:0);

@@ -78,6 +78,8 @@ En rad per fälla som har bitit oss (issue 77). Fyll på när en bugg visar sig 
 - Hemliga installationer måste döljas också i introt och överflygningen (structHid), inte bara på sjökortet.
 - Hjälptexten, README och kodens kommentarer driver isär från koden om de inte ändras i samma commit (issue 95).
 - `tests/t70.js` har CRLF-radslut: ersättningar med exakt text måste ta hänsyn till `\r`.
+- Ö-generatorns rutnät (`grid`) räknar en cell på 10 m som land fast marken vid stranden kan ligga under vattenytan: en kontroll av om något står i vattnet ska läsa höjden (`elevAt`, `heightAt`), inte rutnätet (radarmastens stag 15 nov).
+- Ett test som körs för hand läser den `tests/g2.js` som byggdes senast: bygg om med `python3 tests/mk.py` efter ändringar och efter en `git stash` (15 nov gick två tester igenom på den gamla koden).
 - Swiftshader tappar WebGL-kontexten lokalt på Windows: kör renderande verktyg på grafikkortet där.
 - En varying i en skuggare kan bli negativ längs en ytas kontur (kantutjämningen läser den strax utanför triangeln), och `pow` av ett negativt tal är inget tal. Skärmens 8 bitar klämmer bort det, men efterbehandlingens flyttalsbuffert behåller det som svarta punkter (fyrens ljuskägla 15 nov): håll värdet över noll med `max`, och granska ljuseffekter med efterbehandlingen på.
 - En artefakt som redan finns kan inte skrivas över utan att den publicerade versionen läses först; `force` bara när Magnus sagt det.
