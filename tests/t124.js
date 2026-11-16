@@ -2,7 +2,7 @@
 // decision refers only to units in that picture, a taken command centre silences it, the same seed gives the same decisions, and off (an
 // explicit choice since issue 187, when on became the default) changes nothing. Decisions 1 (alarm), 2 (reinforce) and 3 (counterattack with the strength condition).
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.CAP2.on=false;/* issue 188: these tests are about the captain as it was; t142 tests the new rules */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.CAP2.on=false;B.RETAKE.on=false;B.RESERVE.on=false;/* issues 188, 167, 194: these tests are about the captain as it was; t142 and t148 test the new rules */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 let G;const seedRand=s=>{let x=s>>>0;Math.random=()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};};
 function fresh(cap,n){seedRand(7);B.newGame(1264);G=B.G;G.running=true;G.netAll=true;G.mines=[];G.units=[];G.known.fill(1);G.knownV++;B.LOS.on=false;G.krokAuto=false;
   B.setCap(!!cap);if(!cap)B.ENEMY_SHARE.on=false;const r=G.relays[0];
@@ -27,7 +27,7 @@ const C=G.eCap,L1=C&&C.log.slice();ok(!!C&&L1.length>0,'on: the captain decides 
 ok(B.ENEMY_SHARE.on===true,'on: shared sight is on with it');
 ok(L1.every(d=>d.refs.every(id=>known.has(id)&&id!=='DECOY')),'every decision refers only to units the enemy has reported, never the unseen one');
 ok(L1.some(d=>d.type==='alarm')&&G.enemies.some(e=>!e.mobile&&e.alert&&e.alert.t>0),'the alarm sets e.alert on fixed guns in other zones');
-{const t=L1.filter(d=>d.type==='alarm').map(d=>d.t);let gap=1e9;for(let i=1;i<t.length;i++)gap=Math.min(gap,t[i]-t[i-1]);ok(t.length<2||gap>=CAP_Q()*.79,'the alarm keeps its silence ('+gap.toFixed(1)+' s between)');}
+{let gap=1e9,n=0;for(const z of new Set(L1.map(d=>d.z))){const t=L1.filter(d=>d.type==='alarm'&&d.z===z).map(d=>d.t);n=Math.max(n,t.length);for(let i=1;i<t.length;i++)gap=Math.min(gap,t[i]-t[i-1]);}/* the silence is per zone (quiet('a'+z)); with patrols (issue 189) two zones may alarm close together */ok(n<2||gap>=CAP_Q()*.79,'the alarm keeps its silence in a zone ('+gap.toFixed(1)+' s between)');}
 function CAP_Q(){return B.CAP.qAlarm;}
 ok(L1.every(d=>d.type!=='alarm'||d.n>0),'an alarm that reaches no gun is not a decision');
 // the lag: a unit is not in the picture until its sighting is CAP.lag old
