@@ -7,13 +7,12 @@
 // measures the first planned route (length and share over water), the distance driven while advancing (Anfaller, Samlas, Söker, På väg;
 // retreats and service trips are not counted), time in the water, the longest time standing still with an order, how close an aircraft
 // came to air defence it was not attacking, and time with no way through. It flags what looks wrong; a flag is a lead, not a failure.
-// Builds g2.js first, like run.js.
+// Rebuilds g2.js when index.html is newer (lib.js).
 //   node tests/falt.js                        six islands, all missions, 200 s each (about half a minute)
 //   node tests/falt.js 5555,9052 120          chosen islands and a shorter time
 //   node tests/falt.js all 200 lv,sparv       only some missions: lv, bunker, punkt, baver, sparv, korseld
 global.performance={now:()=>0};
-require('child_process').execFileSync('python3',[require('path').join(__dirname,'mk.py')]);
-require('./g2.js');const B=globalThis.__BH;
+const B=require('./lib.js').game();
 const out=s=>process.stdout.write(s+'\n');
 const arg=process.argv.slice(2);
 const SEEDS=(!arg[0]||arg[0]==='all'?'1234,2024,4711,5555,8080,9052':arg[0]).split(',').map(Number);

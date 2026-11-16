@@ -3,7 +3,7 @@
 // The generator keeps every mast within reach of Birka, R1 or an earlier mast; only a zone with no such spot falls back on the harbour.
 // `node tests/t123.js list` prints the table, `node tests/t123.js pos` prints enemy and structure positions per seed (to compare before/after).
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+const L=require('./lib.js'),B=L.game();let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const LIST=process.argv[2]==='list',POS=process.argv[2]==='pos';
 function reach(G,pts){G.netAll=false;G.masts=[];
   for(const r of G.relays)r.captured=false;

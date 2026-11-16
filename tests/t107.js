@@ -43,15 +43,7 @@ const mk=(kind)=>{const u=B.makeUnit(kind,G.units[0].x+5,G.units[0].y);G.units.p
   const keep=G.units[0].num;B.numberUnits();ok(G.units[0].num===keep,'numbering again changes nothing');}
 /* ---- the models ---- */
 const THREE=require('three');
-const src=fs.readFileSync(path.join(__dirname,'g2.js'),'utf8').split('\r').join('');
-const MARK='\nif(!hasDOM)return;\n',i=src.indexOf(MARK),R0=src.indexOf('\nlet R3=null;\n'),j=src.indexOf('function mkEnemyMesh(e){'),k2=src.indexOf('\n}\n',j)+3;
-const fn=n=>{const a=src.indexOf('\nfunction '+n+'(');if(a<0)throw new Error('function '+n+' not found');return src.slice(a,src.indexOf('\n}\n',a)+3);},
-  st=n=>{const a=src.indexOf('\nconst '+n+'=');if(a<0)throw new Error('const '+n+' not found');return src.slice(a,src.indexOf('\n',a+1)+1);};
-const cv=()=>({width:0,height:0,getContext:()=>new Proxy({},{get:(t,p)=>p==='createRadialGradient'||p==='createLinearGradient'?()=>({addColorStop(){}}):()=>{},set:()=>true})});
-global.document={createElement:cv};
-const body=(src.slice(0,i)+'\n'+src.slice(R0,k2)+fn('krokLegs')+st('HOVER_Y')+st('_lgI')).replace('(function(){','').split('\n').filter(l=>!l.startsWith("if(typeof globalThis!=='undefined')globalThis.__BH=")).join('\n')
-  +'\nreturn{mkUnitMesh,svNum,svCall,SV_FONT,setR3:o=>{R3=o;}};\n';
-const M=new Function('THREE',body)(THREE);
+const M=require('./lib.js').models(THREE,'mkUnitMesh,svNum,svCall,SV_FONT',{extra:['krokLegs'],consts:['HOVER_Y','_lgI']});
 const lamp=new THREE.MeshLambertMaterial({color:0xe8e4d0});
 const meas=g=>{g.updateMatrixWorld(true);let tri=0,meshes=0,h=0;const lug=g.userData.lugs;g.traverse(o=>{if(!o.isMesh||(lug&&o.parent===lug))return;meshes++;const ge=o.geometry,p=ge.attributes.position;tri+=(ge.index?ge.index.count:p.count)/3;
   for(let n=0;n<p.array.length;n++)h=(h*31+Math.round(p.array[n]*1000))|0;});return{tri,meshes,h};};

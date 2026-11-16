@@ -4,16 +4,11 @@
 // and the glass is R3.winMat and the lamps R3.lampMat. T120_PROBE=1 prints the measures.
 const fs=require('fs'),path=require('path');global.performance={now:()=>0};
 const THREE=require('three');let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
-const src=fs.readFileSync(path.join(__dirname,'g2.js'),'utf8').split('\r').join('');
-const MARK='\nif(!hasDOM)return;\n',i=src.indexOf(MARK),R0=src.indexOf('\nlet R3=null;\n'),j=src.indexOf('function mkEnemyMesh(e){'),k=src.indexOf('\n}\n',j)+3;
+const L=require('./lib.js'),{src,i,R0,j,k}=L.marks();
 const a0=src.indexOf('/* ---- issue 129 models'),a1=src.indexOf('/* ---- end of the issue 129 models ---- */');
 ok(i>0&&R0>i&&j>R0&&k>j&&a0>R0&&a1>a0&&a1<j,'the issue 129 models are where this test looks for them (after let R3, before mkEnemyMesh)');
 if(!(i>0&&a0>R0&&a1>a0)){console.log('FAILED');process.exit(1);}
-const cv=()=>({width:0,height:0,getContext:()=>new Proxy({},{get:(t,p)=>p==='createRadialGradient'||p==='createLinearGradient'?()=>({addColorStop(){}}):()=>{},set:()=>true})});
-global.document={createElement:cv};
-const body=(src.slice(0,i)+'\n'+src.slice(R0,k)).replace('(function(){','').split('\n').filter(l=>!l.startsWith("if(typeof globalThis!=='undefined')globalThis.__BH=")).join('\n')
-  +'\nreturn{mkKraftverk,mkCistern,mkPumphus,mkTanker,setR3:o=>{R3=o;}};\n';
-const M=new Function('THREE',body)(THREE);
+const M=L.models(THREE,'mkKraftverk,mkCistern,mkPumphus,mkTanker');
 const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a});lampMat.userData.lit=winMat.userData.lit=true;
 M.setR3({lampMat,winMat});
 

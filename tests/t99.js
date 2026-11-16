@@ -5,20 +5,11 @@
 // The game script stops at its own "if(!hasDOM)return;" headless (the 3D part is never reached), so the 3D code is cut out of g2.js and run here.
 const fs=require('fs'),path=require('path');global.performance={now:()=>0};
 const THREE=require('three');let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
-const src=fs.readFileSync(path.join(__dirname,'g2.js'),'utf8').split('\r').join('');
-const MARK='\nif(!hasDOM)return;\n',i=src.indexOf(MARK),R0=src.indexOf('\nlet R3=null;\n'),j=src.indexOf('function mkEnemyMesh(e){'),k=src.indexOf('\n}\n',j)+3;
+const L=require('./lib.js'),{src,i,R0,j,k}=L.marks();
 ok(i>0&&R0>i&&j>R0&&k>j,'the 3D model code is where this test looks for it (the early return in the game script, let R3, then mkEnemyMesh)');
 if(!(i>0&&R0>i&&j>R0&&k>j)){console.log('FAILED');process.exit(1);}
-// functions the models use that live further down the file, cut out by name
-const EXTRA=['krokLegs'],fn=n=>{const a=src.indexOf('\nfunction '+n+'(');if(a<0)throw new Error('function '+n+' not found');return src.slice(a,src.indexOf('\n}\n',a)+3);},
-  st=n=>{const a=src.indexOf('\nconst '+n+'=');if(a<0)throw new Error('const '+n+' not found');return src.slice(a,src.indexOf('\n',a+1)+1);};
-// a canvas that draws nothing, for the contact shadow texture
-const cv=()=>({width:0,height:0,getContext:()=>new Proxy({},{get:(t,p)=>p==='createRadialGradient'||p==='createLinearGradient'?()=>({addColorStop(){}}):()=>{},set:()=>true})});
-global.document={createElement:cv};
-// the __BH line names things declared after the early return, which are not run here
-const body=(src.slice(0,i)+'\n'+src.slice(R0,k)+EXTRA.map(fn).join('')+st('HOVER_Y')+st('_lgI')).replace('(function(){','').split('\n').filter(l=>!l.startsWith("if(typeof globalThis!=='undefined')globalThis.__BH=")).join('\n')
-  +'\nreturn{mkUnitMesh,mkEnemyMesh,setR3:o=>{R3=o;},TYPES,ENEMY};\n';
-const M=new Function('THREE',body)(THREE);
+// the cut and the stub canvas live in lib.js; extra: functions and consts the models use that live further down the file
+const M=L.models(THREE,'mkUnitMesh,mkEnemyMesh,TYPES,ENEMY',{extra:['krokLegs'],consts:['HOVER_Y','_lgI']});
 M.setR3({lampMat:new THREE.MeshLambertMaterial({color:0xe8e4d0})});
 
 /* the lift lugs (userData.lugs) are counted out: they are drawn only while the unit hangs in KROK's hook (Magnus 1 nov) */
