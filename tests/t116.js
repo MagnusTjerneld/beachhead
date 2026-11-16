@@ -79,6 +79,18 @@ fresh(SD);G.enemies=[];
   B.crewFetch(v,c);ok(v.fetch&&v.orders.length===1,'Hämta besättningen sends the vehicle');
   run(3000,()=>!!c.carried);ok(c.carried===v.id,'it arrives and the crew boards ('+(c.carried?'':lastLog())+')');}
 
+// the own menus (Magnus 16 nov, ö 7968): a crew 2.4 m from a VARG lies on the same spot as it on the chart, so the vehicle's own menu offers
+// Ta ombord and the crew's Gå ombord i, within CREW.near; HÖK and a vehicle that has a crew do not
+fresh(SD);G.enemies=[];
+{const{v,c}=found();v.x=c.x+2.4;v.y=c.y;const lab=t=>B.selfItems(t).map(i=>i.l);
+  const vi=B.selfItems(v).find(i=>/^Ta ombord /.test(i.l)),ci=B.selfItems(c).find(i=>/^Gå ombord i /.test(i.l));
+  ok(vi&&vi.l.includes(c.name),'the VARG\'s own menu: '+vi?.l);ok(ci&&ci.l.includes(v.name),'the crew\'s own menu: '+ci?.l);
+  const h=put('drone',c.x+1,c.y);ok(!lab(c).some(l=>l.includes(h.name)),'not a HÖK');
+  const far=put('tank',c.x+B.CREW.near+10,c.y);ok(!lab(far).some(l=>/^Ta ombord /.test(l)),'not a vehicle '+(B.CREW.near+10)+' m off');
+  ci.f();run(40,()=>!!c.carried);ok(c.carried===v.id,'Gå ombord i takes it aboard the VARG');
+  ok(!lab(v).some(l=>/^Ta ombord /.test(l))&&lab(v).includes('Sätt av besättningen'),'with the crew aboard: Sätt av, no Ta ombord');
+  ok(!lab(far).some(l=>/^Ta ombord /.test(l)),'nor elsewhere, once it is aboard');}
+
 // 5: done when aboard Birka. A vehicle on the deck
 fresh(SD);G.enemies=[];
 {const{v,c}=found();B.crewBoard(c,v);run(2);ok(!G.over&&!G.misGot,'aboard a vehicle in the field is not done');
