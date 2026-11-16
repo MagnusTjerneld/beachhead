@@ -2,7 +2,7 @@
 // (SCEN, scenTick), the island, the dark and the power, the power station and the oil depot with four cisterns, the counterattack and
 // the tanker. Headless: the points are set taken and the steps stepped.
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.PATROL.on=false;/* issue 189: this test is about the island as it was */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const crypto=require('crypto');
 const run=(n,f)=>{for(let i=0;i<n;i++){B.step(.05);if(f&&f())return i;}return n;};
 const sigOf=seed=>{B.newGame(seed,'djup',{});const G=B.G;
