@@ -31,8 +31,8 @@ B.RETAKE.on=true;B.RESERVE.on=false;/* the retaking alone first */
   ok(G.enemies.some(e=>!e.dead&&e.capTo===G.relays.indexOf(r)&&Math.hypot(e.x-r.x,e.y-r.y)<=B.RETAKE.atR+30),'no new guard: the troops that took it stand there');}
 
 // a unit of the player within CAP.nearR breaks the countdown
-{fresh(['verkstad']);const r=rel('verkstad');let rtMax=0,ownT=null;
-  run(20*400,()=>{if(r.rt>0&&ownT===null){const u=B.makeUnit('tank',r.x+B.CAP.nearR-20,r.y);u.hp=u.maxhp=1e6;G.units.push(u);ownT=G.time;}rtMax=Math.max(rtMax,r.rt||0);});
+{fresh(['verkstad']);const r=rel('verkstad');let rtMax=0,ownT=null,pin=null;/* the unit is pinned: it would drive off to fight and leave the radius */
+  run(20*400,()=>{if(r.rt>0&&ownT===null){const u=B.makeUnit('tank',r.x+B.CAP.nearR-20,r.y);u.hp=u.maxhp=1e6;G.units.push(u);ownT=G.time;pin=u;}if(pin){pin.x=r.x+B.CAP.nearR-20;pin.y=r.y;}rtMax=Math.max(rtMax,r.rt||0);});
   ok(ownT!==null&&r.captured,'a unit within CAP.nearR: the station is not retaken');
   ok(G.eCap.log.some(d=>d.type==='retake'&&d.why.ph==='break'),'the break is in the captain\'s log');}
 
