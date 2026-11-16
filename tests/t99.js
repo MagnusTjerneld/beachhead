@@ -49,7 +49,7 @@ const CONTRACT={
     turret:{parts:['head'],tri:650,calls:4,h:[3.5,7.5],len:[8,14],foot:[-.15,.1]},
     /* the coast battery is built into a rock face that goes below the origin, so it is tall, wide and sunk by design */
     kust:{parts:['head'],tri:2250,calls:4,h:[12,20],len:[20,36],foot:[-12,.1]},
-    aa:{parts:['head'],tri:2050,calls:8,h:[2,5],len:[4.5,9],foot:[-.15,.1]},
+    aa:{parts:['head','outB','outL'],tri:2050,calls:14,h:[2,5],len:[4.5,9],foot:[-.15,.1]},
     rb:{parts:[],tri:360,calls:3,h:[1.2,2.8],len:[2,4.5],foot:[-.15,.1]},
     inf:{parts:[],tri:620,calls:3,h:[1.2,2.8],len:[1.5,4.5],foot:[-.15,.1]},
     at:{parts:[],tri:380,calls:3,h:[1.2,2.8],len:[1.5,4],foot:[-.2,.1]},
