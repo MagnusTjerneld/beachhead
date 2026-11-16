@@ -1,16 +1,18 @@
 global.performance={now:()=>0};
-require('./g2.js');
-const B=globalThis.__BH;const V=process.argv[2]||'base';
+const B=require('./lib.js').game();
+const V=process.argv[2]||'base';
 /* the old start and round islands, so results compare; the captain bot (tests/kapten.js) plays today's islands and start, as Magnus does */
 if(V!=='kapten'){B.WIN.all=false;B.COAST.n=0;B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;}if(process.env.SALV)B.SALVAGE.mult=+process.env.SALV;if(process.env.ESHARE)B.ENEMY_SHARE.on=process.env.ESHARE!=='0';if(process.env.LOS)B.LOS.on=process.env.LOS!=='0';if(process.env.HEIGHT)B.HEIGHT_F.on=+process.env.HEIGHT;if(process.env.RANGEAIR)B.RANGE_F.air=+process.env.RANGEAIR;/* before any island is built: the piles get their value then */
 const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 /* reachability without A*: the bot asked A* once per defender every tick, and for unreachable targets A* floods the whole map.
    Connected components of the ground (4-connected, which is what A* without corner cutting reaches) give the same answer. */
-const GWc=220,CELLc=10,passC=i=>B.W.grid[i]!==4&&B.W.grid[i]!==5;
+/* the game's own predicate for a VARG (passTank: everything but rock and wall, and the ship's hull cells), not a copy of it (issue 181, 17 nov);
+   passLand would be wrong here, the VARG is amphibious */
+const GWc=220,CELLc=10,passC=B.passTank;
 const cellC=(x,y)=>Math.max(0,Math.min(GWc-1,Math.floor(y/CELLc)))*GWc+Math.max(0,Math.min(GWc-1,Math.floor(x/CELLc)));
 let RV=null,LAB=null,NP=new Map(),FPC=new Map();
-function reachVer(){const g=B.W.grid;let h=g.length;for(let i=0;i<g.length;i++)if(g[i]===4||g[i]===5)h=(Math.imul(h,31)+i)|0;
+function reachVer(){const g=B.W.grid;let h=g.length;for(let i=0;i<g.length;i++)if(!passC(i))h=(Math.imul(h,31)+i)|0;
   if(h!==RV){RV=h;NP.clear();FPC.clear();const N=g.length;LAB=new Int32Array(N);let L=0;const q=new Int32Array(N);
     for(let i=0;i<N;i++){if(LAB[i]||!passC(i))continue;L++;let qh=0,qt=0;q[qt++]=i;LAB[i]=L;while(qh<qt){const c=q[qh++],cx=c%GWc,cy=(c/GWc)|0;
       if(cx>0&&!LAB[c-1]&&passC(c-1)){LAB[c-1]=L;q[qt++]=c-1;}if(cx<GWc-1&&!LAB[c+1]&&passC(c+1)){LAB[c+1]=L;q[qt++]=c+1;}
@@ -34,7 +36,6 @@ function play(seed,limit){
   if(process.env.KROK_BROKE!=null)B.KROK_BROKE.on=process.env.KROK_BROKE!=='0';
   const lostK={},seenDead=new Set(),killers={};
   const cat={},known=new Map();let logTop=null,res15=null,res30=null,tick=0,maxRes=0,krokBusy=0,krokN=0,firstRelay=null,zeroT=0;
-  const COST={scout:40,drone:120,tank:200,eng:150};
   while(G.time<limit&&!G.over){
     if(exS)for(const m of [300,600,890])if(!exK[m]&&G.time>=m)exK[m]=landPct()+(exS.dead?'x':'');
     B.step(.05);tick++;
@@ -53,8 +54,10 @@ function play(seed,limit){
     const want=V==='rush'?[['eng',1],['tank',6]]:V==='farm'?[['eng',3]]:[...(aaAlive?[['scout',1]]:[]),['tank',2],['drone',1],['tank',3],['eng',2],['tank',Math.min(7,4+Math.floor(G.res/350))]];
     /* the plan in order, saving up for the next rather than skipping to something cheaper, as the captain bot does: with the game's start of 500
        (issue 103) a list that bought whatever it could afford spent it on a BÄVER, HÖK and GETING and never reached a VARG (Magnus 30 okt) */
-    const unmet=want.find(([k,n])=>cnt(k)<n);if(unmet&&G.res>=COST[unmet[0]]&&alive.length+G.build.filter(b=>b.kind!=='krok').length<10){const k=unmet[0];G.res-=COST[k];G.build.push({kind:k,t:{scout:8,drone:15,tank:25,eng:20}[k],total:1});}
-    if(V!=='nosalv'&&G.kroks.length+G.build.filter(b=>b.kind==='krok').length<(V==='farm'?4:3)&&G.res>=(V==='farm'?150:400)&&G.wrecks.filter(w=>!w.claimed).length>4){G.res-=150;G.build.push({kind:'krok',t:20,total:20});}
+    /* cost, build time and the queue are the game's own (TYPES, buildCost, queueBuild; issue 181, 17 nov): the bot had its own table, with a GETING at 40 and 8 s
+       where the game says 60 and 10 */
+    const unmet=want.find(([k,n])=>cnt(k)<n);if(unmet&&G.res>=B.buildCost(unmet[0]))B.queueBuild(unmet[0]);
+    if(V!=='nosalv'&&G.kroks.length+G.build.filter(b=>b.kind==='krok').length<(V==='farm'?4:3)&&G.res>=(V==='farm'?B.KROK_COST:400)&&G.wrecks.filter(w=>!w.claimed).length>4){G.res-=B.KROK_COST;G.build.push({kind:'krok',t:20,total:20});}
     if(V==='farm'){for(const e of alive.filter(u=>u.kind==='eng')){if(e.orders.length)continue;const ss=G.structs.filter(s=>!s.dead&&!G.enemies.some(x=>!x.dead&&d(x,s)<x.range+40)).sort((a,b)=>d(a,e)-d(b,e));const s=ss.find(s=>!G.units.some(o=>o!==e&&o.orders[0]&&o.orders[0].s===s));if(s){s.krok=true;B.giveOrder(e,{type:'demolish',s,post:'def'},false);}}continue;}
     const tanks=alive.filter(u=>u.kind==='tank');
     const cen=tanks.length?{x:tanks.reduce((s,u)=>s+u.x,0)/tanks.length,y:tanks.reduce((s,u)=>s+u.y,0)/tanks.length}:{x:G.units[0]?G.units[0].x:0,y:0};

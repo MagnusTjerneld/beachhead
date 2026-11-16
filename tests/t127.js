@@ -57,11 +57,7 @@ for(const e of G.enemies)e.dead=true;
 // won when every point is taken
 for(const r of G.relays)r.captured=true;for(const e of G.enemies)e.dead=true;stepN(10,.2);ok(G.over&&!G.failed&&S.done,'won when the whole island is taken');
 // the model
-{const THREE=require('three');const src=fs.readFileSync(path.join(__dirname,'g2.js'),'utf8').split('\r').join('');
-  const MARK='\nif(!hasDOM)return;\n',i=src.indexOf(MARK),R0=src.indexOf('\nlet R3=null;\n'),j=src.indexOf('function mkEnemyMesh(e){'),k=src.indexOf('\n}\n',j)+3;
-  const cv=()=>({width:0,height:0,getContext:()=>new Proxy({},{get:(t,p)=>p==='createRadialGradient'||p==='createLinearGradient'?()=>({addColorStop(){}}):()=>{},set:()=>true})});global.document={createElement:cv};
-  const body=(src.slice(0,i)+'\n'+src.slice(R0,k)).replace('(function(){','').split('\n').filter(l=>!l.startsWith("if(typeof globalThis!=='undefined')globalThis.__BH=")).join('\n')+'\nreturn{mkFerry,setR3:o=>{R3=o;}};\n';
-  const M=new Function('THREE',body)(THREE);const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a});lampMat.userData.lit=winMat.userData.lit=true;M.setR3({lampMat,winMat});
+{const THREE=require('three');const M=require('./lib.js').models(THREE,'mkFerry');const lampMat=new THREE.MeshLambertMaterial({color:0xe8e4d0}),winMat=new THREE.MeshLambertMaterial({color:0x2f4a5a});lampMat.userData.lit=winMat.userData.lit=true;M.setR3({lampMat,winMat});
   const g=M.mkFerry();g.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(g),sz=bb.getSize(new THREE.Vector3());let tri=0,calls=0,bad=0,win=0,lamp=0;
   g.traverse(o=>{if(!o.isMesh)return;calls++;const ge=o.geometry,p=ge.attributes.position;tri+=(ge.index?ge.index.count:p.count)/3;for(let n=0;n<p.array.length;n++)if(!isFinite(p.array[n])){bad++;break;}if(o.material===winMat)win++;if(o.material===lampMat)lamp++;});
   if(process.env.T127_PROBE)console.log(sz,tri,calls,bb.min,bb.max);

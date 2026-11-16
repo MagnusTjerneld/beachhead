@@ -17,28 +17,18 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Plocka ut spelkoden
-        run: python3 tests/mk.py
-      - name: Kartvalidering (tio öar)
+      - name: Installera three (modelltesterna)
         working-directory: tests
-        run: node t23.js | tee map.log && ! grep -v "check ok" map.log | grep -q .
-      - name: Strategiska punkter
+        run: npm ci --no-audit --no-fund
+      - name: Alla snabba tester (tests/run.js bygger g2.js och kör dem parallellt)
         working-directory: tests
-        run: node t51.js
-      - name: Låsta sektorer, minor och inropning
-        working-directory: tests
-        run: node t58.js
-      - name: Luftvärn, KROK för hand, fältreparation och luckor
-        working-directory: tests
-        run: node t60.js
-      - name: Uppdrag och tillfälliga order
-        working-directory: tests
-        run: node t61.js
+        run: RUN_N=$(nproc) node run.js
 
   deploy:
     needs: test

@@ -11,7 +11,7 @@
 //   node tests/sandbox.js pansar 30 --hok         a Defensiv HÖK in wings that have none
 //   node tests/sandbox.js --list                the scenarios
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;
+const B=require('./lib.js').game();B.SHAPE_CFG.force='rund';B.SHAPE_CFG.rough=0;
 const DT=.05,TMAX=300,SEED=7341;
 // defenders: [kind, forward, lateral, hull share at start] in metres from the defence centre, forward pointing away from the attackers;
 // own.hp is the attackers' hull share at start
