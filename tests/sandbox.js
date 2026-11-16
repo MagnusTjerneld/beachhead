@@ -53,6 +53,7 @@ const SC={
   /* Kustbatteriet (issue 73, 29 okt): the coast artillery only falls silent to fire, so a win is GÄDDA silencing it */
   gka:{txt:'GÄDDA och en hög GETING mot kustartilleriet 80 m upp från stranden (vinst: tystat)',sea:1,own:{gadda:1,get:['def']},def:[['kust',80,0]],plan:'gadda',tyst:true}
 };
+const SBF=process.env.SB_FACE?{front:0,side:Math.PI/2,back:Math.PI}[process.env.SB_FACE]:null;
 const args=process.argv.slice(2),flags=new Set(args.filter(a=>a.startsWith('--'))),pos=args.filter(a=>!a.startsWith('--')&&!a.includes('=')),sets=args.filter(a=>a.includes('='));
 if(flags.has('--list')){for(const[k,s]of Object.entries(SC))console.log(k.padEnd(10)+s.txt);process.exit(0);}
 const which=!pos[0]||pos[0]==='all'?Object.keys(SC):pos[0].split(','),REPS=+(pos[1]||10),LOG=flags.has('--log'),UNSEEN=flags.has('--unseen'),HOK=flags.has('--hok');
@@ -84,7 +85,7 @@ function play(name,rep){
   {const{D,f,n}=S.sea?seaArena():arena();for(let s=S.sea?0:-480;s<=(S.sea?240:160);s+=5)for(let l=-150;l<=150;l+=5){const i=Math.floor((D.y+f.y*s+n.y*l)/10)*220+Math.floor((D.x+f.x*s+n.x*l)/10);if(B.W.grid[i]>=4)B.W.grid[i]=B.W.baseGrid[i]=3;}}
   G.reachAll=null;B.computeLock();
   const{D,f,n}=S.sea?seaArena():arena(),at=(fw,la)=>({x:D.x+f.x*fw+n.x*la,y:D.y+f.y*fw+n.y*la});
-  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(kind==='kust'){e.face=Math.atan2(-f.y,-f.x);e.cone=B.kustCone(e);}/* issue 172: its cone, as in the game */if(!UNSEEN)e.seen=true;return e;});
+  G.enemies=S.def.map(([kind,fw,la,hf],i)=>{const p=at(fw,la),e=B.makeEnemy({id:'X'+(i+1),kind,x:p.x,y:p.y});if(hf)e.hp=Math.round(e.maxhp*hf);e.aim=Math.atan2(-f.y,-f.x)+(Math.random()-.5)*.6;if(kind==='kust'){e.face=Math.atan2(-f.y,-f.x);e.cone=B.kustCone(e);}/* issue 172: its cone, as in the game */if(SBF!=null){const fa=Math.atan2(-f.y,-f.x)+SBF;if(kind==='turret'){e.face=fa;e.cone=B.coneOf(fa,B.TURRET.arc);e.aim=fa;}if(kind==='tank'||kind==='light')e.hd=fa;}/* issue 190: SB_FACE=front|side|back turns each bunker's glugg and each vehicle's hull that way to the attackers (unset: no face, as before) */if(!UNSEEN)e.seen=true;return e;});
   if(!UNSEEN){G.known.fill(1);G.knownV++;}
   /* cover: troops hidden from the air as in buildings; moved: they moved this far since they were seen, so the known place is stale;
      hide: defenders nobody has seen yet; need: the ones that must fall for a win (default all) */

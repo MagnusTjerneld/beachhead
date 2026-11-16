@@ -1,7 +1,7 @@
 // GETING low or high (Magnus 22 okt): low it sees everything and is heard at 70 m; high (150 m) only the air defence's radar notices it,
 // it sees the big targets further but not the teams on foot until they fire, and land it alone has seen is not secured for KROK
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+process.env.BH_TURRET='0';/* issue 190: this test is not about the bunker's embrasure; it fires all round as before */require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const run=s=>{for(let i=0;i<s*20;i++)B.step(.05);};const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 B.newGame(9949);const G=B.G;G.running=true;G.netAll=true;
 // a pansarvärn with a bunker within 200 m, the rest of the enemy gone
