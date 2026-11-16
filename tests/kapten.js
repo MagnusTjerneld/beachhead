@@ -18,6 +18,31 @@ const busySvc=u=>(u.rtb&&!broke(u))||u.awaitRep||(u.orders[0]&&u.orders[0].toRep
 const cen=us=>({x:us.reduce((s,u)=>s+u.x,0)/us.length,y:us.reduce((s,u)=>s+u.y,0)/us.length});
 /* as a click: an attack goes through the game's own check of targets covering each other, which on Offensiv takes the cover first */
 const ord=(us,pk)=>{if(us.length)B.groupOrder(Object.assign({us},pk),false);};
+/* issue 190 (Magnus 16 nov): the captain learns to flank. Against a spotted bunker whose cone is known (the chart draws it) the wing
+   stands off outside the cone first and attacks from there; against a spotted tank or light armour it comes from the side or behind.
+   The rule: if the wing's own place is in the bunker's cone (or in front of the vehicle), look for a staging point on the ring round the
+   target (0.85 of the bunker's range; 0.9 of the wing's own range for a vehicle) at 24 bearings, outside the cone by FL_MARGIN rad (side
+   or rear for a vehicle, rear preferred), on the way of the game's own search that is at most FL_RATIO times the direct way plus FL_EXTRA m
+   (a bunker: and does not run through the cone within its range). The nearest such point is driven to with the target marked Undvik (the game's way then goes round the cone) and the
+   attack order is given when the wing is there (FL_ARRIVE m) or after FL_MAXT s. None found: the attack goes straight as before.
+   BH_FLANK=0 turns it off, to measure what the flanking is worth */
+const FLANK=process.env.BH_FLANK!=='0',FL_RATIO=1.7,FL_EXTRA=120,FL_MARGIN=.2,FL_ARRIVE=35,FL_MAXT=90;
+const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
+function flankPt(e,us,vc){
+  const tc=B.turrCone(e),veh=B.ARMOR.on&&(e.kind==='tank'||e.kind==='light')&&e.hd!=null;
+  if(!tc&&!veh)return null;
+  const bad=p=>tc?B.inCone(e,p):B.armorSide(e,p)==='front';
+  if(!bad(vc))return null;
+  const R=tc?e.range*.85:Math.max(40,(us[0].range||90)*.9),g=B.W.grid,pass=i=>g[i]!==4&&g[i]!==5,direct=d(vc,{x:e.lx,y:e.ly});
+  const m=tc?(tc.a0+tc.a1)/2:0,h=tc?(tc.a1-tc.a0)/2:0;let best=null;
+  for(let k=0;k<24;k++){const a=k/24*2*Math.PI,p={x:e.lx+Math.cos(a)*R,y:e.ly+Math.sin(a)*R};
+    if(p.x<20||p.y<20||p.x>2180||p.y>2180||!pass(B.cellIdx(p.x,p.y)))continue;
+    const off=tc?Math.abs(wrap(a-m))>h+FL_MARGIN:Math.abs(wrap(a-e.hd))>=B.BJORN.cone+FL_MARGIN;if(!off)continue;
+    const path=B.astar(vc.x,vc.y,p.x,p.y,pass,()=>1);if(!path||!path.length)continue;
+    let L=0,q=vc,hit=false;for(const s of path){const l=d(q,s),n=Math.ceil(l/10);for(let j=1;j<=n&&!hit;j++){const z={x:q.x+(s.x-q.x)*j/n,y:q.y+(s.y-q.y)*j/n};if(tc&&B.inCone(e,z)&&d(z,{x:e.lx,y:e.ly})<e.range)hit=true;}L+=l;q=s;}
+    if(hit||L>direct*FL_RATIO+FL_EXTRA)continue;
+    const sc=L*(!tc&&Math.abs(wrap(a-e.hd))>=Math.PI-B.BJORN.cone-FL_MARGIN?.85:1);if(!best||sc<best.sc)best={sc,x:p.x,y:p.y};}
+  return best;}
 /* a seen enemy that can fire on ground units within this of the point makes the point unsafe for the wing */
 const groundThreat=(G,p,m)=>G.enemies.find(e=>!e.dead&&e.seen&&e.canGround&&Math.hypot(p.x-e.lx,p.y-e.ly)<(e.range||0)+m);
 /* seen ground (from low or high) around a point: where an air defence would have been seen, as camouflage hides it only from the ground */
@@ -154,6 +179,10 @@ return function tick(G){
     if(!fight&&G.time-K.seenAt[e.id]<WAIT){K.why='väntar efter spaning';return;}
     if(!fight&&!scanned('e'+e.id,null,e,vc)){K.why='spanar mål';return;}
     /* the HÖK strike with the wing only outside air defence */
+    /* issue 190: stand off outside the cone, or on the side of the vehicle, first (a fight already under way is not left for it) */
+    if(FLANK&&!fight){if(!K.fl||K.fl.e!==e){if(K.fl&&K.fl.e)K.fl.e.avoid=false;const f=flankPt(e,ready,vc);K.fl={e,f,t:G.time};if(f){K.why='flankerar '+e.id;K.flanks=(K.flanks||0)+1;if(B.turrCone(e))e.avoid=true;/* as the Undvik in the wheel: the game's way to the point then goes round the cone */B.groupOrder({us:ready,world:{x:f.x,y:f.y}},false);return;}}
+      else if(K.fl.f&&G.time-K.fl.t<FL_MAXT&&ready.some(t=>d(t,K.fl.f)>FL_ARRIVE)){K.why='flankerar '+e.id;return;}}
+    if(K.fl&&K.fl.e&&K.fl.e.avoid&&K.fl.f)K.fl.e.avoid=false;K.fl=null;
     K.tgt=e;K.tgtT=K.tgtAt=G.time;K.tgtAny=false;K.bound=null;K.from={x:vc.x,y:vc.y};ord(e.kind==='aa'||aaNear(e)?ready:ready.concat(cover),{enemy:e});return;}
   // nothing in reach: the next bound towards the nearest point or barrier the wing can drive to
   if(K.bound&&G.time-K.bound.t<60&&ready.some(t=>d(t,K.bound)>40)){K.why='på väg';return;}
