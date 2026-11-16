@@ -3,7 +3,7 @@
 // when the command centre is taken ("Fiendens ledning har tystnat." once); with the captain off nothing is shown and nothing changes.
 // The level is not shown to the player (Magnus 12 nov); it is the captain's state, and a recording keeps it and every decision (issue 194).
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.CAP2.on=false;/* issue 188: these tests are about the captain as it was; t142 tests the new rules */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 let G,lines,seenLog,unk=[];const leak=[];
 const seedRand=s=>{let x=s>>>0;Math.random=()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};};
 function fresh(cap,station,n){seedRand(7);B.newGame(1264);G=B.G;G.running=true;G.netAll=true;G.mines=[];G.units=[];G.known.fill(1);G.knownV++;B.LOS.on=false;G.krokAuto=false;
