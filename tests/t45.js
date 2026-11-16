@@ -90,13 +90,13 @@ function play(seed,limit){
   const lost={};for(const l of G.log)0;
   if(process.env.DBG&&G.kap)console.log('kapten:',G.kap.why,G.kap.tgt&&G.kap.tgt.id,G.kap.bound&&[Math.round(G.kap.bound.x),Math.round(G.kap.bound.y)]);
   if(process.env.DBG){for(const u of G.units.filter(u=>!u.dead))console.log(u.name,Math.round(u.x),Math.round(u.y),u.state,u.orders[0]&&u.orders[0].type,u.orders[0]&&u.orders[0].enemy&&u.orders[0].enemy.id);for(const e of G.enemies.filter(e=>!e.dead))console.log(' ',e.id,e.kind,Math.round(e.x),Math.round(e.y),'seen',e.seen,'vis',e.visibleNow,'hp',Math.round(e.hp));console.log(G.relays.map(r=>r.id+':'+r.captured+':'+r.guards).join(' '),'barriers',G.barriers.map(b=>b.id+(b.cleared?'x':'')).join(' '));}
-  return {seed,kills:G.enemies.filter(e=>e.dead).length,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,zeroT,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length,ek:G.eCap?G.eCap.stat:undefined};
+  return {seed,failed:!!G.failed,cen:(G.relays.find(r=>r.type==="central")||{}).capT,lim:G.misLimit||undefined,kills:G.enemies.filter(e=>e.dead).length,explore:exS?exK:undefined,over:G.over,t:Math.round(G.time),r1:firstRelay,cap:G.relays.filter(r=>r.captured).length,lost:G.unitsLost,net:G.lostValue-G.salvagedOwn,res:Math.round(G.res),maxRes:Math.round(maxRes),res15,res30,zeroT,svc:Math.round(G.svcSpent||0),salv:G.salvaged,cat,kroks:G.kroks.length,krokBusy:krokN?Math.round(krokBusy/krokN*100):0,lostK,killers,structsLeft:G.structs.filter(s=>!s.dead).length+'/'+G.structs.length,ek:G.eCap?G.eCap.stat:undefined};
 }
 // seeds: a comma list, 'quick' (four islands, about a minute) or nothing (all ten, two to three minutes)
 /* the captain bot's ten start with the five islands Magnus has recorded long games on */
 const seeds=(process.argv[3]==='quick'?'1234,7341,4242,9001':process.argv[3]||(V==='kapten'?'1490,9949,3019,1234,9027,7341,4242,9001,2718,5555':'1234,7341,4242,9001,2718,5555,31,77,1001,1002')).split(',').map(Number);
 const lim=+(process.argv[4]||3600);
-const summary=rs=>{const won=rs.filter(r=>r.over);const avg=(a,f)=>a.length?Math.round(a.reduce((s,r)=>s+f(r),0)/a.length):'-';
+const summary=rs=>{const won=rs.filter(r=>r.over&&!r.failed);const avg=(a,f)=>a.length?Math.round(a.reduce((s,r)=>s+f(r),0)/a.length):'-';
 console.log(V,'won',won.length+'/'+rs.length,'avg time(won)',avg(won,r=>r.t),'avg lost',avg(rs,r=>r.lost),'avg kills',avg(rs,r=>r.kills),'lost/kill',(rs.reduce((a,r)=>a+r.lost,0)/Math.max(1,rs.reduce((a,r)=>a+r.kills,0))).toFixed(2),'avg net',avg(rs,r=>r.net),'avg salv',avg(rs,r=>r.salv),'avg endRes',avg(rs,r=>r.res),'avg s at 0',avg(rs,r=>r.zeroT),'krokBusy%',avg(rs,r=>r.krokBusy));};
 // several seeds run in parallel child processes, one per core (each game is independent); T45_SERIAL=1 runs them in turn
 if(seeds.length>1&&!process.env.T45_SERIAL&&!process.env.T45_CHILD){
