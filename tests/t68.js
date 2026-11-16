@@ -24,7 +24,7 @@ const setup=seed=>{B.newGame(seed);const G=B.G;G.running=true;G.netAll=true;for(
   for(let i=0;i<60*20;i++){s.orbit={x:C.x,y:C.y-R-2};B.step(.05);if(s.linkLost&&!was){lost++;if(s.lostMsgT===G.time)said++;}was=!!s.linkLost;}
   ok(lost<100&&said<=7,'at the edge of the link it is lost '+lost+' times a minute (589 before) and says so '+said+' times');}
 // 5. four HÖK sent to the same point do not hover inside each other (18 okt)
-{const G=setup(7341),L=G.relays[0],H=[0,1,2,3].map(i=>{const h=B.makeUnit('drone',L.x+200+i*3,L.y);h.fuel=h.maxFuel=1e5;G.units.push(h);return h;});
+{const G=setup(7341);G.known.fill(1);G.knownV++;/* scouted: the route over unscouted ground (issue 152) is not what this measures */const L=G.relays[0],H=[0,1,2,3].map(i=>{const h=B.makeUnit('drone',L.x+200+i*3,L.y);h.fuel=h.maxFuel=1e5;G.units.push(h);return h;});
   for(const h of H)B.giveOrder(h,{type:'move',x:L.x,y:L.y+300,post:'def'});let mn=1e9;
   for(let i=0;i<40*20;i++){B.step(.05);if(i>20*20)for(let a=0;a<4;a++)for(let b=a+1;b<4;b++)mn=Math.min(mn,Math.hypot(H[a].x-H[b].x,H[a].y-H[b].y));}
   ok(mn>=13,'four HÖK circling the same point keep '+mn.toFixed(1)+' m apart at the least');}
