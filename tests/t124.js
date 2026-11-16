@@ -2,7 +2,7 @@
 // decision refers only to units in that picture, a taken command centre silences it, the same seed gives the same decisions, and off (an
 // explicit choice since issue 187, when on became the default) changes nothing. Decisions 1 (alarm), 2 (reinforce) and 3 (counterattack with the strength condition).
 global.performance={now:()=>0};
-require('./g2.js');const B=globalThis.__BH;B.CAP2.on=false;/* issue 188: these tests are about the captain as it was; t142 tests the new rules */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
+require('./g2.js');const B=globalThis.__BH;B.CAP2.on=false;B.RETAKE.on=false;B.RESERVE.on=false;/* issues 188, 167, 194: these tests are about the captain as it was; t142 and t148 test the new rules */let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 let G;const seedRand=s=>{let x=s>>>0;Math.random=()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};};
 function fresh(cap,n){seedRand(7);B.newGame(1264);G=B.G;G.running=true;G.netAll=true;G.mines=[];G.units=[];G.known.fill(1);G.knownV++;B.LOS.on=false;G.krokAuto=false;
   B.setCap(!!cap);if(!cap)B.ENEMY_SHARE.on=false;const r=G.relays[0];
