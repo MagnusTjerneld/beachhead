@@ -16,7 +16,10 @@ ok(BP&&BP.on===true&&BP.n[0]===2&&BP.n[1]===4&&BP.halt===20,'PATROL is on by def
 let tot=0;
 for(const sd of SEEDS){BP.on=false;seedRand(5);B.newGame(sd);const stOff=B.G.structs.map(q=>q.kind+Math.round(q.x)+','+Math.round(q.y)).join('|'),off=B.W.enemies.map(e=>({id:e.id,kind:e.kind,x:e.x,y:e.y,route:!!e.route,cover:e.cover,guard:e.guard}));
   BP.on=true;seedRand(5);B.newGame(sd);const G=B.G,p=pats(G),WE=B.W.enemies;tot+=p.length;
-  ok(p.length>=2&&p.length<=4,'ö '+sd+': '+p.length+' patrols ('+p.map(e=>e.id).join(' ')+')');
+  /* Magnus 17 nov (morning report): the ground cover of the air defence is never lent to a patrol, rather one patrol fewer; 2024 has no other free units */
+  const lent=off.filter(o=>o.cover!=null&&!WE.find(e=>e.id===o.id&&e.cover!=null));
+  ok(lent.length===0,'ö '+sd+': the air defence keeps its ground cover'+(lent.length?' ('+lent.map(o=>o.id).join(' ')+')':''));
+  ok(sd===2024?p.length<=4:p.length>=2&&p.length<=4,'ö '+sd+': '+p.length+' patrols ('+p.map(e=>e.id).join(' ')+')'+(sd===2024?', fewer allowed: the budget went to bunkers':''));
   ok(B.G.structs.map(q=>q.kind+Math.round(q.x)+','+Math.round(q.y)).join('|')===stOff,'ö '+sd+': the buildings stand where they stood with the flag off');
   ok(off.length===WE.length&&kinds(off)===kinds(WE),'ö '+sd+': the same enemies by id and kind as with the flag off');
   ok(sum(off)===sum(WE),'ö '+sd+': the same sum of strength ('+sum(WE)+')');

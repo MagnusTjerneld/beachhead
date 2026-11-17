@@ -47,7 +47,7 @@ const PI=Math.PI,near=(a,b,e)=>Math.abs(a-b)<=(e==null?1e-6:e);
   ok(n>=50&&bad<=n*.02,'on ö 2547: no corner under the ground at '+(n-bad)+' of '+n+' places ('+leaned+' lean more than 2 degrees)');}
 
 // ---- 2. the air defence truck's supports and its setting up
-{const SC=B.SCOOT.aa;ok(B.AA_SETUP===5&&SC.setup===B.AA_SETUP,'setting up takes AA_SETUP = '+B.AA_SETUP+' s (it was 8)');
+{const SC=B.SCOOT.aa;ok(B.AA_SETUP===8&&SC.setup===B.AA_SETUP,'setting up takes AA_SETUP = '+B.AA_SETUP+' s (5 s for a night, back to 8 on 17 nov)');
   ok(B.aaStay({sc:null,kind:'aa'})===1,'a truck that has not moved stands on its supports');
   ok(B.aaStay({kind:'aa',sc:{ph:'pack',t:SC.pack}})===1&&B.aaStay({kind:'aa',sc:{ph:'pack',t:SC.pack/2}})===.5&&B.aaStay({kind:'aa',sc:{ph:'pack',t:0}})===0,'packing folds them up over '+SC.pack+' s');
   ok(B.aaStay({kind:'aa',sc:{ph:'move',t:3}})===0,'they are up while it drives');

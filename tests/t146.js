@@ -1,5 +1,5 @@
 // Natt 17 nov: GÄDDA keeps apart and gives way (issue 193), fires instead of circling (issue 196), and an attack order that gets no firing
-// spot is refused at once, or fired from where the unit stands (issue 199); BJÖRN has its own place after VARG in the unit list (issue 202).
+// spot is refused after ATK_TRIES tries (two since 17 nov, about 3 s), or fired from where the unit stands (issue 199); BJÖRN has its own place after VARG in the unit list (issue 202).
 global.performance={now:()=>0};
 require('./g2.js');const B=globalThis.__BH;let fail=0;const ok=(c,m)=>{console.log((c?'ok   ':'FAIL ')+m);if(!c)fail++;};
 const G=()=>B.G,until=(f,s)=>{for(let i=0;i<s*20;i++){if(f())return true;B.step(.05);}return !!f();};
@@ -37,19 +37,20 @@ for(const kind of['head','cross']){fresh();for(const e of G().enemies)e.dead=tru
     B.giveOrder(u,{type:'attack',enemy:T,post:'off'});const a0=u.ammo;until(()=>{hold();return u.ammo<a0;},60);
     ok(u.ammo<a0,'from '+off.join(',')+' off its spot the boat fires at a still target ('+Math.round(G().time)+' s, '+u.state+')');if(u.ammo<a0)fired++;}
   ok(tried>=2&&fired===tried,'it fired from '+fired+' of '+tried+' starts');}
-// issue 199: an attack order with no way to a firing spot is refused at once, with a message; one that can be fired on from here is fired on from here
+// issue 199: an attack order with no firing spot it can reach is refused at once, with a message (a way that fails is tried ATK_TRIES times, two since 17 nov); one that can be fired on from here is fired on from here
 {const run=(dist,direct)=>{fresh();for(const e of G().enemies)e.dead=true;const r=G().relays.find(q=>q.type!=='central')||G().relays[0];
     const cx=Math.floor(r.x/10),cy=Math.floor(r.y/10),g=B.W.grid;let bx=-1,by=-1;
     for(let a=0;a<64&&bx<0;a++){const x=r.x+Math.cos(a*.1)*dist,y=r.y+Math.sin(a*.1)*dist;if(B.heightAt(x,y)>2&&B.heightAt(x,y)<20){bx=x;by=y;}}
     const u=B.makeUnit('tank',r.x,r.y);u.hp=u.maxhp=1e4;G().units.push(u);
-    const sv=[];for(let dy=-5;dy<=5;dy++)for(let dx=-5;dx<=5;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))<3)continue;const i=(cy+dy)*B.GW+cx+dx;sv.push([i,g[i]]);g[i]=0;}
+    const sv=[];for(let dy=-5;dy<=5;dy++)for(let dx=-5;dx<=5;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))<3)continue;const i=(cy+dy)*B.GW+cx+dx;sv.push([i,g[i]]);g[i]=4;/* ROCK: VARG drives through water, so a ring of water was no wall (found 17 nov when ATK_TRIES went to 2) */}
     const E=B.makeEnemy({kind:'turret',x:bx,y:by});E.seen=true;E.visibleNow=true;E.lx=bx;E.ly=by;E.canGround=true;E.hp=E.maxhp=1e6;G().enemies.push(E);B.LOS.on=false;const hold=painter(E);
     const n0=G().log.length;B.giveOrder(u,{type:'attack',enemy:E,post:'off'});const t0=G().time;
-    if(direct){B.step(.05);const o=u.orders[0];if(o){o.fp=null;B.spotFail(u,o,{none:true});}}else until(()=>{hold();return !u.orders.length;},3);
+    if(direct){B.step(.05);const o=u.orders[0];if(o){o.fp=null;B.spotFail(u,o,{none:true});}}else until(()=>{hold();return !u.orders.length;},6);
     const msg=G().log.slice(n0).map(l=>l.text).join(' | ');for(const[i,v]of sv)g[i]=v;
     return{u,msg,gone:!u.orders.length,t:G().time-t0,here:u.orders[0]&&u.orders[0].here,bx,dist:Math.hypot(E.x-u.x,E.y-u.y),range:B.effRange?0:0};};
   const far=run(900,false);
-  ok(far.bx>0&&far.gone&&far.t<2.5&&/eldställning|framkomlig|spärr|rimlig/.test(far.msg),'a target out of reach with no way: refused in '+far.t.toFixed(1)+' s with a message ('+far.msg.slice(0,110)+')');
+  ok(far.bx>0&&far.gone&&far.t<5&&/eldställning|framkomlig|spärr|rimlig/.test(far.msg),'a target out of reach with no way: refused in '+far.t.toFixed(1)+' s with a message ('+far.msg.slice(0,110)+')');
+  ok(B.ATK_TRIES===2,'ATK_TRIES is 2 (Magnus 17 nov): a way that fails is tried once more after u.waitT, about 3 s, before the refusal');
   const near=run(110,true);
   ok(near.bx>0&&!near.gone&&near.here,'a target in reach and in sight, no way to a spot: fired on from where the unit stands ('+(near.here?'here':'no')+')');
   // the same unit given the same order again is told again
