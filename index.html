@@ -4228,7 +4228,7 @@ function move(u,dt){
     return;
   }
   if(u.waitT&&G.time<u.waitT){u.state='Ingen framkomlig väg';return;}
-  if(u.unsafeWait&&(u.override||G.ctrl===u.id)){u.unsafeWait=false;u.hold=false;}
+  if(u.unsafeWait&&(u.override||G.ctrl===u.id)){u.unsafeWait=false;u.wayWait=false;u.hold=false;}
   if(u.unsafeWait&&G.time<(u.safeT||0)){if(u.waitTxt)u.state=u.waitTxt;return;}
   if(!u.path||!u.path.length||u.pathFor!==o||Math.hypot(tx-u.pathT.x,ty-u.pathT.y)>20){
     if(u.air)u.path=airPath(u,tx,ty,o);
@@ -4245,9 +4245,9 @@ function move(u,dt){
         if(th)why='Målet ligger inom räckhåll för '+ename(th);
         else if(passLand(cellIdx(u.x,u.y))){const ps=i=>passLand(i)&&!gm[i];pth=astar(u.x,u.y,tx,ty,ps,costFor(pathPost(u,o.post)));if(!pth&&astar(u.x,u.y,tx,ty,passLand,costFor(pathPost(u,o.post))))why='Vägen dit går genom räckhåll för känt hot';}
         if(why&&(o.post==='off'||o.pull)){if(!o.pull&&!o.boldTold){o.boldTold=1;say(u,why+'. Kör ändå, BÄVER står på Offensiv.');}why=null;}
-        if(why){u.path=null;u.pathFor=null;u.hold=true;u.unsafeWait=true;u.safeT=G.time+3;u.state=u.waitTxt='Väntar: '+why.charAt(0).toLowerCase()+why.slice(1);
+        if(why){u.path=null;u.pathFor=null;u.hold=true;u.unsafeWait=true;u.wayWait=true;u.safeT=G.time+3;u.state=u.waitTxt='Väntar: '+why.charAt(0).toLowerCase()+why.slice(1);
           if(!u.safeMsgT||G.time>u.safeMsgT){u.safeMsgT=G.time+25;say(u,why+'. Väntar tills det är säkert (Kör ändå skickar mig ändå).');}return;}
-        if(u.unsafeWait){u.unsafeWait=false;u.hold=false;say(u,'Säker väg finns. Kör.');}}
+        if(u.unsafeWait){u.unsafeWait=false;u.hold=false;if(u.wayWait&&G.time>=(u.safeOkT||0)){u.safeOkT=G.time+25;say(u,'Säker väg finns. Kör.');}u.wayWait=false;}}/* only when it was this wait, and with hysteresis: the airlift's wait for a landing place cleared here said it every 6 s (Magnus 18 nov) */
       if(!pth){const pass=u.kind==='eng'||isBj(u)?passLand:u.kind==='tank'?passTank:passAmph,avoid=o.type==='attack'&&u.kind==='tank'||o.type==='rtb'&&u.kind==='tank';/* on the way to service a VARG keeps round known threats too (18 okt, test round 9949) */const home=o.type==='rtb'&&u.kind==='tank';pth=home&&o.direct?null:astar(u.x,u.y,tx,ty,pass,costFor(pathPost(u,o.post),avoid?o.enemy||{}:null,home?40:6,home?40:0));
         /* the way home (issue 166, provspel ö 2929 kp01, Magnus 9 nov: V01 at 27 % went 2.2 km round the east coast over unscouted land rather
            than 600 m past known guns, and that is no safer): unscouted land counts as a known threat's reach, and a way round more than
@@ -6549,7 +6549,7 @@ function orderKrok(w){
 /* the ring where an order is given ages in real time (fixed 17 okt, issue 12): with the game's clock, orders given while paused left
    their rings on the chart until it ran again */
 function ping(x,y){(G.pings||(G.pings=[])).push({x,y,t0:performance.now()});}
-function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.override=false;u.waitT=0;u.unsafeWait=false;/* a new order must not stall on the old wait (issue 171) */}
+function resetFor(u){u.path=null;u.rtb=false;u.saved=null;u.hold=false;u.override=false;u.waitT=0;u.unsafeWait=false;u.wayWait=false;/* a new order must not stall on the old wait (issue 171) */}
 function dropCtrl(){stopFollowMe();G.ctrl=null;G.firing=false;G.mlook=false;if(typeof document!=='undefined'&&document.pointerLockElement)document.exitPointerLock();}
 function lastPost(u){return u.orders.length?u.orders[u.orders.length-1].post:u.post;}
 function defaultOrder(u,pk,post){

@@ -110,4 +110,12 @@ fresh(3402,{uppdrag:'crew'});G.enemies=[];
 {const q=G.misCrew,v=put('tank',q.x+25,q.y);B.misTick(.05);const c=B.crewU();B.crewBoard(c,v);G.beach.st='off';
   const t=B.crewTip();v.x=t.x;v.y=t.y;B.misTick(.05);ok(!G.misGot,'with Birka not at the beach or the quay it does not count');
   G.beach.st='on';G.ramp={bow:.5,side:1};B.misTick(.05);ok(!G.misGot,'nor with the bow ramp up');}
+// Magnus 18 nov: "Säker väg finns. Kör." only after a wait for the way itself, and once in 25 s (the airlift's wait for a landing place,
+// cleared by the same check, made BÄVER say it every 6 s)
+fresh(1264);G.enemies=[];
+{const L=B.W.landing,p=landNear(L.x,L.y,30),q=landNear(p.x+160,p.y,0),u=put('eng',p.x,p.y);
+  const safeN=()=>G.log.filter(l=>/Säker väg finns/.test(l.text)).length,go=(way)=>{u.orders=[{type:'move',x:q.x,y:q.y,post:'def'}];u.path=null;u.hold=true;u.unsafeWait=true;u.wayWait=way;u.safeT=0;run(4);};
+  G.log.length=0;go(false);ok(safeN()===0&&!u.unsafeWait,'a wait of another kind, cleared by the way check, says nothing');
+  go(true);ok(safeN()===1,'a wait for the way says it once');
+  go(true);go(true);ok(safeN()===1,'and not again within 25 s ('+safeN()+')');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
