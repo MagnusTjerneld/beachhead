@@ -165,7 +165,8 @@ fresh(SD);G.enemies=[];
 // is the troops with at least two minutes of march, and one standing close is left where it stands
 fresh(SD);
 {const q=G.misCrew,C=B.MIS_CFG,L=B.WORLD.landing,d=Math.hypot(q.rx-L.x,q.ry-L.y);
-  ok(Math.abs(B.crewPatT()-Math.max(C.crewPatrol,d*C.crewPerM))<1e-6&&B.crewPatT()>=480,'the clock follows the distance from the landing to the ring: '+Math.round(d)+' m, '+Math.round(B.crewPatT())+' s');
+  const wy=Math.min(B.crewWay(q),d*C.crewMaxF);
+  ok(Math.abs(B.crewPatT()-Math.max(C.crewPatrol,wy*C.crewPerM))<1e-6&&B.crewPatT()>=480&&wy>=d*.95,'the clock follows the way from the landing to the ring (Magnus 18 nov, not the crow): '+Math.round(d)+' m as the crow flies, '+Math.round(wy)+' m of way, '+Math.round(B.crewPatT())+' s');
   const mob=G.enemies.filter(e=>e.mobile&&!e.dead);G.enemies=mob;
   const len=e=>{const p=B.astar(e.x,e.y,q.x,q.y,B.passLand,()=>1);if(!p||!p.length)return -1;let s=0,x=e.x,y=e.y;for(const o of p){s+=Math.hypot(o.x-x,o.y-y);x=o.x;y=o.y;}return s/(e.speed||4);};
   const far=mob.filter(e=>!e.march&&len(e)>=C.crewLead),near=B.makeEnemy({id:'XN',kind:'at',x:q.x+60,y:q.y});G.enemies.push(near);
