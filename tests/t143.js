@@ -21,15 +21,24 @@ put(at(e.face,100));e.tgtU=null;e.cd=0;tick(30);
 ok(e.tgtU===g,'in the cone at 100 m it takes the target as before');
 put(at(e.face+PI,100));e.tgtU=null;e.cd=0;const hp0=g.hp;tick(60);
 ok(e.tgtU!==g&&g.hp===hp0,'behind it at 100 m it neither targets nor hits');
-put(at(e.face+PI,B.TURRET.backSee-10));e.tgtU=null;e.cd=0;tick(60);
-ok(e.tgtU!==g,'behind it at '+(B.TURRET.backSee-10)+' m (inside backSee) it still does not fire');
-put(at(e.face+PI/4+.1,100));e.tgtU=null;e.cd=0;tick(40);
+const calm=()=>{e.aim=e.face;e.alert=null;e.cone=B.coneOf(e.face,B.TURRET.arc);e.tgtU=null;e.cd=0;};
+ok(Math.abs(B.TURRET.turn-30*PI/180)<1e-9,'TURRET.turn: 30 degrees a second (Magnus 18 nov)');
+put(at(e.face+PI,B.TURRET.backSee-10));calm();tick(20);
+ok(e.tgtU!==g&&!!e.alert&&ang(e.aim,e.face)>.2,'behind it at '+(B.TURRET.backSee-10)+' m (inside backSee) it does not fire at once but starts to turn');
+tick(140);ok(ang(e.aim,Math.atan2(g.y-e.y,g.x-e.x))<.05&&B.inCone(e,g),'after a turn at 30 degrees a second its gun is on it and its cone, which followed the gun, holds it (too close below it to fire: depOK)');
+calm();put(at(e.face+PI/4+.1,100));e.tgtU=null;e.cd=0;tick(40);
 ok(e.tgtU!==g,'just past the edge of the cone (45 degrees plus) no target');
 put(at(e.face+PI/4-.05,100));e.tgtU=null;e.cd=0;tick(40);
 ok(e.tgtU===g,'just inside the edge: target');
-/* the gun does not turn out of the cone: an alarm from behind turns it only to the edge */
-put(at(e.face,400));e.tgtU=null;e.aim=e.face;const al=at(e.face+PI,200);e.alert={t:G.time,x:al.x,y:al.y};tick(80);
-ok(ang(e.aim,(e.cone.a0+e.cone.a1)/2)<=PI/4+1e-6,'an alarm from behind turns the gun to the edge of the cone at most');
+/* Magnus 18 nov: an alarm from behind turns it all the way round, and 20 s after the alarm it turns back to the way in */
+put(at(e.face,400));calm();const al=at(e.face+PI-.2,200);e.alert={t:G.time,x:al.x,y:al.y};tick(80);
+const half=ang(e.aim,e.face);ok(half>PI/2&&half<PI*.9,'4 s after an alarm from behind it has turned '+(half*180/PI).toFixed(0)+' degrees (30 a second)');
+tick(60);ok(ang(e.aim,e.face+PI-.2)<.05&&B.inCone(e,al),'it ends facing the alarm, its cone with it');
+const cap0=B.CAP.on,sh0=B.ENEMY_SHARE.on;B.CAP.on=false;B.ENEMY_SHARE.on=false;/* the captain's alarms and shared sight of what it saw would hold it */e.alert.t=G.time-21;tick(140);ok(ang(e.aim,e.face)<.05,'20 s after the alarm, with no shared sight, it is back on its face');B.CAP.on=cap0;B.ENEMY_SHARE.on=sh0;
+/* shot at from behind: it turns to the shooter */
+calm();const sh=B.makeUnit('tank',at(e.face+PI,300).x,at(e.face+PI,300).y);B.shoot(sh,e,0,0,'f','cannon');
+ok(!!e.alert&&Math.hypot(e.alert.x-sh.x,e.alert.y-sh.y)<1,'a shot at it from behind gives it the shooter as its alarm');
+calm();put(at(e.face,400));
 /* flag off: the old all round bunker */
 B.TURRET.on=false;put(at(e.face+PI,100));e.tgtU=null;e.cd=0;e.alert=null;tick(40);
 ok(e.tgtU===g&&B.turrCone(e)===null,'TURRET.on false: it takes a target behind it as before');

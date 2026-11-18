@@ -16,7 +16,7 @@ ok(B.CAP.on===true&&B.ENEMY_SHARE.on===true,'the captain is on by default, and s
 {const cp=require('child_process'),q=v=>cp.execFileSync(process.execPath,['-e',"global.performance={now:()=>0};require('./g2.js');const B=globalThis.__BH;console.log(B.CAP.on+' '+B.ENEMY_SHARE.on)"],{cwd:__dirname,env:{...process.env,BH_EKAPTEN:v}}).toString().trim();
   ok(q('0')==='false false','BH_EKAPTEN=0 turns the captain off ('+q('0')+')');ok(q('1')==='true true','BH_EKAPTEN=1 turns it on ('+q('1')+')');}
 fresh(false);run(1200,watch);
-ok(!G.eCap&&!G.enemies.some(e=>!e.mobile&&e.alert)&&!G.enemies.some(e=>e.capTo!=null),'explicitly off: no picture, no alarm on a fixed gun, nobody sent');
+ok(!G.eCap&&!G.enemies.some(e=>!e.mobile&&e.alert&&!e.alert.own)&&/* own: a bunker shot at or seeing someone close behind turns by itself (Magnus 18 nov) */!G.enemies.some(e=>e.capTo!=null),'explicitly off: no picture, no alarm on a fixed gun, nobody sent');
 const off1=JSON.stringify(G.enemies.map(e=>[Math.round(e.x),Math.round(e.y),Math.round(e.hp)]));
 fresh(false);run(1200);ok(off1===JSON.stringify(G.enemies.map(e=>[Math.round(e.x),Math.round(e.y),Math.round(e.hp)])),'off: two runs from the same seed end the same');
 ok(B.ENEMY_SHARE.on===false,'off: shared sight is off too');
