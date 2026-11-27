@@ -41,5 +41,6 @@ fresh();{const L=B.LANDING,v=put('tank',L.x,L.y-40),h=put('drone',L.x+5,L.y-30),
 // Spela vidare (Magnus 3 nov after ö 2169): a failed mission plays on, and nothing more ends it
 {B.newGame(2547,'djup',{uppdrag:'halshugg'});const G=B.G;G.running=true;G.time=B.misLimit()+1;B.checkWin();ok(G.over&&G.failed,'out of time: the mission fails');
   B.playOn();ok(!G.over&&G.running&&G.cont,'Spela vidare: the game runs again');run(20);B.checkWin();ok(!G.over,'and the time out does not end it again');
-  for(const r of G.relays)r.captured=true;B.checkWin();ok(!G.over&&G.log.some(l=>/räknas inte/.test(l.text)),'the goal reached after it does not count');}
+  const nRes=(B.resLoad?B.resLoad().length:null);for(const r of G.relays)r.captured=true;B.checkWin();ok(G.over&&G.late&&G.log.some(l=>/räknas inte/.test(l.text)),'the goal reached after it ends the map but does not count (ö 9163 kp06)');
+  if(nRes!=null)ok(B.resLoad().length===nRes,'and saves no new result');}
 console.log(fail?'FAILED '+fail:'all passed');process.exit(fail?1:0);
