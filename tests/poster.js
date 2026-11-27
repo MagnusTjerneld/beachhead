@@ -39,18 +39,32 @@ const gadda=(K,key,sx,f,rel,v,t0)=>{const q0=K.gnd(sx,f),hd=K.yaw+rel,c=Math.cos
 // three HÖK in a wedge: the leader on the ray through (sx,sy) d m out, the two wingmen back m behind and side m out to either side, up m higher
 const wedge=(K,sx,sy,d,rel,pitch,roll,back,side,up)=>{const q=K.ray(sx,sy,d),hd=K.yaw+rel,c=Math.cos(hd),s=Math.sin(hd),cols=[undefined,PAL[3][0],PAL[5][0]];
   [[0,0],[-back,-side],[-back,side]].forEach(([b,l],i)=>{const m=fUnit('hok'+(i+1),'drone',cols[i]);m.position.set(q.x+c*b-s*l,q.y+(i?up:0),q.z+s*b+c*l);m.rotation.set(roll||0,-hd,pitch||0);});};
+// the lighthouse lit (27 nov, Magnus) in the poster's daylight, where the game keeps it dark: the beam and the lantern's flare are set
+// here, after the game has set them for the frame (the shot script runs after sync3D), so the other lights of the scene stay as the
+// sun has them. az is the camera's bearing from the lighthouse (as in from()), off the angle in degrees the beam stands off it, k its strength
+const lyse=(az,off,k)=>{const B=R3.lhBeam;if(!B)return;B.beam.visible=B.flare.visible=true;B.beam.rotation.y=-(az+off)*PI/180;
+  B.mat.uniforms.uOp.value=.42*k*(1+1.4*(R3.mist||0));B.flare.scale.setScalar(9*k);B.flare.material.opacity=.9*k;
+  // the lamp behind the red glass burns: its own material, since R3.lampMat is shared with the scene's other lamps (the poster's page is thrown away after)
+  R3.lighthouse.children.forEach(m=>{if(m.material===R3.lampMat)m.material=new THREE.MeshBasicMaterial({color:new THREE.Color(0xfff2c8).multiplyScalar(1.6)});});};
+// takes away the trees and bushes within r m of the ground line at screen x sx from f0 to f1 m ahead (27 nov, Magnus: not the bush in
+// front of MUS): the matrices of the instances are zeroed, as the trailer's clearings do, and the page is thrown away after
+const rensa=(K,sx,f0,f1,r)=>{const a=K.gnd(sx,f0),b=K.gnd(sx,f1),vx=b.x-a.x,vz=b.z-a.z,near=(x,z)=>{const t=clamp(((x-a.x)*vx+(z-a.z)*vz)/(vx*vx+vz*vz||1),0,1);return Math.hypot(x-a.x-vx*t,z-a.z-vz*t)<r;};
+  const m=new THREE.Matrix4(),zero=new THREE.Matrix4().makeScale(0,0,0),v=new THREE.Vector3();
+  for(const T of R3.treeTiles||[]){T.g.updateMatrixWorld(true);T.g.traverse(o=>{if(!o.isInstancedMesh)return;let ch=false;for(let i=0;i<o.count;i++){o.getMatrixAt(i,m);v.setFromMatrixPosition(m).applyMatrix4(o.matrixWorld);if(near(v.x,v.z)){o.setMatrixAt(i,zero);ch=true;}}if(ch)o.instanceMatrix.needsUpdate=true;});}
+  for(const [o,Ls] of R3.looseM||[]){let ch=false;Ls.forEach((q,i)=>{if(!q.m&&near(q.x,q.y)){o.setMatrixAt(i,zero);ch=true;}});if(ch)o.instanceMatrix.needsUpdate=true;}};
 const mus=(K,sx,f,rel)=>{const q=K.gnd(sx,f),hd=K.yaw+rel,m=fUnit('mus','mus');fPlace(m,q.x,q.z,hd,0);if(Math.random()<dtr*40)fxDust(q.x-Math.cos(hd),fGround(q.x,q.z),q.z-Math.sin(hd),.6);return m;};
 `;
 const POSTER=[{namn:'fyren',host:'lyft',tau:1.5,steg:2.5,kod:`
   FILM.tod=17.2;FILM.sunEl=.24;
   const a0=68*PI/180;filmBirka({x:L.x+Math.cos(a0)*380,y:L.y+Math.sin(a0)*380,a:a0+PI/2});
   const K=from(255,130,70,-.3,58,.05);
-  mus(K,.18,108,PI-.5);
+  mus(K,.18,108,PI-.5);rensa(K,.2,88,106,4);
   varg(K,0,-.28,150,PI+.25);varg(K,1,.3,168,PI-.15);varg(K,2,.02,190,PI);
   krok(K,.35,.05,95,PI-.5);
   wedge(K,-.5,-.02,52,PI+.4,-.05,-.4,8,5,1.5);
   gadda(K,'gadda1',.66,222,PI-1.2,20,1.5);gadda(K,'gadda2',.56,236,PI-1.2,20,1.5);
   air(K,'geting','scout',.5,-.35,30,PI-.8,.05,.1);
+  lyse(255,35,1);
 `}];
 const scener=(opt.scener?require(path.resolve(opt.scener)):POSTER).filter(s=>!bara||bara.includes(s.namn));
 // in the cloud: its own Chromium on swiftshader; on a desktop the graphics card (swiftshader loses the WebGL context there)
